@@ -29,7 +29,7 @@ async function main() {
     
     // 機能3: 設定システム初期化
     configManager = new ConfigManager();
-    const config = configManager.initialize();
+    const config = await configManager.initialize();
     
     // 機能2: データベース初期化（設定を使用）
     dbManager = new DatabaseManager(config.database.path);
@@ -37,9 +37,9 @@ async function main() {
     
     // 機能4: ファイル監視初期化
     const monitorConfig = {
-      watchPaths: config.monitoring.watchPaths,
-      ignored: config.monitoring.excludePatterns,
-      depth: config.monitoring.maxDepth
+      watchPaths: config.watchPaths,
+      ignored: config.excludePatterns,
+      depth: config.monitoring?.maxDepth || 10
     };
     
     fileMonitor = new FileMonitor(monitorConfig);
@@ -48,7 +48,7 @@ async function main() {
     eventProcessor = new EventProcessor(dbManager);
     
     // 機能6: CLI Display初期化（ui001準拠）
-    cliDisplay = new CLIDisplay(dbManager);
+    cliDisplay = new CLIDisplay(dbManager, config.display);
     
     // ファイル監視イベントをEvent Processorに接続
     fileMonitor.on('fileEvent', async (event) => {

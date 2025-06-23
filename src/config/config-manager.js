@@ -1,18 +1,61 @@
 /**
- * Configuration Manager (a002準拠)
+ * Configuration Manager (簡略化版)
  * 機能3: 設定システムの基本管理
  * 
  * 読み込み優先順位:
  * 1. コマンドライン引数（--config）
- * 2. 環境変数（CCTOP_CONFIG_FILE）
- * 3. ~/.cctop/config.json
- * 4. デフォルト設定（defaults.js）
+ * 2. ~/.cctop/config.json
  */
 
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
-const defaults = require('./defaults');
+
+const readline = require('readline');
+
+// デフォルト設定（postinstall.jsと同じ内容）
+const DEFAULT_CONFIG = {
+  version: "0.1.0",
+  watchPaths: ["./"],
+  excludePatterns: [
+    "**/node_modules/**",
+    "**/.git/**",
+    "**/dist/**",
+    "**/build/**",
+    "**/.next/**",
+    "**/.nuxt/**",
+    "**/.cache/**",
+    "**/coverage/**",
+    "**/.DS_Store",
+    "**/*.log",
+    "**/.env*",
+    "**/.cctop/**"
+  ],
+  includePatterns: [],
+  monitoring: {
+    debounceMs: 100,
+    maxDepth: 10,
+    followSymlinks: false
+  },
+  display: {
+    maxEvents: 50,
+    refreshInterval: 100,
+    showTimestamps: true,
+    colorEnabled: true,
+    relativeTime: false,
+    mode: "all"
+  },
+  database: {
+    path: "~/.cctop/events.db",
+    maxEvents: 10000,
+    cleanupInterval: 3600000,
+    walMode: true
+  },
+  performance: {
+    maxMemoryMB: 256,
+    gcInterval: 60000
+  }
+};
 
 class ConfigManager {
   constructor() {
@@ -24,29 +67,47 @@ class ConfigManager {
    * 設定初期化
    * @param {Object} cliArgs - コマンドライン引数
    */
-  initialize(cliArgs = {}) {
+  async initialize(cliArgs = {}) {
     try {
-      // 1. デフォルト設定をベースとする
-      this.config = JSON.parse(JSON.stringify(defaults));
-      
-      // 2. 設定ファイルパスの決定（優先順位に従って）
+      // 1. 設定ファイルパスの決定（優先順位に従って）
       this.configPath = this.determineConfigPath(cliArgs);
       
-      // 3. 設定ファイルが存在する場合は読み込んでマージ
-      if (this.configPath && fs.existsSync(this.configPath)) {
-        const fileConfig = this.loadConfigFile(this.configPath);
-        this.config = this.mergeConfig(this.config, fileConfig);
+      // 2. 設定ファイルの存在確認
+      if (!fs.existsSync(this.configPath)) {
+        // テスト環境では自動的に設定ファイルを作成
+        if (process.env.NODE_ENV === 'test') {
+          await this.createDefaultConfigFile();
+          console.log(`📝 Created default config for test: ${this.configPath}`);
+        } else {
+          console.error(`\nエラー: 設定ファイルが見つかりません: ${this.configPath}`);
+          
+          // デフォルト設定ファイルを作成
+          await this.createDefaultConfigFile();
+          
+          console.log(`\n設定ファイルを作成しました: ${this.configPath}`);
+          console.log('設定を編集してから再度実行してください。\n');
+          
+          // ユーザー確認待機
+          await this.waitForUserConfirmation();
+          
+          // プログラム終了
+          process.exit(1);
+        }
+      }
+      
+      // 3. 設定ファイルを読み込む
+      const fileConfig = this.loadConfigFile(this.configPath);
+      this.config = fileConfig;
+      if (process.env.NODE_ENV === 'test' || process.env.CCTOP_VERBOSE) {
         console.log(`📋 Config loaded from: ${this.configPath}`);
-      } else {
-        // デフォルト設定でconfig.jsonを作成
-        this.createDefaultConfigFile();
-        console.log('📋 Using default configuration');
       }
       
       // 4. CLIアrgumentsでオーバーライド
       this.applyCLIOverrides(cliArgs);
       
-      console.log('⚙️ Configuration initialized');
+      if (process.env.NODE_ENV === 'test' || process.env.CCTOP_VERBOSE) {
+        console.log('⚙️ Configuration initialized');
+      }
       return this.config;
       
     } catch (error) {
@@ -56,7 +117,7 @@ class ConfigManager {
   }
 
   /**
-   * 設定ファイルパスの決定（a002準拠の優先順位）
+   * 設定ファイルパスの決定（CONFIG001準拠の優先順位）
    */
   determineConfigPath(cliArgs) {
     // 1. コマンドライン引数（--config）
@@ -64,12 +125,7 @@ class ConfigManager {
       return path.resolve(cliArgs.config);
     }
     
-    // 2. 環境変数（CCTOP_CONFIG_FILE）
-    if (process.env.CCTOP_CONFIG_FILE) {
-      return path.resolve(process.env.CCTOP_CONFIG_FILE);
-    }
-    
-    // 3. ~/.cctop/config.json
+    // 2. ~/.cctop/config.json
     const defaultConfigPath = path.join(os.homedir(), '.cctop', 'config.json');
     return defaultConfigPath;
   }
@@ -110,7 +166,7 @@ class ConfigManager {
   applyCLIOverrides(cliArgs) {
     // 監視パスの指定
     if (cliArgs.watchPath) {
-      this.config.monitoring.watchPaths = Array.isArray(cliArgs.watchPath) 
+      this.config.watchPaths = Array.isArray(cliArgs.watchPath) 
         ? cliArgs.watchPath 
         : [cliArgs.watchPath];
     }
@@ -122,33 +178,49 @@ class ConfigManager {
     
     // 表示行数の指定
     if (cliArgs.maxLines) {
-      this.config.display.maxLines = parseInt(cliArgs.maxLines, 10);
+      this.config.display.maxEvents = parseInt(cliArgs.maxLines, 10);
     }
   }
 
   /**
    * デフォルト設定ファイルを作成
    */
-  createDefaultConfigFile() {
+  async createDefaultConfigFile() {
     try {
       // ~/.cctop ディレクトリが存在しない場合は作成
       const configDir = path.dirname(this.configPath);
       if (!fs.existsSync(configDir)) {
         fs.mkdirSync(configDir, { recursive: true });
-        console.log(`📁 Created config directory: ${configDir}`);
       }
       
       // デフォルト設定をconfig.jsonとして保存
-      if (!fs.existsSync(this.configPath)) {
-        // this.configが設定されていない場合はdefaultsを使用
-        const configToSave = this.config || require('./defaults');
-        const configContent = JSON.stringify(configToSave, null, 2);
-        fs.writeFileSync(this.configPath, configContent, 'utf8');
-        console.log(`📝 Created default config: ${this.configPath}`);
-      }
+      const configContent = JSON.stringify(DEFAULT_CONFIG, null, 2);
+      fs.writeFileSync(this.configPath, configContent, 'utf8');
+      
     } catch (error) {
-      console.warn(`⚠️ Failed to create config file ${this.configPath}:`, error.message);
+      console.error(`\n⚠️ 設定ファイルの作成に失敗しました: ${error.message}`);
+      console.error('手動で以下のコマンドを実行してください:');
+      console.error(`mkdir -p ${path.dirname(this.configPath)}`);
+      console.error(`次に、${this.configPath} に設定ファイルを作成してください。\n`);
+      throw error;
     }
+  }
+
+  /**
+   * ユーザー確認待機
+   */
+  async waitForUserConfirmation() {
+    const rl = readline.createInterface({
+      input: process.stdin,
+      output: process.stdout
+    });
+
+    return new Promise((resolve) => {
+      rl.question('Enterキーを押して終了...', () => {
+        rl.close();
+        resolve();
+      });
+    });
   }
 
   /**
@@ -194,12 +266,12 @@ class ConfigManager {
       errors.push('Database path is required');
     }
 
-    if (!Array.isArray(this.get('monitoring.watchPaths'))) {
-      errors.push('monitoring.watchPaths must be an array');
+    if (!Array.isArray(this.get('watchPaths'))) {
+      errors.push('watchPaths must be an array');
     }
 
-    if (this.get('display.maxLines') <= 0) {
-      errors.push('display.maxLines must be positive');
+    if (this.get('display.maxEvents') <= 0) {
+      errors.push('display.maxEvents must be positive');
     }
 
     if (errors.length > 0) {

@@ -61,7 +61,7 @@ const schema = {
 // 初期データ
 const initialData = {
   event_types: [
-    { code: 'scan', name: 'Scan', description: 'Initial file scan' },
+    { code: 'find', name: 'Find', description: 'Initial file discovery' },
     { code: 'create', name: 'Create', description: 'File creation' },
     { code: 'modify', name: 'Modify', description: 'File modification' },
     { code: 'delete', name: 'Delete', description: 'File deletion' },

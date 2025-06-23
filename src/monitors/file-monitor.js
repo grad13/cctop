@@ -67,9 +67,9 @@ class FileMonitor extends EventEmitter {
       this.emit('ready');
     });
 
-    // ファイル追加（Create/Scan）
+    // ファイル追加（Create/Find）
     this.watcher.on('add', (filePath, stats) => {
-      const eventType = this.isReady ? 'create' : 'scan';
+      const eventType = this.isReady ? 'create' : 'find';
       this.emitFileEvent(eventType, filePath, stats);
     });
 
@@ -80,6 +80,9 @@ class FileMonitor extends EventEmitter {
 
     // ファイル削除（Delete）
     this.watcher.on('unlink', (filePath) => {
+      if (process.env.NODE_ENV === 'test' || process.env.CCTOP_DEBUG) {
+        console.log('[FileMonitor] unlink event detected:', filePath);
+      }
       this.emitFileEvent('delete', filePath, null);
     });
 
@@ -107,6 +110,11 @@ class FileMonitor extends EventEmitter {
    * ファイルイベントの発行
    */
   emitFileEvent(type, filePath, stats) {
+    // Ignore events if monitor is not running
+    if (!this.isRunning) {
+      return;
+    }
+    
     const event = {
       type,
       path: path.resolve(filePath),
@@ -128,9 +136,14 @@ class FileMonitor extends EventEmitter {
 
     try {
       if (this.watcher) {
+        // Remove all watcher event listeners first
+        this.watcher.removeAllListeners();
         await this.watcher.close();
         this.watcher = null;
       }
+      
+      // Remove all event listeners to prevent memory leaks
+      this.removeAllListeners();
       
       this.isRunning = false;
       this.isReady = false;

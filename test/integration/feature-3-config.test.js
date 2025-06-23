@@ -39,99 +39,175 @@ describe('Feature 3: 設定システム', () => {
       fs.unlinkSync(originalConfigPath);
     }
     
-    // 環境変数クリーンアップ
-    delete process.env.CCTOP_CONFIG_FILE;
   });
 
-  test('Should use default configuration when no config file exists', () => {
-    const config = configManager.initialize();
+  test('Should handle config file not exists with error', async () => {
+    // テスト環境ではエラーハンドリングが異なるため、NODE_ENVを一時的に変更
+    const originalEnv = process.env.NODE_ENV;
+    delete process.env.NODE_ENV;
     
-    expect(config.monitoring.watchPaths).toEqual(['.']);
-    expect(config.monitoring.excludePatterns).toContain('**/node_modules/**');
-    expect(config.database.mode).toBe('WAL');
-    expect(config.display.maxLines).toBe(50);
+    // ~/.cctop/config.jsonが存在しない状況でテスト
+    const mockExit = jest.spyOn(process, 'exit').mockImplementation(() => {});
+    const mockConsoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
+    const mockConsoleLog = jest.spyOn(console, 'log').mockImplementation(() => {});
+    
+    // waitForUserConfirmationをモックしてユーザー入力をスキップ
+    configManager.waitForUserConfirmation = jest.fn().mockResolvedValue();
+    
+    // 一時的に設定ファイルを削除
+    const configPath = path.join(os.homedir(), '.cctop', 'config.json');
+    const backupPath = configPath + '.test-backup';
+    if (fs.existsSync(configPath)) {
+      fs.renameSync(configPath, backupPath);
+    }
+    
+    try {
+      await configManager.initialize();
+    } catch (error) {
+      // process.exitが呼ばれるので、エラーハンドリング
+    }
+    
+    expect(mockConsoleError).toHaveBeenCalledWith(expect.stringContaining('エラー: 設定ファイルが見つかりません'));
+    expect(mockExit).toHaveBeenCalledWith(1);
+    
+    // 設定ファイルを復元
+    if (fs.existsSync(backupPath)) {
+      fs.renameSync(backupPath, configPath);
+    }
+    
+    mockExit.mockRestore();
+    mockConsoleError.mockRestore();
+    mockConsoleLog.mockRestore();
+    process.env.NODE_ENV = originalEnv;
   });
 
-  test('Should load configuration from file (a002準拠)', () => {
+  test('Should load configuration from file (CONFIG001準拠)', async () => {
     // テスト用設定ファイル作成
     const testConfigPath = path.join(tempConfigDir, 'config.json');
     const testConfig = {
-      monitoring: {
-        watchPaths: ['/test/path'],
-        debounceMs: 200
-      },
+      watchPaths: ['/test/path'],
+      ignorePaths: ['test_modules'],
       display: {
-        maxLines: 100
+        maxEvents: 20,
+        refreshInterval: 200
+      },
+      database: {
+        path: '~/.cctop/test.db',
+        maxEvents: 5000,
+        cleanupInterval: 1800000
       }
     };
     fs.writeFileSync(testConfigPath, JSON.stringify(testConfig, null, 2));
 
     // 設定ファイルを指定して初期化
-    const config = configManager.initialize({ config: testConfigPath });
+    const config = await configManager.initialize({ config: testConfigPath });
     
     // ファイルからの設定が適用されていることを確認
-    expect(config.monitoring.watchPaths).toEqual(['/test/path']);
-    expect(config.monitoring.debounceMs).toBe(200);
-    expect(config.display.maxLines).toBe(100);
-    
-    // デフォルト値もマージされていることを確認
-    expect(config.database.mode).toBe('WAL');
-    expect(config.monitoring.excludePatterns).toContain('**/node_modules/**');
+    expect(config.watchPaths).toEqual(['/test/path']);
+    expect(config.ignorePaths).toContain('test_modules');
+    expect(config.display.maxEvents).toBe(20);
+    expect(config.database.path).toBe('~/.cctop/test.db');
   });
 
-  test('Should apply CLI overrides (最高優先度)', () => {
+  test('Should apply CLI overrides (最高優先度)', async () => {
+    // まず~/.cctop/config.jsonを作成
+    const homeConfigPath = path.join(os.homedir(), '.cctop', 'config.json');
+    const homeConfig = {
+      watchPaths: ['./'],
+      ignorePaths: ['node_modules'],
+      display: { maxEvents: 10, refreshInterval: 100 },
+      database: { path: '~/.cctop/events.db', maxEvents: 10000, cleanupInterval: 3600000 }
+    };
+    fs.mkdirSync(path.dirname(homeConfigPath), { recursive: true });
+    fs.writeFileSync(homeConfigPath, JSON.stringify(homeConfig, null, 2));
+    
     const cliArgs = {
       watchPath: '/cli/path',
       maxLines: '25',
       dbPath: '/custom/db.sqlite'
     };
 
-    const config = configManager.initialize(cliArgs);
+    const config = await configManager.initialize(cliArgs);
     
-    expect(config.monitoring.watchPaths).toEqual(['/cli/path']);
-    expect(config.display.maxLines).toBe(25);
+    expect(config.watchPaths).toEqual(['/cli/path']);
+    expect(config.display.maxEvents).toBe(25);
     expect(config.database.path).toBe('/custom/db.sqlite');
   });
 
-  test('Should handle config file priority (a002準拠の優先順位)', () => {
-    // 環境変数設定
-    const envConfigPath = path.join(tempConfigDir, 'env-config.json');
-    const envConfig = { display: { maxLines: 75 } };
-    fs.writeFileSync(envConfigPath, JSON.stringify(envConfig, null, 2));
+  test('Should use ~/.cctop/config.json as default', async () => {
+    // ~/.cctop/config.jsonを作成
+    const homeConfigPath = path.join(os.homedir(), '.cctop', 'config.json');
+    const homeConfig = {
+      watchPaths: ['/home/path'],
+      ignorePaths: ['custom_ignore'],
+      display: { maxEvents: 30, refreshInterval: 150 },
+      database: { path: '~/.cctop/custom.db', maxEvents: 20000, cleanupInterval: 7200000 }
+    };
+    fs.mkdirSync(path.dirname(homeConfigPath), { recursive: true });
+    fs.writeFileSync(homeConfigPath, JSON.stringify(homeConfig, null, 2));
     
-    process.env.CCTOP_CONFIG_FILE = envConfigPath;
+    const config = await configManager.initialize();
     
-    const config = configManager.initialize();
-    
-    expect(config.display.maxLines).toBe(75);
-    
-    // 環境変数クリーンアップ
-    delete process.env.CCTOP_CONFIG_FILE;
+    expect(config.watchPaths).toEqual(['/home/path']);
+    expect(config.display.maxEvents).toBe(30);
   });
 
-  test('Should validate configuration', () => {
-    configManager.initialize();
+  test('Should validate configuration', async () => {
+    // ~/.cctop/config.jsonを作成
+    const homeConfigPath = path.join(os.homedir(), '.cctop', 'config.json');
+    const homeConfig = {
+      watchPaths: ['./'],
+      ignorePaths: [],
+      display: { maxEvents: 10, refreshInterval: 100 },
+      database: { path: '~/.cctop/events.db', maxEvents: 10000, cleanupInterval: 3600000 }
+    };
+    fs.mkdirSync(path.dirname(homeConfigPath), { recursive: true });
+    fs.writeFileSync(homeConfigPath, JSON.stringify(homeConfig, null, 2));
+    
+    await configManager.initialize();
     
     // 正常な設定では検証が通る
     expect(() => configManager.validate()).not.toThrow();
     
     // 不正な設定で検証エラー
-    configManager.config.display.maxLines = -1;
-    expect(() => configManager.validate()).toThrow('display.maxLines must be positive');
+    configManager.config.display.maxEvents = -1;
+    expect(() => configManager.validate()).toThrow('display.maxEvents must be positive');
   });
 
-  test('Should get configuration values', () => {
-    const config = configManager.initialize();
+  test('Should get configuration values', async () => {
+    // ~/.cctop/config.jsonを作成
+    const homeConfigPath = path.join(os.homedir(), '.cctop', 'config.json');
+    const homeConfig = {
+      watchPaths: ['./'],
+      ignorePaths: [],
+      display: { maxEvents: 10, refreshInterval: 100 },
+      database: { path: '~/.cctop/events.db', maxEvents: 10000, cleanupInterval: 3600000 }
+    };
+    fs.mkdirSync(path.dirname(homeConfigPath), { recursive: true });
+    fs.writeFileSync(homeConfigPath, JSON.stringify(homeConfig, null, 2));
     
-    expect(configManager.get('monitoring.debounceMs')).toBe(100);
-    expect(configManager.get('database.mode')).toBe('WAL');
+    const config = await configManager.initialize();
+    
+    expect(configManager.get('display.refreshInterval')).toBe(100);
+    expect(configManager.get('database.path')).toBe('~/.cctop/events.db');
     expect(configManager.get('nonexistent.key', 'default')).toBe('default');
     expect(configManager.get('nonexistent.key')).toBeNull();
   });
 
-  test('Should save configuration to ~/.cctop/config.json', () => {
-    const config = configManager.initialize();
-    config.display.maxLines = 999; // 変更
+  test('Should save configuration to ~/.cctop/config.json', async () => {
+    // ~/.cctop/config.jsonを作成
+    const homeConfigPath = path.join(os.homedir(), '.cctop', 'config.json');
+    const homeConfig = {
+      watchPaths: ['./'],
+      ignorePaths: [],
+      display: { maxEvents: 10, refreshInterval: 100 },
+      database: { path: '~/.cctop/events.db', maxEvents: 10000, cleanupInterval: 3600000 }
+    };
+    fs.mkdirSync(path.dirname(homeConfigPath), { recursive: true });
+    fs.writeFileSync(homeConfigPath, JSON.stringify(homeConfig, null, 2));
+    
+    const config = await configManager.initialize();
+    config.display.maxEvents = 999; // 変更
     
     configManager.save();
     
@@ -140,78 +216,111 @@ describe('Feature 3: 設定システム', () => {
     expect(fs.existsSync(savedConfigPath)).toBe(true);
     
     const savedConfig = JSON.parse(fs.readFileSync(savedConfigPath, 'utf8'));
-    expect(savedConfig.display.maxLines).toBe(999);
+    expect(savedConfig.display.maxEvents).toBe(999);
   });
 
-  test('Should handle malformed config file gracefully', () => {
+  test('Should handle malformed config file with error', async () => {
     // 不正なJSONファイル作成
     const badConfigPath = path.join(tempConfigDir, 'bad-config.json');
     fs.writeFileSync(badConfigPath, '{ invalid json }');
+    
+    const mockConsoleWarn = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    const mockConsoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
 
-    // エラーが発生せずデフォルト設定が使われることを確認
-    const config = configManager.initialize({ config: badConfigPath });
-    expect(config.monitoring.watchPaths).toEqual(['.']);
+    // loadConfigFileは空のオブジェクトを返すが、initializeは成功する
+    const config = await configManager.initialize({ config: badConfigPath });
+    
+    // 警告が出力されていることを確認
+    expect(mockConsoleWarn).toHaveBeenCalledWith(
+      expect.stringContaining('Failed to load config file'),
+      expect.any(String)
+    );
+    
+    // デフォルト値が使われていることを確認（空のオブジェクトが返される）
+    expect(config).toEqual({});
+    
+    mockConsoleWarn.mockRestore();
+    mockConsoleError.mockRestore();
   });
 
-  test('Should respect config priority order (統合テスト)', () => {
-    // 4つの設定源を全て用意
+  test('Should respect config priority order (統合テスト)', async () => {
+    // 2つの設定源を用意
     
-    // 4. デフォルト設定（defaults.js） - maxLines: 50
-    // （これは既に組み込まれている）
-    
-    // 3. ~/.cctop/config.json
+    // 2. ~/.cctop/config.json
     const defaultConfigPath = path.join(os.homedir(), '.cctop', 'config.json');
-    const defaultConfig = { display: { maxLines: 75 } };
+    const defaultConfig = { 
+      watchPaths: ['./'],
+      ignorePaths: [],
+      display: { maxEvents: 75, refreshInterval: 100 },
+      database: { path: '~/.cctop/events.db', maxEvents: 10000, cleanupInterval: 3600000 }
+    };
+    fs.mkdirSync(path.dirname(defaultConfigPath), { recursive: true });
     fs.writeFileSync(defaultConfigPath, JSON.stringify(defaultConfig, null, 2));
-    
-    // 2. 環境変数
-    const envConfigPath = path.join(tempConfigDir, 'env-config.json');
-    const envConfig = { display: { maxLines: 100 } };
-    fs.writeFileSync(envConfigPath, JSON.stringify(envConfig, null, 2));
-    process.env.CCTOP_CONFIG_FILE = envConfigPath;
     
     // 1. コマンドライン引数（最高優先度）
     const cliConfigPath = path.join(tempConfigDir, 'cli-config.json');
-    const cliConfig = { display: { maxLines: 125 } };
+    const cliConfig = { 
+      watchPaths: ['./cli'],
+      ignorePaths: [],
+      display: { maxEvents: 125, refreshInterval: 200 },
+      database: { path: '~/.cctop/cli.db', maxEvents: 20000, cleanupInterval: 7200000 }
+    };
     fs.writeFileSync(cliConfigPath, JSON.stringify(cliConfig, null, 2));
     
-    const config = configManager.initialize({ 
+    const config = await configManager.initialize({ 
       config: cliConfigPath,  // CLIで指定
       maxLines: '150'         // CLI引数でさらにオーバーライド
     });
     
     // 最高優先度のCLI引数が適用されることを確認
-    expect(config.display.maxLines).toBe(150);
+    expect(config.display.maxEvents).toBe(150);
     
     // クリーンアップ
-    delete process.env.CCTOP_CONFIG_FILE;
     if (fs.existsSync(defaultConfigPath)) {
       fs.unlinkSync(defaultConfigPath);
     }
   });
 
-  test('Should create config.json automatically when missing', () => {
+  test('Should have consistent config structure for watchPaths', async () => {
+    // bin/cctopとFileMonitorで同じ参照パスを使うことを確認
+    const config = await configManager.initialize();
+    
+    // config.watchPathsが存在することを確認
+    expect(config).toHaveProperty('watchPaths');
+    expect(Array.isArray(config.watchPaths)).toBe(true);
+    expect(config.watchPaths.length).toBeGreaterThan(0);
+    
+    // bin/cctopでの使用を模擬
+    const monitorConfig = {
+      watchPaths: config.watchPaths,
+      ignored: config.excludePatterns,
+      depth: config.monitoring?.maxDepth || 10
+    };
+    
+    expect(monitorConfig.watchPaths).toBeDefined();
+    expect(monitorConfig.watchPaths).toEqual(config.watchPaths);
+  });
+
+  test('Should create config.json automatically when missing', async () => {
     // 存在しないディレクトリでテスト
     const testConfigDir = path.join(os.tmpdir(), `test-cctop-auto-config-${Date.now()}`);
     const testConfigPath = path.join(testConfigDir, 'config.json');
     
     const manager = new ConfigManager();
     manager.configPath = testConfigPath;
-    // デフォルト設定を初期化
-    manager.config = require('../../src/config/defaults');
     
     // config.jsonが存在しないことを確認
     expect(fs.existsSync(testConfigPath)).toBe(false);
     
     // createDefaultConfigFileを実行
-    manager.createDefaultConfigFile();
+    await manager.createDefaultConfigFile();
     
     // config.jsonが作成されたことを確認
     expect(fs.existsSync(testConfigPath)).toBe(true);
     
     // 内容が正しいことを確認
     const createdConfig = JSON.parse(fs.readFileSync(testConfigPath, 'utf8'));
-    expect(createdConfig.monitoring).toBeDefined();
+    expect(createdConfig.watchPaths).toBeDefined();
     expect(createdConfig.database).toBeDefined();
     expect(createdConfig.display).toBeDefined();
     

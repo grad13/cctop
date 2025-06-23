@@ -7,17 +7,20 @@ const chalk = require('chalk');
 const EventEmitter = require('events');
 
 class CLIDisplay extends EventEmitter {
-  constructor(databaseManager) {
+  constructor(databaseManager, displayConfig = {}) {
     super();
     this.db = databaseManager;
-    this.displayMode = 'all'; // 'all' or 'unique'
-    this.maxLines = 30;
+    this.displayMode = displayConfig.mode || 'all'; // 'all' or 'unique'
+    this.maxLines = displayConfig.maxEvents || 50;
     this.events = [];
     this.uniqueEvents = new Map(); // fileName -> latest event
     this.isRunning = false;
     this.refreshInterval = null;
+    this.displayConfig = displayConfig;
     
-    console.log('🖥️ CLIDisplay initialized');
+    if (process.env.NODE_ENV === 'test' || process.env.CCTOP_VERBOSE) {
+      console.log('🖥️ CLIDisplay initialized');
+    }
     this.setupKeyboardHandlers();
   }
 
@@ -73,6 +76,10 @@ class CLIDisplay extends EventEmitter {
    * イベント追加（EventProcessorから呼ばれる）
    */
   addEvent(eventData) {
+    if (process.env.NODE_ENV === 'test' || process.env.CCTOP_DEBUG) {
+      console.log('[CLIDisplay] Adding event:', eventData.event_type, 'for', eventData.file_name);
+    }
+    
     this.events.unshift(eventData);
     
     // 最大行数を超えた場合は古いイベントを削除
@@ -142,8 +149,8 @@ class CLIDisplay extends EventEmitter {
     const header = 'Modified               Elapsed  File Name                    Directory       Event    Lines Blocks';
     const separator = '─'.repeat(97);
     
-    console.log(chalk.bold(header));
-    console.log(chalk.gray(separator));
+    process.stdout.write(chalk.bold(header) + '\n');
+    process.stdout.write(chalk.gray(separator) + '\n');
   }
 
   /**
@@ -160,7 +167,7 @@ class CLIDisplay extends EventEmitter {
     // 空行で埋める
     const remainingLines = this.maxLines - Math.min(eventsToShow.length, this.maxLines);
     for (let i = 0; i < remainingLines; i++) {
-      console.log('');
+      process.stdout.write('\n');
     }
   }
 
@@ -198,7 +205,7 @@ class CLIDisplay extends EventEmitter {
     // 行組み立て（UI002準拠 - 97文字固定幅）
     const line = `${modified}  ${elapsed}  ${fileName}  ${directory} ${eventType} ${lines} ${blocks}`;
     
-    console.log(line);
+    process.stdout.write(line + '\n');
   }
 
   /**
@@ -265,7 +272,7 @@ class CLIDisplay extends EventEmitter {
     const formatted = eventType.padEnd(8);
     
     switch (eventType) {
-      case 'scan':
+      case 'find':
         return chalk.blue(formatted);
       case 'create':
         return chalk.greenBright(formatted);
@@ -313,14 +320,12 @@ class CLIDisplay extends EventEmitter {
       ? `${totalEvents} events`
       : `${uniqueFiles} files`;
     
-    const statusLine = `${modeIndicator}  Scan:ON Create:ON Modify:ON Move:ON Delete:ON  ${stats}`;
-    const helpLine1 = '[a] All  [u] Unique  [q] Exit';
-    const helpLine2 = '[s] Scan  [c] Create  [m] Modify  [v] moVe  [d] Delete  [/] Search';
+    const statusLine = `${modeIndicator}  ${stats}`;
+    const helpLine = '[a] All  [u] Unique  [q] Exit';
     
-    console.log(chalk.gray(separator));
-    console.log(chalk.bold(statusLine));
-    console.log(chalk.dim(helpLine1));
-    console.log(chalk.dim(helpLine2));
+    process.stdout.write(chalk.gray(separator) + '\n');
+    process.stdout.write(chalk.bold(statusLine) + '\n');
+    process.stdout.write(chalk.dim(helpLine) + '\n');
   }
 
   /**

@@ -12,6 +12,7 @@ class EventProcessor extends EventEmitter {
     super();
     this.db = databaseManager;
     this.isInitialScanMode = true;
+    this.destroyed = false;
     
     console.log('⚡ EventProcessor initialized');
   }
@@ -21,6 +22,10 @@ class EventProcessor extends EventEmitter {
    */
   async processFileEvent(event) {
     try {
+      if (process.env.NODE_ENV === 'test' || process.env.CCTOP_DEBUG) {
+        console.log('[EventProcessor] Processing event:', event.type, 'for', event.path);
+      }
+      
       // r002準拠のイベントタイプマッピング
       const eventType = this.mapEventType(event.type);
       if (!eventType) {
@@ -51,7 +56,9 @@ class EventProcessor extends EventEmitter {
       
       // 処理完了イベント発行（setImmediate で次のティックで実行）
       setImmediate(() => {
-        this.emit('eventProcessed', result);
+        if (!this.destroyed) {
+          this.emit('eventProcessed', result);
+        }
       });
       
       // 戻り値としても結果を返す（同期的な確認のため）
@@ -61,7 +68,9 @@ class EventProcessor extends EventEmitter {
       console.error('❌ Event processing failed:', error);
       const errorResult = { event, error };
       setImmediate(() => {
-        this.emit('processingError', errorResult);
+        if (!this.destroyed) {
+          this.emit('processingError', errorResult);
+        }
       });
       throw error; // エラーを再スローして呼び出し元に伝播
     }
@@ -73,7 +82,7 @@ class EventProcessor extends EventEmitter {
   onInitialScanComplete() {
     this.isInitialScanMode = false;
     console.log('🔄 Initial scan complete - switching to real-time mode');
-    this.emit('scanComplete');
+    this.emit('findComplete');
   }
 
   /**
@@ -81,7 +90,7 @@ class EventProcessor extends EventEmitter {
    */
   mapEventType(chokidarEvent) {
     const eventMapping = {
-      'scan': 'scan',     // 初期スキャン中のファイル発見
+      'find': 'find',     // 初期スキャン中のファイル発見
       'create': 'create', // リアルタイム監視中の新規作成
       'modify': 'modify', // ファイル変更
       'delete': 'delete', // ファイル削除
@@ -245,6 +254,16 @@ class EventProcessor extends EventEmitter {
       processedEvents: this.listenerCount('eventProcessed'),
       errors: this.listenerCount('processingError')
     };
+  }
+
+  /**
+   * クリーンアップ処理
+   */
+  cleanup() {
+    // Mark as destroyed to prevent further processing
+    this.destroyed = true;
+    this.removeAllListeners();
+    console.log('🧹 EventProcessor cleaned up');
   }
 }
 

@@ -52,7 +52,7 @@ describe('Feature 2: データベース実装', () => {
     const eventTypes = await dbManager.all('SELECT * FROM event_types ORDER BY code');
     
     expect(eventTypes).toHaveLength(5);
-    expect(eventTypes.map(e => e.code)).toEqual(['create', 'delete', 'modify', 'move', 'scan']);
+    expect(eventTypes.map(e => e.code)).toEqual(['create', 'delete', 'find', 'modify', 'move']);
   });
 
   test('Should create ~/.cctop directory by default', async () => {

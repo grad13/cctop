@@ -44,7 +44,7 @@ describe('Feature 4: File Monitor (chokidar統合)', () => {
     expect(fileMonitor.getWatchedPaths()).toEqual([testDir]);
   });
 
-  test('Should perform initial scan and emit scan events', async () => {
+  test('Should perform initial find and emit find events', async () => {
     // 事前にファイル作成
     const testFiles = [
       path.join(testDir, 'file1.txt'),
@@ -63,10 +63,10 @@ describe('Feature 4: File Monitor (chokidar統合)', () => {
 
     fileMonitor = new FileMonitor(config);
     
-    const scanEvents = [];
+    const findEvents = [];
     fileMonitor.on('fileEvent', (event) => {
-      if (event.type === 'scan') {
-        scanEvents.push(event);
+      if (event.type === 'find') {
+        findEvents.push(event);
       }
     });
 
@@ -79,16 +79,16 @@ describe('Feature 4: File Monitor (chokidar統合)', () => {
 
     expect(fileMonitor.isActive()).toBe(true);
     expect(fileMonitor.isInitialScanComplete()).toBe(true);
-    expect(scanEvents.length).toBeGreaterThanOrEqual(2);
+    expect(findEvents.length).toBeGreaterThanOrEqual(2);
     
-    // scanイベントのファイルパスを確認
-    const scannedPaths = scanEvents.map(e => e.path);
+    // findイベントのファイルパスを確認
+    const findnedPaths = findEvents.map(e => e.path);
     testFiles.forEach(testFile => {
-      expect(scannedPaths).toContain(path.resolve(testFile));
+      expect(findnedPaths).toContain(path.resolve(testFile));
     });
   });
 
-  test('Should detect create events after initial scan', async () => {
+  test('Should detect create events after initial find', async () => {
     const config = {
       watchPaths: [testDir],
       ignored: [],
@@ -350,7 +350,7 @@ describe('Feature 4: File Monitor (chokidar統合)', () => {
     expect(lifecycleEvents[1].timestamp).toBeLessThanOrEqual(lifecycleEvents[2].timestamp);
   });
 
-  test('Should distinguish between scan and create events correctly', async () => {
+  test('Should distinguish between find and create events correctly', async () => {
     // 既存ファイルを作成
     const existingFile = path.join(testDir, 'existing.txt');
     fs.writeFileSync(existingFile, 'Existing content');
@@ -384,8 +384,8 @@ describe('Feature 4: File Monitor (chokidar統合)', () => {
     
     await new Promise(resolve => setTimeout(resolve, 300));
 
-    // 既存ファイルはscanイベント、新規ファイルはcreateイベント
-    console.log('All scan/create events:', events);
+    // 既存ファイルはfindイベント、新規ファイルはcreateイベント
+    console.log('All find/create events:', events);
     const existingEvent = events.find(e => e.filename === 'existing.txt');
     const newEvent = events.find(e => e.filename === 'new.txt');
     
@@ -393,7 +393,7 @@ describe('Feature 4: File Monitor (chokidar統合)', () => {
     console.log('New event:', newEvent);
     
     expect(existingEvent).toBeDefined();
-    expect(existingEvent.type).toBe('scan');
+    expect(existingEvent.type).toBe('find');
     expect(newEvent).toBeDefined();
     expect(newEvent.type).toBe('create');
   });

@@ -9,9 +9,10 @@
   "scripts": {
     "start": "node bin/cctop",
     "test": "jest test/integration --runInBand --forceExit",
-    "test:sequential": "node test-sequential.js",
+    "test:sequential": "node test/test-sequential.js",
     "test:watch": "jest test/integration --watch",
-    "test:rdd": "jest test/integration --detectOpenHandles"
+    "test:rdd": "jest test/integration --detectOpenHandles",
+    "postinstall": "node scripts/postinstall.js"
   },
   "keywords": [
     "monitoring",

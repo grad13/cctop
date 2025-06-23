@@ -15,6 +15,8 @@ module.exports = {
     '<rootDir>/test/integration/feature-4-file-monitor.test.js',
     '<rootDir>/test/integration/feature-5-event-processor.test.js',
     '<rootDir>/test/integration/feature-6-cli-display.test.js',
+    '<rootDir>/test/integration/startup-verification.test.js',
+    '<rootDir>/test/integration/rdd-actual-behavior.test.js',
     '<rootDir>/test/integration/rdd-verification.test.js'
   ],
   

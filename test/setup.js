@@ -3,6 +3,76 @@
  * テスト実行前後のリソース管理を確実に行う
  */
 
+const fs = require('fs');
+const path = require('path');
+const os = require('os');
+
+// テスト用の設定ファイルを作成
+const setupTestConfig = () => {
+  const configDir = path.join(os.homedir(), '.cctop');
+  const configPath = path.join(configDir, 'config.json');
+  
+  // ディレクトリ作成
+  if (!fs.existsSync(configDir)) {
+    fs.mkdirSync(configDir, { recursive: true });
+  }
+  
+  // テスト用のデフォルト設定
+  const testConfig = {
+    version: "0.1.0",
+    watchPaths: ["./"],
+    excludePatterns: [
+      "**/node_modules/**",
+      "**/.git/**",
+      "**/dist/**",
+      "**/build/**",
+      "**/.next/**",
+      "**/.nuxt/**",
+      "**/.cache/**",
+      "**/coverage/**",
+      "**/.DS_Store",
+      "**/*.log",
+      "**/.env*",
+      "**/.cctop/**"
+    ],
+    includePatterns: [],
+    monitoring: {
+      debounceMs: 100,
+      maxDepth: 10,
+      followSymlinks: false
+    },
+    display: {
+      maxEvents: 50,
+      refreshInterval: 100,
+      showTimestamps: true,
+      colorEnabled: true,
+      relativeTime: false,
+      mode: "all"
+    },
+    database: {
+      path: "~/.cctop/events.db",
+      maxEvents: 10000,
+      cleanupInterval: 3600000,
+      walMode: true
+    },
+    performance: {
+      maxMemoryMB: 256,
+      gcInterval: 60000
+    }
+  };
+  
+  // 設定ファイルが存在しない場合のみ作成
+  if (!fs.existsSync(configPath)) {
+    fs.writeFileSync(configPath, JSON.stringify(testConfig, null, 2));
+    console.log(`📝 Created test config: ${configPath}`);
+  }
+};
+
+// テスト環境のセットアップ
+beforeAll(() => {
+  setupTestConfig();
+});
+
 // グローバルタイムアウト延長
 jest.setTimeout(10000);
 

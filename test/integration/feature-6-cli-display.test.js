@@ -185,7 +185,7 @@ describe('Feature 6: CLI Display (ui001準拠)', () => {
 
   test('Should format event types with colors', () => {
     const testCases = [
-      { type: 'scan', expected: true },
+      { type: 'find', expected: true },
       { type: 'create', expected: true },
       { type: 'modify', expected: true },
       { type: 'delete', expected: true },

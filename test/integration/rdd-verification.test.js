@@ -165,8 +165,8 @@ describe('RDD Verification: 実動作確認', () => {
           }, 500);
         }
         
-        // ファイル作成イベントの検出を確認
-        if (output.includes('💾 create: real-time-test.txt → DB')) {
+        // ファイル作成イベントの検出を確認（表形式での表示）
+        if (output.includes('real-time-test.txt') && output.includes('create')) {
           resolve();
         }
       });
@@ -196,11 +196,20 @@ describe('RDD Verification: 実動作確認', () => {
         const chunk = data.toString();
         output += chunk;
         
-        // イベント検出の記録
-        if (chunk.includes('💾') && chunk.includes('multi-test.txt')) {
-          const eventMatch = chunk.match(/💾 (\w+): multi-test\.txt/);
-          if (eventMatch) {
-            detectedEvents.push(eventMatch[1]);
+        // イベント検出の記録（仕様書ui002準拠の表形式）
+        // 画面全体の再描画方式なので、行ごとに解析する
+        const lines = chunk.split('\n');
+        for (const line of lines) {
+          // 表示例: "2025-06-24 00:00:00     00:00  multi-test.txt               ./              create       1      8"
+          if (line.includes('multi-test.txt') && line.includes('   ')) {  // データ行の判定
+            // イベントタイプは固定位置にあるため、正確に判定
+            if (line.includes(' create ') && !detectedEvents.includes('create')) {
+              detectedEvents.push('create');
+            } else if (line.includes(' modify ') && !detectedEvents.includes('modify')) {
+              detectedEvents.push('modify');
+            } else if (line.includes(' delete ') && !detectedEvents.includes('delete')) {
+              detectedEvents.push('delete');
+            }
           }
         }
         
@@ -266,10 +275,13 @@ describe('RDD Verification: 実動作確認', () => {
         const chunk = data.toString();
         output += chunk;
         
-        // イベント数カウント
-        const eventMatches = chunk.match(/💾.*→ DB/g);
-        if (eventMatches) {
-          detectedEventCount += eventMatches.length;
+        // イベント数カウント（仕様書ui002準拠の表形式）
+        // perf-test-*.txt ファイルのcreateイベントをカウント
+        const lines = chunk.split('\n');
+        for (const line of lines) {
+          if (line.includes('perf-test-') && line.includes(' create ')) {
+            detectedEventCount++;
+          }
         }
         
         // 起動完了後にパフォーマンステスト実行

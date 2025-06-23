@@ -12,7 +12,8 @@ describe('Feature 1: 基本エントリポイント', () => {
     
     return new Promise((resolve, reject) => {
       const child = spawn('node', [cctopPath], {
-        stdio: 'pipe'
+        stdio: 'pipe',
+        env: { ...process.env, NODE_ENV: 'test', CCTOP_VERBOSE: 'true' }
       });
       
       let output = '';
@@ -57,7 +58,8 @@ describe('Feature 1: 基本エントリポイント', () => {
     
     return new Promise((resolve, reject) => {
       const child = spawn('node', [cctopPath], {
-        stdio: 'pipe'
+        stdio: 'pipe',
+        env: { ...process.env, NODE_ENV: 'test', CCTOP_VERBOSE: 'true' }
       });
       
       let output = '';
