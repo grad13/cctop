@@ -1,0 +1,35 @@
+{
+  "name": "cctop",
+  "version": "0.1.0",
+  "description": "File system monitoring tool with real-time event tracking",
+  "main": "src/index.js",
+  "bin": {
+    "cctop": "./bin/cctop"
+  },
+  "scripts": {
+    "start": "node bin/cctop",
+    "test": "jest test/integration --runInBand --forceExit",
+    "test:sequential": "node test-sequential.js",
+    "test:watch": "jest test/integration --watch",
+    "test:rdd": "jest test/integration --detectOpenHandles"
+  },
+  "keywords": [
+    "monitoring",
+    "filesystem",
+    "events",
+    "cli"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "chokidar": "^3.5.3",
+    "sqlite3": "^5.1.6",
+    "chalk": "^4.1.2"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}
