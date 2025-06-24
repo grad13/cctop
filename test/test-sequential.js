@@ -36,54 +36,55 @@ async function runTest(testFile) {
   return new Promise((resolve) => {
     const startTime = Date.now();
     
-    const jest = spawn('npx', ['jest', testPath, '--no-coverage', '--runInBand', '--verbose'], {
+    const vitest = spawn('npx', ['vitest', 'run', testPath, '--reporter=verbose'], {
       stdio: ['inherit', 'pipe', 'pipe']
     });
     
     let output = '';
     let errorOutput = '';
     
-    jest.stdout.on('data', (data) => {
+    vitest.stdout.on('data', (data) => {
       const chunk = data.toString();
       output += chunk;
       // リアルタイムでのデバッグ出力
       // process.stdout.write(chunk);
     });
     
-    jest.stderr.on('data', (data) => {
+    vitest.stderr.on('data', (data) => {
       const chunk = data.toString();
       errorOutput += chunk;
       // リアルタイムでのデバッグ出力
       // process.stderr.write(chunk);
     });
     
-    jest.on('close', (code) => {
+    vitest.on('close', (code) => {
       const duration = Date.now() - startTime;
       const success = code === 0;
       
-      // 結果解析（Jest の様々な出力形式に対応）
+      // 結果解析（Vitest の出力形式に対応）
       const allOutput = output + errorOutput;
       let testsInFile = 0;
       
-      // パターン1: "Tests: X passed, Y total" の精密パターン
-      const testsPassedMatch = allOutput.match(/Tests:\s+(\d+)\s+passed,\s+(\d+)\s+total/);
-      if (testsPassedMatch) {
-        testsInFile = parseInt(testsPassedMatch[1]);
+      // パターン1: "✓ X (Y passed)" の形式
+      const vitestPassedMatch = allOutput.match(/✓\s+(\d+)\s+\((\d+)\s+passed\)/);
+      if (vitestPassedMatch) {
+        testsInFile = parseInt(vitestPassedMatch[2]);
       }
       
-      // パターン2: "✓ test description" の数をカウント (より正確)
+      // パターン2: "Test Files  X passed, Y total" の形式
+      if (testsInFile === 0) {
+        const testFilesMatch = allOutput.match(/Test Files\s+(\d+)\s+passed/);
+        const testsMatch = allOutput.match(/Tests\s+(\d+)\s+passed/);
+        if (testsMatch) {
+          testsInFile = parseInt(testsMatch[1]);
+        }
+      }
+      
+      // パターン3: "✓" マークの数をカウント
       if (testsInFile === 0) {
         const testPassedMatches = allOutput.match(/^\s*✓/gm);
         if (testPassedMatches) {
           testsInFile = testPassedMatches.length;
-        }
-      }
-      
-      // パターン3: PASS行があって✓がない場合は最低限の検出
-      if (testsInFile === 0) {
-        const passMatch = allOutput.match(/PASS.*\.test\.js/);
-        if (passMatch && success) {
-          testsInFile = 1; // 成功したら最低1つのテストがあったとみなす
         }
       }
       
@@ -95,7 +96,7 @@ async function runTest(testFile) {
         console.log(`❌ FAILED: ${testFile} (${duration}ms)`);
         console.log(`Error output: ${errorOutput.slice(0, 300)}...`);
         if (output) {
-          console.log(`Jest output: ${output.slice(0, 300)}...`);
+          console.log(`Vitest output: ${output.slice(0, 300)}...`);
         }
       }
       

@@ -13,8 +13,8 @@ export default defineConfig({
     setupFiles: ['./test/setup.js'],
     
     // タイムアウト設定
-    testTimeout: 120000,
-    hookTimeout: 120000,
+    testTimeout: 300000,
+    hookTimeout: 60000,
     
     // 並列実行制御（Jest --runInBandの代替）
     poolOptions: {

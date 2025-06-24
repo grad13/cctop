@@ -10,6 +10,7 @@ const EventEmitter = require('events');
 class EventProcessor extends EventEmitter {
   constructor(databaseManager) {
     super();
+    this.setMaxListeners(20); // メモリリーク対策
     this.db = databaseManager;
     this.isInitialScanMode = true;
     this.destroyed = false;
@@ -218,8 +219,7 @@ class EventProcessor extends EventEmitter {
    */
   async countLines(filePath) {
     return new Promise((resolve, reject) => {
-      let lineCount = 0;
-      let isFirstLine = true;
+      let content = '';
       
       const stream = fs.createReadStream(filePath, { 
         encoding: 'utf8',
@@ -227,20 +227,19 @@ class EventProcessor extends EventEmitter {
       });
       
       stream.on('data', (chunk) => {
-        // 改行をカウント
-        const lines = chunk.split('\n');
-        lineCount += lines.length - 1;
-        
-        // 最初のチャンクで空でなければ1行はある
-        if (isFirstLine && chunk.length > 0) {
-          lineCount += 1;
-          isFirstLine = false;
-        }
+        content += chunk;
       });
       
       stream.on('end', () => {
-        // 空ファイルの場合は0行
-        resolve(isFirstLine ? 0 : lineCount);
+        if (content.length === 0) {
+          resolve(0); // 空ファイルは0行
+        } else {
+          // 改行で分割して行数をカウント
+          const lines = content.split('\n');
+          // 最後が空文字列（改行で終わる）の場合は除外
+          const lineCount = content.endsWith('\n') ? lines.length - 1 : lines.length;
+          resolve(lineCount);
+        }
       });
       
       stream.on('error', (error) => {

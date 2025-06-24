@@ -10,6 +10,7 @@ const path = require('path');
 class FileMonitor extends EventEmitter {
   constructor(config) {
     super();
+    this.setMaxListeners(20); // メモリリーク対策
     this.config = config;
     this.watcher = null;
     this.isReady = false;

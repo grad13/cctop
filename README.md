@@ -13,7 +13,11 @@ A high-performance file system monitoring tool with real-time event tracking and
 ## Installation
 
 ```bash
-npm install
+# Install globally
+npm install -g cctop
+
+# Or install locally
+npm install cctop
 ```
 
 ## Usage
@@ -27,6 +31,9 @@ cctop /path/to/directory
 
 # Use specific database
 cctop --db /path/to/database.db
+
+# If installed locally
+npx cctop
 ```
 
 ## Architecture

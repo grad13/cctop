@@ -7,6 +7,9 @@ const fs = require('fs');
 const path = require('path');
 const os = require('os');
 
+// EventEmitter メモリリーク対策（グローバル設定）
+require('events').EventEmitter.defaultMaxListeners = 20;
+
 // テスト用の設定ファイルを作成
 const setupTestConfig = () => {
   const configDir = path.join(os.homedir(), '.cctop');

@@ -221,6 +221,13 @@ class DatabaseManager {
   }
 
   /**
+   * データベースインスタンス取得（.database プロパティ用getter）
+   */
+  get database() {
+    return this.db;
+  }
+
+  /**
    * イベントタイプIDを取得
    */
   async getEventTypeId(eventTypeCode) {
@@ -351,9 +358,13 @@ class DatabaseManager {
         e.directory,
         e.file_size,
         e.line_count,
-        e.block_count
+        e.block_count,
+        e.object_id,
+        e.is_directory,
+        of.inode
       FROM events e
       JOIN event_types et ON e.event_type_id = et.id
+      LEFT JOIN object_fingerprint of ON e.object_id = of.id
       ORDER BY e.timestamp DESC
       LIMIT ?
     `, [limit]);

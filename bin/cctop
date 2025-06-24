@@ -106,7 +106,7 @@ async function main() {
 }
 
 // 基本的な終了処理
-process.on('SIGINT', async () => {
+const shutdown = async () => {
   console.log('\n👋 cctop shutting down...');
   
   if (cliDisplay) {
@@ -126,7 +126,10 @@ process.on('SIGINT', async () => {
   }
   
   process.exit(0);
-});
+};
+
+process.on('SIGINT', shutdown);
+process.on('SIGTERM', shutdown);
 
 // 未処理の例外をキャッチ
 process.on('unhandledRejection', (reason, promise) => {

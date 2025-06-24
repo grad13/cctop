@@ -2,7 +2,7 @@
  * BufferedRenderer テスト (FUNC-018準拠)
  */
 
-const { describe, test, expect, beforeEach, afterEach, vi } = require('vitest');
+// Vitest globals配置（vitest.config.jsのglobals: trueで自動利用可能）
 const BufferedRenderer = require('../../src/utils/buffered-renderer');
 
 describe('BufferedRenderer', () => {

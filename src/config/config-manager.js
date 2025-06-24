@@ -69,7 +69,10 @@ class ConfigManager {
       // 4. CLIアrgumentsでオーバーライド
       this.applyCLIOverrides(cliArgs);
       
-      // 5. 自動監視対象追加機能（PLAN準拠）
+      // 5. 設定値の妥当性検証（必須項目チェック）
+      this.validate();
+      
+      // 6. 自動監視対象追加機能（PLAN準拠）
       await this.checkAndAddCurrentDirectory(cliArgs);
       
       if (process.env.NODE_ENV === 'test' || process.env.CCTOP_VERBOSE) {
@@ -243,12 +246,12 @@ class ConfigManager {
   }
 
   /**
-   * 監視対象ディレクトリ追加の確認プロンプト（PLAN準拠）
+   * 監視対象ディレクトリ追加の確認プロンプト（PLAN準拠・timeout対応）
    */
-  async promptAddDirectory(dirPath) {
-    // テスト環境では自動でy応答
+  async promptAddDirectory(dirPath, timeout = 30000) {
+    // テスト環境では自動でfalse応答（安全側デフォルト）
     if (process.env.NODE_ENV === 'test') {
-      return true;
+      return false;
     }
     
     const rl = readline.createInterface({
@@ -257,9 +260,16 @@ class ConfigManager {
     });
     
     return new Promise((resolve) => {
+      const timer = setTimeout(() => {
+        rl.close();
+        console.log('\nTimeout - continuing with current config');
+        resolve(false); // 安全側デフォルト
+      }, timeout);
+      
       rl.question(
         `📁 ${dirPath} をモニタ対象に追加しますか？ (y/n): `,
         (answer) => {
+          clearTimeout(timer);
           rl.close();
           resolve(answer.toLowerCase() === 'y' || answer.toLowerCase() === 'yes');
         }
@@ -336,6 +346,13 @@ class ConfigManager {
       throw new Error('Configuration not initialized');
     }
     return JSON.parse(JSON.stringify(this.config));
+  }
+
+  /**
+   * 全設定の取得（getAll()のエイリアス）
+   */
+  getConfig() {
+    return this.getAll();
   }
 
   /**

@@ -20,7 +20,7 @@
     "events",
     "cli"
   ],
-  "author": "",
+  "author": "grad13 <nyahha@gmail.com>",
   "license": "MIT",
   "dependencies": {
     "chalk": "^4.1.2",
