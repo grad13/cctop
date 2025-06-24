@@ -1,0 +1,42 @@
+{
+  "filename": "talk-with-ChatGPT-about-mcp.txt",
+  "path": "inputs/articles/talk-with-ChatGPT-about-mcp.txt",
+  "size_bytes": 45728,
+  "size_readable": "44.7KB",
+  "created_date": "2025-06-18",
+  "cached_date": "2025-06-18T07:40:00Z",
+  "cache_creator": "Clerk Agent",
+  "content_type": "dialogue",
+  "language": "ja",
+  "topics": [
+    "Model Context Protocol (MCP)",
+    "Agentic Coding",
+    "Multi-Agent Systems",
+    "Claude Code",
+    "Parallel Processing"
+  ],
+  "key_concepts": [
+    "MCP as USB-C for AI tools",
+    "Task() parallel execution",
+    "Autonomous task generation",
+    "50+ MCP server types"
+  ],
+  "summary_file": "cache/summaries/talk-with-ChatGPT-about-mcp-summary.md",
+  "extracts_file": null,
+  "search_keywords": [
+    "mcp",
+    "model context protocol",
+    "agentic coding",
+    "multi-agent",
+    "parallel",
+    "task",
+    "claude code",
+    "filesystem",
+    "fetch",
+    "github",
+    "slack",
+    "docker"
+  ],
+  "cache_version": "1.0",
+  "expiry_date": "2025-07-18"
+}

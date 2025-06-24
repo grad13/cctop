@@ -1,0 +1,28 @@
+Quick Switch Module - Environment Check: 
+Object { windowHasQuickSwitch: false, windowLocation: "https://orbital-q.sakura.ne.jp/", pathname: "/", documentReadyState: "interactive", isInIframe: false, isPreviewMode: false, isSPAEnvironment: false, shouldInitialize: true, parentLocation: "親ウィンドウ" }
+quick-switch-C567rn7J.js:650:2375
+✅ Quick Switch: Creating new global instance in parent window quick-switch-C567rn7J.js:650:3601
+🚀 [QuickSwitch] Constructor called 
+Object { timestamp: 1749949053419, location: "https://orbital-q.sakura.ne.jp/", hash: "", pathname: "/" }
+quick-switch-C567rn7J.js:1:4313
+🚀 [QuickSwitch] Initial index: 1 quick-switch-C567rn7J.js:1:4820
+📐 [QuickSwitch] Init called 
+Object { readyState: "interactive", isShellEnvironment: false, isInIframe: false }
+quick-switch-C567rn7J.js:1:5530
+🎹 [QuickSwitch] Setting up keyboard listeners 
+Object { timestamp: 1749949053420, documentHasFocus: true, activeElement: "BODY", keyboardEnabled: true }
+quick-switch-C567rn7J.js:1:7837
+✅ Quick Switch: Instance created successfully 
+Object { keyboardEnabled: true, currentIslandIndex: 1, islands: (3) […] }
+quick-switch-C567rn7J.js:650:3758
+📍 親ウィンドウで実行中 - iframeからのキーイベントを受信します quick-switch-iframe-bridge-F_PvnN8E.js:1:762
+⚡ Landing fallback script loaded landing-BzT5AV0a.js:449:13419
+⚠️ Main app not detected, fallback mode not implemented landing-BzT5AV0a.js:449:13539
+XHRGET
+https://orbital-q.sakura.ne.jp/api/vision/daily.php?date=2025-06-15
+[HTTP/2 404  86ms]
+
+📐 [QuickSwitch] DOM already loaded, ensuring focus quick-switch-C567rn7J.js:1:6763
+
+​
+
