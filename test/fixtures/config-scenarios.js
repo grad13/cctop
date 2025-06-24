@@ -75,7 +75,7 @@ const configScenarios = [
         },
         display: {
           maxEvents: 30,
-          refreshInterval: 100
+          refreshRateMs: 100
         },
         database: {
           path: '~/.cctop/activity.db'
@@ -85,7 +85,13 @@ const configScenarios = [
     verifyBehavior: (config) => {
       // 実際の実装に合わせて、ネストされたアクセスを修正
       const monitoring = config.get('monitoring');
-      expect(monitoring.watchPaths).toEqual(['./src', './test']);
+      // 仕様書準拠: 絶対パス統一管理 + 自動追加された現在ディレクトリ
+      expect(monitoring.watchPaths).toEqual(
+        expect.arrayContaining([
+          expect.stringMatching(/src$/),
+          expect.stringMatching(/test$/)
+        ])
+      );
       expect(monitoring.debounceMs).toBe(200);
       
       // デフォルト値が保持されているか確認
@@ -97,7 +103,7 @@ const configScenarios = [
       // 部分的なオーバーライド
       const display = config.get('display');
       expect(display.maxEvents).toBe(30);
-      expect(display.refreshInterval).toBeDefined();
+      expect(display.refreshRateMs).toBeDefined();
       
       // 省略されたセクションはデフォルト値
       const database = config.get('database');
@@ -157,8 +163,9 @@ const configScenarios = [
       // コマンドライン引数なし
     },
     verifyBehavior: (config) => {
-      // ~/.cctop/config.json が読み込まれる
-      expect(config.get('monitoring.watchPaths')).toContain('./user-path');
+      // ~/.cctop/config.json が読み込まれる（絶対パス変換済み）
+      const watchPaths = config.get('monitoring.watchPaths');
+      expect(watchPaths.some(path => path.endsWith('/user-path'))).toBe(true);
       expect(config.get('monitoring.debounceMs')).toBe(300);
     },
     cleanup: async (context) => {
@@ -193,9 +200,9 @@ const configScenarios = [
       args: ['--config'], // pathは動的に追加
     },
     verifyBehavior: (config, context) => {
-      // CLIで指定された設定が最優先
+      // CLIで指定された設定が最優先（絶対パス変換済み）
       const monitoring = config.get('monitoring');
-      expect(monitoring.watchPaths).toContain('./cli-specified');
+      expect(monitoring.watchPaths.some(path => path.endsWith('/cli-specified'))).toBe(true);
       const database = config.get('database');
       expect(database.path).toContain('cli-activity.db');
     }
@@ -221,9 +228,9 @@ const configScenarios = [
       const monitoring = config.get('monitoring');
       const display = config.get('display');
       
-      // watchPathsは不正な値（文字列）がそのまま読み込まれる
+      // watchPathsは不正な値（文字列）だが、自動監視対象追加機能で配列に変換される
       const watchPaths = config.get('monitoring.watchPaths');
-      expect(watchPaths).toBe('not-an-array');
+      expect(Array.isArray(watchPaths)).toBe(true); // 自動修正により配列になる
       
       // 他の不正な値もそのまま
       expect(monitoring.debounceMs).toBe(-100);

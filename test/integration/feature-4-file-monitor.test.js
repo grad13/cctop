@@ -137,7 +137,7 @@ describe('Feature 4: File Monitor (chokidar統合)', () => {
       fileMonitor.on('fileEvent', handler);
     });
 
-    expect(createEvents.length).toBe(2); // ディレクトリ作成 + ファイル作成
+    expect(createEvents.length).toBe(2); // テストディレクトリ作成 + ファイル作成
     
     // ファイル作成イベントを特定
     const fileCreateEvent = createEvents.find(e => e.path === path.resolve(newFile));

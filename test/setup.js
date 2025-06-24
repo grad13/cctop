@@ -20,30 +20,28 @@ const setupTestConfig = () => {
   // テスト用のデフォルト設定
   const testConfig = {
     version: "0.1.0",
-    watchPaths: ["./"],
-    excludePatterns: [
-      "**/node_modules/**",
-      "**/.git/**",
-      "**/dist/**",
-      "**/build/**",
-      "**/.next/**",
-      "**/.nuxt/**",
-      "**/.cache/**",
-      "**/coverage/**",
-      "**/.DS_Store",
-      "**/*.log",
-      "**/.env*",
-      "**/.cctop/**"
-    ],
-    includePatterns: [],
     monitoring: {
+      watchPaths: ["./"],
+      excludePatterns: [
+        "**/node_modules/**",
+        "**/.git/**",
+        "**/dist/**",
+        "**/build/**",
+        "**/.next/**",
+        "**/.nuxt/**",
+        "**/.cache/**",
+        "**/coverage/**",
+        "**/.DS_Store",
+        "**/*.log",
+        "**/.env*",
+        "**/.cctop/**"
+      ],
       debounceMs: 100,
-      maxDepth: 10,
-      followSymlinks: false
+      maxDepth: 10
     },
     display: {
-      maxEvents: 50,
-      refreshInterval: 100,
+      maxEvents: 20,
+      refreshRateMs: 100,
       showTimestamps: true,
       colorEnabled: true,
       relativeTime: false,
@@ -51,13 +49,7 @@ const setupTestConfig = () => {
     },
     database: {
       path: "~/.cctop/activity.db",
-      maxEvents: 10000,
-      cleanupInterval: 3600000,
-      walMode: true
-    },
-    performance: {
-      maxMemoryMB: 256,
-      gcInterval: 60000
+      mode: "WAL"
     }
   };
   

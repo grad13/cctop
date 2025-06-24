@@ -18,10 +18,14 @@ class CLIDisplay extends EventEmitter {
     this.refreshInterval = null;
     this.displayConfig = displayConfig;
     
+    // レスポンシブディレクトリ表示用の幅設定
+    this.widthConfig = this.calculateDynamicWidth();
+    
     if (process.env.NODE_ENV === 'test' || process.env.CCTOP_VERBOSE) {
       console.log('🖥️ CLIDisplay initialized');
     }
     this.setupKeyboardHandlers();
+    this.setupResizeHandler();
   }
 
   /**
@@ -146,8 +150,10 @@ class CLIDisplay extends EventEmitter {
    * ヘッダー表示
    */
   renderHeader() {
-    const header = 'Modified               Elapsed  File Name                    Directory       Event    Lines Blocks';
-    const separator = '─'.repeat(97);
+    const directoryHeaderWidth = this.widthConfig.directory;
+    const directoryHeader = 'Directory'.padEnd(directoryHeaderWidth);
+    const header = `Modified               Elapsed  File Name                    Event    Lines Blocks ${directoryHeader}`;
+    const separator = '─'.repeat(this.widthConfig.terminal || 97);
     
     process.stdout.write(chalk.bold(header) + '\n');
     process.stdout.write(chalk.gray(separator) + '\n');
@@ -197,13 +203,13 @@ class CLIDisplay extends EventEmitter {
     const modified = this.formatTimestamp(timestamp);
     const elapsed = this.formatElapsed(now - timestamp);
     const fileName = this.truncateString(event.file_name, 28);
-    const directory = this.truncateString(this.formatDirectory(event.directory), 15);
+    const directory = this.truncateDirectoryPath(this.formatDirectory(event.directory), this.widthConfig.directory);
     const eventType = this.formatEventType(event.event_type);
     const lines = this.formatNumber(event.line_count, 5);
     const blocks = this.formatNumber(event.block_count, 6);
     
-    // 行組み立て（UI002準拠 - 97文字固定幅）
-    const line = `${modified}  ${elapsed}  ${fileName}  ${directory} ${eventType} ${lines} ${blocks}`;
+    // 行組み立て（レスポンシブレイアウト - Directory列を最右端で動的幅）
+    const line = `${modified}  ${elapsed}  ${fileName}  ${eventType} ${lines} ${blocks}  ${directory}`;
     
     process.stdout.write(line + '\n');
   }
@@ -263,6 +269,34 @@ class CLIDisplay extends EventEmitter {
   }
 
   /**
+   * レスポンシブディレクトリ表示用の動的幅計算
+   */
+  calculateDynamicWidth() {
+    const terminalWidth = process.stdout.columns || 80;
+    // 固定カラム: Modified(19) + Elapsed(10) + FileName(28) + Event(8) + Lines(5) + Blocks(6) + スペース(6*2=12)
+    const fixedWidth = 19 + 10 + 28 + 8 + 5 + 6 + 12; // 88文字
+    const directoryWidth = Math.max(10, terminalWidth - fixedWidth - 2); // 最小10文字保証、最後のスペース2文字
+    
+    return {
+      terminal: terminalWidth,
+      directory: directoryWidth
+    };
+  }
+
+  /**
+   * ディレクトリパスの動的切り詰め（末尾優先）
+   */
+  truncateDirectoryPath(path, maxWidth) {
+    if (path.length <= maxWidth) {
+      return path.padEnd(maxWidth);
+    }
+    
+    // 末尾優先の切り詰め（パスの終わり部分を保持）
+    const truncated = '...' + path.slice(-(maxWidth - 3));
+    return truncated.padEnd(maxWidth);
+  }
+
+  /**
    * イベントタイプの色付けフォーマット
    */
   formatEventType(eventType) {
@@ -314,7 +348,7 @@ class CLIDisplay extends EventEmitter {
     const totalEvents = this.events.length;
     const uniqueFiles = this.uniqueEvents.size;
     
-    const separator = '─'.repeat(97);
+    const separator = '─'.repeat(this.widthConfig.terminal || 97);
     const modeIndicator = this.displayMode === 'all' ? 'All Activities' : 'Unique Files';
     const stats = this.displayMode === 'all' 
       ? `${totalEvents} events`
@@ -349,6 +383,21 @@ class CLIDisplay extends EventEmitter {
       
       process.stdin.on('data', (key) => {
         this.handleKeyPress(key);
+      });
+    }
+  }
+
+  /**
+   * ターミナルリサイズイベントハンドラー設定
+   */
+  setupResizeHandler() {
+    if (process.stdout.isTTY) {
+      process.stdout.on('resize', () => {
+        this.widthConfig = this.calculateDynamicWidth();
+        // 表示中の場合は再描画（パフォーマンス考慮で次のrefreshで反映）
+        if (process.env.NODE_ENV === 'test' || process.env.CCTOP_DEBUG) {
+          console.log(`Terminal resized: ${this.widthConfig.terminal}x? Directory width: ${this.widthConfig.directory}`);
+        }
       });
     }
   }
