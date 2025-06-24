@@ -5,6 +5,8 @@
 
 const chalk = require('chalk');
 const EventEmitter = require('events');
+const stringWidth = require('string-width');
+const { padEndWithWidth, padStartWithWidth, truncateWithEllipsis } = require('../utils/display-width');
 
 class CLIDisplay extends EventEmitter {
   constructor(databaseManager, displayConfig = {}) {
@@ -151,7 +153,7 @@ class CLIDisplay extends EventEmitter {
    */
   renderHeader() {
     const directoryHeaderWidth = this.widthConfig.directory;
-    const directoryHeader = 'Directory'.padEnd(directoryHeaderWidth);
+    const directoryHeader = padEndWithWidth('Directory', directoryHeaderWidth);
     const header = `Modified               Elapsed  File Name                    Event    Lines Blocks ${directoryHeader}`;
     const separator = '─'.repeat(this.widthConfig.terminal || 97);
     
@@ -202,8 +204,8 @@ class CLIDisplay extends EventEmitter {
     // 各カラムのフォーマット
     const modified = this.formatTimestamp(timestamp);
     const elapsed = this.formatElapsed(now - timestamp);
-    const fileName = this.truncateString(event.file_name, 28);
-    const directory = this.truncateDirectoryPath(this.formatDirectory(event.directory), this.widthConfig.directory);
+    const fileName = padEndWithWidth(event.file_name, 28);
+    const directory = this.truncateDirectoryPathWithWidth(this.formatDirectory(event.directory), this.widthConfig.directory);
     const eventType = this.formatEventType(event.event_type);
     const lines = this.formatNumber(event.line_count, 5);
     const blocks = this.formatNumber(event.block_count, 6);
@@ -286,14 +288,30 @@ class CLIDisplay extends EventEmitter {
   /**
    * ディレクトリパスの動的切り詰め（末尾優先）
    */
-  truncateDirectoryPath(path, maxWidth) {
-    if (path.length <= maxWidth) {
-      return path.padEnd(maxWidth);
+  truncateDirectoryPathWithWidth(path, maxWidth) {
+    if (stringWidth(path) <= maxWidth) {
+      return padEndWithWidth(path, maxWidth);
     }
     
     // 末尾優先の切り詰め（パスの終わり部分を保持）
-    const truncated = '...' + path.slice(-(maxWidth - 3));
-    return truncated.padEnd(maxWidth);
+    const ellipsis = '...';
+    const ellipsisWidth = stringWidth(ellipsis);
+    let truncated = '';
+    let width = 0;
+    const targetWidth = maxWidth - ellipsisWidth;
+    
+    // 後ろから文字を取得
+    for (let i = path.length - 1; i >= 0; i--) {
+      const char = path[i];
+      const charWidth = stringWidth(char);
+      if (width + charWidth > targetWidth) {
+        break;
+      }
+      truncated = char + truncated;
+      width += charWidth;
+    }
+    
+    return padEndWithWidth(ellipsis + truncated, maxWidth);
   }
 
   /**
@@ -303,7 +321,7 @@ class CLIDisplay extends EventEmitter {
     if (!eventType) {
       eventType = 'unknown';
     }
-    const formatted = eventType.padEnd(8);
+    const formatted = padEndWithWidth(eventType, 8);
     
     switch (eventType) {
       case 'find':
@@ -326,19 +344,16 @@ class CLIDisplay extends EventEmitter {
    */
   formatNumber(value, width) {
     if (value === null || value === undefined) {
-      return '-'.padStart(width);
+      return padStartWithWidth('-', width);
     }
-    return String(value).padStart(width);
+    return padStartWithWidth(String(value), width);
   }
 
   /**
-   * 文字列切り詰め
+   * 文字列切り詰め（表示幅対応）
    */
-  truncateString(str, maxLength) {
-    if (str.length <= maxLength) {
-      return str.padEnd(maxLength);
-    }
-    return str.substring(0, maxLength - 3) + '...';
+  truncateStringWithWidth(str, maxWidth) {
+    return truncateWithEllipsis(str, maxWidth);
   }
 
   /**

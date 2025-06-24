@@ -235,14 +235,13 @@ describe('Feature 6: CLI Display (ui001準拠)', () => {
 
   test('Should truncate long strings correctly', () => {
     const longString = 'this-is-a-very-long-filename.txt';
-    const truncated = cliDisplay.truncateString(longString, 20);
+    const truncated = cliDisplay.truncateStringWithWidth(longString, 20);
     expect(truncated.length).toBe(20);
     expect(truncated.endsWith('...')).toBe(true);
 
     const shortString = 'short.txt';
-    const padded = cliDisplay.truncateString(shortString, 20);
-    expect(padded.length).toBe(20);
-    expect(padded.startsWith('short.txt')).toBe(true);
+    const notTruncated = cliDisplay.truncateStringWithWidth(shortString, 20);
+    expect(notTruncated).toBe('short.txt');
   });
 
   test('Should format directory paths correctly', () => {

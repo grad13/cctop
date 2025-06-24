@@ -7,7 +7,7 @@ export default defineConfig({
     environment: 'node',
     
     // テストファイルパターン
-    include: ['test/integration/**/*.test.js'],
+    include: ['test/integration/**/*.test.js', 'test/unit/**/*.test.js'],
     
     // Jest設定の移行
     setupFiles: ['./test/setup.js'],
