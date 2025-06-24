@@ -73,8 +73,8 @@ beforeAll(() => {
   setupTestConfig();
 });
 
-// グローバルタイムアウト延長
-jest.setTimeout(10000);
+// グローバルタイムアウト延長（Vitestでは設定ファイルで管理）
+// jest.setTimeout(10000); // Vitest互換のため無効化
 
 // プロセス終了時のクリーンアップ
 const originalExit = process.exit;

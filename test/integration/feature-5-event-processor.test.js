@@ -222,7 +222,9 @@ describe('Feature 5: Event Processor (chokidar→DB統合)', () => {
     const modifyEventPromise = new Promise((resolve, reject) => {
       const handler = (result) => {
         if (result.eventType === 'modify' && result.original.path === path.resolve(testFile)) {
-          eventProcessor.off('eventProcessed', handler);
+          if (eventProcessor) {
+            eventProcessor.off('eventProcessed', handler);
+          }
           resolve(result);
         }
       };
@@ -230,7 +232,9 @@ describe('Feature 5: Event Processor (chokidar→DB統合)', () => {
       
       // タイムアウト設定（8秒）
       setTimeout(() => {
-        eventProcessor.off('eventProcessed', handler);
+        if (eventProcessor) {
+          eventProcessor.off('eventProcessed', handler);
+        }
         reject(new Error('Modify event timeout'));
       }, 8000);
     });
@@ -294,7 +298,9 @@ describe('Feature 5: Event Processor (chokidar→DB統合)', () => {
     await new Promise((resolve) => {
       const handler = (result) => {
         if (result.eventType === 'delete' && result.original.path === path.resolve(testFile)) {
-          eventProcessor.off('eventProcessed', handler);
+          if (eventProcessor) {
+            eventProcessor.off('eventProcessed', handler);
+          }
           resolve();
         }
       };

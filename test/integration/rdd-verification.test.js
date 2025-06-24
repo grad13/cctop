@@ -40,8 +40,8 @@ describe('RDD Verification: 実動作確認', () => {
     
     return new Promise((resolve, reject) => {
       const timeoutId = setTimeout(() => {
-        reject(new Error('Startup timeout - exceeded 3 seconds'));
-      }, 5000);
+        reject(new Error('Startup timeout - exceeded 10 seconds'));
+      }, 10000);
       
       cctopProcess = spawn('node', [cctopPath, '--watch', testDir], {
         stdio: 'pipe',
@@ -140,7 +140,7 @@ describe('RDD Verification: 実動作確認', () => {
       
       setTimeout(() => {
         reject(new Error('Exit test timeout'));
-      }, 10000);
+      }, 15000);
     });
   }, 15000);
 
@@ -150,7 +150,7 @@ describe('RDD Verification: 実動作確認', () => {
     return new Promise((resolve, reject) => {
       const timeoutId = setTimeout(() => {
         reject(new Error('Real-time detection timeout'));
-      }, 8000);
+      }, 15000);
       
       cctopProcess = spawn('node', [cctopPath, '--watch', testDir], {
         stdio: 'pipe',

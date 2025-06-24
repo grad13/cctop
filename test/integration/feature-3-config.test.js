@@ -112,11 +112,11 @@ describe('Feature 3: 設定システム', () => {
     const originalEnv = process.env.NODE_ENV;
     delete process.env.NODE_ENV;
     
-    const mockExit = jest.spyOn(process, 'exit').mockImplementation(() => {});
-    const mockConsoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
-    const mockConsoleLog = jest.spyOn(console, 'log').mockImplementation(() => {});
+    const mockExit = vi.spyOn(process, 'exit').mockImplementation(() => {});
+    const mockConsoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const mockConsoleLog = vi.spyOn(console, 'log').mockImplementation(() => {});
     
-    configManager.waitForUserConfirmation = jest.fn().mockResolvedValue();
+    configManager.waitForUserConfirmation = vi.fn().mockResolvedValue();
     
     const configPath = path.join(os.homedir(), '.cctop', 'config.json');
     const backupPath = configPath + '.test-backup';

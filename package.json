@@ -8,10 +8,10 @@
   },
   "scripts": {
     "start": "node bin/cctop",
-    "test": "jest test/integration --runInBand --forceExit",
+    "test": "vitest run",
     "test:sequential": "node test/test-sequential.js",
-    "test:watch": "jest test/integration --watch",
-    "test:rdd": "jest test/integration --detectOpenHandles",
+    "test:watch": "vitest",
+    "test:rdd": "vitest run --reporter=verbose",
     "postinstall": "node scripts/postinstall.js"
   },
   "keywords": [
@@ -23,12 +23,12 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
+    "chalk": "^4.1.2",
     "chokidar": "^3.5.3",
-    "sqlite3": "^5.1.6",
-    "chalk": "^4.1.2"
+    "sqlite3": "^5.1.6"
   },
   "devDependencies": {
-    "jest": "^29.7.0"
+    "vitest": "^3.2.4"
   },
   "engines": {
     "node": ">=14.0.0"
