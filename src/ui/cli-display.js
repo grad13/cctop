@@ -7,6 +7,7 @@ const chalk = require('chalk');
 const EventEmitter = require('events');
 const stringWidth = require('string-width');
 const { padEndWithWidth, padStartWithWidth, truncateWithEllipsis } = require('../utils/display-width');
+const BufferedRenderer = require('../utils/buffered-renderer');
 
 class CLIDisplay extends EventEmitter {
   constructor(databaseManager, displayConfig = {}) {
@@ -22,6 +23,13 @@ class CLIDisplay extends EventEmitter {
     
     // レスポンシブディレクトリ表示用の幅設定
     this.widthConfig = this.calculateDynamicWidth();
+    
+    // FUNC-018: 二重バッファ描画機能
+    this.renderer = new BufferedRenderer({
+      renderInterval: 16, // 60fps制限
+      maxBufferSize: this.maxLines * 2,
+      enableDebounce: true
+    });
     
     if (process.env.NODE_ENV === 'test' || process.env.CCTOP_VERBOSE) {
       console.log('🖥️ CLIDisplay initialized');
@@ -67,6 +75,11 @@ class CLIDisplay extends EventEmitter {
     if (this.refreshInterval) {
       clearInterval(this.refreshInterval);
       this.refreshInterval = null;
+    }
+    
+    // BufferedRendererのリソース解放
+    if (this.renderer) {
+      this.renderer.destroy();
     }
     
     // 標準入力のrawモードを解除
@@ -124,59 +137,77 @@ class CLIDisplay extends EventEmitter {
     
     this.refreshInterval = setInterval(() => {
       this.render();
-    }, 1000); // 1秒間隔でリフレッシュ
+    }, 100); // 100ms間隔でリフレッシュ（BufferedRendererが60fps制限）
   }
 
   /**
-   * 画面レンダリング
+   * 画面レンダリング（FUNC-018: 二重バッファ描画）
    */
   render() {
     if (!this.isRunning) {
       return;
     }
     
-    // 画面クリア（完全クリア）
-    console.clear();
+    // BufferedRendererにバッファを構築
+    this.renderer.clear();
     
-    // ヘッダー表示
-    this.renderHeader();
+    // ヘッダー追加
+    this.buildHeader();
     
-    // イベント一覧表示
-    this.renderEvents();
+    // イベント一覧追加
+    this.buildEvents();
     
-    // フッター表示
-    this.renderFooter();
+    // フッター追加
+    this.buildFooter();
+    
+    // 二重バッファ描画（遅延レンダリング）
+    this.renderer.renderDebounced();
   }
 
   /**
-   * ヘッダー表示
+   * ヘッダー構築（BufferedRenderer用）
    */
-  renderHeader() {
+  buildHeader() {
     const directoryHeaderWidth = this.widthConfig.directory;
     const directoryHeader = padEndWithWidth('Directory', directoryHeaderWidth);
     const header = `Modified               Elapsed  File Name                    Event    Lines Blocks ${directoryHeader}`;
     const separator = '─'.repeat(this.widthConfig.terminal || 97);
     
-    process.stdout.write(chalk.bold(header) + '\n');
-    process.stdout.write(chalk.gray(separator) + '\n');
+    this.renderer.addLine(chalk.bold(header));
+    this.renderer.addLine(chalk.gray(separator));
   }
 
   /**
-   * イベント一覧表示
+   * ヘッダー表示（後方互換性）
    */
-  renderEvents() {
+  renderHeader() {
+    this.buildHeader();
+  }
+
+  /**
+   * イベント一覧構築（BufferedRenderer用）
+   */
+  buildEvents() {
     const eventsToShow = this.getEventsToDisplay();
     
     for (let i = 0; i < Math.min(eventsToShow.length, this.maxLines); i++) {
       const event = eventsToShow[i];
-      this.renderEventLine(event);
+      const eventLine = this.formatEventLine(event);
+      this.renderer.addLine(eventLine);
     }
     
     // 空行で埋める
     const remainingLines = this.maxLines - Math.min(eventsToShow.length, this.maxLines);
     for (let i = 0; i < remainingLines; i++) {
-      process.stdout.write('\n');
+      this.renderer.addLine('');
     }
+  }
+
+  /**
+   * イベント一覧表示（後方互換性）
+   */
+  renderEvents() {
+    this.buildEvents();
   }
 
   /**
@@ -194,12 +225,11 @@ class CLIDisplay extends EventEmitter {
   }
 
   /**
-   * イベント行表示
+   * イベント行フォーマット（BufferedRenderer用）
    */
-  renderEventLine(event) {
+  formatEventLine(event) {
     const timestamp = new Date(event.timestamp);
     const now = new Date();
-    
     
     // 各カラムのフォーマット
     const modified = this.formatTimestamp(timestamp);
@@ -211,8 +241,14 @@ class CLIDisplay extends EventEmitter {
     const blocks = this.formatNumber(event.block_count, 6);
     
     // 行組み立て（レスポンシブレイアウト - Directory列を最右端で動的幅）
-    const line = `${modified}  ${elapsed}  ${fileName}  ${eventType} ${lines} ${blocks}  ${directory}`;
-    
+    return `${modified}  ${elapsed}  ${fileName}  ${eventType} ${lines} ${blocks}  ${directory}`;
+  }
+
+  /**
+   * イベント行表示（後方互換性）
+   */
+  renderEventLine(event) {
+    const line = this.formatEventLine(event);
     process.stdout.write(line + '\n');
   }
 
@@ -357,9 +393,9 @@ class CLIDisplay extends EventEmitter {
   }
 
   /**
-   * フッター表示
+   * フッター構築（BufferedRenderer用）
    */
-  renderFooter() {
+  buildFooter() {
     const totalEvents = this.events.length;
     const uniqueFiles = this.uniqueEvents.size;
     
@@ -372,9 +408,16 @@ class CLIDisplay extends EventEmitter {
     const statusLine = `${modeIndicator}  ${stats}`;
     const helpLine = '[a] All  [u] Unique  [q] Exit';
     
-    process.stdout.write(chalk.gray(separator) + '\n');
-    process.stdout.write(chalk.bold(statusLine) + '\n');
-    process.stdout.write(chalk.dim(helpLine) + '\n');
+    this.renderer.addLine(chalk.gray(separator));
+    this.renderer.addLine(chalk.bold(statusLine));
+    this.renderer.addLine(chalk.dim(helpLine));
+  }
+
+  /**
+   * フッター表示（後方互換性）
+   */
+  renderFooter() {
+    this.buildFooter();
   }
 
   /**
@@ -409,7 +452,13 @@ class CLIDisplay extends EventEmitter {
     if (process.stdout.isTTY) {
       process.stdout.on('resize', () => {
         this.widthConfig = this.calculateDynamicWidth();
-        // 表示中の場合は再描画（パフォーマンス考慮で次のrefreshで反映）
+        
+        // BufferedRendererをリセットして即座に再描画
+        if (this.renderer && this.isRunning) {
+          this.renderer.reset();
+          this.render(); // 即座に再描画
+        }
+        
         if (process.env.NODE_ENV === 'test' || process.env.CCTOP_DEBUG) {
           console.log(`Terminal resized: ${this.widthConfig.terminal}x? Directory width: ${this.widthConfig.directory}`);
         }
@@ -476,6 +525,12 @@ class CLIDisplay extends EventEmitter {
    */
   handleExit() {
     this.stop();
+    
+    // BufferedRendererの緊急時フルクリア
+    if (this.renderer) {
+      this.renderer.reset();
+    }
+    
     process.stdout.write('\x1b[2J\x1b[H'); // 画面クリア
     console.log(chalk.green('👋 cctop stopped'));
     
@@ -487,12 +542,15 @@ class CLIDisplay extends EventEmitter {
    * 統計情報取得
    */
   getStats() {
+    const rendererStats = this.renderer ? this.renderer.getStats() : {};
+    
     return {
       isRunning: this.isRunning,
       displayMode: this.displayMode,
       totalEvents: this.events.length,
       uniqueFiles: this.uniqueEvents.size,
-      maxLines: this.maxLines
+      maxLines: this.maxLines,
+      renderer: rendererStats
     };
   }
 }
