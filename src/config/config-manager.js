@@ -13,26 +13,25 @@ const os = require('os');
 
 const readline = require('readline');
 
-// デフォルト設定（postinstall.jsと同じ内容）
+// デフォルト設定（ネスト構造）
 const DEFAULT_CONFIG = {
   version: "0.1.0",
-  watchPaths: ["./"],
-  excludePatterns: [
-    "**/node_modules/**",
-    "**/.git/**",
-    "**/dist/**",
-    "**/build/**",
-    "**/.next/**",
-    "**/.nuxt/**",
-    "**/.cache/**",
-    "**/coverage/**",
-    "**/.DS_Store",
-    "**/*.log",
-    "**/.env*",
-    "**/.cctop/**"
-  ],
-  includePatterns: [],
   monitoring: {
+    watchPaths: ["./"],
+    excludePatterns: [
+      "**/node_modules/**",
+      "**/.git/**",
+      "**/dist/**",
+      "**/build/**",
+      "**/.next/**",
+      "**/.nuxt/**",
+      "**/.cache/**",
+      "**/coverage/**",
+      "**/.DS_Store",
+      "**/*.log",
+      "**/.env*",
+      "**/.cctop/**"
+    ],
     debounceMs: 100,
     maxDepth: 10,
     followSymlinks: false
@@ -46,7 +45,7 @@ const DEFAULT_CONFIG = {
     mode: "all"
   },
   database: {
-    path: "~/.cctop/events.db",
+    path: "~/.cctop/activity.db",
     maxEvents: 10000,
     cleanupInterval: 3600000,
     walMode: true
@@ -136,7 +135,14 @@ class ConfigManager {
   loadConfigFile(configPath) {
     try {
       const content = fs.readFileSync(configPath, 'utf8');
-      return JSON.parse(content);
+      const config = JSON.parse(content);
+      
+      // データベースパスの ~ を展開
+      if (config.database && config.database.path) {
+        config.database.path = this.expandTilde(config.database.path);
+      }
+      
+      return config;
     } catch (error) {
       console.warn(`⚠️ Failed to load config file ${configPath}:`, error.message);
       return {};
@@ -166,7 +172,11 @@ class ConfigManager {
   applyCLIOverrides(cliArgs) {
     // 監視パスの指定
     if (cliArgs.watchPath) {
-      this.config.watchPaths = Array.isArray(cliArgs.watchPath) 
+      // monitoring構造が存在しない場合は作成
+      if (!this.config.monitoring) {
+        this.config.monitoring = {};
+      }
+      this.config.monitoring.watchPaths = Array.isArray(cliArgs.watchPath) 
         ? cliArgs.watchPath 
         : [cliArgs.watchPath];
     }
@@ -193,8 +203,14 @@ class ConfigManager {
         fs.mkdirSync(configDir, { recursive: true });
       }
       
+      // デフォルト設定のコピーを作成（パス展開を適用）
+      const config = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
+      if (config.database && config.database.path) {
+        config.database.path = this.expandTilde(config.database.path);
+      }
+      
       // デフォルト設定をconfig.jsonとして保存
-      const configContent = JSON.stringify(DEFAULT_CONFIG, null, 2);
+      const configContent = JSON.stringify(config, null, 2);
       fs.writeFileSync(this.configPath, configContent, 'utf8');
       
     } catch (error) {
@@ -266,8 +282,8 @@ class ConfigManager {
       errors.push('Database path is required');
     }
 
-    if (!Array.isArray(this.get('watchPaths'))) {
-      errors.push('watchPaths must be an array');
+    if (!Array.isArray(this.get('monitoring.watchPaths'))) {
+      errors.push('monitoring.watchPaths must be an array');
     }
 
     if (this.get('display.maxEvents') <= 0) {
@@ -301,6 +317,21 @@ class ConfigManager {
       console.error('❌ Failed to save configuration:', error);
       throw error;
     }
+  }
+
+  /**
+   * チルダ展開
+   */
+  expandTilde(filePath) {
+    if (typeof filePath !== 'string') {
+      return filePath;
+    }
+    
+    if (filePath.startsWith('~/')) {
+      return path.join(os.homedir(), filePath.slice(2));
+    }
+    
+    return filePath;
   }
 }
 

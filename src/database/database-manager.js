@@ -42,8 +42,39 @@ class DatabaseManager {
       console.log(`🗄️ Database initialized: ${this.dbPath}`);
       
     } catch (error) {
-      console.error('❌ Database initialization failed:', error);
-      throw error;
+      // 破損したDBの場合は回復を試みる
+      if (error.code === 'SQLITE_NOTADB' || error.message.includes('not a database')) {
+        console.warn('⚠️  Corrupted database detected, attempting recovery...');
+        
+        // 既存の接続を閉じる
+        if (this.db) {
+          try {
+            await this.close();
+          } catch (closeError) {
+            // エラーは無視（既に壊れているため）
+          }
+        }
+        
+        // 破損したDBをバックアップ
+        const backupPath = `${this.dbPath}.corrupted.${Date.now()}`;
+        try {
+          fs.renameSync(this.dbPath, backupPath);
+          console.log(`📦 Backed up corrupted database to: ${path.basename(backupPath)}`);
+        } catch (backupError) {
+          console.error('Failed to backup corrupted database:', backupError);
+        }
+        
+        // 新しいDBで再試行
+        await this.connect();
+        await this.createTables();
+        await this.insertInitialData();
+        
+        this.isInitialized = true;
+        console.log(`✅ Database recovered: ${this.dbPath}`);
+      } else {
+        console.error('❌ Database initialization failed:', error);
+        throw error;
+      }
     }
   }
 

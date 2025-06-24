@@ -27,9 +27,28 @@ async function main() {
       console.log('📁 Current directory:', process.cwd());
     }
     
+    // コマンドライン引数のパース
+    const cliArgs = {};
+    const args = process.argv.slice(2);
+    for (let i = 0; i < args.length; i++) {
+      if (args[i] === '--config' && i + 1 < args.length) {
+        cliArgs.config = args[i + 1];
+        i++;
+      } else if (args[i] === '--watch' && i + 1 < args.length) {
+        cliArgs.watchPath = args[i + 1];
+        i++;
+      } else if (args[i] === '--db' && i + 1 < args.length) {
+        cliArgs.dbPath = args[i + 1];
+        i++;
+      } else if (args[i] === '--max-lines' && i + 1 < args.length) {
+        cliArgs.maxLines = args[i + 1];
+        i++;
+      }
+    }
+    
     // 機能3: 設定システム初期化
     configManager = new ConfigManager();
-    const config = await configManager.initialize();
+    const config = await configManager.initialize(cliArgs);
     
     // 機能2: データベース初期化（設定を使用）
     dbManager = new DatabaseManager(config.database.path);
@@ -37,8 +56,8 @@ async function main() {
     
     // 機能4: ファイル監視初期化
     const monitorConfig = {
-      watchPaths: config.watchPaths,
-      ignored: config.excludePatterns,
+      watchPaths: config.monitoring?.watchPaths || config.watchPaths || ["./"],
+      ignored: config.monitoring?.excludePatterns || config.excludePatterns || [],
       depth: config.monitoring?.maxDepth || 10
     };
     

@@ -15,7 +15,7 @@ const schema = {
   object_fingerprint: `
     CREATE TABLE IF NOT EXISTS object_fingerprint (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      inode INTEGER
+      inode INTEGER UNIQUE
     )`,
   
   events: `

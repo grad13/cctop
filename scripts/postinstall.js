@@ -38,7 +38,7 @@ const DEFAULT_CONFIG = {
     mode: "all"
   },
   database: {
-    path: "~/.cctop/events.db",
+    path: "~/.cctop/activity.db",
     maxEvents: 10000,
     cleanupInterval: 3600000,
     walMode: true

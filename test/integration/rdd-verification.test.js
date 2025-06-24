@@ -39,7 +39,11 @@ describe('RDD Verification: 実動作確認', () => {
     const startTime = Date.now();
     
     return new Promise((resolve, reject) => {
-      cctopProcess = spawn('node', [cctopPath], {
+      const timeoutId = setTimeout(() => {
+        reject(new Error('Startup timeout - exceeded 3 seconds'));
+      }, 5000);
+      
+      cctopProcess = spawn('node', [cctopPath, '--watch', testDir], {
         stdio: 'pipe',
         cwd: testDir
       });
@@ -54,16 +58,15 @@ describe('RDD Verification: 実動作確認', () => {
           const elapsedTime = Date.now() - startTime;
           
           expect(elapsedTime).toBeLessThan(3000); // 3秒以内
+          clearTimeout(timeoutId);
           resolve();
         }
       });
       
-      cctopProcess.on('error', reject);
-      
-      // タイムアウト
-      setTimeout(() => {
-        reject(new Error('Startup timeout - exceeded 3 seconds'));
-      }, 5000);
+      cctopProcess.on('error', (err) => {
+        clearTimeout(timeoutId);
+        reject(err);
+      });
     });
   }, 10000); // テスト自体は10秒タイムアウト
 
@@ -72,7 +75,7 @@ describe('RDD Verification: 実動作確認', () => {
     const expectedDbPath = path.join(os.homedir(), '.cctop', 'activity.db');
     
     return new Promise((resolve, reject) => {
-      cctopProcess = spawn('node', [cctopPath], {
+      cctopProcess = spawn('node', [cctopPath, '--watch', testDir], {
         stdio: 'pipe',
         cwd: testDir
       });
@@ -107,7 +110,7 @@ describe('RDD Verification: 実動作確認', () => {
     const cctopPath = path.join(__dirname, '../../bin/cctop');
     
     return new Promise((resolve, reject) => {
-      cctopProcess = spawn('node', [cctopPath], {
+      cctopProcess = spawn('node', [cctopPath, '--watch', testDir], {
         stdio: 'pipe',
         cwd: testDir
       });
@@ -145,16 +148,23 @@ describe('RDD Verification: 実動作確認', () => {
     const cctopPath = path.join(__dirname, '../../bin/cctop');
     
     return new Promise((resolve, reject) => {
-      cctopProcess = spawn('node', [cctopPath], {
+      const timeoutId = setTimeout(() => {
+        reject(new Error('Real-time detection timeout'));
+      }, 8000);
+      
+      cctopProcess = spawn('node', [cctopPath, '--watch', testDir], {
         stdio: 'pipe',
         cwd: testDir
       });
       
       let output = '';
       let fileCreated = false;
+      let lastChunk = '';
       
       cctopProcess.stdout.on('data', (data) => {
-        output += data.toString();
+        const chunk = data.toString();
+        output += chunk;
+        lastChunk = chunk; // 最新のチャンクを保持
         
         // 起動完了後にファイル作成
         if (!fileCreated && output.includes('🎯 Starting real-time file activity monitor...')) {
@@ -162,20 +172,37 @@ describe('RDD Verification: 実動作確認', () => {
           setTimeout(() => {
             const testFile = path.join(testDir, 'real-time-test.txt');
             fs.writeFileSync(testFile, 'Real-time detection test');
-          }, 500);
+          }, 1000); // 待機時間を増やす
         }
         
-        // ファイル作成イベントの検出を確認（表形式での表示）
-        if (output.includes('real-time-test.txt') && output.includes('create')) {
-          resolve();
+        // デバッグ出力
+        if (fileCreated && chunk.length > 10) {
+          console.log('=== DEBUG OUTPUT START ===');
+          console.log('Chunk length:', chunk.length);
+          console.log('Contains real-time-test.txt:', chunk.includes('real-time-test.txt'));
+          console.log('First 500 chars:', chunk.substring(0, 500));
+          console.log('=== DEBUG OUTPUT END ===');
+        }
+        
+        // ファイル作成イベントの検出を確認
+        // CLIDisplayは画面をクリアして再描画するため、最新のチャンクを確認
+        if (fileCreated && lastChunk.includes('real-time-test.txt')) {
+          // 行単位で確認
+          const lines = lastChunk.split('\n');
+          for (const line of lines) {
+            if (line.includes('real-time-test.txt') && line.includes('create')) {
+              clearTimeout(timeoutId);
+              resolve();
+              return;
+            }
+          }
         }
       });
       
-      cctopProcess.on('error', reject);
-      
-      setTimeout(() => {
-        reject(new Error('Real-time detection timeout'));
-      }, 8000);
+      cctopProcess.on('error', (err) => {
+        clearTimeout(timeoutId);
+        reject(err);
+      });
     });
   }, 12000);
 
@@ -183,7 +210,7 @@ describe('RDD Verification: 実動作確認', () => {
     const cctopPath = path.join(__dirname, '../../bin/cctop');
     
     return new Promise((resolve, reject) => {
-      cctopProcess = spawn('node', [cctopPath], {
+      cctopProcess = spawn('node', [cctopPath, '--watch', testDir], {
         stdio: 'pipe',
         cwd: testDir
       });
@@ -262,7 +289,7 @@ describe('RDD Verification: 実動作確認', () => {
     const cctopPath = path.join(__dirname, '../../bin/cctop');
     
     return new Promise((resolve, reject) => {
-      cctopProcess = spawn('node', [cctopPath], {
+      cctopProcess = spawn('node', [cctopPath, '--watch', testDir], {
         stdio: 'pipe',
         cwd: testDir
       });

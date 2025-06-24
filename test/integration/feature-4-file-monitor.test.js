@@ -20,6 +20,8 @@ describe('Feature 4: File Monitor (chokidar統合)', () => {
 
   afterEach(async () => {
     if (fileMonitor) {
+      // すべてのイベントリスナーを削除
+      fileMonitor.removeAllListeners();
       await fileMonitor.stop();
       fileMonitor = null;
     }
@@ -98,11 +100,12 @@ describe('Feature 4: File Monitor (chokidar統合)', () => {
     fileMonitor = new FileMonitor(config);
     
     const createEvents = [];
-    fileMonitor.on('fileEvent', (event) => {
+    const createEventHandler = (event) => {
       if (event.type === 'create') {
         createEvents.push(event);
       }
-    });
+    };
+    fileMonitor.on('fileEvent', createEventHandler);
 
     fileMonitor.start();
     
@@ -115,20 +118,31 @@ describe('Feature 4: File Monitor (chokidar統合)', () => {
     const newFile = path.join(testDir, 'new-file.txt');
     fs.writeFileSync(newFile, 'New content');
 
-    // createイベントを待機
-    await new Promise((resolve) => {
+    // createイベントを待機（タイムアウト付き）
+    await new Promise((resolve, reject) => {
       const handler = (event) => {
         if (event.type === 'create' && event.path === path.resolve(newFile)) {
           fileMonitor.off('fileEvent', handler);
+          clearTimeout(timeoutId);
           resolve();
         }
       };
+      
+      // タイムアウト設定
+      const timeoutId = setTimeout(() => {
+        fileMonitor.off('fileEvent', handler);
+        reject(new Error('Create event timeout'));
+      }, 5000);
+      
       fileMonitor.on('fileEvent', handler);
     });
 
     expect(createEvents.length).toBe(1);
     expect(createEvents[0].path).toBe(path.resolve(newFile));
     expect(createEvents[0].stats).toBeDefined();
+    
+    // クリーンアップ：イベントハンドラを削除
+    fileMonitor.off('fileEvent', createEventHandler);
   });
 
   test('Should detect modify events', async () => {
@@ -161,14 +175,21 @@ describe('Feature 4: File Monitor (chokidar統合)', () => {
     // ファイル変更
     fs.writeFileSync(testFile, 'Modified content');
 
-    // modifyイベントを待機
-    await new Promise((resolve) => {
+    // modifyイベントを待機（タイムアウト付き）
+    await new Promise((resolve, reject) => {
       const handler = (event) => {
         if (event.type === 'modify' && event.path === path.resolve(testFile)) {
           fileMonitor.off('fileEvent', handler);
+          clearTimeout(timeoutId);
           resolve();
         }
       };
+      
+      const timeoutId = setTimeout(() => {
+        fileMonitor.off('fileEvent', handler);
+        reject(new Error('Modify event timeout'));
+      }, 5000);
+      
       fileMonitor.on('fileEvent', handler);
     });
 
@@ -206,14 +227,21 @@ describe('Feature 4: File Monitor (chokidar統合)', () => {
     // ファイル削除
     fs.unlinkSync(testFile);
 
-    // deleteイベントを待機
-    await new Promise((resolve) => {
+    // deleteイベントを待機（タイムアウト付き）
+    await new Promise((resolve, reject) => {
       const handler = (event) => {
         if (event.type === 'delete' && event.path === path.resolve(testFile)) {
           fileMonitor.off('fileEvent', handler);
+          clearTimeout(timeoutId);
           resolve();
         }
       };
+      
+      const timeoutId = setTimeout(() => {
+        fileMonitor.off('fileEvent', handler);
+        reject(new Error('Delete event timeout'));
+      }, 5000);
+      
       fileMonitor.on('fileEvent', handler);
     });
 
