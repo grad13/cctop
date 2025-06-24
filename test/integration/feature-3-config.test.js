@@ -216,7 +216,7 @@ describe('Feature 3: 設定システム', () => {
         maxDepth: 10
       },
       display: {
-        maxEvents: 50,
+        maxEvents: 20,
         refreshInterval: 100
       },
       database: {
@@ -245,7 +245,7 @@ describe('Feature 3: 設定システム', () => {
       },
       {
         modify: () => configManager.config.database.path = '',
-        error: 'Database path is required'
+        error: 'Required fields missing: database.path'
       }
     ];
     
@@ -378,5 +378,149 @@ describe('Feature 3: 設定システム', () => {
     
     // 他の設定はファイルから読み込まれる
     expect(config.monitoring?.debounceMs || config.debounceMs).toBe(100);
+  });
+
+  /**
+   * 自動監視対象追加機能のテスト
+   */
+  test('Should automatically add current directory to watchPaths when empty', async () => {
+    // 空のwatchPathsを含む設定を作成
+    const configWithEmptyWatchPaths = {
+      monitoring: {
+        watchPaths: [],
+        excludePatterns: [],
+        debounceMs: 100,
+        maxDepth: 10
+      },
+      display: {
+        maxEvents: 20,
+        refreshRateMs: 100
+      },
+      database: {
+        path: '~/.cctop/activity.db',
+        mode: 'WAL'
+      }
+    };
+    
+    const configPath = path.join(tempConfigDir, 'auto-watch-test-config.json');
+    fs.writeFileSync(configPath, JSON.stringify(configWithEmptyWatchPaths, null, 2));
+    
+    // NODE_ENV=testなので自動的にy応答される
+    const originalEnv = process.env.NODE_ENV;
+    process.env.NODE_ENV = 'test';
+    
+    try {
+      const config = await configManager.initialize({ config: configPath });
+      
+      // 現在のディレクトリが追加されていることを確認
+      const currentDir = process.cwd();
+      expect(config.monitoring.watchPaths).toContain(currentDir);
+      expect(config.monitoring.watchPaths).toHaveLength(1);
+      
+      // config.jsonが更新されていることを確認
+      const savedConfig = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+      expect(savedConfig.monitoring.watchPaths).toContain(currentDir);
+      
+    } finally {
+      process.env.NODE_ENV = originalEnv;
+    }
+  });
+
+  test('Should add CLI watchPath to config when specified', async () => {
+    const configWithEmptyWatchPaths = {
+      monitoring: {
+        watchPaths: [],
+        excludePatterns: [],
+        debounceMs: 100,
+        maxDepth: 10
+      },
+      display: {
+        maxEvents: 20,
+        refreshRateMs: 100
+      },
+      database: {
+        path: '~/.cctop/activity.db',
+        mode: 'WAL'
+      }
+    };
+    
+    const configPath = path.join(tempConfigDir, 'cli-watch-test-config.json');
+    fs.writeFileSync(configPath, JSON.stringify(configWithEmptyWatchPaths, null, 2));
+    
+    const originalEnv = process.env.NODE_ENV;
+    process.env.NODE_ENV = 'test';
+    
+    try {
+      const targetWatchPath = '/custom/watch/path';
+      const config = await configManager.initialize({ 
+        config: configPath,
+        watchPath: targetWatchPath 
+      });
+      
+      // CLI指定のパスが上書きされていることを確認
+      expect(config.monitoring.watchPaths).toEqual([targetWatchPath]);
+      
+    } finally {
+      process.env.NODE_ENV = originalEnv;
+    }
+  });
+
+  test('Should not add duplicate watchPaths', async () => {
+    const currentDir = process.cwd();
+    const configWithCurrentDir = {
+      monitoring: {
+        watchPaths: [currentDir],
+        excludePatterns: [],
+        debounceMs: 100,
+        maxDepth: 10
+      },
+      display: {
+        maxEvents: 20,
+        refreshRateMs: 100
+      },
+      database: {
+        path: '~/.cctop/activity.db',
+        mode: 'WAL'
+      }
+    };
+    
+    const configPath = path.join(tempConfigDir, 'no-duplicate-test-config.json');
+    fs.writeFileSync(configPath, JSON.stringify(configWithCurrentDir, null, 2));
+    
+    const config = await configManager.initialize({ config: configPath });
+    
+    // 重複がないことを確認（現在ディレクトリが既に含まれているので追加されない）
+    expect(config.monitoring.watchPaths).toEqual([currentDir]);
+    expect(config.monitoring.watchPaths).toHaveLength(1);
+  });
+
+  test('Should handle relative path normalization correctly', async () => {
+    const configWithRelativePath = {
+      monitoring: {
+        watchPaths: ['.'], // 相対パス
+        excludePatterns: [],
+        debounceMs: 100,
+        maxDepth: 10
+      },
+      display: {
+        maxEvents: 20,
+        refreshRateMs: 100
+      },
+      database: {
+        path: '~/.cctop/activity.db',
+        mode: 'WAL'
+      }
+    };
+    
+    const configPath = path.join(tempConfigDir, 'relative-path-test-config.json');
+    fs.writeFileSync(configPath, JSON.stringify(configWithRelativePath, null, 2));
+    
+    const config = await configManager.initialize({ config: configPath });
+    
+    // 相対パス"."が絶対パスに正規化されて重複なしであることを確認
+    const currentDir = process.cwd();
+    const resolvedCurrentDir = path.resolve(currentDir);
+    expect(config.monitoring.watchPaths).toContain(resolvedCurrentDir);
+    expect(config.monitoring.watchPaths).toHaveLength(1); // 重複なし
   });
 });

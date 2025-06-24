@@ -86,12 +86,10 @@ class FileMonitor extends EventEmitter {
       this.emitFileEvent('delete', filePath, null);
     });
 
-    // ディレクトリ追加（初期スキャン中は記録しない）
+    // ディレクトリ追加（PLAN-20250624-001準拠）
     this.watcher.on('addDir', (dirPath, stats) => {
-      if (this.isReady) {
-        this.emitFileEvent('create', dirPath, stats);
-      }
-      // 初期スキャン中はディレクトリを記録しない（計画書準拠）
+      const eventType = this.isReady ? 'create' : 'find';
+      this.emitFileEvent(eventType, dirPath, stats);
     });
 
     // ディレクトリ削除

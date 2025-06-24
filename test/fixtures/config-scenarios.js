@@ -40,15 +40,15 @@ const configScenarios = [
       expect(database).toBeDefined();
       expect(database.path).toContain('.cctop'); // 仕様書準拠
       expect(database.path).toContain('activity.db'); // 仕様書準拠
-      expect(database.walMode).toBe(true); // 実際の設定構造に合わせる
+      expect(database.mode).toBe("WAL"); // PLAN準拠の設定構造
       
       // display設定の確認
       const display = config.get('display');
       expect(display).toBeDefined();
       expect(display.maxEvents).toBeGreaterThan(0);
       expect(display.maxEvents).toBeLessThanOrEqual(100); // 妥当な範囲
-      expect(display.refreshInterval).toBeGreaterThan(0);
-      expect(display.refreshInterval).toBeLessThanOrEqual(1000); // 妥当な範囲
+      expect(display.refreshRateMs).toBeGreaterThan(0);
+      expect(display.refreshRateMs).toBeLessThanOrEqual(1000); // 妥当な範囲
     },
     verifyStructure: (config) => {
       // 設定の完全な構造を確認（ネスト構造）

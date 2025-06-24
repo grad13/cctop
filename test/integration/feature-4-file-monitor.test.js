@@ -137,9 +137,13 @@ describe('Feature 4: File Monitor (chokidar統合)', () => {
       fileMonitor.on('fileEvent', handler);
     });
 
-    expect(createEvents.length).toBe(1);
-    expect(createEvents[0].path).toBe(path.resolve(newFile));
-    expect(createEvents[0].stats).toBeDefined();
+    expect(createEvents.length).toBe(2); // ディレクトリ作成 + ファイル作成
+    
+    // ファイル作成イベントを特定
+    const fileCreateEvent = createEvents.find(e => e.path === path.resolve(newFile));
+    expect(fileCreateEvent).toBeDefined();
+    expect(fileCreateEvent.stats).toBeDefined();
+    expect(fileCreateEvent.stats.isDirectory()).toBe(false);
     
     // クリーンアップ：イベントハンドラを削除
     fileMonitor.off('fileEvent', createEventHandler);
@@ -361,7 +365,23 @@ describe('Feature 4: File Monitor (chokidar統合)', () => {
     
     // 3. ファイル削除
     fs.unlinkSync(testFile);
-    await new Promise(resolve => setTimeout(resolve, 200));
+    
+    // deleteイベントを明示的に待機
+    await new Promise((resolve) => {
+      const deleteHandler = (event) => {
+        if (event.type === 'delete' && event.filename === 'lifecycle-test.txt') {
+          fileMonitor.off('fileEvent', deleteHandler);
+          resolve();
+        }
+      };
+      fileMonitor.on('fileEvent', deleteHandler);
+      
+      // 最大2秒待機
+      setTimeout(() => {
+        fileMonitor.off('fileEvent', deleteHandler);
+        resolve();
+      }, 2000);
+    });
 
     // 全イベントが検出されていることを確認
     console.log('All events detected:', allEvents);

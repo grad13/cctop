@@ -11,7 +11,7 @@ class CLIDisplay extends EventEmitter {
     super();
     this.db = databaseManager;
     this.displayMode = displayConfig.mode || 'all'; // 'all' or 'unique'
-    this.maxLines = displayConfig.maxEvents || 50;
+    this.maxLines = displayConfig.maxEvents; // config.jsonから必ず来る
     this.events = [];
     this.uniqueEvents = new Map(); // fileName -> latest event
     this.isRunning = false;

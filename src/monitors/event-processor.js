@@ -112,24 +112,27 @@ class EventProcessor extends EventEmitter {
     };
 
     if (stats) {
-      metadata.file_size = stats.size || 0;
+      const isDirectory = stats.isDirectory();
+      metadata.is_directory = isDirectory ? 1 : 0;
+      metadata.file_size = isDirectory ? 0 : (stats.size || 0);
       metadata.inode = stats.ino || null;
       
-      // 行数カウント（テキストファイルのみ）
-      if (this.isTextFile(filePath)) {
+      // 行数カウント（ディレクトリ以外のテキストファイルのみ）
+      if (!isDirectory && this.isTextFile(filePath)) {
         try {
           metadata.line_count = await this.countLines(filePath);
         } catch (error) {
           metadata.line_count = null;
         }
       } else {
-        metadata.line_count = null;
+        metadata.line_count = isDirectory ? 0 : null;
       }
       
       // ブロック数（利用可能な場合）
       metadata.block_count = stats.blocks || null;
     } else {
       // 削除されたファイルの場合
+      metadata.is_directory = 0; // デフォルトファイル扱い
       metadata.file_size = null;
       metadata.line_count = null;
       metadata.block_count = null;
@@ -166,6 +169,7 @@ class EventProcessor extends EventEmitter {
       file_path: metadata.file_path,
       file_name: metadata.file_name,
       directory: metadata.directory,
+      is_directory: metadata.is_directory,
       file_size: metadata.file_size,
       line_count: metadata.line_count,
       block_count: metadata.block_count,

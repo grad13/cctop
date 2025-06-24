@@ -372,7 +372,23 @@ describe('Feature 5: Event Processor (chokidar→DB統合)', () => {
     
     // 3. ファイル削除
     fs.unlinkSync(testFile);
-    await new Promise(resolve => setTimeout(resolve, 200));
+    
+    // deleteイベント処理を明示的に待機
+    await new Promise((resolve) => {
+      const deleteHandler = (result) => {
+        if (result.eventType === 'delete' && result.fileName === 'lifecycle-test.txt') {
+          eventProcessor.off('eventProcessed', deleteHandler);
+          resolve();
+        }
+      };
+      eventProcessor.on('eventProcessed', deleteHandler);
+      
+      // 最大2秒待機
+      setTimeout(() => {
+        eventProcessor.off('eventProcessed', deleteHandler);
+        resolve();
+      }, 2000);
+    });
 
     // 全イベントが処理されていることを確認
     expect(processedEvents.length).toBe(3);
@@ -446,11 +462,12 @@ describe('Feature 5: Event Processor (chokidar→DB統合)', () => {
       })));
     }
     
-    const existingEvent = events.find(e => e.file_name === 'existing.txt');
+    // existing.txtの初回イベント（find）を取得
+    const existingEvents = events.filter(e => e.file_name === 'existing.txt').sort((a, b) => a.timestamp - b.timestamp);
     const newEvent = events.find(e => e.file_name === 'new.txt');
     
-    expect(existingEvent).toBeDefined();
-    expect(existingEvent.event_type).toBe('find');
+    expect(existingEvents.length).toBeGreaterThan(0);
+    expect(existingEvents[0].event_type).toBe('find'); // 最初のイベントがfind
     expect(newEvent).toBeDefined();
     expect(newEvent.event_type).toBe('create');
   });

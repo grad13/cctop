@@ -39,3 +39,10 @@ pids
 *.pid
 *.seed
 *.pid.lock
+
+
+../documents/
+../passage/
+../CLAUDE.md
+../VERSIONs/
+../VAULTs/

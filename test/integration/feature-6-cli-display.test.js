@@ -32,8 +32,8 @@ describe('Feature 6: CLI Display (ui001準拠)', () => {
       return true;
     };
     
-    // CLI Display初期化
-    cliDisplay = new CLIDisplay(dbManager);
+    // CLI Display初期化（テスト用設定を提供）
+    cliDisplay = new CLIDisplay(dbManager, { maxEvents: 20 });
   });
 
   afterEach(async () => {
@@ -56,12 +56,37 @@ describe('Feature 6: CLI Display (ui001準拠)', () => {
     }
   });
 
-  test('Should initialize with default settings', () => {
+  test('Should initialize with provided config', () => {
     expect(cliDisplay.displayMode).toBe('all');
-    expect(cliDisplay.maxLines).toBe(50);
+    expect(cliDisplay.maxLines).toBe(20); // テスト用設定で提供した値
     expect(cliDisplay.isRunning).toBe(false);
     expect(cliDisplay.events).toEqual([]);
     expect(cliDisplay.uniqueEvents.size).toBe(0);
+  });
+
+  test('Should use config maxEvents value', () => {
+    const customConfig = { maxEvents: 15 };
+    const customDisplay = new CLIDisplay(dbManager, customConfig);
+    expect(customDisplay.maxLines).toBe(15); // displayConfig.maxEvents → maxLines
+  });
+
+  test('Should use actual config.json style setting', () => {
+    const configJsonStyle = {
+      maxEvents: 10,  // config.jsonのdisplay.maxEvents
+      refreshRateMs: 100
+    };
+    const configDisplay = new CLIDisplay(dbManager, configJsonStyle);
+    expect(configDisplay.maxLines).toBe(10); // display.maxEvents → maxLines
+  });
+
+  test('Should handle missing config gracefully (current implementation)', () => {
+    // 現在の実装: displayConfig.maxEvents は undefined になる
+    const emptyConfig = {};
+    const emptyDisplay = new CLIDisplay(dbManager, emptyConfig);
+    expect(emptyDisplay.maxLines).toBeUndefined(); // 現在の動作
+    
+    // TODO: 将来的には設定バリデーションで必須項目不足エラーになるべき
+    // expect(() => new CLIDisplay(dbManager, emptyConfig)).toThrow('必須項目が不足');
   });
 
   test('Should load initial events from database', async () => {
@@ -259,7 +284,7 @@ describe('Feature 6: CLI Display (ui001準拠)', () => {
     expect(stats.totalEvents).toBe(3);
     expect(stats.uniqueFiles).toBe(2);
     expect(stats.displayMode).toBe('all');
-    expect(stats.maxLines).toBe(50);
+    expect(stats.maxLines).toBe(20); // 現在のフォールバック値
     expect(stats.isRunning).toBe(false);
   });
 
@@ -276,17 +301,19 @@ describe('Feature 6: CLI Display (ui001準拠)', () => {
   });
 
   test('Should limit events to maxLines', () => {
-    cliDisplay.maxLines = 3;
+    const limitedConfig = { maxEvents: 3 };
+    const limitedDisplay = new CLIDisplay(dbManager, limitedConfig);
 
     // maxLines * 2を超える数のイベントを追加
     for (let i = 0; i < 10; i++) {
-      cliDisplay.addEvent({
+      limitedDisplay.addEvent({
         file_name: `file${i}.txt`,
         timestamp: i * 1000
       });
     }
 
-    expect(cliDisplay.events.length).toBeLessThanOrEqual(6); // maxLines * 2
+    expect(limitedDisplay.events.length).toBeLessThanOrEqual(6); // maxLines * 2
+    limitedDisplay.stop();
   });
 
   test('Should render header correctly', () => {

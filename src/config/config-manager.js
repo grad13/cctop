@@ -13,48 +13,8 @@ const os = require('os');
 
 const readline = require('readline');
 
-// デフォルト設定（ネスト構造）
-const DEFAULT_CONFIG = {
-  version: "0.1.0",
-  monitoring: {
-    watchPaths: ["./"],
-    excludePatterns: [
-      "**/node_modules/**",
-      "**/.git/**",
-      "**/dist/**",
-      "**/build/**",
-      "**/.next/**",
-      "**/.nuxt/**",
-      "**/.cache/**",
-      "**/coverage/**",
-      "**/.DS_Store",
-      "**/*.log",
-      "**/.env*",
-      "**/.cctop/**"
-    ],
-    debounceMs: 100,
-    maxDepth: 10,
-    followSymlinks: false
-  },
-  display: {
-    maxEvents: 50,
-    refreshInterval: 100,
-    showTimestamps: true,
-    colorEnabled: true,
-    relativeTime: false,
-    mode: "all"
-  },
-  database: {
-    path: "~/.cctop/activity.db",
-    maxEvents: 10000,
-    cleanupInterval: 3600000,
-    walMode: true
-  },
-  performance: {
-    maxMemoryMB: 256,
-    gcInterval: 60000
-  }
-};
+// PLAN準拠: JSコード内では設定値は一切定義しない（定数除く）
+// 全設定は~/.cctop/config.jsonから読み込む
 
 class ConfigManager {
   constructor() {
@@ -71,31 +31,36 @@ class ConfigManager {
       // 1. 設定ファイルパスの決定（優先順位に従って）
       this.configPath = this.determineConfigPath(cliArgs);
       
-      // 2. 設定ファイルの存在確認
+      // 2. 設定ファイルの存在確認（PLAN準拠）
       if (!fs.existsSync(this.configPath)) {
-        // テスト環境では自動的に設定ファイルを作成
-        if (process.env.NODE_ENV === 'test') {
-          await this.createDefaultConfigFile();
-          console.log(`📝 Created default config for test: ${this.configPath}`);
-        } else {
-          console.error(`\nエラー: 設定ファイルが見つかりません: ${this.configPath}`);
-          
-          // デフォルト設定ファイルを作成
-          await this.createDefaultConfigFile();
-          
-          console.log(`\n設定ファイルを作成しました: ${this.configPath}`);
-          console.log('設定を編集してから再度実行してください。\n');
-          
+        console.error(`\nエラー: 設定ファイルが見つかりません: ${this.configPath}`);
+        
+        // デフォルト設定ファイルを作成
+        await this.createDefaultConfigFile();
+        
+        console.log(`設定ファイルを作成しました: ${this.configPath}`);
+        console.log('設定を確認してから再度実行してください。\n');
+        
+        // テスト環境以外では終了
+        if (process.env.NODE_ENV !== 'test') {
           // ユーザー確認待機
           await this.waitForUserConfirmation();
-          
-          // プログラム終了
           process.exit(1);
         }
       }
       
-      // 3. 設定ファイルを読み込む
+      // 3. 設定ファイルを読み込む（PLAN準拠のエラーハンドリング）
       const fileConfig = this.loadConfigFile(this.configPath);
+      if (!fileConfig || Object.keys(fileConfig).length === 0) {
+        console.error(`\nエラー: 設定ファイルの読み込みに失敗しました: ${this.configPath}`);
+        console.error('ファイルが存在し、有効なJSONかを確認してください。\n');
+        if (process.env.NODE_ENV !== 'test') {
+          process.exit(1);
+        } else {
+          throw new Error('Configuration file load failed');
+        }
+      }
+      
       this.config = fileConfig;
       if (process.env.NODE_ENV === 'test' || process.env.CCTOP_VERBOSE) {
         console.log(`📋 Config loaded from: ${this.configPath}`);
@@ -103,6 +68,9 @@ class ConfigManager {
       
       // 4. CLIアrgumentsでオーバーライド
       this.applyCLIOverrides(cliArgs);
+      
+      // 5. 自動監視対象追加機能（PLAN準拠）
+      await this.checkAndAddCurrentDirectory(cliArgs);
       
       if (process.env.NODE_ENV === 'test' || process.env.CCTOP_VERBOSE) {
         console.log('⚙️ Configuration initialized');
@@ -130,7 +98,7 @@ class ConfigManager {
   }
 
   /**
-   * 設定ファイルの読み込み
+   * 設定ファイルの読み込み（PLAN準拠の厳格なエラーハンドリング）
    */
   loadConfigFile(configPath) {
     try {
@@ -144,8 +112,18 @@ class ConfigManager {
       
       return config;
     } catch (error) {
-      console.warn(`⚠️ Failed to load config file ${configPath}:`, error.message);
-      return {};
+      if (error.code === 'ENOENT') {
+        console.error(`❌ ファイル不存在: ${configPath}`);
+        return null;
+      } else if (error instanceof SyntaxError) {
+        console.error(`❌ JSON構文エラー: ${configPath}`);
+        console.error(`詳細: ${error.message}`);
+        console.error('修正方法: 有効なJSON形式に修正してください');
+        return null;
+      } else {
+        console.error(`❌ 設定ファイル読み込みエラー: ${error.message}`);
+        return null;
+      }
     }
   }
 
@@ -170,7 +148,7 @@ class ConfigManager {
    * CLIアrgumentsの適用
    */
   applyCLIOverrides(cliArgs) {
-    // 監視パスの指定
+    // 監視パスの指定（CLI引数で上書き）
     if (cliArgs.watchPath) {
       // monitoring構造が存在しない場合は作成
       if (!this.config.monitoring) {
@@ -193,7 +171,7 @@ class ConfigManager {
   }
 
   /**
-   * デフォルト設定ファイルを作成
+   * デフォルト設定ファイルを作成（PLAN準拠）
    */
   async createDefaultConfigFile() {
     try {
@@ -203,14 +181,39 @@ class ConfigManager {
         fs.mkdirSync(configDir, { recursive: true });
       }
       
-      // デフォルト設定のコピーを作成（パス展開を適用）
-      const config = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
-      if (config.database && config.database.path) {
-        config.database.path = this.expandTilde(config.database.path);
+      // PLAN記載のデフォルト設定（更新版）
+      const defaultConfig = {
+        "version": "0.1.0",
+        "monitoring": {
+          "watchPaths": [],
+          "excludePatterns": [
+            "**/node_modules/**",
+            "**/.git/**",
+            "**/.DS_Store",
+            "**/.cctop/**",
+            "**/coverage/**",
+            "**/*.log"
+          ],
+          "debounceMs": 100,
+          "maxDepth": 10
+        },
+        "database": {
+          "path": "~/.cctop/activity.db",
+          "mode": "WAL"
+        },
+        "display": {
+          "maxEvents": 20,
+          "refreshRateMs": 100
+        }
+      };
+      
+      // データベースパスの ~ を展開
+      if (defaultConfig.database && defaultConfig.database.path) {
+        defaultConfig.database.path = this.expandTilde(defaultConfig.database.path);
       }
       
       // デフォルト設定をconfig.jsonとして保存
-      const configContent = JSON.stringify(config, null, 2);
+      const configContent = JSON.stringify(defaultConfig, null, 2);
       fs.writeFileSync(this.configPath, configContent, 'utf8');
       
     } catch (error) {
@@ -237,6 +240,70 @@ class ConfigManager {
         resolve();
       });
     });
+  }
+
+  /**
+   * 監視対象ディレクトリ追加の確認プロンプト（PLAN準拠）
+   */
+  async promptAddDirectory(dirPath) {
+    // テスト環境では自動でy応答
+    if (process.env.NODE_ENV === 'test') {
+      return true;
+    }
+    
+    const rl = readline.createInterface({
+      input: process.stdin,
+      output: process.stdout
+    });
+    
+    return new Promise((resolve) => {
+      rl.question(
+        `📁 ${dirPath} をモニタ対象に追加しますか？ (y/n): `,
+        (answer) => {
+          rl.close();
+          resolve(answer.toLowerCase() === 'y' || answer.toLowerCase() === 'yes');
+        }
+      );
+    });
+  }
+
+  /**
+   * 現在ディレクトリの監視対象自動追加チェック（PLAN準拠・更新版）
+   */
+  async checkAndAddCurrentDirectory(cliArgs = {}) {
+    // 監視対象ディレクトリの決定
+    const targetDir = cliArgs.watchPath || process.cwd();
+    const absoluteTargetDir = path.resolve(targetDir);
+    
+    // 設定構造の防御的確認
+    if (!this.config.monitoring) {
+      this.config.monitoring = {};
+    }
+    if (!Array.isArray(this.config.monitoring.watchPaths)) {
+      this.config.monitoring.watchPaths = [];
+    }
+    
+    // 既存のパスを絶対パスに正規化（PLAN準拠: 全て絶対パスで統一）
+    this.config.monitoring.watchPaths = this.config.monitoring.watchPaths.map(watchPath => {
+      return path.resolve(watchPath);
+    });
+    
+    const watchPaths = this.config.monitoring.watchPaths;
+    
+    // 既に監視対象に含まれているかチェック（絶対パスで統一比較）
+    const isAlreadyWatched = watchPaths.includes(absoluteTargetDir);
+    
+    if (!isAlreadyWatched) {
+      const shouldAdd = await this.promptAddDirectory(absoluteTargetDir);
+      if (shouldAdd) {
+        // 絶対パスで追加（PLAN準拠）
+        this.config.monitoring.watchPaths.push(absoluteTargetDir);
+        await this.save();
+        console.log(`✅ Added to monitor: ${absoluteTargetDir}`);
+      } else {
+        console.log(`ℹ️  Monitoring with current config only`);
+      }
+    }
   }
 
   /**
@@ -272,29 +339,66 @@ class ConfigManager {
   }
 
   /**
-   * 設定の有効性確認
+   * 設定の有効性確認（PLAN準拠の必須項目チェック）
    */
   validate() {
-    const errors = [];
+    // PLAN記載の必須項目
+    const requiredFields = [
+      'database.path',
+      'display.maxEvents',    
+      'monitoring.watchPaths'
+    ];
 
-    // 必須設定の確認
-    if (!this.get('database.path')) {
-      errors.push('Database path is required');
+    const missing = [];
+    requiredFields.forEach(field => {
+      const value = this.getNestedValue(this.config, field);
+      if (value === null || value === undefined || value === '') {
+        missing.push(field);
+      }
+    });
+    
+    if (missing.length > 0) {
+      const errorMsg = `設定ファイルに必須項目が不足しています:\n${missing.map(f => `  - ${f}`).join('\n')}\n\n~/.cctop/config.jsonを確認し、不足項目を追加してください。\nデフォルト設定を参考にしてください。`;
+      
+      if (process.env.NODE_ENV === 'test') {
+        throw new Error(`Required fields missing: ${missing.join(', ')}`);
+      } else {
+        console.error(`エラー: ${errorMsg}`);
+        process.exit(1);
+      }
     }
 
+    // 型チェック
     if (!Array.isArray(this.get('monitoring.watchPaths'))) {
-      errors.push('monitoring.watchPaths must be an array');
+      const errorMsg = 'monitoring.watchPaths must be an array';
+      if (process.env.NODE_ENV === 'test') {
+        throw new Error(errorMsg);
+      } else {
+        console.error(`エラー: monitoring.watchPathsは配列である必要があります`);
+        process.exit(1);
+      }
     }
 
     if (this.get('display.maxEvents') <= 0) {
-      errors.push('display.maxEvents must be positive');
-    }
-
-    if (errors.length > 0) {
-      throw new Error(`Configuration validation failed: ${errors.join(', ')}`);
+      const errorMsg = 'display.maxEvents must be positive';
+      if (process.env.NODE_ENV === 'test') {
+        throw new Error(errorMsg);
+      } else {
+        console.error(`エラー: display.maxEventsは正の数である必要があります`);
+        process.exit(1);
+      }
     }
 
     return true;
+  }
+
+  /**
+   * ネストされた値の取得
+   */
+  getNestedValue(obj, path) {
+    return path.split('.').reduce((current, key) => {
+      return current && current[key] !== undefined ? current[key] : null;
+    }, obj);
   }
 
   /**

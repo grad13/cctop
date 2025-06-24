@@ -27,6 +27,7 @@ const schema = {
       file_path TEXT NOT NULL,
       file_name TEXT NOT NULL,
       directory TEXT NOT NULL,
+      is_directory INTEGER DEFAULT 0,
       previous_event_id INTEGER,
       source_path TEXT,
       file_size INTEGER,

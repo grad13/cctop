@@ -219,7 +219,7 @@ describe('Startup Verification', () => {
           maxDepth: 5
         },
         display: {
-          maxEvents: 25
+          maxEvents: 20
         },
         database: {
           path: path.join(testDir, 'test.db')

@@ -271,9 +271,9 @@ class DatabaseManager {
     const result = await this.run(`
       INSERT INTO events (
         timestamp, event_type_id, object_id, file_path, file_name,
-        directory, previous_event_id, source_path, file_size,
+        directory, is_directory, previous_event_id, source_path, file_size,
         line_count, block_count
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `, [
       eventData.timestamp,
       eventData.event_type_id,
@@ -281,6 +281,7 @@ class DatabaseManager {
       eventData.file_path,
       eventData.file_name,
       eventData.directory,
+      eventData.is_directory,
       eventData.previous_event_id,
       eventData.source_path,
       eventData.file_size,
