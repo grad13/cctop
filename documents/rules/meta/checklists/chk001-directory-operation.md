@@ -44,8 +44,8 @@
 - `rules/meta/protocols/` - プロトコル管理
 - `records/incidents/` - インシデント記録
 - `rules/meta/checklists/` - チェックリスト管理
-- `techs/specifications/*/` - 各仕様ディレクトリ
-- `techs/roadmaps/*/` - 各ロードマップディレクトリ
+- `visions/specifications/*/` - 各仕様ディレクトリ
+- `visions/blueprints/*/` - 各設計図・ロードマップディレクトリ
 - `agents/status/` - エージェント状況記録
 - `agents/roles/` - エージェント役割定義
 

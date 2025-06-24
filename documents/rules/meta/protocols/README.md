@@ -1,7 +1,7 @@
 # Protocols - 開発プロトコル・ガイドライン
 
-**最終更新**: 2025年6月18日 05:00  
-**更新内容**: P016を5エージェント体制（Builder/Validator追加）に完全更新  
+**最終更新**: 2025年6月24日  
+**更新内容**: P045 Git管理分離プロトコル追加  
 **目的**: プロジェクト全体で一貫性のある開発を実現するためのルール集  
 **H008適用**: すべてのファイル名が命名規則を遵守していることを確認済み
 
@@ -61,11 +61,11 @@
 | P042 | p042-protocol-periodic-review.md | プロトコル定期見直しプロトコル（2025年6月18日制定） |
 | P043 | p043-l2-to-l3-archive-migration-protocol.md | L2→L3アーカイブ移行プロトコル（DDD2階層メンテナンス） |
 | P044 | p044-l1-l2-migration-protocol.md | L1→L2移行プロトコル（週次status整理） |
-| P045 | p045-unified-document-metadata-standard.md | 統一文書メタデータ標準（Date/Created冗長性解消） |
+| P045 | p045-git-management-separation-protocol.md | Git管理分離プロトコル（親git・子git境界管理） |
 
 **参照例**: 「P000を確認してください」「P007実施完了」
 
-**新規Protocol番号**: P045から（P009、P021、P023、P027はDDD2またはP022に統合済み、P032はP031に統合済み）
+**新規Protocol番号**: P046から（P009、P021、P023、P027はDDD2またはP022に統合済み、P032はP031に統合済み）
 
 
 ## 📁 ファイル構成（番号順）

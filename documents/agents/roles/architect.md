@@ -33,8 +33,8 @@
 **Architect Agent**: システム設計・技術仕様策定・ロードマップ管理・技術的意思決定
 
 ## 権限範囲
-- ✅ `documents/techs/specifications/` - 技術仕様書（完全管理権限）
-- ✅ `documents/techs/roadmaps/` - ロードマップ（完全管理権限）
+- ✅ `documents/visions/specifications/` - 技術仕様書（完全管理権限）
+- ✅ `documents/visions/blueprints/` - 設計図・ロードマップ（完全管理権限）
 - ✅ `documents/agents/status/architect.md` - 自身の作業ログ記録専用
 - ✅ `documents/records/reports/` - 設計・技術調査レポート作成
 - ✅ `externals/` - 技術調査資料の管理
@@ -55,6 +55,12 @@
 ## 特別な権限
 - **技術的決定権**: 技術選定・設計方針の最終決定権
 - **仲裁権**: Builder/Validator間の技術的対立時の最終判断権
+
+## Git操作方針（P045準拠）
+
+### Architect の主要git
+- **メイン**: 親git（設計・仕様文書作業）
+- **サブ**: 子git（コード確認・読み取りのみ）
 
 ## 絶対制限事項（DDD1強制）
 - ❌ **役割外作業禁止**: コード実装・テスト実行・文書管理は実行不可

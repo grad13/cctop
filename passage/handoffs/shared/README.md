@@ -8,7 +8,7 @@ The shared directory contains resources, templates, and references accessible by
 
 ```
 shared/
-├── templates/      # Reusable document templates
+├── templates/      # Reusable document templates (P045対応済み)
 ├── standards/      # Coding and documentation standards
 ├── references/     # Quick reference guides
 ├── tools/          # Shared scripts and utilities
@@ -19,7 +19,14 @@ shared/
 
 ### 1. Templates
 
-Standardized templates for common handoff types:
+Standardized templates for common handoff types (P045 Git管理分離対応済み):
+
+#### Available Templates
+- **builder-to-validator-template.md** - Builder→Validator実装完了報告
+- **validator-to-builder-template.md** - Validator→Builder修正依頼  
+- **general-handoff-template.md** - 全Agent間汎用テンプレート
+
+**P045対応**: 全テンプレートにGit Repository指定・CHK006確認が組み込み済み
 
 #### Task Template
 ```markdown

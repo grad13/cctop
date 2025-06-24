@@ -305,7 +305,7 @@ cctop ink [path]
 ### 7.1 関連文書
 - [r002 Test Design](../design/r002-test-design.md)
 - [v009 UI Strategy](../vision/v009-ui-strategy.md)
-- [Architecture Overview](../techs/specifications/architecture/overview.md)
+- [Architecture Overview](../visions/specifications/architecture/overview.md)
 
 ### 7.2 外部リソース
 - [Ink v6 Documentation](https://github.com/vadimdemedes/ink)

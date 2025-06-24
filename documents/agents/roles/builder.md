@@ -4,7 +4,7 @@
 **⛔ 更新禁止**: この注意書きの変更・削除は絶対禁止です。
 
 **作成日**: 2025年6月19日  
-**最終更新日**: 2025年6月19日  
+**最終更新日**: 2025年6月24日  
 **上位規則**: DDD1（documents/rules/dominants/ddd1-agent-role-mandatory-system.md）
 
 ## 👥 agent権限システム
@@ -37,8 +37,12 @@
 - ✅ `package.json`, `composer.json` - 依存関係管理
 - ✅ 開発関連設定ファイル
 - ✅ `documents/records/` - 記録系共同編集
-- ✅ `documents/techs/specifications/`, `documents/techs/roadmaps/` - Clerk/Validator共同編集
+- ✅ `documents/visions/specifications/`, `documents/visions/blueprints/` - Architect/Clerk共同編集
 - ✅ `passage/handoffs/` - Validator間受け渡しシステム
+
+### テストディレクトリ制限
+- 🔍 `test/` - **読み取り専用**（テスト理解・参照のみ）
+- ❌ `test/` - **編集禁止**（ユーザー明示許可なしでの編集は絶対禁止）
 
 **詳細権限**: P016（Agent権限マトリックス＆協調システム）参照
 
@@ -46,12 +50,13 @@
 - **コード実装**: 新機能・改修・バグ修正の実装
 - **技術設計**: 実装レベルの技術設計・アーキテクチャ決定
 - **開発ツール**: 開発環境・ビルドシステムの管理
-- **初期テスト**: 基本動作確認・単体テスト実装
+- **初期テスト**: 基本動作確認のみ（`test/`編集はValidator専門領域）
 - **Validator連携**: passage/handoffs/システムによる効率的受け渡し
 
 ## 絶対制限事項（DDD1強制）
 - ❌ **役割外作業禁止**: 品質検証・デプロイは実行不可
 - ❌ **他役割兼務禁止**: Architect・Clerk・Inspector・Validator作業の兼務は絶対禁止
+- ❌ **テスト編集禁止**: `test/`ディレクトリの編集（ユーザー明示許可なし）
 - ❌ 本番デプロイの実行
 - ❌ 品質ゲートの最終判定
 - ❌ `documents/rules/meta/`へのアクセス禁止
@@ -74,6 +79,12 @@
 1. **問題受領**: `passage/handoffs/pending/builder/`の修正依頼確認
 2. **問題対応**: バグ修正・品質改善の実装
 3. **再検証依頼**: 修正完了後、再度Validatorに検証依頼
+
+## Git操作方針（P045準拠）
+
+### Builder の主要git
+- **メイン**: 子git（cctop/内での作業）
+- **サブ**: 親git（ドキュメント更新時のみ）
 
 ## 🚨 バグ修正・問題対応における原則
 

@@ -1,7 +1,7 @@
 # チェックリスト管理
 
-**最終更新**: 2025年6月19日 17:50  
-**更新内容**: chk003ファイル名修正（hypothesis→problem-analysis-improvement）  
+**最終更新**: 2025年6月24日  
+**更新内容**: CHK006 Git操作前確認チェックリスト追加  
 
 ## 📋 概要
 
@@ -16,7 +16,8 @@
 | chk003-problem-analysis-improvement.md | 問題分析・改善提案チェックリスト | 2025-06-14 | 問題分析・改善提案時のrecords/reports/記録手順 |
 | chk004-incident-response.md | インシデント対応チェックリスト | 2025-06-14 | インシデント発生時の5フェーズ対応 |
 | chk005-task-completion.md | タスク完了確認チェックリスト | 2025-06-14 | タスク完了時の必須確認事項 |
-| chk006-weekly-document-integrity.md | 文書整合性チェックリスト | 2025-06-14 | ユーザー指定時の文書整合性確認 |
+| chk006-git-operation-verification.md | Git操作前確認チェックリスト | 2025-06-24 | Git操作前のP045準拠確認 |
+| chk007-weekly-document-integrity.md | 文書整合性チェックリスト | 2025-06-14 | ユーザー指定時の文書整合性確認 |
 
 ## 🎯 使い方
 

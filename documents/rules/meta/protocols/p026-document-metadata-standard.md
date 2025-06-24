@@ -68,8 +68,8 @@
 - documents/rules/meta/protocols/*.md
 - documents/rules/meta/protocols/*.md
 - documents/records/reports/*.md
-- documents/techs/specifications/**/*.md
-- documents/techs/roadmaps/*.md
+- documents/visions/specifications/**/*.md
+- documents/visions/blueprints/*.md
 - documents/agents/status/*.md
 - documents/rules/meta/checklists/*.md
 

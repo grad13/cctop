@@ -47,8 +47,8 @@ documents/archives/timebox-legacy/records/incidents/
 #### 1.2 認証システム仕様・計画（大規模）
 ```bash
 # 移動対象
-documents/techs/specifications/authentication/
-documents/techs/roadmaps/features/authentication/
+documents/visions/specifications/authentication/
+documents/visions/blueprints/features/authentication/
 
 # 移動先
 documents/archives/web-ui-legacy/authentication/
@@ -59,7 +59,7 @@ documents/archives/web-ui-legacy/authentication/
 #### 1.3 アセット管理関連
 ```bash
 # 移動対象
-documents/techs/specifications/asset-management/
+documents/visions/specifications/asset-management/
 
 # 移動先
 documents/archives/web-ui-legacy/asset-management/
@@ -74,10 +74,10 @@ documents/archives/web-ui-legacy/asset-management/
 #### 2.1 Web UI・SPA関連文書
 ```bash
 # 調査・移動対象（推定100+ファイル）
-documents/techs/specifications/*island*
-documents/techs/specifications/*spa*
-documents/techs/specifications/*frontend*
-documents/techs/roadmaps/*ui*
+documents/visions/specifications/*island*
+documents/visions/specifications/*spa*
+documents/visions/specifications/*frontend*
+documents/visions/blueprints/*ui*
 documents/records/reports/*ui*
 documents/records/reports/*web*
 ```
@@ -145,9 +145,9 @@ documents/archives/
    mv documents/records/incidents/INC-*-timebox-* documents/archives/timebox-legacy/records/incidents/
    
    # 認証・アセット管理
-   mv documents/techs/specifications/authentication/ documents/archives/web-ui-legacy/
-   mv documents/techs/specifications/asset-management/ documents/archives/web-ui-legacy/
-   mv documents/techs/roadmaps/features/authentication/ documents/archives/web-ui-legacy/
+   mv documents/visions/specifications/authentication/ documents/archives/web-ui-legacy/
+   mv documents/visions/specifications/asset-management/ documents/archives/web-ui-legacy/
+   mv documents/visions/blueprints/features/authentication/ documents/archives/web-ui-legacy/
    ```
 
 3. **README.md更新**

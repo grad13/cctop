@@ -57,7 +57,7 @@
 3. ✅ 他の影響を受けたREADME.mdの調査・修正
    - documents/README.md更新
    - documents/records/daily/README.md新規作成
-   - documents/techs/roadmaps/README.md修正
+   - documents/visions/blueprints/README.md修正
 4. ✅ ディレクトリ再編チェックリスト作成
 5. □ P019更新（今後実施）
 6. □ P007更新（今後実施）

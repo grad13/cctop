@@ -24,7 +24,7 @@ Inspector Agentが仕様書を作成する際、誤って`surveillance/specifica
 ## 原因分析（5 Whys）
 
 ### Why1: なぜspecifications/に配置したか？
-→ documents/techs/specifications/の構造を無意識に模倣した
+→ documents/visions/specifications/の構造を無意識に模倣した
 
 ### Why2: なぜdocuments/の構造を模倣したか？
 → プロジェクト全体の標準的な配置と思い込んだ

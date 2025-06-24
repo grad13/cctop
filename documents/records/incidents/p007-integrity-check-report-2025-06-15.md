@@ -37,9 +37,9 @@
 
 #### ⚠️ Important: roadmapディレクトリ名の不整合
 - **問題**: CLAUDE.md 134行目で `documents/roadmap/project-milestones.md` を参照
-- **実際**: `documents/techs/roadmaps/` （複数形）が正しいディレクトリ名
+- **実際**: `documents/visions/blueprints/` （複数形）が正しいディレクトリ名
 - **影響**: ファイル参照エラー
-- **推奨対応**: CLAUDE.mdの参照を `documents/techs/roadmaps/project-roadmap.md` に修正
+- **推奨対応**: CLAUDE.mdの参照を `documents/visions/blueprints/project-roadmap.md` に修正
 
 #### ℹ️ Info: 変数的な参照
 - `documents/agents/status/{agent}.md` の{agent}部分は変数的参照のため問題なし

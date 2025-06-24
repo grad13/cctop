@@ -37,8 +37,8 @@
 | **documents/records/reports/** | RWCDM | RWCDM | RWCDM | RWCDM | RWCDM | 分析レポート・実施履歴 |
 | **documents/records/bugs/** | RWCDM | RWCDM | RWC | RWCDM | RWCDM | バグ記録（Builder/Validator主管） |
 | **documents/rules/meta/** | R | R | RWC | RWCDM | R | メタ管理（Clerk主管、Architect設計） |
-| **documents/techs/specifications/** | RWC | RWC | RWCDM | RWC | R | 仕様書（Architect主管） |
-| **documents/techs/roadmaps/** | RWC | RWC | RWCDM | RWC | R | ロードマップ（Architect主管） |
+| **documents/visions/specifications/** | RWC | RWC | RWCDM | RWC | R | 仕様書（Architect主管） |
+| **documents/visions/blueprints/** | RWC | RWC | RWCDM | RWC | R | 設計図・ロードマップ（Architect主管） |
 | **passage/handoffs/** | RWCDM | RWCDM | RWCDM | RWCDM | R | エージェント間受け渡し（REP-0022・REP-0075） |
 | **passage/externals/** | R | R | R | RWCDM | R | 外部システム連携（Clerk管理） |
 | **surveillance/** | - | - | - | R | RWCDM | 監視システム（Inspector専用） |
@@ -74,8 +74,8 @@
 
 #### Architect Agent
 - ✅ システム設計・アーキテクチャ決定権限
-- ✅ documents/techs/specifications/主管権限
-- ✅ documents/techs/roadmaps/主管権限
+- ✅ documents/visions/specifications/主管権限
+- ✅ documents/visions/blueprints/主管権限
 - ✅ src/への設計観点での編集権限（実装はBuilder）
 - ✅ documents/rules/meta/への設計関連提案権限
 - ✅ handoffs/システムによる他エージェント連携
@@ -92,7 +92,7 @@
 #### Inspector Agent
 - ✅ surveillance/内での全権限（コード・文書含む）
 - ✅ surveillance/docs/への仕様書作成権限
-- ❌ documents/techs/specifications/への書き込み禁止
+- ❌ documents/visions/specifications/への書き込み禁止
 - ❌ documentsでのpatternsコマンド使用禁止（P013）
 - ❌ Git書き込み操作禁止
 
@@ -104,7 +104,7 @@
 
 ### 2. 共同編集エリア
 - documents/records/: 全Agent完全編集可（記録系一元化）
-- documents/techs/specifications/, roadmaps/: Architect主管、Builder/Validator/Clerk共同編集可
+- documents/visions/specifications/, blueprints/: Architect主管、Builder/Validator/Clerk共同編集可
 - handoffs/: 全Agent（タスク受け渡し、Inspector読み取りのみ）
 
 ### 3. 専用エリア
@@ -114,7 +114,7 @@
 - CLAUDE.md: Clerk専用（DDD1）
 - src/: Builder主管（Architect設計編集可、Validator読み取り）
 - tests/, dist/, build/: Validator主管
-- documents/techs/specifications/, roadmaps/: Architect主管
+- documents/visions/specifications/, blueprints/: Architect主管
 
 ### 4. 読み取り専用
 - .git/: 全Agent読み取りのみ

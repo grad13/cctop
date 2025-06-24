@@ -99,6 +99,22 @@ PLAN-YYYYMMDD-XXX-brief-description.md
 **規模**: 1.5時間の調査作業  
 **含まれるもの**: ペア組み合わせテスト、根本原因分析、修正提案
 
+### PLAN-20250624-007: specifications/内部整理計画
+**ファイル**: `PLAN-20250624-007-specifications-internal-reorganization.md`  
+**目的**: documents/visions/specifications/ の構造整理・カテゴリ最適化  
+**ステータス**: 実行完了  
+**重要性**: 中（文書管理改善）  
+**規模**: 実際の作業時間：約2時間  
+**結果**: 18ファイル分類完了、3新規ディレクトリ作成、技術部品カタログ化実現
+
+### PLAN-20250624-008: specifications/内容統廃合計画
+**ファイル**: `PLAN-20250624-008-specifications-content-consolidation.md`  
+**目的**: documents/visions/specifications/ の内容統廃合・技術部品品質向上  
+**ステータス**: 計画書作成完了・実行承認待ち  
+**重要性**: 高（品質向上・重複排除）  
+**規模**: 7-9時間の統廃合作業  
+**含まれるもの**: 8件重複統合、5件配置修正、品質向上、参照整合性確保
+
 ## 計画書のライフサイクル
 
 ### 1. 計画立案

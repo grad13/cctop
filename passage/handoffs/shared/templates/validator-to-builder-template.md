@@ -15,7 +15,8 @@
 **Priority**: [Critical/High/Medium/Low]  
 **Type**: [Bugfix/Improvement/Clarification/Refactor]  
 **Created**: YYYY-MM-DD HH:MM  
-**Related Handoff**: [Original implementation handoff ID]
+**Related Handoff**: [Original implementation handoff ID]  
+**Git Repository**: [子git/親git] - P045準拠で修正対象gitを明示
 
 ## 🐛 Issue Summary
 
@@ -74,9 +75,11 @@
 
 ## 📁 Affected Files/Components
 
-- `path/to/file1.js` - [Issue description]
-- `path/to/file2.php` - [Issue description]
+- `path/to/file1.js` - [Issue description] *(子git)*
+- `path/to/file2.php` - [Issue description] *(子git)*
 - [Database/Configuration changes needed]
+
+**Git Operations**: 修正作業は[子git/親git]で実行。CHK006確認後にコミットすること。
 
 ## 💡 Suggested Solutions
 

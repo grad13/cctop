@@ -15,7 +15,8 @@
 **Priority**: [High/Medium/Low]  
 **Type**: [Feature/Bugfix/Enhancement/Hotfix]  
 **Created**: YYYY-MM-DD HH:MM  
-**Deadline**: [If applicable]
+**Deadline**: [If applicable]  
+**Git Repository**: [子git/親git] - P045準拠でコミット先を明示
 
 ## 📋 Implementation Summary
 
@@ -24,14 +25,16 @@
 ## 🔧 Technical Changes
 
 ### Modified Files
-- `path/to/file1.js` - [Description of changes]
-- `path/to/file2.php` - [Description of changes]
+- `path/to/file1.js` - [Description of changes] *(子git)*
+- `path/to/file2.php` - [Description of changes] *(子git)*
 
 ### Added Files
-- `path/to/newfile.js` - [Purpose and functionality]
+- `path/to/newfile.js` - [Purpose and functionality] *(子git)*
 
 ### Deleted Files
-- `path/to/oldfile.js` - [Reason for deletion]
+- `path/to/oldfile.js` - [Reason for deletion] *(子git)*
+
+**Git Operations**: 変更は[子git/親git]でコミット完了。P045・CHK006に準拠して実行済み。
 
 ### Database Changes
 - [Any schema changes, migrations, or data updates]

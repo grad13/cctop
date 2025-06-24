@@ -153,7 +153,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Phase 1 (r002)**: 基本機能実装完了
 - **Phase 2以降**: パフォーマンス検証、高度な分析機能の実装予定
 
-**詳細仕様**: `documents/techs/specifications/cctop/` を参照
+**詳細仕様**: `documents/visions/specifications/cctop/` を参照
 
 ## 開発コマンド
 

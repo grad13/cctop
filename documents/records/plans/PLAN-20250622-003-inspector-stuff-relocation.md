@@ -21,21 +21,21 @@ documents/records/inspector-stuff/
 ### 内容分類
 
 #### 1. **cctop技術仕様書** (`docs/specifications/`)
-- **配置先**: `documents/techs/specifications/`
+- **配置先**: `documents/visions/specifications/`
 - **内容**: 
   - database/ - SQLite3スキーマ・設計
   - cli-ui/ - CLI UI設計
   - cache/ - キャッシュ戦略
   - test-strategy.md - テスト戦略
-- **理由**: documents/techs/specifications/は技術仕様の標準配置場所
+- **理由**: documents/visions/specifications/は技術仕様の標準配置場所
 
 #### 2. **cctop開発計画書** (`docs/plans/`)
-- **配置先**: `documents/techs/roadmaps/`  
+- **配置先**: `documents/visions/blueprints/`  
 - **内容**:
   - ip005-development-surveillance-v3-phased-plan.md
   - ip008-cctop-v3-development-roadmap.md
   - Phase別実装計画書
-- **理由**: documents/techs/roadmaps/は開発計画の標準配置場所
+- **理由**: documents/visions/blueprints/は開発計画の標準配置場所
 
 #### 3. **cctop開発記録** (`docs/reports/`)
 - **配置先**: `documents/records/reports/`（新規作成済み）

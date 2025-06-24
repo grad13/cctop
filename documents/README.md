@@ -33,7 +33,7 @@ documents/
 │       ├── clerk.md       # Clerk Agent作業記録
 │       ├── inspector.md   # Inspector Agent作業記録
 │       └── validator.md   # Validator Agent作業記録
-├── techs/                 # 技術文書（Architect主管）
+├── visions/               # 技術文書（Architect主管）
 │   ├── roadmaps/          # 開発計画・将来構想
 │   │   ├── README.md      # ロードマップ管理概要
 │   │   ├── project-roadmap.md # 全体ロードマップ
@@ -78,7 +78,7 @@ documents/
 - **2025年6月17日**: `meta/hypotheses/`、`records/experiments/` → 完全廃止・アーカイブ完了
 - **2025年6月19日**: **REP-0085大規模再編実施**
   - `roles/`、`status/` → `agents/`に統合（エージェント関連）
-  - `roadmaps/`、`specifications/` → `techs/`に統合（技術文書）
+  - `roadmaps/`、`specifications/` → `visions/`に統合（技術文書）
   - `dominants/`、`meta/` → `rules/`に統合（ルール文書）  
   - `archive/` → `archives/`にリネーム（L3長期保存）
 
@@ -95,8 +95,8 @@ documents/
 3. **インシデント**: [records/incidents/](/documents/records/incidents/)
 
 ### 🔧 開発・仕様確認
-1. **システム仕様**: [specifications/](/documents/techs/specifications/)
-2. **開発計画**: [roadmaps/](/documents/techs/roadmaps/)
+1. **システム仕様**: [specifications/](/documents/visions/specifications/)
+2. **開発計画**: [blueprints/](/documents/visions/blueprints/)
 3. **プロトコル**: [meta/protocols/](/documents/rules/meta/protocols/)
 
 ### 🔬 改善・管理
@@ -110,14 +110,14 @@ documents/
 
 ### 基本原則（新構造）
 - **エージェント関連** → `agents/`（roles/権限定義 + status/進捗記録）
-- **技術文書** → `techs/`（roadmaps/計画 + specifications/仕様）
+- **技術文書** → `visions/`（blueprints/設計図 + specifications/仕様）
 - **ルール文書** → `rules/`（dominants/原則 + meta/プロトコル）
 - **記録系** → `records/`（L2アクティブ記録・全Agent編集可）
 - **長期保存** → `archives/`（L3アーカイブ・P043準拠）
 
 ### 判断基準（新構造）
 1. **エージェント権限・進捗** → agents/
-2. **技術仕様・計画** → techs/
+2. **技術仕様・計画** → visions/
 3. **ルール・プロトコル** → rules/
 4. **時系列で蓄積される記録** → records/
 5. **長期保存・アーカイブ** → archives/
@@ -126,7 +126,7 @@ documents/
 
 - **文書管理ルール**: P017/P019/P022に分解統合済み（旧H030）
 - **Agent権限マトリックス**: [P016](/documents/rules/meta/protocols/p016-agent-permission-matrix.md)
-- **用語集**: [glossary.md](/documents/techs/specifications/terminology/glossary.md)
+- **用語集**: [glossary.md](/documents/visions/specifications/terminology/glossary.md)
 
 ---
 

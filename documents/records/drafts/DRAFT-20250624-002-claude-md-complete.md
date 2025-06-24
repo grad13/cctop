@@ -98,8 +98,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `documents/rules/meta/checklists/`
 - `documents/records/reports/`
 - `documents/records/incidents/`
-- `documents/techs/specifications/`
-- `documents/techs/roadmaps/`
+- `documents/visions/specifications/`
+- `documents/visions/roadmaps/`
 - 各エージェントディレクトリ（agents/roles/, agents/status/）
 
 **理念**: 「directory操作 = README.md更新」を一体の作業として扱う

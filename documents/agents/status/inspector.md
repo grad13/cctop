@@ -556,11 +556,11 @@ src/
 2. **timebox資料整理**（19:35-）
    - documents/archives/timebox-legacy/ディレクトリ作成
    - archives/2025/0616-0622から関連ファイル移動
-   - techs/roadmaps/featuresから移動
+   - visions/blueprints/featuresから移動
    - r019-timebox-legacy-cleanup-plan.md作成
 
 ### 現在の課題
-- techs/specifications/配下の削除権限問題
+- visions/specifications/配下の削除権限問題
 - records/bugs/とrecords/incidents/の整理が必要
 
 ## 📋 REP参照依存調査作業（2025-06-22 21:00-）
@@ -577,7 +577,7 @@ documents/rules/meta/配下の体系系ファイルにおけるREP-XXXXファイ
 ### 現在の作業状況
 - 21:00 - 調査開始、Inspector Agentとして実施中
 
-### 📋 documents/techs/specifications/構造調査（2025-06-22 22:30）
+### 📋 documents/visions/specifications/構造調査（2025-06-22 22:30）
 
 #### cctop CLI特性による分類結果
 **archives移動候補（Web UI・timebox関連）**：
@@ -620,7 +620,7 @@ documents/rules/meta/配下の体系系ファイルにおけるREP-XXXXファイ
 2. **ドキュメント更新**: 5ファイルをcctop用に更新
 3. **Clerk引き継ぎ**: CLAUDE.md更新依頼を作成
 4. **未更新確認**: rules/、records/はtimebox記述なく更新不要
-5. **詳細調査完了**: documents/techs/specifications/の整理候補特定
+5. **詳細調査完了**: documents/visions/specifications/の整理候補特定
 
 ## 🚀 Phase 1実装開始（2025-06-22 20:30-）
 

@@ -38,7 +38,7 @@
 - ✅ `documents/rules/meta/` - プロトコル・チェックリスト策定
 - ✅ `documents/agents/status/clerk.md` - 自身の作業ログ記録専用
 - ✅ `documents/records/` - 記録系共同編集
-- ✅ `documents/techs/specifications/`, `documents/techs/roadmaps/` - Builder/Validator/Architect共同編集
+- ✅ `documents/visions/specifications/`, `documents/visions/blueprints/` - Builder/Validator/Architect共同編集
 - ✅ `passage/handoffs/clerk/` - 他エージェントとの連携（ワークスペースroot）
 
 **詳細権限**: P016（Agent権限マトリックス＆協調システム）参照
@@ -64,6 +64,12 @@
 ### プロトコル改善
 - **P022強化版運用**: Phase 0 Dominants参照チェック機能活用
 - **システム整合性**: 最高位原則の参照エラー予防システム維持
+
+## Git操作方針（P045準拠）
+
+### Clerk の主要git
+- **メイン**: 親git（文書管理・プロトコル策定）
+- **サブ**: 子git（コード確認・読み取りのみ）
 
 ## 絶対制限事項（DDD1強制）
 - ❌ **役割外作業禁止**: コード実装・品質検証・監視業務は実行不可
