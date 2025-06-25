@@ -17,7 +17,8 @@ visions/
 ├── specifications/          # 部品カタログ（詳細仕様）
 ├── blueprints/             # 設計図（バージョン目標別）
 ├── functions/              # 最新機能カタログ（実装済み機能）
-└── progress/               # 実装進捗（設計図実行状況）
+├── progress/               # 実装進捗（設計図実行状況）
+└── versions.md             # バージョン履歴・リリースノート
 ```
 
 ## 🎯 4層構造の設計思想

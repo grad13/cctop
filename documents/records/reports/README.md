@@ -38,6 +38,8 @@ REP-XXXX-title.md
 | REP-0089-screen-flicker-investigation.md | 2025-06-23 | 画面フリッカー問題調査分析 | 活動中 |
 | REP-0090-test-isolation-pair-debugging.md | 2025-06-24 | テスト分離問題のペアデバッグ記録 | 活動中 |
 | REP-0091-test-async-interference-investigation.md | 2025-06-24 | テスト非同期干渉問題の調査 | 活動中 |
+| REP-0098-bp000-test-environment-critical-analysis.md | 2025-06-25 | BP-000テスト環境の根本問題分析レポート | 活動中 |
+| REP-0099-lost-refind-event-design-rationale.md | 2025-06-25 | Lost/Refindイベント設計思想の記録 | 活動中 |
 
 ## 📁 アーカイブされたレポート（archives/）
 
@@ -100,8 +102,8 @@ REP-XXXX-title.md
 ### 番号体系について
 - **正常動作**: REP番号に欠番が存在するのは正常（アーカイブ移行により発生）
 - **採番ルール**: 新規レポートは欠番を埋めず、常に最新番号+1を使用
-- **現在番号**: REP-0091（最新）
-- **次回番号**: REP-0092-（次回新規レポート用）
+- **現在番号**: REP-0099（最新）
+- **次回番号**: REP-0100-（次回新規レポート用）
 
 ### 検索・参照方法
 - **現在のレポート**: このディレクトリ内のファイル

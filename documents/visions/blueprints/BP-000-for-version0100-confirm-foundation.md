@@ -112,6 +112,18 @@ const schema = {
       description TEXT
     )`,
   
+  // Initial data for event_types
+  event_types_init: `
+    INSERT INTO event_types (code, name, description) VALUES
+      ('find', 'Find', 'File discovered during initial scan'),
+      ('create', 'Create', 'New file created'),
+      ('modify', 'Modify', 'File content modified'),
+      ('delete', 'Delete', 'File deleted'),
+      ('move', 'Move', 'File moved/renamed'),
+      ('lost', 'Lost', 'File detected as missing on startup'),
+      ('refind', 'Refind', 'Previously lost file rediscovered')
+  `,
+  
   object_fingerprint: `
     CREATE TABLE object_fingerprint (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -350,12 +362,15 @@ this.watcher = chokidar.watch(config.paths, {
 ```javascript
 // 初期スキャン状態管理
 let isReady = false;
-watcher.on('ready', () => {
+watcher.on('ready', async () => {
   isReady = true;
   console.log('Initial scan complete');
+  
+  // Scan for lost files after initial scan
+  await scanForLostFiles();
 });
 
-// イベント変換テーブル（r002準拠）
+// Event conversion table (r002 compliant)
 const eventMapping = {
   'add': (stats) => isReady ? 'create' : 'find',
   'change': () => 'modify',
@@ -363,6 +378,21 @@ const eventMapping = {
   'addDir': (stats) => isReady ? 'create' : 'find',
   'unlinkDir': () => 'delete'
 };
+
+// Scan for lost files on startup
+async function scanForLostFiles() {
+  const liveFiles = await databaseManager.getLiveFiles(); // deleted = false
+  for (const file of liveFiles) {
+    if (!fs.existsSync(file.file_path)) {
+      await eventProcessor.recordEvent('lost', file.object_id, {
+        file_path: file.file_path,
+        file_name: file.file_name,
+        directory: file.directory,
+        timestamp: Date.now()
+      });
+    }
+  }
+}
 
 // メタデータ収集（r002準拠）
 async function collectMetadata(targetPath, stats) {
@@ -376,6 +406,24 @@ async function collectMetadata(targetPath, stats) {
     inode: stats.ino || null,
     is_directory: isDirectory
   };
+}
+
+// Object ID management for proper inheritance
+async function getObjectId(filePath, stats, eventType) {
+  if (eventType === 'delete') {
+    // For delete events: search for existing object_id by file path
+    const existing = await databaseManager.findByPath(filePath);
+    return existing?.object_id || null;
+  } else if (stats?.ino) {
+    // When inode is available: check for refind scenario
+    const existing = await databaseManager.findByInode(stats.ino);
+    if (existing && existing.latest_event === 'lost') {
+      // Record as refind event
+      return { objectId: existing.object_id, isRefind: true };
+    }
+  }
+  // Generate new object_id for truly new files
+  return await databaseManager.createNewObjectId(stats?.ino);
 }
 ```
 
@@ -454,6 +502,8 @@ All Activities  Cached Events: 3/156
 - modify: デフォルト（色なし）
 - move: シアン（chalk.cyan）
 - delete: グレー（chalk.gray）
+- lost: 暗い赤（chalk.red.dim）
+- refind: 明るい黄（chalk.yellowBright）
 
 ### Phase 5: 統合・検証（1日）- 実動作駆動開発（Running-Driven Development: RDD）に基づく実動作確認
 

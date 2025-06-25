@@ -32,21 +32,27 @@ FUNC-003-configuration-management.md
 ### 現在のファイル一覧
 | ファイル | 機能 | Phase | 優先度 |
 |---------|------|-------|---------|
-| FUNC-001-database-schema-foundation.md | データベーススキーマ基盤 | Legacy | 最高 |
-| FUNC-002-chokidar-db-integration.md | chokidar-DB統合テスト | Legacy | 最高 |
+| **FUNC-000-sqlite-database-foundation.md** | **SQLiteデータベース基盤管理** | **Core** | **最高** |
+| **FUNC-001-file-lifecycle-tracking.md** | **ファイルライフサイクル追跡機能** | **Core** | **最高** |
+| **FUNC-002-east-asian-width-display.md** | **East Asian Width対応表示機能** | **Core** | **最高** |
 | FUNC-003-advanced-configuration-system.md | 高度設定システム | Legacy | 高 |
 | FUNC-004-cli-ui-baseline.md | CLI UI基盤 | Legacy | 高 |
 | FUNC-005-stream-display-system.md | ストリーム表示システム | Legacy | 高 |
 | FUNC-006-basic-configuration-management.md | 基本設定管理 | Legacy | 中 |
 | FUNC-007-post-install-setup.md | インストール後セットアップ | Legacy | 中 |
 | FUNC-008-monitor-foundation-vision.md | 監視基盤ビジョン | Legacy | 中 |
-| **FUNC-010-sqlite-database-foundation.md** | **SQLiteデータベース基盤管理** | **Phase 1** | **最高** |
 | **FUNC-011-chokidar-database-integration.md** | **chokidar-Database統合監視** | **Phase 1** | **最高** |
 | **FUNC-012-cli-display-integration.md** | **CLI表示統合機能** | **Phase 1** | **最高** |
 | **FUNC-013-hierarchical-config-management.md** | **階層的設定管理機能** | **Phase 2** | **高** |
 | **FUNC-014-postinstall-auto-initialization.md** | **postinstall自動初期化機能** | **Phase 2** | **高** |
 | **FUNC-015-performance-monitoring.md** | **パフォーマンス監視機能** | **Phase 3** | **中** |
 | **FUNC-016-config-migration.md** | **設定マイグレーション機能** | **Phase 3** | **中** |
+| **FUNC-018-double-buffer-rendering.md** | **二重バッファ描画機能** | **Phase 1** | **高** |
+| **FUNC-019-inotify-limit-management.md** | **inotify上限管理機能** | **Phase 2** | **高** |
+| **FUNC-020-event-type-filtering.md** | **イベントタイプフィルタリング機能** | **Phase 1** | **高** |
+| **FUNC-021-display-color-customization.md** | **表示色カスタマイズ機能** | **Phase 2** | **中** |
+| **FUNC-022-local-global-storage-management.md** | **ローカル・グローバル設定管理機能** | **Phase 1** | **高** |
+| **FUNC-024-plugin-architecture.md** | **プラグインアーキテクチャ** | **Phase 2** | **中** |
 
 ### バージョン管理
 - **1機能1ファイル**: 機能毎に独立したファイル
