@@ -11,10 +11,11 @@
 
 ```
 records/
-├── incidents/   # インシデント記録
-├── reports/     # 分析レポート・実施履歴
 ├── bugs/        # バグ記録（Builder/Validator主管）
-└── plans/       # プロジェクト計画書（2025年6月22日追加）
+├── drafts/      # ドラフト文書（正式適用前）
+├── incidents/   # インシデント記録
+├── plans/       # プロジェクト計画書（2025年6月22日追加）
+└── reports/     # 分析レポート・実施履歴
 ```
 
 ## 🎯 配置基準
@@ -43,6 +44,13 @@ records/
 - **用途**: バグトラッキング（P011準拠）
 - **更新**: 2025年6月18日に5エージェント体制対応
 
+### drafts/
+- **内容**: 正式適用前のドラフト文書
+- **作成者**: 全Agent
+- **命名**: `DRAFT-YYYYMMDD-XXX-title.md`
+- **用途**: CLAUDE.md更新案、プロトコル草案等の一時保管
+- **追加**: 2025年6月23日新設
+
 ### plans/
 - **内容**: 大規模プロジェクト計画・移行計画・改善計画
 - **主管**: Architect Agent（計画立案）
@@ -67,6 +75,7 @@ records/
 
 ## 更新履歴
 
+- 2025年6月26日: drafts/ディレクトリ追加、records/draft（誤作成）を統合（Clerk Agent）
 - 2025年6月22日: plans/ディレクトリ追加、大規模計画書管理開始（Architect Agent）
 - 2025年6月17日 23:59: experiments/ディレクトリ廃止、archive/experiments-legacy/に移動（Clerk Agent）
 - 2025年6月15日: 初版作成（records統合に伴う）
