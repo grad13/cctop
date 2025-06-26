@@ -5,6 +5,43 @@ cctopの開発における各バージョンの主要な変更点と改善内容
 
 ---
 
+## v0.2.0.0 (開発中)
+### 🚀 データベース基盤刷新と機能強化
+
+**開発開始**: 2025年6月26日  
+**計画文書**: [BP-001](blueprints/BP-001-for-version0200-restructered.md)  
+**実装方針**: 既存v0.1.xコードの改修（2,434行を基盤として活用）
+
+**主要改善点**:
+- **データベース基盤刷新** ([FUNC-000](functions/FUNC-000-sqlite-database-foundation.md))
+  - 5テーブル構成への移行（events, event_types, files, measurements, aggregates）
+  - inode再利用問題への対応（UNIQUE制約なし設計）
+  - WALモード・トランザクション管理の強化
+
+- **ファイルライフサイクル追跡強化** ([FUNC-001](functions/FUNC-001-file-lifecycle-tracking.md))
+  - 6イベントタイプの完全サポート（find/create/modify/delete/move/restore）
+  - ファイル同一性管理（file_id再利用システム）
+  - メタデータ完全性の保証
+
+- **新機能追加**
+  - イベントタイプフィルタリング ([FUNC-023](functions/FUNC-023-event-type-filtering.md))
+  - postinstall自動初期化 ([FUNC-013](functions/FUNC-013-postinstall-auto-initialization.md))
+  - レスポンシブディレクトリ表示強化 ([FUNC-024](functions/FUNC-024-responsive-directory-display.md))
+
+- **設定システム改善** ([FUNC-010](functions/FUNC-010-local-global-storage-management.md)/[011](functions/FUNC-011-hierarchical-config-management.md))
+  - ローカル優先設定（.cctop/config.json）
+  - グローバル設定オプション（--global）
+  - 階層的設定管理
+
+**技術的改善**:
+- chokidar統合の最適化（初期スキャンとリアルタイム監視の明確な区別）
+- 二重バッファ描画とEast Asian Width対応の統合
+- テスト駆動開発の徹底（機能追加時のテスト必須化）
+
+**推定完成**: 3-4日（Builder/Validatorによる実装中）
+
+---
+
 ## v0.1.3.0 (2025-06-25)
 ### 🎨 二重バッファ描画機能実装
 
