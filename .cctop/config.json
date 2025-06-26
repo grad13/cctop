@@ -7,10 +7,8 @@
     "excludePatterns": [
       "**/node_modules/**",
       "**/.git/**",
-      "**/.DS_Store",
-      "**/.cctop/**",
-      "**/coverage/**",
-      "**/*.log"
+      "**/.*",
+      "**/.cctop/**"
     ],
     "debounceMs": 100,
     "maxDepth": 10,
@@ -30,11 +28,17 @@
     }
   },
   "database": {
-    "path": "/Users/takuo-h/.cctop/activity.db",
+    "path": "./.cctop/activity.db",
     "mode": "WAL"
   },
   "display": {
     "maxEvents": 20,
-    "refreshRateMs": 100
+    "refreshRateMs": 100,
+    "statusArea": {
+      "maxLines": 3,
+      "enabled": true,
+      "scrollSpeed": 200,
+      "updateInterval": 5000
+    }
   }
 }

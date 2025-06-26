@@ -147,6 +147,29 @@ INSERT INTO event_types (code, name, description) VALUES
 - **キャッシュサイズ**: 64MB（大量データ処理対応）
 - **一時ストレージ**: メモリ使用
 
+### **生成ファイル仕様**
+
+#### メインデータベース
+- **activity.db**: 主要データベースファイル（SQLスキーマ・データ）
+
+#### WALモード関連ファイル
+- **activity.db-wal**: Write-Ahead Logファイル（トランザクション中間記録）
+- **activity.db-shm**: Shared Memoryファイル（WALインデックス・同期制御）
+
+#### ファイル管理仕様
+```
+.cctop/ または ~/.cctop/
+├── activity.db      # メインDBファイル（永続保存）
+├── activity.db-wal  # WALファイル（SQLite自動生成）
+└── activity.db-shm  # SHMファイル（SQLite自動生成）
+```
+
+**重要事項**:
+- **WAL/SHMファイル**: SQLiteが自動生成・管理（手動削除禁止）
+- **運用考慮**: バックアップ時はactivity.dbのみを対象とする
+- **終了時処理**: cctop正常終了時にWAL/SHMファイルは自動削除
+- **異常終了**: WAL/SHMファイル残存時は次回起動で自動処理
+
 ## 🔍 統合対象（重複解消）
 
 ### **"activity.db"記述の統合**

@@ -42,13 +42,14 @@ FUNC-003-configuration-management.md
 | FUNC-002-chokidar-database-integration.md | chokidar-Database統合監視 |
 
 ### 1-Configuration & Settings
-| ファイル | 機能 |
-|---------|------|
-| FUNC-100-local-global-storage-management.md | ローカル・グローバル設定管理 |
-| FUNC-101-hierarchical-config-management.md | 階層的設定管理 |
-| FUNC-102-file-watch-limit-management.md | ファイル監視上限管理 |
-| FUNC-103-postinstall-auto-initialization.md | postinstall自動初期化 |
-| FUNC-104-cli-interface-specification.md | CLIインターフェース統合仕様 |
+| ファイル | 機能 | ステータス |
+|---------|------|----------|
+| ~~FUNC-100-local-global-storage-management.md~~ | ~~ローカル・グローバル設定管理~~ | **Deprecated** |
+| FUNC-101-hierarchical-config-management.md | 階層的設定管理 | Active |
+| FUNC-102-file-watch-limit-management.md | ファイル監視上限管理 | Active |
+| ~~FUNC-103-postinstall-auto-initialization.md~~ | ~~postinstall自動初期化~~ | **Deprecated** |
+| FUNC-104-cli-interface-specification.md | CLIインターフェース統合仕様 | Active |
+| **FUNC-105-local-setup-initialization.md** | **ローカル設定・初期化** | **Active** |
 
 ### 2-View & Display
 | ファイル | 機能 |
@@ -63,7 +64,7 @@ FUNC-003-configuration-management.md
 ### 3-Extension
 | ファイル | 機能 |
 |---------|------|
-| - | - |
+| FUNC-300-background-activity-monitor.md | バックグラウンド監視モード |
 
 ## 📊 管理方針
 
@@ -132,7 +133,7 @@ FUNC-003-configuration-management.md
   - Core: FUNC-000,001,002
   - Configuration: FUNC-100,101,102,103,104
   - View: FUNC-200,201,202,203,204,205
-  - Extension: 現在なし（FUNC-205がView配置）
+  - Extension: FUNC-300 - バックグラウンド監視モード
 - **Draft機能分離**: FUNC-900,901,903,904をpilots/に移行
 - **管理方針変更**: Active/Draft混在問題の構造的解決
 

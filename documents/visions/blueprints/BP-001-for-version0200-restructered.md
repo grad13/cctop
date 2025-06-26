@@ -15,21 +15,23 @@
 - ファイルライフサイクル追跡の強化
 - イベントタイプフィルタリング機能
 - postinstall自動初期化による導入の簡素化
+- バックグラウンド監視モード（Monitor/Viewer分離アーキテクチャ）
 
 ## 📊 実装スコープ
 
 ### 含まれるもの
 1. **データベース基盤**（[FUNC-000](../../functions/FUNC-000-sqlite-database-foundation.md)準拠）
 2. **ファイルライフサイクル追跡**（[FUNC-001](../../functions/FUNC-001-file-lifecycle-tracking.md)準拠）
-3. **設定システム**（[FUNC-010/011](../../functions/FUNC-010-local-global-storage-management.md)準拠）
+3. **設定システム**（[FUNC-105/101](../../functions/func-105-local-setup-initialization.md)準拠）
 4. **chokidar統合**（[FUNC-002](../../functions/FUNC-002-chokidar-database-integration.md)準拠）
-5. **CLI表示**（[FUNC-022](../../functions/FUNC-022-cli-display-integration.md)準拠）
+5. **CLI表示**（[FUNC-202](../../functions/FUNC-202-cli-display-integration.md)準拠）
 6. **表示機能拡張**:
-   - East Asian Width対応（[FUNC-020](../../functions/FUNC-020-east-asian-width-display.md)）
-   - 二重バッファ描画（[FUNC-021](../../functions/FUNC-021-double-buffer-rendering.md)）
-   - レスポンシブディレクトリ表示（[FUNC-024](../../functions/FUNC-024-responsive-directory-display.md)）
-7. **イベントフィルタリング**（[FUNC-023](../../functions/FUNC-023-event-type-filtering.md)準拠）
-8. **自動初期化**（[FUNC-013](../../functions/FUNC-013-postinstall-auto-initialization.md)準拠）
+   - East Asian Width対応（[FUNC-200](../../functions/FUNC-200-east-asian-width-display.md)）
+   - 二重バッファ描画（[FUNC-201](../../functions/FUNC-201-double-buffer-rendering.md)）
+   - レスポンシブディレクトリ表示（[FUNC-204](../../functions/FUNC-204-responsive-directory-display.md)）
+7. **イベントフィルタリング**（[FUNC-203](../../functions/FUNC-203-event-type-filtering.md)準拠）
+8. **自動初期化**（[FUNC-105](../../functions/func-105-local-setup-initialization.md)準拠）
+9. **バックグラウンド監視**（[FUNC-300](../../functions/FUNC-300-background-activity-monitor.md)準拠）
 
 ### 含まれないもの
 - プラグインシステム（FUNC-901）
@@ -100,14 +102,12 @@ cctop/
 └── package.json
 ```
 
-### 設定ディレクトリ（[FUNC-010](../../functions/FUNC-010-local-global-storage-management.md)準拠）
+### 設定ディレクトリ（[FUNC-105](../../functions/func-105-local-setup-initialization.md)準拠）
 ```
-.cctop/                     # カレントディレクトリ配下（デフォルト）
+.cctop/                     # カレントディレクトリ配下
 ├── config.json            # メイン設定ファイル（ネスト構造）
 ├── plugin/                # プラグイン用（v0.2.0.0では未使用）
 └── activity.db            # データベースファイル
-
-# --globalオプション時は ~/.cctop/ を使用
 ```
 
 ## 🔄 実装フェーズ
@@ -116,31 +116,31 @@ cctop/
 
 #### 1.1 プロジェクトセットアップ
 - package.json更新（依存関係追加）
-  - postinstallスクリプトの設定（[FUNC-013](../../functions/FUNC-013-postinstall-auto-initialization.md)参照）
+  - postinstallスクリプトの設定（[FUNC-105](../../functions/func-105-local-setup-initialization.md)参照）
 - ディレクトリ構造作成
 - bin/cctop実行ファイル作成
-- 設定ファイルの初期化（[FUNC-010/011](../../functions/FUNC-010-local-global-storage-management.md)参照）
+- 設定ファイルの初期化（[FUNC-105](../../functions/func-105-local-setup-initialization.md)参照）
 
 #### 1.2 データベース実装（[FUNC-000](../../functions/FUNC-000-sqlite-database-foundation.md)準拠）
 - 5テーブル構成（event_types, files, events, measurements, aggregates）
 - SQLite WALモードでの運用
 - 実装例: [CG-003: Database Schema実装ガイド](../code-guides/CG-003-database-schema-implementation.md)
 
-#### 1.3 設定システム基本実装（[FUNC-010/011](../../functions/FUNC-010-local-global-storage-management.md)準拠）
+#### 1.3 設定システム基本実装（[FUNC-105](../../functions/func-105-local-setup-initialization.md)準拠）
 
 **設定システムの基本方針**:
-- ローカル優先（`.cctop/config.json`）
-- `--global`オプションでグローバル切り替え
-- 設定ファイルの詳細構造は[FUNC-010/011]を参照
+- シンプルな設定管理（`.cctop/config.json`）
+- 自動初期化と簡単セットアップ
+- 設定ファイルの詳細構造は[FUNC-105]を参照
 - JSコード内でのハードコード禁止
 
-**監視対象ディレクトリの管理**:
-- 初回起動時に現在ディレクトリを監視対象に追加するか確認
-- 詳細な動作は[FUNC-010]を参照
+**監視対象の管理**:
+- 初回起動時にカレントディレクトリを自動設定
+- 詳細な動作は[FUNC-105]を参照
 
 **設定ファイル管理のポイント**:
-- 設定不在時は`--init`オプションの案内
-- エラーハンドリングの詳細は[FUNC-010/011]を参照
+- 設定不在時は自動初期化の実行
+- エラーハンドリングの詳細は[FUNC-105]を参照
 - 実装例: [CG-002: Config Manager実装ガイド](../code-guides/CG-002-config-manager-implementation.md)
 
 
@@ -195,9 +195,9 @@ this.watcher = chokidar.watch(config.paths, {
 
 ### Phase 4: CLI実装（1日）
 
-**CLI仕様統合**: CLI全体の仕様は **[FUNC-014: CLIインターフェース統合仕様](../functions/FUNC-014-cli-interface-specification.md)** を参照
+**CLI仕様統合**: CLI全体の仕様は **[FUNC-104: CLIインターフェース統合仕様](../functions/FUNC-104-cli-interface-specification.md)** を参照
 
-#### 4.1 基本表示機能（[FUNC-022](../../functions/FUNC-022-cli-display-integration.md)準拠）
+#### 4.1 基本表示機能（[FUNC-202](../../functions/FUNC-202-cli-display-integration.md)準拠）
 - All/Uniqueモードの切り替え
 - キーボードショートカット
 - リアルタイム更新（60fps制限）

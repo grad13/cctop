@@ -2,12 +2,12 @@
 
 **作成日**: 2025年6月26日  
 **作成者**: Architect Agent  
-**関連仕様**: [FUNC-010](../functions/FUNC-010-local-global-storage-management.md), [FUNC-011](../functions/FUNC-011-hierarchical-config-management.md)  
+**関連仕様**: [FUNC-105](../functions/func-105-local-setup-initialization.md), [FUNC-101](../functions/FUNC-101-hierarchical-config-management.md)  
 **対象バージョン**: v0.2.0.0
 
 ## 📋 概要
 
-ローカル優先の設定管理システムと、自動監視対象追加機能の実装ガイド。
+シンプルな設定管理システムと自動初期化機能の実装ガイド。
 
 ## 🔧 実装コード
 
@@ -39,20 +39,14 @@ class ConfigManager {
     return this.config;
   }
 
-  // 設定ファイルパスの解決（FUNC-010準拠）
+  // 設定ファイルパスの解決（FUNC-105準拠）
   resolveConfigPath(cliArgs) {
     if (cliArgs.config) {
       // --config で明示的に指定
       return path.resolve(cliArgs.config);
     }
     
-    if (cliArgs.global) {
-      // --global オプション時
-      const homeDir = process.env.HOME || process.env.USERPROFILE;
-      return path.join(homeDir, '.cctop', 'config.json');
-    }
-    
-    // デフォルト: ローカルディレクトリ
+    // デフォルト: カレントディレクトリの.cctop/
     return path.join(process.cwd(), '.cctop', 'config.json');
   }
 
@@ -82,7 +76,6 @@ You are not in a cctop-enabled directory.
 
 To get started:
   cctop --init     # Initialize this directory
-  cctop --global   # Use global configuration
 
 Learn more: cctop --help
 `);
@@ -123,7 +116,7 @@ Please fix the syntax error and try again.
 ${missing.map(f => `  - ${f}`).join('\n')}
 
 ${this.configPath}を確認し、不足項目を追加してください。
---initオプションでデフォルト設定を作成できます。
+自動初期化でデフォルト設定を作成できます。
 `);
       process.exit(1);
     }
@@ -190,11 +183,9 @@ ${this.configPath}を確認し、不足項目を追加してください。
     await fs.writeFile(this.configPath, configData, 'utf-8');
   }
 
-  // 初期化機能（--init オプション）
+  // 初期化機能（自動初期化）
   static async initializeNew(options = {}) {
-    const configPath = options.global 
-      ? path.join(process.env.HOME || process.env.USERPROFILE, '.cctop')
-      : path.join(process.cwd(), '.cctop');
+    const configPath = path.join(process.cwd(), '.cctop');
     
     const configFile = path.join(configPath, 'config.json');
     
@@ -273,7 +264,7 @@ async function main() {
   
   // --init オプション
   if (args.init) {
-    await ConfigManager.initializeNew({ global: args.global });
+    await ConfigManager.initializeNew();
     process.exit(0);
   }
   
@@ -289,8 +280,8 @@ async function main() {
 ## 🧪 テストのポイント
 
 1. **設定ファイルパス解決**
-   - ローカル優先の動作確認
-   - --globalオプションの動作確認
+   - デフォルトパス解決の動作確認
+   - 自動初期化の動作確認
 
 2. **エラーハンドリング**
    - ファイル不在時のメッセージ
@@ -308,6 +299,6 @@ async function main() {
 
 ## 🔗 関連ドキュメント
 
-- [FUNC-010: ローカル・グローバル設定管理](../functions/FUNC-010-local-global-storage-management.md)
-- [FUNC-011: 階層的設定管理](../functions/FUNC-011-hierarchical-config-management.md)
+- [FUNC-105: ローカル設定初期化](../functions/func-105-local-setup-initialization.md)
+- [FUNC-101: 階層的設定管理](../functions/FUNC-101-hierarchical-config-management.md)
 - [BP-001: v0.2.0.0実装計画](../blueprints/BP-001-for-version0200-restructered.md)

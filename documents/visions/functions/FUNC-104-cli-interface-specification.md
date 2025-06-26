@@ -43,11 +43,6 @@ cctop [options] [directory]
 
 ## 🔧 オプション一覧
 
-### **設定・ストレージ関連**
-| オプション | 説明 | 参照FUNC |
-|-----------|------|----------|
-| `--global` | グローバル設定（~/.cctop/）を使用 | FUNC-010 |
-| `--local` | ローカル設定（./.cctop/）を明示的に使用 | FUNC-010 |
 
 ### **監視制御関連**
 | オプション | 説明 | 参照FUNC |
@@ -82,10 +77,6 @@ cctop - Code Change Top (File Monitoring Tool)
 Usage: cctop [options] [directory]
 
 Options:
-  Storage:
-    --global              Use global configuration (~/.cctop/)
-    --local               Use local configuration (./.cctop/) [default]
-
   Monitoring:
     -d, --dir <dir>       Directory to watch [default: current]
     -t, --timeout <sec>   Timeout in seconds
@@ -149,11 +140,8 @@ cctop --dir src/
 
 ### **設定管理**
 ```bash
-# グローバル設定で起動
-cctop --global
-
-# ローカル設定を明示的に使用
-cctop --local
+# デフォルト起動
+cctop
 
 # システム制限確認
 cctop --check-limits

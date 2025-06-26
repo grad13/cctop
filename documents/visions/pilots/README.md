@@ -35,8 +35,19 @@ PIL-002-interactive-selection-mode.md
 | ファイル | 機能 | 対象バージョン | 更新日 |
 |---------|------|---------------|--------|
 | PIL-000-display-color-customization.md | 表示色カスタマイズ | 未定 | 2025-06-26 |
-| PIL-002-interactive-selection-mode.md | インタラクティブ選択モード | 0.3.0.0 | 2025-06-26 |
-| PIL-003-detailed-inspection-mode.md | 詳細検査モード | 0.3.0.0 | 2025-06-26 |
+| PIL-002-interactive-selection-mode.md | インタラクティブ選択モード | v0.3.0.0候補 | 2025-06-26 |
+| PIL-003-detailed-inspection-mode.md | 詳細検査モード | v0.3.0.0候補 | 2025-06-26 |
+
+### System & Daemon Experiments
+| ファイル | 機能 | 対象バージョン | 更新日 |
+|---------|------|---------------|--------|
+| PIL-006-daemon-status-monitoring.md | デーモン状態監視機能 | v0.3.0.0候補 | 2025-06-26 |
+| PIL-007-health-diagnostics.md | 健全性診断・自動修復機能 | v0.3.1.0候補 | 2025-06-26 |
+
+### Analytics & Reporting Experiments
+| ファイル | 機能 | 対象バージョン | 更新日 |
+|---------|------|---------------|--------|
+| PIL-005-activity-log-analytics.md | ログ分析・振り返り機能 | v0.3.1.0候補 | 2025-06-26 |
 
 ### Extension Experiments
 | ファイル | 機能 | 対象バージョン | 更新日 |
