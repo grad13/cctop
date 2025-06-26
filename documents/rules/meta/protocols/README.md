@@ -1,7 +1,7 @@
 # Protocols - 開発プロトコル・ガイドライン
 
-**最終更新**: 2025年6月24日  
-**更新内容**: P045 Git管理分離プロトコル追加  
+**最終更新**: 2025年6月26日  
+**更新内容**: P047 visions/構造分類ガイドライン追加  
 **目的**: プロジェクト全体で一貫性のある開発を実現するためのルール集  
 **H008適用**: すべてのファイル名が命名規則を遵守していることを確認済み
 
@@ -62,10 +62,12 @@
 | P043 | p043-l2-to-l3-archive-migration-protocol.md | L2→L3アーカイブ移行プロトコル（DDD2階層メンテナンス） |
 | P044 | p044-l1-l2-migration-protocol.md | L1→L2移行プロトコル（週次status整理） |
 | P045 | p045-git-management-separation-protocol.md | Git管理分離プロトコル（親git・子git境界管理） |
+| P046 | 欠番 | （P045が重複して作成されたため） |
+| P047 | p047-visions-structure-classification-guide.md | visions/構造分類ガイドライン（functions/code-guides/blueprints/） |
 
 **参照例**: 「P000を確認してください」「P007実施完了」
 
-**新規Protocol番号**: P046から（P009、P021、P023、P027はDDD2またはP022に統合済み、P032はP031に統合済み）
+**新規Protocol番号**: P048から（P009、P021、P023、P027はDDD2またはP022に統合済み、P032はP031に統合済み、P046は欠番）
 
 
 ## 📁 ファイル構成（番号順）
@@ -281,6 +283,28 @@
   - 参照正確性・内容最新性・整合性確保
   - 人的精読による品質保証
 
+- **P043: [p043-l2-to-l3-archive-migration-protocol.md](p043-l2-to-l3-archive-migration-protocol.md)** - L2→L3アーカイブ移行プロトコル
+  - DDD2階層メンテナンスの具体的実装
+  - 2週間経過＋内容精査での移行判定
+  - キーワード追加による検索継続性
+
+- **P044: [p044-l1-l2-migration-protocol.md](p044-l1-l2-migration-protocol.md)** - L1→L2移行プロトコル
+  - 週次status整理の標準手順
+  - 3日間経過での自動移行ルール
+  - Agent状態管理の最適化
+
+- **P045: [p045-git-management-separation-protocol.md](p045-git-management-separation-protocol.md)** - Git管理分離プロトコル
+  - 親git・子git境界の厳格管理
+  - ファイルパスによる機械的判定
+  - Agent別操作ガイドライン
+
+- **P046: 欠番** - （P045が重複して作成されたため）
+
+- **P047: [p047-visions-structure-classification-guide.md](p047-visions-structure-classification-guide.md)** - visions/構造分類ガイドライン
+  - functions/: 機能仕様（何をするか）
+  - code-guides/: 実装ガイド（どう作るか）
+  - blueprints/: 統合設計（全体像）
+
 ## 🎯 使い方
 
 ### 新規参加者の場合
@@ -322,7 +346,12 @@
 - 分析活動を体系化する → **P038**
 - CLAUDE.mdを最適化する → **P039**
 - 不変要素を保護する → **P040**
-- 仮説ライフサイクル管理 → **P041**
+- 仮説ライフサイクル管理 → **P041**（廃止）
+- プロトコル定期見直し → **P042**
+- L2→L3アーカイブ移行 → **P043**
+- L1→L2移行 → **P044**
+- Git管理分離 → **P045**
+- visions/構造分類 → **P047**
 
 ### 番号での簡潔参照
 - 「P007を実施してください」

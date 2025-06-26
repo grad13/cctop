@@ -28,7 +28,7 @@ BP-002-for-version0300-plugin-system.md
 ### 設計図の純粋性
 - **進捗情報禁止**: 「Phase 1完了✅」等の進捗は記載しない
 - **クリーン保持**: 設計・仕様・計画のみを記載
-- **進捗分離**: 実装進捗は`../progress/`で管理
+- **進捗管理**: 実装進捗はAgent statusで管理（`documents/agents/status/builder.md`等）
 
 ## 📁 現在のファイル
 
@@ -90,9 +90,9 @@ specifications/ui/ui001-cli-baseline.md のAll/Uniqueモードを実装
 - **参照の追加**: 新しいspecificationsが必要な場合は追加作成
 
 ### 進捗情報の分離
-- **進捗記録**: `../progress/`で管理
-- **課題・ブロッカー**: `../progress/`で記録
-- **実装ログ**: `../progress/`で時系列記録
+- **進捗記録**: Agent statusで管理（`documents/agents/status/builder.md`）
+- **課題・ブロッカー**: handoffsで連携（`passage/handoffs/`）
+- **実装ログ**: Builder/Validatorのstatus.mdで時系列記録
 
 ### バージョン移行
 - **完了確認**: 前バージョンの完全実装確認後に次バージョン設計開始

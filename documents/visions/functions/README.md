@@ -1,12 +1,14 @@
-# Functions - 機能仕様カタログ
+# Functions - Active機能仕様管理
 
 **最終更新**: 2025年6月26日  
 **管理者**: Architect Agent  
-**目的**: cctopプロジェクトの機能仕様管理  
+**目的**: cctopプロジェクトの**Active**機能仕様管理  
 
 ## 📋 概要
 
-functionsディレクトリは、cctopプロジェクトの機能仕様を管理します。各機能の詳細な仕様・実装ガイドライン・テスト要件を記載し、実装の指針となります。
+functionsディレクトリは、**Active**ステータスの確定機能仕様のみを管理します。ここに含まれる機能は実装対象として確定しており、Builder/Validatorの作業対象となります。
+
+**Draft機能**: 実験段階の機能は `pilots/` ディレクトリで管理
 
 ## 📝 命名規則
 
@@ -21,46 +23,47 @@ FUNC-003-configuration-management.md
 
 ### ヘッダー形式
 
-以下をヘッダーに追加する：
+**Active機能のヘッダー**:
 ```
 作成日: YYYY年MM月DD日 HH:MM
 更新日: YYYY年MM月DD日 HH:MM
 作成者: Agent名
-ステータス: Active/Draft/Deprecated
+ステータス: Active
 対象バージョン: X.X.X.X
 ```
 
 ## 📁 現在のファイル一覧
 
 ### 0-Core Functions
-| ファイル | 機能 | ステータス |
-|---------|------|-----------|
-| FUNC-000-sqlite-database-foundation.md | SQLiteデータベース基盤 | Active |
-| FUNC-001-file-lifecycle-tracking.md | ファイルライフサイクル追跡 | Active |
-| FUNC-002-chokidar-database-integration.md | chokidar-Database統合監視 | Active |
+| ファイル | 機能 |
+|---------|------|
+| FUNC-000-sqlite-database-foundation.md | SQLiteデータベース基盤 |
+| FUNC-001-file-lifecycle-tracking.md | ファイルライフサイクル追跡 |
+| FUNC-002-chokidar-database-integration.md | chokidar-Database統合監視 |
 
 ### 1-Configuration & Settings
-| ファイル | 機能 | ステータス |
-|---------|------|-----------|
-| FUNC-010-local-global-storage-management.md | ローカル・グローバル設定管理 | Active |
-| FUNC-011-hierarchical-config-management.md | 階層的設定管理 | Active |
-| FUNC-012-file-watch-limit-management.md | ファイル監視上限管理 | Active |
-| FUNC-013-postinstall-auto-initialization.md | postinstall自動初期化 | Active |
+| ファイル | 機能 |
+|---------|------|
+| FUNC-100-local-global-storage-management.md | ローカル・グローバル設定管理 |
+| FUNC-101-hierarchical-config-management.md | 階層的設定管理 |
+| FUNC-102-file-watch-limit-management.md | ファイル監視上限管理 |
+| FUNC-103-postinstall-auto-initialization.md | postinstall自動初期化 |
+| FUNC-104-cli-interface-specification.md | CLIインターフェース統合仕様 |
 
 ### 2-View & Display
-| ファイル | 機能 | ステータス |
-|---------|------|-----------|
-| FUNC-020-east-asian-width-display.md | East Asian Width対応表示 | Active |
-| FUNC-021-double-buffer-rendering.md | 二重バッファ描画 | Active |
-| FUNC-022-cli-display-integration.md | CLI表示統合 | Active |
-| FUNC-023-event-type-filtering.md | イベントタイプフィルタリング | Active |
-| FUNC-024-responsive-directory-display.md | レスポンシブディレクトリ表示 | Active |
-| FUNC-900-display-color-customization.md | 表示色カスタマイズ | Draft |
+| ファイル | 機能 |
+|---------|------|
+| FUNC-200-east-asian-width-display.md | East Asian Width対応表示 |
+| FUNC-201-double-buffer-rendering.md | 二重バッファ描画 |
+| FUNC-202-cli-display-integration.md | CLI表示統合 |
+| FUNC-203-event-type-filtering.md | イベントタイプフィルタリング |
+| FUNC-204-responsive-directory-display.md | レスポンシブディレクトリ表示 |
+| FUNC-205-status-display-area.md | ステータス表示エリア |
 
 ### 3-Extension
-| ファイル | 機能 | ステータス |
-|---------|------|-----------|
-| FUNC-901-plugin-architecture.md | プラグインアーキテクチャ | Draft |
+| ファイル | 機能 |
+|---------|------|
+| - | - |
 
 ## 📊 管理方針
 
@@ -71,15 +74,15 @@ FUNC-003-configuration-management.md
 
 ### カテゴリ体系
 - **Core (000番台)**: 基盤機能
-- **Configuration (010番台)**: 設定・初期化機能
-- **View (020番台)**: 表示・UI機能
-- **Extension (030番台)**: 拡張・プラグイン機能
+- **Configuration (100番台)**: 設定・初期化機能
+- **View (200番台)**: 表示・UI機能
+- **Extension (300番台)**: 拡張・プラグイン機能
 
-### 新規FUNC作成ルール
-- **番号割当**: 900番台から作成（現在の最新: 901）
-- **初期ステータス**: 必ず「Draft」で開始
-- **番号進行**: 902, 903, 904... と順次割当
-- **カテゴリ昇格**: 機能が確定したら適切な番号帯に移動
+### Active機能管理ルール
+- **機能確定**: 実装対象として確定済みの機能のみ
+- **実装保証**: Builder/Validatorの作業対象
+- **番号固定**: カテゴリ番号による体系的管理
+- **Draft機能**: `pilots/` ディレクトリで実験・検証後に昇格
 
 ## 🎯 品質基準
 
@@ -91,22 +94,23 @@ FUNC-003-configuration-management.md
 - **改善予定**: 将来的な改善・拡張計画
 
 ### 記録しない内容
-- **実装詳細**: コードレベルの詳細（specifications/に記載）
+- **実装詳細**: コードレベルの詳細（code-guides/に記載）
 - **設計の全体図**: 機能をどう組み合わせるか（blueprints/に記載）
-- **進捗情報**: 実装進捗（progress/に記載）
+- **実験的機能**: Draft段階の機能（pilots/に記載）
 
 ## 🔗 他ディレクトリとの関係
 
-### specifications/との関係
-- **技術詳細**: specifications/で技術仕様を詳細管理
+### pilots/との関係
+- **実験機能**: pilots/でDraft機能を実験・検証
+- **昇格プロセス**: 成熟したDraft機能の受け入れ先
+- **設計継承**: パイロット機能の設計を正式採用
+
+### code-guides/との関係
+- **実装詳細**: code-guides/で技術実装の詳細管理
 - **機能概要**: functions/でユーザー視点の機能説明
 
-### progress/との関係
-- **進捗記録**: progress/で実装過程を記録
-- **成果記録**: functions/で完成した機能を記録
-
 ### blueprints/との関係
-- **設計図**: blueprints/で将来の機能設計
+- **実装計画**: blueprints/でActive機能の実装ロードマップ
 - **実績記録**: functions/で完成済み機能の記録
 
 ## ⚠️ 注意事項
@@ -122,10 +126,15 @@ FUNC-003-configuration-management.md
 ## 📝 更新履歴
 
 ### 2025年6月26日
-- FUNC番号体系を整理（000/010/020/900番台）
-- 新規FUNC作成ルール追加（900番台から開始、Draft必須）
-- FUNC-024追加：レスポンシブディレクトリ表示機能
-- FUNC文書内の相互参照を修正
+- **構造改革**: functions/をActive機能専用に変更
+- **pilots/新設**: Draft機能の専用管理ディレクトリ作成
+- **Active機能確定**: 14機能をActive機能として管理
+  - Core: FUNC-000,001,002
+  - Configuration: FUNC-100,101,102,103,104
+  - View: FUNC-200,201,202,203,204,205
+  - Extension: 現在なし（FUNC-205がView配置）
+- **Draft機能分離**: FUNC-900,901,903,904をpilots/に移行
+- **管理方針変更**: Active/Draft混在問題の構造的解決
 
 ### 2025年6月25日
 - Core Functions再編成（FUNC-000〜004）

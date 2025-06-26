@@ -64,6 +64,22 @@
 - **容量上限**: cache/全体で100MB
 - **整合性**: 元ファイル削除時はキャッシュも削除
 
+## 📁 ファイル一覧
+
+### summaries/
+- reddit-multi-agent-orchestration-summary.md
+- talk-with-ChatGPT-about-mcp-summary.md
+- reddit-kiss-yagni-solid-summary.md
+
+### extracts/
+- talk-with-ChatGPT-about-mcp-key-examples.md
+- reddit-kiss-yagni-solid-extract.md
+
+### metadata/
+- reddit-multi-agent-orchestration-meta.json
+- talk-with-ChatGPT-about-mcp-meta.json
+- reddit-kiss-yagni-solid-meta.json
+
 ## 🔗 関連
 - 元ファイル: ../inputs/
 - 設計書: REP-0025

@@ -195,6 +195,8 @@ this.watcher = chokidar.watch(config.paths, {
 
 ### Phase 4: CLI実装（1日）
 
+**CLI仕様統合**: CLI全体の仕様は **[FUNC-014: CLIインターフェース統合仕様](../functions/FUNC-014-cli-interface-specification.md)** を参照
+
 #### 4.1 基本表示機能（[FUNC-022](../../functions/FUNC-022-cli-display-integration.md)準拠）
 - All/Uniqueモードの切り替え
 - キーボードショートカット
