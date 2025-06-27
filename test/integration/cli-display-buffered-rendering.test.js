@@ -42,10 +42,17 @@ describe('CLIDisplay + BufferedRenderer 統合', () => {
     mockStdout = vi.spyOn(process.stdout, 'write').mockImplementation(() => {});
     mockConsole = vi.spyOn(console, 'clear').mockImplementation(() => {});
     
+    // テスト環境でもリサイズハンドラーを登録するため、isTTYをtrueに設定
+    const originalIsTTY = process.stdout.isTTY;
+    process.stdout.isTTY = true;
+    
     display = new CLIDisplay(mockDb, {
       mode: 'all',
       maxEvents: 20
     });
+    
+    // 元の値に戻す
+    process.stdout.isTTY = originalIsTTY;
   });
 
   afterEach(() => {
@@ -68,6 +75,9 @@ describe('CLIDisplay + BufferedRenderer 統合', () => {
     });
 
     test('二重バッファ描画の動作確認', async () => {
+      // BufferedRenderer内部の状態をリセットして初回描画にする
+      display.renderer.reset();
+      
       // イベントデータを追加
       display.addEvent({
         timestamp: Date.now(),
@@ -78,8 +88,12 @@ describe('CLIDisplay + BufferedRenderer 統合', () => {
         block_count: 10
       });
 
-      // レンダリング実行
-      display.render();
+      // レンダリングを同期的に実行（デバウンスを回避）
+      display.renderer.clear();
+      display.buildHeader();
+      display.buildEvents();
+      display.buildFooter();
+      display.renderer.render(); // renderDebouncedではなく直接render
 
       // BufferedRendererが使用されていることを確認
       expect(mockConsole).toHaveBeenCalled(); // 初回はconsole.clear
@@ -98,10 +112,18 @@ describe('CLIDisplay + BufferedRenderer 統合', () => {
         block_count: 5
       });
 
-      display.render();
+      // 同期的にレンダリング
+      display.renderer.clear();
+      display.buildHeader();
+      display.buildEvents();
+      display.buildFooter();
+      display.renderer.render();
 
-      // レンダリングが正常に実行されることを確認（エラーなし）
+      // レンダリングが正常に実行されることを確認
       expect(mockStdout).toHaveBeenCalled();
+      // 日本語文字を含む出力があることを確認
+      const outputCalls = mockStdout.mock.calls.map(call => call[0]).join('');
+      expect(outputCalls).toContain('日本語ファイル名.txt');
     });
 
     test('大量イベントでのパフォーマンス', () => {
@@ -130,8 +152,10 @@ describe('CLIDisplay + BufferedRenderer 統合', () => {
   describe('リサイズ対応', () => {
     test('ターミナルリサイズ時のBufferedRenderer リセット', () => {
       const resetSpy = vi.spyOn(display.renderer, 'reset');
+      
+      // displayを開始してisRunning = trueにする
       display.start();
-
+      
       // リサイズイベントをシミュレート
       process.stdout.emit('resize');
 
@@ -142,6 +166,9 @@ describe('CLIDisplay + BufferedRenderer 統合', () => {
 
   describe('表示モード切り替え', () => {
     test('All/Uniqueモード切り替え時の描画', () => {
+      // 初期状態をリセット
+      display.renderer.reset();
+      
       display.addEvent({
         timestamp: Date.now(),
         file_name: 'test.js',
@@ -151,17 +178,24 @@ describe('CLIDisplay + BufferedRenderer 統合', () => {
         block_count: 10
       });
 
-      // Allモードでレンダリング
+      // Allモードでレンダリング（初回）- 同期的に実行
       display.setDisplayMode('all');
-      display.render();
+      display.renderer.clear();
+      display.buildHeader();
+      display.buildEvents();
+      display.buildFooter();
+      display.renderer.render();
       const allModeCallCount = mockStdout.mock.calls.length;
 
-      mockStdout.mockClear();
-
-      // Uniqueモードでレンダリング
+      // Uniqueモードでレンダリング（2回目）- 同期的に実行
       display.setDisplayMode('unique');
-      display.render();
-      const uniqueModeCallCount = mockStdout.mock.calls.length;
+      display.renderer.clear();
+      display.buildHeader();
+      display.buildEvents();
+      display.buildFooter();
+      display.renderer.render();
+      const totalCallCount = mockStdout.mock.calls.length;
+      const uniqueModeCallCount = totalCallCount - allModeCallCount;
 
       // どちらのモードでも描画が実行される
       expect(allModeCallCount).toBeGreaterThan(0);

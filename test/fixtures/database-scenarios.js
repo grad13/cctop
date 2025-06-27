@@ -67,7 +67,7 @@ const databaseScenarios = [
     
     operations: [
       {
-        type: 'insertEvent',
+        type: 'recordEvent',
         description: 'create event',
         getData: (context) => ({
           event_type: 'create',
@@ -86,7 +86,7 @@ const databaseScenarios = [
       },
       
       {
-        type: 'insertEvent',
+        type: 'recordEvent',
         description: 'modify event',
         getData: (context) => ({
           event_type: 'modify',
@@ -167,7 +167,7 @@ const databaseScenarios = [
     },
     operations: [
       {
-        type: 'insertEvent',
+        type: 'recordEvent',
         description: 'event with complete metadata',
         getData: (context) => ({
           event_type: 'create',

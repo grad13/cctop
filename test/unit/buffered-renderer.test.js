@@ -1,8 +1,8 @@
 /**
- * BufferedRenderer テスト (FUNC-018準拠)
+ * BufferedRenderer Test (FUNC-018 compliant)
  */
 
-// Vitest globals配置（vitest.config.jsのglobals: trueで自動利用可能）
+// Vitest globals setup (automatically available with globals: true in vitest.config.js)
 const BufferedRenderer = require('../../src/utils/buffered-renderer');
 
 describe('BufferedRenderer', () => {
@@ -10,9 +10,9 @@ describe('BufferedRenderer', () => {
   let mockStdout;
 
   beforeEach(() => {
-    // process.stdout.writeのモック
+    // Mock for process.stdout.write
     mockStdout = vi.spyOn(process.stdout, 'write').mockImplementation(() => {});
-    renderer = new BufferedRenderer({ enableDebounce: false }); // テスト用にデバウンス無効
+    renderer = new BufferedRenderer({ enableDebounce: false }); // Disable debounce for testing
   });
 
   afterEach(() => {
@@ -22,8 +22,8 @@ describe('BufferedRenderer', () => {
     mockStdout.mockRestore();
   });
 
-  describe('基本機能', () => {
-    test('バッファの管理', () => {
+  describe('Basic Functionality', () => {
+    test('Buffer Management', () => {
       renderer.addLine('test line 1');
       renderer.addLine('test line 2');
       
@@ -32,7 +32,7 @@ describe('BufferedRenderer', () => {
       expect(renderer.buffer[1]).toBe('test line 2');
     });
 
-    test('クリア処理', () => {
+    test('Clear Operation', () => {
       renderer.addLine('test');
       expect(renderer.buffer).toHaveLength(1);
       
@@ -42,7 +42,7 @@ describe('BufferedRenderer', () => {
       expect(renderer.previousBuffer[0]).toBe('test');
     });
 
-    test('空行の追加', () => {
+    test('Adding Empty Lines', () => {
       renderer.addLine('');
       renderer.addLine(null);
       renderer.addLine(undefined);
@@ -54,25 +54,25 @@ describe('BufferedRenderer', () => {
     });
   });
 
-  describe('バッファサイズ制限', () => {
-    test('最大サイズを超えた場合の古い行削除', () => {
+  describe('Buffer Size Limitation', () => {
+    test('Delete Old Lines When Exceeding Maximum Size', () => {
       const smallRenderer = new BufferedRenderer({ maxBufferSize: 3, enableDebounce: false });
       
       smallRenderer.addLine('line 1');
       smallRenderer.addLine('line 2');
       smallRenderer.addLine('line 3');
-      smallRenderer.addLine('line 4'); // 最大サイズを超える
+      smallRenderer.addLine('line 4'); // Exceeds maximum size
       
       expect(smallRenderer.buffer).toHaveLength(3);
-      expect(smallRenderer.buffer[0]).toBe('line 2'); // 最初の行が削除される
+      expect(smallRenderer.buffer[0]).toBe('line 2'); // First line is deleted
       expect(smallRenderer.buffer[2]).toBe('line 4');
       
       smallRenderer.destroy();
     });
   });
 
-  describe('ANSIエスケープシーケンス', () => {
-    test('カーソル制御コマンド', () => {
+  describe('ANSI Escape Sequences', () => {
+    test('Cursor Control Commands', () => {
       renderer.hideCursor();
       expect(mockStdout).toHaveBeenCalledWith('\x1b[?25l');
       
@@ -86,7 +86,7 @@ describe('BufferedRenderer', () => {
       expect(mockStdout).toHaveBeenCalledWith('\x1b[2K');
     });
 
-    test('カーソル位置の保存と復元', () => {
+    test('Save and Restore Cursor Position', () => {
       renderer.saveCursor();
       expect(mockStdout).toHaveBeenCalledWith('\x1b[s');
       expect(renderer.cursorSaved).toBe(true);
@@ -95,41 +95,41 @@ describe('BufferedRenderer', () => {
       expect(mockStdout).toHaveBeenCalledWith('\x1b[u');
     });
 
-    test('重複したカーソル保存の防止', () => {
+    test('Prevent Duplicate Cursor Save', () => {
       mockStdout.mockClear();
       
       renderer.saveCursor();
-      renderer.saveCursor(); // 2回目は無視される
+      renderer.saveCursor(); // Second call is ignored
       
       expect(mockStdout).toHaveBeenCalledTimes(1);
       expect(mockStdout).toHaveBeenCalledWith('\x1b[s');
     });
   });
 
-  describe('レンダリング機能', () => {
-    test('基本的なレンダリング', () => {
-      // console.clearのモック
+  describe('Rendering Functionality', () => {
+    test('Basic Rendering', () => {
+      // Mock for console.clear
       const mockConsole = vi.spyOn(console, 'clear').mockImplementation(() => {});
       
       renderer.addLine('header');
       renderer.addLine('content');
       renderer.render();
       
-      // 初回はconsole.clearが呼ばれる
+      // console.clear is called on first render
       expect(mockConsole).toHaveBeenCalled();
       
-      // カーソル制御が正しく呼ばれる
+      // Cursor control is called correctly
       expect(mockStdout).toHaveBeenCalledWith('\x1b[?25l'); // hideCursor
       expect(mockStdout).toHaveBeenCalledWith('\x1b[?25h'); // showCursor
       
-      // バッファ内容が出力される
+      // Buffer contents are output
       expect(mockStdout).toHaveBeenCalledWith('header');
       expect(mockStdout).toHaveBeenCalledWith('content');
       
       mockConsole.mockRestore();
     });
 
-    test('空のバッファのレンダリング', () => {
+    test('Rendering Empty Buffer', () => {
       const mockConsole = vi.spyOn(console, 'clear').mockImplementation(() => {});
       
       renderer.render();
@@ -141,7 +141,7 @@ describe('BufferedRenderer', () => {
       mockConsole.mockRestore();
     });
 
-    test('フルレンダリング', () => {
+    test('Full Rendering', () => {
       const mockConsole = vi.spyOn(console, 'clear').mockImplementation(() => {});
       const mockLog = vi.spyOn(console, 'log').mockImplementation(() => {});
       
@@ -159,8 +159,8 @@ describe('BufferedRenderer', () => {
     });
   });
 
-  describe('遅延レンダリング', () => {
-    test('デバウンス機能', (done) => {
+  describe('Delayed Rendering', () => {
+    test('Debounce Functionality', async () => {
       const debouncedRenderer = new BufferedRenderer({ 
         renderInterval: 10, 
         enableDebounce: true 
@@ -170,33 +170,31 @@ describe('BufferedRenderer', () => {
       debouncedRenderer.addLine('test');
       debouncedRenderer.renderDebounced();
       
-      // 即座には実行されない
+      // Not executed immediately
       expect(mockConsole).not.toHaveBeenCalled();
       
-      // 指定時間後に実行される
-      setTimeout(() => {
-        expect(mockConsole).toHaveBeenCalled();
-        mockConsole.mockRestore();
-        debouncedRenderer.destroy();
-        done();
-      }, 15);
+      // Executed after specified time
+      await new Promise(resolve => setTimeout(resolve, 15));
+      expect(mockConsole).toHaveBeenCalled();
+      mockConsole.mockRestore();
+      debouncedRenderer.destroy();
     });
 
-    test('デバウンス無効時の即座実行', () => {
+    test('Immediate Execution When Debounce Disabled', () => {
       const mockConsole = vi.spyOn(console, 'clear').mockImplementation(() => {});
       
       renderer.addLine('test');
       renderer.renderDebounced();
       
-      // デバウンス無効なので即座に実行される
+      // Executed immediately because debounce is disabled
       expect(mockConsole).toHaveBeenCalled();
       
       mockConsole.mockRestore();
     });
   });
 
-  describe('リソース管理', () => {
-    test('reset処理', () => {
+  describe('Resource Management', () => {
+    test('Reset Operation', () => {
       renderer.addLine('test');
       renderer.saveCursor();
       
@@ -206,10 +204,10 @@ describe('BufferedRenderer', () => {
       expect(renderer.previousBuffer).toHaveLength(0);
       expect(renderer.cursorSaved).toBe(false);
       expect(renderer.renderTimer).toBeNull();
-      expect(mockStdout).toHaveBeenCalledWith('\x1b[?25h'); // カーソル表示
+      expect(mockStdout).toHaveBeenCalledWith('\x1b[?25h'); // Show cursor
     });
 
-    test('destroy処理', () => {
+    test('Destroy Operation', () => {
       renderer.addLine('test');
       
       renderer.destroy();
@@ -220,7 +218,7 @@ describe('BufferedRenderer', () => {
     });
   });
 
-  describe('統計情報', () => {
+  describe('Statistics Information', () => {
     test('getStats', () => {
       renderer.addLine('line1');
       renderer.addLine('line2');
@@ -237,8 +235,8 @@ describe('BufferedRenderer', () => {
     });
   });
 
-  describe('設定オプション', () => {
-    test('カスタム設定での初期化', () => {
+  describe('Configuration Options', () => {
+    test('Initialization with Custom Settings', () => {
       const customRenderer = new BufferedRenderer({
         renderInterval: 33,
         maxBufferSize: 100,
@@ -253,7 +251,7 @@ describe('BufferedRenderer', () => {
       customRenderer.destroy();
     });
 
-    test('デフォルト設定', () => {
+    test('Default Settings', () => {
       const defaultRenderer = new BufferedRenderer();
       
       const stats = defaultRenderer.getStats();

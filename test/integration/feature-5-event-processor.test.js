@@ -1,6 +1,6 @@
 /**
  * Feature 5 Test: Event Processor
- * 機能5の動作確認テスト（chokidar→DB統合、r002準拠）
+ * Feature 5 operation verification test (chokidar→DB integration, FUNC-002 compliant)
  */
 
 const fs = require('fs');
@@ -10,7 +10,7 @@ const DatabaseManager = require('../../src/database/database-manager');
 const FileMonitor = require('../../src/monitors/file-monitor');
 const EventProcessor = require('../../src/monitors/event-processor');
 
-describe('Feature 5: Event Processor (chokidar→DB統合)', () => {
+describe('Feature 5: Event Processor (chokidar→DB integration)', () => {
   let testDir;
   let dbManager;
   let fileMonitor;
@@ -18,13 +18,13 @@ describe('Feature 5: Event Processor (chokidar→DB統合)', () => {
   let testDbPath;
 
   beforeEach(async () => {
-    // テスト用の一時ディレクトリとDB
+    // Test temporary directory and DB
     testDir = path.join(os.tmpdir(), `test-event-processor-${Date.now()}`);
     fs.mkdirSync(testDir, { recursive: true });
     
     testDbPath = path.join(os.tmpdir(), `test-event-processor-${Date.now()}.db`);
     
-    // データベース初期化
+    // Database initialization
     dbManager = new DatabaseManager(testDbPath);
     await dbManager.initialize();
     
@@ -34,7 +34,7 @@ describe('Feature 5: Event Processor (chokidar→DB統合)', () => {
 
   afterEach(async () => {
     if (fileMonitor) {
-      // すべてのイベントリスナーを削除
+      // Remove all event listeners
       fileMonitor.removeAllListeners();
       await fileMonitor.stop();
       fileMonitor = null;
@@ -50,7 +50,7 @@ describe('Feature 5: Event Processor (chokidar→DB統合)', () => {
       dbManager = null;
     }
     
-    // テストディレクトリとDBのクリーンアップ
+    // Test directory and DB cleanup
     if (fs.existsSync(testDir)) {
       fs.rmSync(testDir, { recursive: true, force: true });
     }
@@ -61,7 +61,7 @@ describe('Feature 5: Event Processor (chokidar→DB統合)', () => {
   });
 
   test('Should process find events and record to database', async () => {
-    // 事前にファイル作成
+    // Create file beforehand
     const testFile = path.join(testDir, 'scan-test.txt');
     fs.writeFileSync(testFile, 'Test content for scanning');
 
@@ -186,7 +186,7 @@ describe('Feature 5: Event Processor (chokidar→DB統合)', () => {
   }, 12000); // 12秒タイムアウト
 
   test('Should process modify events and record to database', async () => {
-    // 事前にファイル作成
+    // Create file beforehand
     const testFile = path.join(testDir, 'modify-test.txt');
     fs.writeFileSync(testFile, 'Initial content');
 
@@ -259,7 +259,7 @@ describe('Feature 5: Event Processor (chokidar→DB統合)', () => {
   });
 
   test('Should process delete events and record to database', async () => {
-    // 事前にファイル作成
+    // Create file beforehand
     const testFile = path.join(testDir, 'delete-test.txt');
     fs.writeFileSync(testFile, 'Content to be deleted');
 
@@ -524,7 +524,7 @@ describe('Feature 5: Event Processor (chokidar→DB統合)', () => {
       expect(Math.abs(event.timestamp - now)).toBeLessThan(50000); // 50秒以内（テスト実行時間考慮）
     });
     
-    // 必須メタデータ6項目すべて正確記録（仕様書274行）
+    // 必須measurementsテーブル項目すべて正確記録（仕様書274行）
     createEvents.forEach(event => {
       expect(event.file_path).toBeDefined();
       expect(event.file_size).toBeDefined();

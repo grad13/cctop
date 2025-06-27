@@ -1,11 +1,9 @@
 #!/usr/bin/env node
 
 /**
- * cctop v0.1.0.0 エントリポイント
- * 機能1: 基本起動とメッセージ表示
- * 機能2: データベース初期化
- * 機能3: 設定システム
- * 機能4: ファイル監視
+ * cctop v0.2.0.0 - Code Change Top (File Monitoring Tool)
+ * FUNC-104 CLI Interface compliant
+ * FUNC-105 Local Setup Initialization compliant
  */
 
 const DatabaseManager = require('../src/database/database-manager');
@@ -13,12 +11,89 @@ const ConfigManager = require('../src/config/config-manager');
 const FileMonitor = require('../src/monitors/file-monitor');
 const EventProcessor = require('../src/monitors/event-processor');
 const CLIDisplay = require('../src/ui/cli-display');
+const InotifyChecker = require('../src/system/inotify-checker');
+const ViewerProcess = require('../src/ui/viewer-process');
+const ProcessManager = require('../src/monitors/process-manager');
 
 let dbManager = null;
 let configManager = null;
 let fileMonitor = null;
 let eventProcessor = null;
 let cliDisplay = null;
+
+/**
+ * --check-limits option handler (FUNC-104 compliant)
+ */
+/**
+ * Show help message (FUNC-104 compliant)
+ */
+function showHelpMessage() {
+  console.log(`cctop - Code Change Top (File Monitoring Tool)
+
+Usage: cctop [options] [directory]
+
+Options:
+  Monitoring:
+    -d, --dir <dir>       Directory to watch [default: current]
+    -t, --timeout <sec>   Timeout in seconds
+
+  Output:
+    -v, --verbose         Enable verbose output
+    -q, --quiet           Quiet mode (errors only)
+
+  System:
+    --check-limits        Check file watch limits
+
+  Help:
+    -h, --help            Show this help message
+    --version             Show version information
+
+Interactive Controls:
+  Display modes:
+    a - All events       u - Unique files      q - Quit
+
+  Event filters:
+    f - Find  c - Create  m - Modify  d - Delete  v - Move  r - Restore
+
+Examples:
+  cctop                   # Monitor current directory
+  cctop src/              # Monitor src directory
+  cctop --check-limits    # Check system limits`);
+}
+
+/**
+ * Show version information (FUNC-104 compliant)
+ */
+function showVersionInfo() {
+  const packageJson = require('../package.json');
+  console.log(`cctop v${packageJson.version}`);
+}
+
+async function handleCheckLimits() {
+  try {
+    // 設定読み込み（inotify設定のため）
+    const configManager = new ConfigManager();
+    const config = await configManager.initialize({});
+    const inotifyConfig = configManager.getInotifyConfig();
+    
+    // 現在の上限値を取得
+    const currentLimit = await InotifyChecker.getCurrentLimit();
+    
+    // 充足性チェック
+    const checkResult = InotifyChecker.checkLimitSufficiency(
+      currentLimit, 
+      inotifyConfig.requiredMaxUserWatches
+    );
+    
+    // 結果表示
+    console.log(InotifyChecker.formatCheckResult(checkResult));
+    
+  } catch (error) {
+    console.error('Error checking inotify limits:', error.message);
+    process.exit(1);
+  }
+}
+
 
 async function main() {
   try {
@@ -27,77 +102,150 @@ async function main() {
       console.log('📁 Current directory:', process.cwd());
     }
     
-    // コマンドライン引数のパース
+    // Command line argument parsing (FUNC-104 compliant)
     const cliArgs = {};
     const args = process.argv.slice(2);
+    let checkLimitsOnly = false;
+    let showHelp = false;
+    let showVersion = false;
+    
     for (let i = 0; i < args.length; i++) {
-      if (args[i] === '--config' && i + 1 < args.length) {
-        cliArgs.config = args[i + 1];
-        i++;
-      } else if (args[i] === '--watch' && i + 1 < args.length) {
+      const arg = args[i];
+      
+      // Help options
+      if (arg === '-h' || arg === '--help') {
+        showHelp = true;
+      } else if (arg === '--version') {
+        showVersion = true;
+      }
+      // Monitoring options
+      else if ((arg === '-d' || arg === '--dir') && i + 1 < args.length) {
         cliArgs.watchPath = args[i + 1];
         i++;
-      } else if (args[i] === '--db' && i + 1 < args.length) {
-        cliArgs.dbPath = args[i + 1];
-        i++;
-      } else if (args[i] === '--max-lines' && i + 1 < args.length) {
-        cliArgs.maxLines = args[i + 1];
+      } else if ((arg === '-t' || arg === '--timeout') && i + 1 < args.length) {
+        cliArgs.timeout = parseInt(args[i + 1]);
         i++;
       }
+      // Output options
+      else if (arg === '-v' || arg === '--verbose') {
+        process.env.CCTOP_VERBOSE = 'true';
+      } else if (arg === '-q' || arg === '--quiet') {
+        cliArgs.quiet = true;
+      }
+      // System options
+      else if (arg === '--check-limits') {
+        checkLimitsOnly = true;
+      } else if (arg === '--check-inotify') {
+        checkLimitsOnly = true; // Same functionality as --check-limits
+      }
+      // Background Monitor options (FUNC-003)
+      else if (arg === '--daemon') {
+        cliArgs.daemonMode = true;
+      } else if (arg === '--stop') {
+        cliArgs.stopMonitor = true;
+      }
+      // Legacy support
+      else if (arg === '--config' && i + 1 < args.length) {
+        cliArgs.config = args[i + 1];
+        i++;
+      }
+      // Position argument (directory)
+      else if (!arg.startsWith('-')) {
+        cliArgs.watchPath = arg;
+      }
+      // Unknown option error handling (FUNC-104 compliant)
+      else {
+        console.error(`Error: Unknown option: ${arg}`);
+        console.error("Try 'cctop --help' for more information.");
+        process.exit(1);
+      }
+    }
+    
+    // Handle help and version (FUNC-104 compliant)
+    if (showHelp) {
+      showHelpMessage();
+      process.exit(0);
+    }
+    
+    if (showVersion) {
+      showVersionInfo();
+      process.exit(0);
+    }
+    
+    // --check-limits option processing
+    if (checkLimitsOnly) {
+      await handleCheckLimits();
+      process.exit(0);
     }
     
     // 機能3: 設定システム初期化
     configManager = new ConfigManager();
     const config = await configManager.initialize(cliArgs);
-    
-    // 機能2: データベース初期化（設定を使用）
-    dbManager = new DatabaseManager(config.database.path);
-    await dbManager.initialize();
-    
-    // 機能4: ファイル監視初期化
-    const monitorConfig = {
-      watchPaths: config.monitoring?.watchPaths || config.watchPaths || ["./"],
-      ignored: config.monitoring?.excludePatterns || config.excludePatterns || [],
-      depth: config.monitoring?.maxDepth || 10
-    };
-    
-    fileMonitor = new FileMonitor(monitorConfig);
-    
-    // 機能5: Event Processor初期化（chokidar→DB統合）
-    eventProcessor = new EventProcessor(dbManager);
-    
-    // 機能6: CLI Display初期化（ui001準拠）
-    cliDisplay = new CLIDisplay(dbManager, config.display);
-    
-    // ファイル監視イベントをEvent Processorに接続
-    fileMonitor.on('fileEvent', async (event) => {
-      await eventProcessor.processFileEvent(event);
-    });
-    
-    // Event Processorの処理完了イベントをCLI Displayに接続
-    eventProcessor.on('eventProcessed', (result) => {
-      cliDisplay.addEvent(result.recorded);
-    });
-    
-    // 初期スキャン完了時の処理
-    fileMonitor.on('ready', () => {
-      eventProcessor.onInitialScanComplete();
-    });
-    
-    fileMonitor.start();
-    
-    // CLI表示開始（すぐに画面をクリアして表示開始）
-    cliDisplay.start();
-    
-    // 初期スキャン完了を待機
-    await new Promise((resolve) => {
-      fileMonitor.once('ready', resolve);
-    });
-    
-    if (process.env.NODE_ENV === 'test' || process.env.CCTOP_VERBOSE) {
-      console.log('✅ All systems working: entry, config, database, file monitoring, event processing, CLI display!');
-      console.log('🎯 Starting real-time file activity monitor...');
+
+    // Handle FUNC-003 background monitor commands
+    if (cliArgs.stopMonitor) {
+      const processManager = new ProcessManager(config);
+      const result = await processManager.stopMonitor();
+      if (result) {
+        console.log('✅ Monitor process stopped');
+      } else {
+        console.log('ℹ️  No monitor process to stop');
+      }
+      process.exit(0);
     }
+
+
+    if (cliArgs.daemonMode) {
+      // Start monitor in daemon mode only
+      const processManager = new ProcessManager(config);
+      const monitorScript = require.resolve('../src/monitors/monitor-process.js');
+      const pid = await processManager.startMonitor(monitorScript);
+      console.log(`✅ Monitor started in background (PID: ${pid})`);
+      process.exit(0);
+    }
+    
+    // inotify上限チェック（起動時）
+    const inotifyConfig = configManager.getInotifyConfig();
+    if (InotifyChecker.shouldCheckLimits() && inotifyConfig.checkOnStartup) {
+      const currentLimit = await InotifyChecker.getCurrentLimit();
+      const checkResult = InotifyChecker.checkLimitSufficiency(
+        currentLimit,
+        inotifyConfig.requiredMaxUserWatches
+      );
+      
+      // 不足時に警告表示
+      if (checkResult.status === 'insufficient' && inotifyConfig.warnIfInsufficient) {
+        console.warn(InotifyChecker.generateWarningMessage(
+          checkResult.current,
+          checkResult.required
+        ));
+        console.warn(''); // 空行
+      }
+    }
+    
+    // Default mode: Start instant viewer for immediate feedback (FUNC-206 compliant)
+    // Use InstantViewer for < 100ms startup time
+    const InstantViewer = require('../src/ui/instant-viewer');
+    const viewer = new InstantViewer(config);
+    
+    // Handle graceful shutdown
+    process.on('SIGINT', async () => {
+      if (process.env.CCTOP_VERBOSE) {
+        console.log('\n🛑 Received SIGINT, stopping...');
+      }
+      await viewer.stop();
+      process.exit(0);
+    });
+    
+    process.on('SIGTERM', async () => {
+      if (process.env.CCTOP_VERBOSE) {
+        console.log('\n🛑 Received SIGTERM, stopping...');
+      }
+      await viewer.stop();
+      process.exit(0);
+    });
+    
+    await viewer.start();
     
   } catch (error) {
     console.error('❌ Startup failed:', error.message);
@@ -105,31 +253,7 @@ async function main() {
   }
 }
 
-// 基本的な終了処理
-const shutdown = async () => {
-  console.log('\n👋 cctop shutting down...');
-  
-  if (cliDisplay) {
-    cliDisplay.stop();
-  }
-  
-  if (fileMonitor) {
-    await fileMonitor.stop();
-  }
-  
-  if (eventProcessor) {
-    eventProcessor.removeAllListeners();
-  }
-  
-  if (dbManager) {
-    await dbManager.close();
-  }
-  
-  process.exit(0);
-};
-
-process.on('SIGINT', shutdown);
-process.on('SIGTERM', shutdown);
+// Signal handlers are now managed within ViewerProcess
 
 // 未処理の例外をキャッチ
 process.on('unhandledRejection', (reason, promise) => {

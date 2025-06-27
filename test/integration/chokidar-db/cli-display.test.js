@@ -1,7 +1,7 @@
 /**
- * r002 Phase 1: CLI Display Test
- * BP-000準拠 - All/Uniqueモード切り替え・表示フォーマット・色分け
- * ui001/ui002準拠の完全な表示システム検証
+ * FUNC-202 Phase 1: CLI Display Test
+ * BP-001 compliant - All/Unique mode switching, display formatting, color coding
+ * Complete display system verification compliant with ui001/ui002
  */
 
 const fs = require('fs');
@@ -10,7 +10,7 @@ const os = require('os');
 const CLIDisplay = require('../../../src/ui/cli-display');
 const DatabaseManager = require('../../../src/database/database-manager');
 
-// ANSI色コードのテストヘルパー
+// ANSI color code test helpers
 const stripAnsiCodes = (str) => {
   return str.replace(/\x1b\[[0-9;]*m/g, '');
 };
@@ -20,7 +20,7 @@ const extractAnsiColors = (str) => {
   return matches || [];
 };
 
-describe('r002 Phase 1: CLI Display System (All/Uniqueモード・表示品質)', () => {
+describe('FUNC-202 Phase 1: CLI Display System (All/Uniqueモード・表示品質)', () => {
   let testDir;
   let dbManager;
   let dbPath;
@@ -73,7 +73,7 @@ describe('r002 Phase 1: CLI Display System (All/Uniqueモード・表示品質)'
     const modifyEventType = await dbManager.getEventTypeId('modify');
     const objectId = await dbManager.getOrCreateObjectId(12345, path.join(testDir, 'test-file.txt'));
 
-    await dbManager.insertEvent({
+    await dbManager.recordEvent({
       timestamp: Date.now(),
       event_type_id: createEventType,
       object_id: objectId,
@@ -88,7 +88,7 @@ describe('r002 Phase 1: CLI Display System (All/Uniqueモード・表示品質)'
       block_count: null
     });
 
-    await dbManager.insertEvent({
+    await dbManager.recordEvent({
       timestamp: Date.now() + 1000,
       event_type_id: modifyEventType,
       object_id: objectId,
@@ -142,5 +142,5 @@ describe('r002 Phase 1: CLI Display System (All/Uniqueモード・表示品質)'
   });
 
   // 残りのテストは実装の詳細に依存するため省略
-  // BP-000の基本動作確認のみ実施
+  // BP-001の基本動作確認のみ実施
 });

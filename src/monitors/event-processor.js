@@ -1,6 +1,6 @@
 /**
- * Event Processor (r002準拠)
- * 機能5: chokidar→DB統合によるイベント処理
+ * Event Processor (FUNC-001/002 v0.2.0.0 compliant)
+ * Complete file lifecycle tracking with chokidar integration
  */
 
 const fs = require('fs');
@@ -8,132 +8,364 @@ const path = require('path');
 const EventEmitter = require('events');
 
 class EventProcessor extends EventEmitter {
-  constructor(databaseManager) {
+  constructor(databaseManager, config = {}) {
     super();
-    this.setMaxListeners(20); // メモリリーク対策
+    this.setMaxListeners(20); // Memory leak countermeasure
     this.db = databaseManager;
+    this.config = config;
     this.isInitialScanMode = true;
     this.destroyed = false;
+    this.dbInitWarningShown = false; // Add flag to limit warning messages
+    
+    // Event filtering settings (FUNC-023 compliant)
+    this.eventFilters = this.initializeEventFilters();
+    
+    // Cache for move event detection
+    this.recentDeletes = new Map(); // filePath -> {inode, timestamp}
+    this.moveDetectionWindow = 1000; // Detect delete->create within 1 second as move
+    
+    // Event queueing (transaction conflict avoidance)
+    this.eventQueue = [];
+    this.processing = false;
     
     console.log('⚡ EventProcessor initialized');
   }
 
   /**
-   * ファイル監視からのイベント処理
+   * Initialize event filtering settings
+   */
+  initializeEventFilters() {
+    const defaultFilters = {
+      find: true,
+      create: true,
+      modify: true,
+      delete: true,
+      move: true,
+      restore: true
+    };
+    
+    // Load filter settings from config.json
+    if (this.config.monitoring && this.config.monitoring.eventFilters) {
+      return { ...defaultFilters, ...this.config.monitoring.eventFilters };
+    }
+    
+    return defaultFilters;
+  }
+  
+  /**
+   * Process events from file monitoring (with queueing support)
    */
   async processFileEvent(event) {
+    // Add event to queue
+    this.eventQueue.push(event);
+    
+    // Start queue processing if not already processing
+    if (!this.processing) {
+      this.processing = true;
+      await this.processEventQueue();
+      this.processing = false;
+    }
+    
+    return null; // Do not return result immediately due to queueing
+  }
+
+  /**
+   * Sequential processing of event queue
+   */
+  async processEventQueue() {
+    while (this.eventQueue.length > 0 && !this.destroyed) {
+      const event = this.eventQueue.shift();
+      
+      try {
+        await this.processEventInternal(event);
+      } catch (error) {
+        console.error('Event processing failed:', error);
+        const errorResult = { event, error };
+        setImmediate(() => {
+          if (!this.destroyed) {
+            this.emit('processingError', errorResult);
+          }
+        });
+      }
+    }
+  }
+
+  /**
+   * Internal event processing (original processFileEvent logic)
+   */
+  async processEventInternal(event) {
     try {
-      if (process.env.NODE_ENV === 'test' || process.env.CCTOP_DEBUG) {
+      // Add retry count tracking
+      if (!event.retryCount) {
+        event.retryCount = 0;
+      }
+      
+      // Check max retry count
+      if (event.retryCount > 10) {
+        console.error('[EventProcessor] Max retries exceeded, dropping event:', event.path);
+        return null;
+      }
+      
+      // Enhanced database readiness check
+      if (!await this.isDatabaseReady()) {
+        // Show warning only once
+        if (!this.dbInitWarningShown) {
+          console.warn('[EventProcessor] Database not initialized, queueing events...');
+          this.dbInitWarningShown = true;
+        }
+        
+        event.retryCount++;
+        
+        // Delayed re-queueing to prevent infinite loop
+        setTimeout(() => {
+          if (!this.destroyed && this.eventQueue.length < 1000) { // Queue size limit
+            this.eventQueue.push(event);
+          }
+        }, 100);
+        
+        return null;
+      }
+      
+      if (process.env.NODE_ENV === 'test' || process.env.CCTOP_VERBOSE) {
         console.log('[EventProcessor] Processing event:', event.type, 'for', event.path);
       }
       
-      // r002準拠のイベントタイプマッピング
+      // Event type mapping
       const eventType = this.mapEventType(event.type);
       if (!eventType) {
         console.log(`⏭️ Skipping event: ${event.type} for ${path.basename(event.path)}`);
-        return null; // 明示的にnullを返す
+        return null;
+      }
+      
+      // Event filtering check
+      if (!this.eventFilters[eventType]) {
+        if (process.env.NODE_ENV === 'test' || process.env.CCTOP_VERBOSE) {
+          console.log(`[EventProcessor] Event filtered out: ${eventType}`);
+        }
+        return null;
       }
 
-      // メタデータ収集
-      const metadata = await this.collectMetadata(event.path, event.stats);
+      // Collect metadata
+      const metadata = await this.collectMetadata(event.path, event.stats, eventType);
       
-      // データベースに記録
-      const eventRecord = await this.recordEvent(eventType, event.path, metadata);
+      // Skip if metadata is null (directory case)
+      if (!metadata) {
+        if (process.env.NODE_ENV === 'test' || process.env.CCTOP_VERBOSE) {
+          console.log(`[EventProcessor] Skipping directory: ${event.path}`);
+        }
+        return null;
+      }
       
-      // console.log(`💾 ${eventType}: ${path.basename(event.path)} → DB (ID: ${eventRecord.id})`);
+      // For delete events, save to move cache
+      if (eventType === 'delete') {
+        // Get existing file info and cache it
+        const fileInfo = await this.db.findByPath(event.path);
+        if (fileInfo && fileInfo.inode) {
+          this.recentDeletes.set(event.path, {
+            inode: fileInfo.inode,
+            timestamp: Date.now()
+          });
+          
+          // Clean up old entries
+          this.cleanupMoveCache();
+        }
+      }
       
-      // 統計更新
-      await this.updateStatistics(eventRecord);
+      // Move detection (on create/find events)
+      if ((eventType === 'find' || eventType === 'create') && metadata.inode) {
+        // Check for move events
+        for (const [deletedPath, deleteInfo] of this.recentDeletes.entries()) {
+          if (deleteInfo.inode === metadata.inode && 
+              Date.now() - deleteInfo.timestamp < this.moveDetectionWindow) {
+            // Record as move event
+            this.recentDeletes.delete(deletedPath);
+            
+            const moveEventId = await this.db.recordEvent({
+              ...metadata,
+              event_type: 'move'
+            });
+            
+            const result = {
+              original: event,
+              recorded: {
+                id: moveEventId,
+                ...metadata,
+                event_type: 'move',
+              },
+              eventType: 'move'
+            };
+            
+            setImmediate(() => {
+              if (!this.destroyed) {
+                this.emit('eventProcessed', result);
+              }
+            });
+            
+            return result;
+          }
+        }
+        
+        // Restore detection (FUNC-001 compliant: revival of deleted files within 5 minutes)
+        const existing = await this.db.findByPath(metadata.file_path);
+        if (existing && existing.is_active === false) {
+          // Check if within 5 minutes of deletion (planned to be configurable)
+          const restoreTimeLimit = 5 * 60 * 1000; // 5 minutes
+          const timeSinceDeletion = Date.now() - existing.last_event_timestamp;
+          
+          if (timeSinceDeletion <= restoreTimeLimit) {
+            // Record as restore event
+            metadata.event_type = 'restore';
+            const eventId = await this.db.recordEvent({
+              ...metadata,
+              event_type: 'restore'
+            });
+            
+            const result = {
+              original: event,
+              recorded: {
+                id: eventId,
+                ...metadata,
+                event_type: 'restore'
+              },
+              eventType: 'restore'
+            };
+            
+            setImmediate(() => {
+              if (!this.destroyed) {
+                this.emit('eventProcessed', result);
+              }
+            });
+            
+            return result;
+          }
+        }
+        
+        // Duplicate find event prevention - inodeベースでチェック
+        if (eventType === 'find' && metadata.inode) {
+          const existingByInode = await this.db.get(`
+            SELECT f.id, f.is_active 
+            FROM files f 
+            WHERE f.inode = ? AND f.is_active = 1
+            LIMIT 1
+          `, [metadata.inode]);
+          
+          if (existingByInode) {
+            console.log(`[EventProcessor] Skipping duplicate find for inode ${metadata.inode}: ${path.basename(metadata.file_path)}`);
+            return null;
+          } else {
+            console.log(`[EventProcessor] Processing find for new inode ${metadata.inode}: ${path.basename(metadata.file_path)}`);
+          }
+        }
+      }
       
-      // 処理結果オブジェクト
+      // Record normal event
+      const eventId = await this.db.recordEvent({
+        ...metadata,
+        event_type: eventType
+      });
+      
+      // Processing result object
       const result = {
         original: event,
         recorded: {
-          ...eventRecord,
-          event_type: eventType  // CLIDisplay用にevent_type文字列を追加
+          id: eventId,
+          ...metadata,
+          event_type: eventType
         },
         eventType
       };
       
-      // 処理完了イベント発行（setImmediate で次のティックで実行）
+      // Emit processing complete event
       setImmediate(() => {
         if (!this.destroyed) {
           this.emit('eventProcessed', result);
         }
       });
       
-      // 戻り値としても結果を返す（同期的な確認のため）
       return result;
       
     } catch (error) {
-      console.error('❌ Event processing failed:', error);
+      console.error('Event processing failed:', error);
       const errorResult = { event, error };
       setImmediate(() => {
         if (!this.destroyed) {
           this.emit('processingError', errorResult);
         }
       });
-      throw error; // エラーを再スローして呼び出し元に伝播
+      throw error;
     }
   }
 
   /**
-   * 初期スキャン完了の処理
+   * Handle initial scan completion
    */
   onInitialScanComplete() {
     this.isInitialScanMode = false;
-    console.log('🔄 Initial scan complete - switching to real-time mode');
+    if (process.env.NODE_ENV === 'test' || process.env.CCTOP_VERBOSE) {
+      console.log('Initial scan complete - switching to real-time mode');
+    }
     this.emit('findComplete');
   }
 
   /**
-   * r002準拠のイベントタイプマッピング
+   * Event type mapping
    */
   mapEventType(chokidarEvent) {
     const eventMapping = {
-      'find': 'find',     // 初期スキャン中のファイル発見
-      'create': 'create', // リアルタイム監視中の新規作成
-      'modify': 'modify', // ファイル変更
-      'delete': 'delete', // ファイル削除
-      'move': 'move'      // ファイル移動（将来実装）
+      'find': 'find',     // File discovery during initial scan
+      'create': 'create', // New creation during real-time monitoring
+      'modify': 'modify', // File modification
+      'delete': 'delete', // File deletion
+      'move': 'move'      // File move (future implementation)
     };
     
     return eventMapping[chokidarEvent] || null;
   }
 
   /**
-   * メタデータ収集（r002準拠）
+   * Collect metadata (FUNC-001 compliant)
    */
-  async collectMetadata(filePath, stats) {
+  async collectMetadata(filePath, stats, eventType) {
     const metadata = {
       file_path: path.resolve(filePath),
       file_name: path.basename(filePath),
       directory: path.dirname(path.resolve(filePath)),
-      timestamp: Date.now()
+      // For 'find' events during initial scan, use file's actual modification time
+      timestamp: (eventType === 'find' && stats && stats.mtime) 
+        ? stats.mtime.getTime() 
+        : Date.now()
     };
 
     if (stats) {
-      const isDirectory = stats.isDirectory();
-      metadata.is_directory = isDirectory ? 1 : 0;
-      metadata.file_size = isDirectory ? 0 : (stats.size || 0);
+      // FUNC-001: Files only (directories excluded)
+      if (stats.isDirectory()) {
+        return null; // Skip directories entirely
+      }
+      
+      metadata.file_size = stats.size || 0;
       metadata.inode = stats.ino || null;
       
-      // 行数カウント（ディレクトリ以外のテキストファイルのみ）
-      if (!isDirectory && this.isTextFile(filePath)) {
+      // Line count (text files only)
+      if (this.isTextFile(filePath)) {
         try {
           metadata.line_count = await this.countLines(filePath);
+          if (process.env.NODE_ENV === 'test' || process.env.CCTOP_VERBOSE) {
+            console.log(`[EventProcessor] Line count for ${path.basename(filePath)}: ${metadata.line_count}`);
+          }
         } catch (error) {
+          if (process.env.NODE_ENV === 'test' || process.env.CCTOP_VERBOSE) {
+            console.log(`[EventProcessor] Line count failed for ${path.basename(filePath)}: ${error.message}`);
+          }
           metadata.line_count = null;
         }
       } else {
-        metadata.line_count = isDirectory ? 0 : null;
+        metadata.line_count = null;
       }
       
-      // ブロック数（利用可能な場合）
+      // Block count (if available)
       metadata.block_count = stats.blocks || null;
     } else {
-      // 削除されたファイルの場合
-      metadata.is_directory = 0; // デフォルトファイル扱い
+      // For deleted files
       metadata.file_size = null;
       metadata.line_count = null;
       metadata.block_count = null;
@@ -144,61 +376,7 @@ class EventProcessor extends EventEmitter {
   }
 
   /**
-   * データベースにイベント記録
-   */
-  async recordEvent(eventType, filePath, metadata) {
-    // イベントタイプIDを取得
-    const eventTypeId = await this.db.getEventTypeId(eventType);
-    if (!eventTypeId) {
-      throw new Error(`Unknown event type: ${eventType}`);
-    }
-
-    // オブジェクトフィンガープリント管理
-    let objectId;
-    if (metadata.inode) {
-      objectId = await this.db.getOrCreateObjectId(metadata.inode);
-    } else {
-      // inodeが利用できない場合（削除ファイルなど）
-      objectId = await this.db.getOrCreateObjectId(null, filePath);
-    }
-
-    // イベント記録
-    const eventRecord = await this.db.insertEvent({
-      timestamp: metadata.timestamp,
-      event_type_id: eventTypeId,
-      object_id: objectId,
-      file_path: metadata.file_path,
-      file_name: metadata.file_name,
-      directory: metadata.directory,
-      is_directory: metadata.is_directory,
-      file_size: metadata.file_size,
-      line_count: metadata.line_count,
-      block_count: metadata.block_count,
-      previous_event_id: null, // 将来実装
-      source_path: null        // 将来実装（moveイベント用）
-    });
-
-    return eventRecord;
-  }
-
-  /**
-   * 統計情報更新
-   */
-  async updateStatistics(eventRecord) {
-    try {
-      await this.db.updateObjectStatistics(eventRecord.object_id, {
-        current_file_size: eventRecord.file_size,
-        current_line_count: eventRecord.line_count,
-        current_block_count: eventRecord.block_count,
-        last_updated: Date.now()
-      });
-    } catch (error) {
-      console.error('⚠️ Statistics update failed:', error);
-    }
-  }
-
-  /**
-   * テキストファイル判定
+   * Determine if text file
    */
   isTextFile(filePath) {
     const textExtensions = [
@@ -215,11 +393,12 @@ class EventProcessor extends EventEmitter {
   }
 
   /**
-   * ファイルの行数カウント
+   * Count lines in file
    */
   async countLines(filePath) {
     return new Promise((resolve, reject) => {
-      let content = '';
+      let lineCount = 0;
+      let lastChunkEndsWithNewline = false;
       
       const stream = fs.createReadStream(filePath, { 
         encoding: 'utf8',
@@ -227,18 +406,22 @@ class EventProcessor extends EventEmitter {
       });
       
       stream.on('data', (chunk) => {
-        content += chunk;
+        // Count newlines in this chunk
+        const newlines = chunk.split('\n').length - 1;
+        lineCount += newlines;
+        
+        // Track if chunk ends with newline
+        lastChunkEndsWithNewline = chunk.endsWith('\n');
       });
       
       stream.on('end', () => {
-        if (content.length === 0) {
-          resolve(0); // 空ファイルは0行
+        // If file is empty, return 0
+        if (lineCount === 0 && !lastChunkEndsWithNewline) {
+          resolve(0);
         } else {
-          // 改行で分割して行数をカウント
-          const lines = content.split('\n');
-          // 最後が空文字列（改行で終わる）の場合は除外
-          const lineCount = content.endsWith('\n') ? lines.length - 1 : lines.length;
-          resolve(lineCount);
+          // If file doesn't end with newline, add 1 for the last line
+          const finalLineCount = lastChunkEndsWithNewline ? lineCount : lineCount + 1;
+          resolve(finalLineCount);
         }
       });
       
@@ -249,7 +432,134 @@ class EventProcessor extends EventEmitter {
   }
 
   /**
-   * 現在の処理統計取得
+   * Clean up move cache
+   */
+  cleanupMoveCache() {
+    const now = Date.now();
+    for (const [path, info] of this.recentDeletes.entries()) {
+      if (now - info.timestamp > this.moveDetectionWindow) {
+        this.recentDeletes.delete(path);
+      }
+    }
+  }
+  
+  /**
+   * Scan for missing files (files in DB but no longer exist on disk)
+   * FUNC-001 compliant: delete event detection on startup
+   */
+  async scanForMissingFiles() {
+    try {
+      // Check database connection before scanning
+      if (!this.db || !this.db.isInitialized) {
+        console.warn('[EventProcessor] Database not initialized, skipping missing file scan');
+        return;
+      }
+      
+      if (process.env.NODE_ENV === 'test' || process.env.CCTOP_VERBOSE) {
+        console.log('[EventProcessor] Starting missing file scan...');
+      }
+      
+      // Get all live files from database
+      const liveFiles = await this.db.getLiveFiles();
+      
+      if (!liveFiles || liveFiles.length === 0) {
+        if (process.env.NODE_ENV === 'test' || process.env.CCTOP_VERBOSE) {
+          console.log('[EventProcessor] No live files found in database');
+        }
+        return;
+      }
+      
+      let deletedCount = 0;
+      
+      // Check each file's existence
+      for (const file of liveFiles) {
+        if (this.destroyed) {
+          break; // Stop if processor is destroyed
+        }
+        
+        try {
+          const exists = fs.existsSync(file.file_path);
+          
+          if (!exists) {
+            // File is missing - record delete event
+            const metadata = {
+              file_path: file.file_path,
+              file_name: file.file_name,
+              directory: file.directory,
+              timestamp: Date.now(),
+              file_size: null,
+              line_count: null,
+              block_count: null,
+              inode: file.inode
+            };
+            
+            // Record delete event (FUNC-001 compliant)
+            const eventId = await this.db.recordEvent({
+              ...metadata,
+              event_type: 'delete'
+            });
+            
+            // Create result object
+            const result = {
+              original: { type: 'delete', path: file.file_path },
+              recorded: {
+                id: eventId,
+                ...metadata,
+                event_type: 'delete'
+              },
+              eventType: 'delete'
+            };
+            
+            // Emit event
+            setImmediate(() => {
+              if (!this.destroyed) {
+                this.emit('eventProcessed', result);
+              }
+            });
+            
+            deletedCount++;
+            
+            if (process.env.NODE_ENV === 'test' || process.env.CCTOP_VERBOSE) {
+              console.log(`[EventProcessor] Missing file detected as deleted: ${file.file_name}`);
+            }
+          }
+        } catch (error) {
+          console.error(`Error checking file existence: ${file.file_path}`, error);
+        }
+      }
+      
+      if (process.env.NODE_ENV === 'test' || process.env.CCTOP_VERBOSE) {
+        console.log(`[EventProcessor] Missing file scan complete. Found ${deletedCount} deleted files`);
+      }
+      
+    } catch (error) {
+      console.error('Missing file scan failed:', error);
+      
+      const errorResult = { 
+        event: { type: 'scanForMissingFiles' }, 
+        error 
+      };
+      
+      setImmediate(() => {
+        if (!this.destroyed) {
+          this.emit('processingError', errorResult);
+        }
+      });
+      
+      throw error;
+    }
+  }
+
+  /**
+   * Legacy alias for scanForMissingFiles (backward compatibility)
+   * @deprecated Use scanForMissingFiles instead
+   */
+  async scanForLostFiles() {
+    return await this.scanForMissingFiles();
+  }
+
+  /**
+   * Get current processing statistics
    */
   getStats() {
     return {
@@ -259,14 +569,45 @@ class EventProcessor extends EventEmitter {
     };
   }
 
+
   /**
-   * クリーンアップ処理
+   * Enhanced database readiness check
+   * Verifies both flag and actual connection capability
+   */
+  async isDatabaseReady() {
+    if (!this.db || !this.db.isInitialized) {
+      return false;
+    }
+    
+    // Actual connection test (critical improvement)
+    try {
+      await new Promise((resolve, reject) => {
+        this.db.db.get('SELECT 1', (err) => {
+          if (err) {
+            reject(err);
+          } else {
+            resolve();
+          }
+        });
+      });
+      return true;
+    } catch (error) {
+      if (process.env.CCTOP_VERBOSE === 'true') {
+        console.warn('[EventProcessor] Database connection test failed:', error.message);
+      }
+      return false;
+    }
+  }
+
+  /**
+   * Cleanup processing
    */
   cleanup() {
-    // Mark as destroyed to prevent further processing
     this.destroyed = true;
+    this.eventQueue = []; // Clear queue
+    this.processing = false;
     this.removeAllListeners();
-    console.log('🧹 EventProcessor cleaned up');
+    console.log('EventProcessor cleaned up');
   }
 }
 

@@ -54,7 +54,7 @@ describe('RDD Verification: 実動作確認', () => {
         output += data.toString();
         
         // 起動完了メッセージを確認
-        if (output.includes('🎯 Starting real-time file activity monitor...')) {
+        if (output.includes('Starting real-time file activity monitor...')) {
           const elapsedTime = Date.now() - startTime;
           
           expect(elapsedTime).toBeLessThan(3000); // 3秒以内
@@ -86,7 +86,7 @@ describe('RDD Verification: 実動作確認', () => {
         output += data.toString();
         
         // データベース初期化完了を確認
-        if (output.includes('🗄️ Database initialized:')) {
+        if (output.includes('Database initialized:')) {
           // データベースファイルの存在確認
           expect(fs.existsSync(expectedDbPath)).toBe(true);
           
@@ -122,7 +122,7 @@ describe('RDD Verification: 実動作確認', () => {
         output += data.toString();
         
         // 起動完了後にSIGINTを送信
-        if (!startupComplete && output.includes('🎯 Starting real-time file activity monitor...')) {
+        if (!startupComplete && output.includes('Starting real-time file activity monitor...')) {
           startupComplete = true;
           setTimeout(() => {
             cctopProcess.kill('SIGINT');
@@ -167,7 +167,7 @@ describe('RDD Verification: 実動作確認', () => {
         lastChunk = chunk; // 最新のチャンクを保持
         
         // 起動完了後にファイル作成
-        if (!fileCreated && output.includes('🎯 Starting real-time file activity monitor...')) {
+        if (!fileCreated && output.includes('Starting real-time file activity monitor...')) {
           fileCreated = true;
           setTimeout(() => {
             const testFile = path.join(testDir, 'real-time-test.txt');
@@ -241,7 +241,7 @@ describe('RDD Verification: 実動作確認', () => {
         }
         
         // 起動完了後に複数操作実行
-        if (!operationsStarted && output.includes('🎯 Starting real-time file activity monitor...')) {
+        if (!operationsStarted && output.includes('Starting real-time file activity monitor...')) {
           operationsStarted = true;
           setTimeout(() => {
             const testFile = path.join(testDir, 'multi-test.txt');
@@ -312,7 +312,7 @@ describe('RDD Verification: 実動作確認', () => {
         }
         
         // 起動完了後にパフォーマンステスト実行
-        if (!performanceTestStarted && output.includes('🎯 Starting real-time file activity monitor...')) {
+        if (!performanceTestStarted && output.includes('Starting real-time file activity monitor...')) {
           performanceTestStarted = true;
           
           setTimeout(() => {

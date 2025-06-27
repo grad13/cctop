@@ -1,6 +1,6 @@
 {
   "name": "cctop",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "File system monitoring tool with real-time event tracking",
   "main": "src/index.js",
   "bin": {
@@ -12,6 +12,9 @@
     "test:sequential": "node test/test-sequential.js",
     "test:watch": "vitest",
     "test:rdd": "vitest run --reporter=verbose",
+    "test:e2e": "vitest run test/e2e/",
+    "test:integration": "vitest run test/integration/",
+    "rdd-verify": "node test/rdd-daily-verification.js",
     "postinstall": "node scripts/postinstall.js"
   },
   "keywords": [

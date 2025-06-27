@@ -1,6 +1,6 @@
 /**
- * File Monitor (vis005準拠)
- * 機能4: chokidar統合によるファイル監視
+ * File Monitor (vis005 compliant)
+ * Feature 4: File monitoring with chokidar integration
  */
 
 const chokidar = require('chokidar');
@@ -10,103 +10,140 @@ const path = require('path');
 class FileMonitor extends EventEmitter {
   constructor(config) {
     super();
-    this.setMaxListeners(20); // メモリリーク対策
+    this.setMaxListeners(20); // Memory leak countermeasure
     this.config = config;
     this.watcher = null;
     this.isReady = false;
     this.isRunning = false;
+    this.verbose = process.env.NODE_ENV !== 'test' || process.env.CCTOP_VERBOSE;
     
-    console.log('📁 FileMonitor initialized');
+    if (this.verbose) {
+      console.log('FileMonitor initialized');
+    }
   }
 
   /**
-   * 監視開始
+   * Start monitoring
    */
   start() {
     if (this.isRunning) {
-      console.warn('⚠️ FileMonitor already running');
+      if (this.verbose) {
+        console.warn('FileMonitor already running');
+      }
       return;
     }
 
     try {
-      // PLAN-20250624-001のchokidar設定（vis005準拠）
-      this.watcher = chokidar.watch(this.config.watchPaths, {
+      // PLAN-20250624-001 chokidar settings (vis005 compliant)
+      const chokidarOptions = {
         persistent: true,
-        ignoreInitial: false,  // 初期スキャンを有効化
-        ignored: this.config.ignored || [],
-        awaitWriteFinish: {
-          stabilityThreshold: 50,   // より短い安定時間
-          pollInterval: 25
-        },
-        atomic: true,
-        alwaysStat: true,      // statsオブジェクトを常に提供
+        ignoreInitial: false,  // Enable initial scan
+        ignored: this.config.excludePatterns || [],
+        alwaysStat: true,      // Always provide stats object
         depth: this.config.depth || 10,
-        usePolling: false,     // プラットフォーム固有の監視を使用
-        interval: 100,         // ポーリング間隔（usePolling: falseでも一部で使用）
+        usePolling: false,     // Use platform-specific monitoring
+        interval: 100,         // Polling interval (used partially even with usePolling: false)
         binaryInterval: 300
-      });
+      };
+      
+      // Enable atomic and awaitWriteFinish in production environment
+      if (process.env.NODE_ENV !== 'test') {
+        chokidarOptions.atomic = 100;  // Short delay for atomic processing
+        chokidarOptions.awaitWriteFinish = {
+          stabilityThreshold: 2000,   // FUNC-002 compliant
+          pollInterval: 100           // FUNC-002 compliant
+        };
+      }
+      
+      // Validate watchPaths configuration
+      if (!this.config.watchPaths || !Array.isArray(this.config.watchPaths)) {
+        throw new Error('watchPaths must be provided as an array');
+      }
+      
+      this.watcher = chokidar.watch(this.config.watchPaths, chokidarOptions);
 
       this.setupEventHandlers();
       this.isRunning = true;
       
-      console.log(`🔍 FileMonitor started watching: ${this.config.watchPaths.join(', ')}`);
+      if (this.verbose) {
+        console.log(`FileMonitor started watching: ${this.config.watchPaths ? this.config.watchPaths.join(', ') : 'No paths configured'}`);
+        if (this.config.excludePatterns && this.config.excludePatterns.length > 0) {
+          console.log(`🚫 Ignoring patterns: ${this.config.excludePatterns.join(', ')}`);
+        }
+      }
       
     } catch (error) {
-      console.error('❌ FileMonitor start failed:', error);
+      if (this.verbose) {
+        console.error('FileMonitor start failed:', error);
+      }
       throw error;
     }
   }
 
   /**
-   * イベントハンドラーの設定
+   * Setup event handlers
    */
   setupEventHandlers() {
-    // 初期スキャン完了の検出
+    // Debug: Log all events
+    if (process.env.NODE_ENV === 'test' || process.env.CCTOP_VERBOSE) {
+      this.watcher.on('all', (event, path) => {
+        console.log(`[chokidar debug] ${event}: ${path}`);
+      });
+    }
+    
+    // Detect initial scan completion
     this.watcher.on('ready', () => {
       this.isReady = true;
-      console.log('✅ Initial scan complete');
+      if (process.env.NODE_ENV === 'test' || process.env.CCTOP_VERBOSE) {
+        console.log('Initial scan complete');
+      }
       this.emit('ready');
     });
 
-    // ファイル追加（Create/Find）
+    // File addition (Create/Find)
     this.watcher.on('add', (filePath, stats) => {
       const eventType = this.isReady ? 'create' : 'find';
+      console.log(`[FileMonitor] ${eventType} event for: ${filePath}`);
       this.emitFileEvent(eventType, filePath, stats);
     });
 
-    // ファイル変更（Modify）
+    // File modification (Modify)
     this.watcher.on('change', (filePath, stats) => {
       this.emitFileEvent('modify', filePath, stats);
     });
 
-    // ファイル削除（Delete）
+    // File deletion (Delete)
     this.watcher.on('unlink', (filePath) => {
-      if (process.env.NODE_ENV === 'test' || process.env.CCTOP_DEBUG) {
-        console.log('[FileMonitor] unlink event detected:', filePath);
+      if (process.env.NODE_ENV === 'test' || process.env.CCTOP_VERBOSE) {
+        if (this.verbose) {
+          console.log('[FileMonitor] unlink event detected:', filePath);
+        }
       }
       this.emitFileEvent('delete', filePath, null);
     });
 
-    // ディレクトリ追加（PLAN-20250624-001準拠）
+    // Directory addition (PLAN-20250624-001 compliant)
     this.watcher.on('addDir', (dirPath, stats) => {
       const eventType = this.isReady ? 'create' : 'find';
       this.emitFileEvent(eventType, dirPath, stats);
     });
 
-    // ディレクトリ削除
+    // Directory deletion
     this.watcher.on('unlinkDir', (dirPath) => {
       this.emitFileEvent('delete', dirPath, null);
     });
 
-    // エラーハンドリング
+    // Error handling
     this.watcher.on('error', (error) => {
-      console.error('❌ FileMonitor error:', error);
+      if (this.verbose) {
+        console.error('FileMonitor error:', error);
+      }
       this.emit('error', error);
     });
   }
 
   /**
-   * ファイルイベントの発行
+   * Emit file event
    */
   emitFileEvent(type, filePath, stats) {
     // Ignore events if monitor is not running
@@ -118,7 +155,7 @@ class FileMonitor extends EventEmitter {
       type,
       path: path.resolve(filePath),
       stats,
-      timestamp: Date.now()
+      timestamp: Date.now() // Will be overridden for 'find' events in event-processor
     };
 
     // console.log(`📄 ${type}: ${path.basename(filePath)}`);
@@ -126,7 +163,7 @@ class FileMonitor extends EventEmitter {
   }
 
   /**
-   * 監視停止
+   * Stop monitoring
    */
   async stop() {
     if (!this.isRunning) {
@@ -147,37 +184,41 @@ class FileMonitor extends EventEmitter {
       this.isRunning = false;
       this.isReady = false;
       
-      console.log('📪 FileMonitor stopped');
+      if (this.verbose) {
+        console.log('📪 FileMonitor stopped');
+      }
       
     } catch (error) {
-      console.error('❌ FileMonitor stop failed:', error);
+      if (this.verbose) {
+        console.error('FileMonitor stop failed:', error);
+      }
       throw error;
     }
   }
 
   /**
-   * 監視状態の確認
+   * Check monitoring state
    */
   isActive() {
     return this.isRunning && this.watcher !== null;
   }
 
   /**
-   * 初期スキャン完了状態の確認
+   * Check initial scan completion state
    */
   isInitialScanComplete() {
     return this.isReady;
   }
 
   /**
-   * 監視中パスの取得
+   * Get watched paths
    */
   getWatchedPaths() {
     return this.config.watchPaths;
   }
 
   /**
-   * 統計情報の取得
+   * Get statistics
    */
   getStats() {
     return {

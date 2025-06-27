@@ -8,15 +8,16 @@ import { z } from 'zod';
 // Event Types Schema
 export const EventTypeSchema = z.object({
   id: z.number().positive(),
-  code: z.enum(['find', 'create', 'modify', 'delete', 'move']),
+  code: z.enum(['find', 'create', 'modify', 'delete', 'move', 'restore']),
   name: z.string().min(1),
   description: z.string().optional()
 });
 
-// Object Fingerprint Schema
-export const ObjectFingerprintSchema = z.object({
+// Files Schema (v0.2.0)
+export const FilesSchema = z.object({
   id: z.number().positive(),
-  inode: z.number().positive().optional()
+  inode: z.number().positive().optional(),
+  is_active: z.number().min(0).max(1).default(1)
 });
 
 // Events Schema (Main Event Table)
@@ -24,7 +25,7 @@ export const EventRecordSchema = z.object({
   id: z.number().positive().optional(), // AUTO_INCREMENT
   timestamp: z.number().positive(),
   event_type_id: z.number().positive(),
-  object_id: z.number().positive(),
+  file_id: z.number().positive(),
   file_path: z.string().min(1),
   file_name: z.string().min(1),
   directory: z.string().min(1),
@@ -36,9 +37,18 @@ export const EventRecordSchema = z.object({
   block_count: z.number().min(0).optional()
 });
 
-// Object Statistics Schema
-export const ObjectStatisticsSchema = z.object({
-  object_id: z.number().positive(),
+// Measurements Schema (v0.2.0)
+export const MeasurementsSchema = z.object({
+  event_id: z.number().positive(),
+  inode: z.number().positive().optional(),
+  file_size: z.number().min(0).optional(),
+  line_count: z.number().min(0).optional(),
+  block_count: z.number().min(0).optional()
+});
+
+// Aggregates Schema (v0.2.0)
+export const AggregatesSchema = z.object({
+  file_id: z.number().positive(),
   current_file_size: z.number().min(0).default(0),
   current_line_count: z.number().min(0).default(0),
   current_block_count: z.number().min(0).default(0),
@@ -65,16 +75,20 @@ export const ExpectedTablesSchema = z.object({
     (cols) => ['id', 'code', 'name', 'description'].every(col => cols.includes(col)),
     { message: "event_types table missing required columns" }
   ),
-  object_fingerprint: z.array(z.string()).refine(
-    (cols) => ['id', 'inode'].every(col => cols.includes(col)),
-    { message: "object_fingerprint table missing required columns" }
+  files: z.array(z.string()).refine(
+    (cols) => ['id', 'inode', 'is_active'].every(col => cols.includes(col)),
+    { message: "files table missing required columns" }
+  ),
+  measurements: z.array(z.string()).refine(
+    (cols) => ['event_id', 'inode', 'file_size', 'line_count', 'block_count'].every(col => cols.includes(col)),
+    { message: "measurements table missing required columns" }
   ),
   events: z.array(z.string()).refine(
-    (cols) => ['id', 'timestamp', 'event_type_id', 'object_id', 'file_path', 'file_name', 'directory'].every(col => cols.includes(col)),
+    (cols) => ['id', 'timestamp', 'event_type_id', 'file_id', 'file_path', 'file_name', 'directory'].every(col => cols.includes(col)),
     { message: "events table missing required columns" }
   ),
-  object_statistics: z.array(z.string()).refine(
-    (cols) => ['object_id', 'current_file_size', 'total_events'].every(col => cols.includes(col)),
-    { message: "object_statistics table missing required columns" }
+  aggregates: z.array(z.string()).refine(
+    (cols) => ['file_id', 'current_file_size', 'total_events'].every(col => cols.includes(col)),
+    { message: "aggregates table missing required columns" }
   )
 });

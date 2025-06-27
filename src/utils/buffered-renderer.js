@@ -1,7 +1,7 @@
 /**
- * Buffered Renderer (FUNC-018準拠)
- * 画面のちらつきを防ぐための二重バッファリング機能
- * VERSIONs/product-v01から移植、v0.1.0.0向けに最適化
+ * Buffered Renderer (FUNC-018 compliant)
+ * Double buffering functionality to prevent screen flickering
+ * Ported from VERSIONs/product-v01, optimized for v0.1.0.0
  */
 
 class BufferedRenderer {
@@ -10,15 +10,15 @@ class BufferedRenderer {
     this.previousBuffer = [];
     this.cursorSaved = false;
     
-    // FUNC-018仕様: 60fps制限（16ms間隔）
+    // FUNC-018 specification: 60fps limit (16ms interval)
     this.renderInterval = options.renderInterval || 16;
     this.renderTimer = null;
     this.maxBufferSize = options.maxBufferSize || 10000;
-    this.enableDebounce = options.enableDebounce !== false; // デフォルトでデバウンス有効
+    this.enableDebounce = options.enableDebounce !== false; // Debounce enabled by default
   }
 
   /**
-   * バッファをクリア
+   * Clear buffer
    */
   clear() {
     this.previousBuffer = [...this.buffer];
@@ -26,18 +26,18 @@ class BufferedRenderer {
   }
 
   /**
-   * バッファに行を追加
+   * Add line to buffer
    */
   addLine(line) {
-    // バッファサイズ制限
+    // Buffer size limit
     if (this.buffer.length >= this.maxBufferSize) {
-      this.buffer.shift(); // 古い行を削除
+      this.buffer.shift(); // Remove old lines
     }
     this.buffer.push(line || '');
   }
 
   /**
-   * カーソル位置を保存
+   * Save cursor position
    */
   saveCursor() {
     if (!this.cursorSaved) {
@@ -47,7 +47,7 @@ class BufferedRenderer {
   }
 
   /**
-   * カーソル位置を復元
+   * Restore cursor position
    */
   restoreCursor() {
     if (this.cursorSaved) {
@@ -56,42 +56,42 @@ class BufferedRenderer {
   }
 
   /**
-   * カーソルを指定行に移動
+   * Move cursor to specified line
    */
   moveCursor(row, col = 1) {
     process.stdout.write(`\x1b[${row};${col}H`);
   }
 
   /**
-   * 現在行をクリア
+   * Clear current line
    */
   clearLine() {
     process.stdout.write('\x1b[2K'); // Clear entire line
   }
 
   /**
-   * 画面を下までクリア
+   * Clear screen to bottom
    */
   clearToBottom() {
     process.stdout.write('\x1b[J'); // Clear from cursor to end of screen
   }
 
   /**
-   * カーソルを非表示にする
+   * Hide cursor
    */
   hideCursor() {
     process.stdout.write('\x1b[?25l');
   }
 
   /**
-   * カーソルを表示する
+   * Show cursor
    */
   showCursor() {
     process.stdout.write('\x1b[?25h');
   }
 
   /**
-   * 遅延レンダリング（60fps制限）
+   * Delayed rendering (60fps limit)
    */
   renderDebounced() {
     if (!this.enableDebounce) {
@@ -106,22 +106,22 @@ class BufferedRenderer {
   }
 
   /**
-   * バッファの内容を画面に描画（二重バッファ方式）
+   * Render buffer contents to screen (double buffer method)
    */
   render() {
-    // 初回描画時は全体をクリア
+    // Clear entire screen on first render
     if (!this.cursorSaved) {
       console.clear();
       this.saveCursor();
     }
 
-    // カーソルを非表示にして描画を開始
+    // Hide cursor and start rendering
     this.hideCursor();
 
-    // カーソルを最初に戻す
+    // Return cursor to beginning
     this.restoreCursor();
 
-    // 全行を更新（ANSIエスケープシーケンス対応）
+    // Update all lines (ANSI escape sequence support)
     const maxLines = Math.max(this.buffer.length, this.previousBuffer.length);
     
     for (let i = 0; i < maxLines; i++) {
@@ -133,16 +133,16 @@ class BufferedRenderer {
       }
     }
 
-    // カーソルを最後の行の後に移動してから表示
+    // Move cursor after last line then show
     this.moveCursor(this.buffer.length + 1, 1);
     this.showCursor();
 
-    // 描画完了後にpreviousBufferを更新
+    // Update previousBuffer after rendering completes
     this.previousBuffer = [...this.buffer];
   }
 
   /**
-   * 完全な再描画（緊急時用）
+   * Complete redraw (for emergency use)
    */
   fullRender() {
     console.clear();
@@ -151,7 +151,7 @@ class BufferedRenderer {
   }
 
   /**
-   * レンダラーをリセット
+   * Reset renderer
    */
   reset() {
     clearTimeout(this.renderTimer);
@@ -159,18 +159,18 @@ class BufferedRenderer {
     this.buffer = [];
     this.previousBuffer = [];
     this.cursorSaved = false;
-    this.showCursor(); // カーソルを確実に表示
+    this.showCursor(); // Ensure cursor is visible
   }
 
   /**
-   * リソース解放
+   * Release resources
    */
   destroy() {
     this.reset();
   }
 
   /**
-   * 統計情報取得
+   * Get statistics
    */
   getStats() {
     return {

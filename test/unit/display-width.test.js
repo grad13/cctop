@@ -32,9 +32,9 @@ describe('East Asian Width Support', () => {
     });
 
     it('should handle emojis correctly', () => {
-      expect(stringWidth('🎉')).toBe(2); // Single emoji
-      expect(stringWidth('👨‍👩‍👧‍👦')).toBe(2); // Family emoji (combined)
-      expect(stringWidth('test🎉file')).toBe(10); // 4 + 2 + 4
+      expect(stringWidth('\u{1F389}')).toBe(2); // Single emoji (party popper)
+      expect(stringWidth('\u{1F468}\u{200D}\u{1F469}\u{200D}\u{1F467}\u{200D}\u{1F466}')).toBe(2); // Family emoji (combined)
+      expect(stringWidth('test\u{1F389}file')).toBe(10); // 4 + 2 + 4
     });
 
     it('should handle zero-width characters', () => {
@@ -139,7 +139,7 @@ describe('East Asian Width Support', () => {
     });
 
     it('should handle strings with emojis', () => {
-      const result = truncateWithEllipsis('🎉🎊🎈🎁🎀', 8);
+      const result = truncateWithEllipsis('\u{1F389}\u{1F38A}\u{1F388}\u{1F381}\u{1F380}', 8);
       expect(stringWidth(result)).toBeLessThanOrEqual(8);
       expect(result.endsWith('...')).toBe(true);
     });

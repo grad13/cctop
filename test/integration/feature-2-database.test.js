@@ -1,6 +1,6 @@
 /**
- * Feature 2 Test: データベース実装
- * Data-Driven Testing + 実データ使用のアプローチ
+ * Feature 2 Test: Database implementation
+ * Data-Driven Testing + real data usage approach
  */
 
 const fs = require('fs');
@@ -8,19 +8,19 @@ const path = require('path');
 const os = require('os');
 const DatabaseManager = require('../../src/database/database-manager');
 
-// テストフィクスチャとコントラクトのインポート
+// Import test fixtures and contracts
 const { databaseScenarios } = require('../fixtures/database-scenarios');
 const { DataFlowContract } = require('../contracts/data-flow.contract');
 const SideEffectTracker = require('../helpers/side-effect-tracker');
 
-describe('Feature 2: データベース実装', () => {
+describe('Feature 2: Database implementation', () => {
   let testDbPath;
   let dbManager;
   let testDir;
   const sideEffectTracker = new SideEffectTracker();
 
   beforeEach(() => {
-    // テスト用ディレクトリとデータベース
+    // Test directory and database
     testDir = path.join(os.tmpdir(), `test-cctop-${Date.now()}`);
     fs.mkdirSync(testDir, { recursive: true });
     testDbPath = path.join(testDir, 'test-activity.db');
@@ -45,8 +45,8 @@ describe('Feature 2: データベース実装', () => {
     
     expect(dbManager.isConnected()).toBe(true);
     
-    // db001準拠の全テーブルが作成されていることを確認
-    const expectedTables = ['event_types', 'object_fingerprint', 'events', 'object_statistics'];
+    // FUNC-000準拠の全テーブルが作成されていることを確認
+    const expectedTables = ['event_types', 'files', 'events', 'measurements', 'aggregates'];
     
     for (const tableName of expectedTables) {
       const result = await dbManager.get(
@@ -63,8 +63,8 @@ describe('Feature 2: データベース実装', () => {
     
     const eventTypes = await dbManager.all('SELECT * FROM event_types ORDER BY code');
     
-    expect(eventTypes).toHaveLength(5);
-    expect(eventTypes.map(e => e.code)).toEqual(['create', 'delete', 'find', 'modify', 'move']);
+    expect(eventTypes).toHaveLength(6);
+    expect(eventTypes.map(e => e.code)).toEqual(['create', 'delete', 'find', 'modify', 'move', 'restore']);
   });
 
   /**
@@ -155,7 +155,7 @@ describe('Feature 2: データベース実装', () => {
           const data = operation.getData(context);
           
           switch (operation.type) {
-            case 'insertEvent': {
+            case 'recordEvent': {
               // イベントタイプIDを取得
               const eventTypeRow = await scenarioDbManager.get(
                 'SELECT id FROM event_types WHERE code = ?',
@@ -167,14 +167,14 @@ describe('Feature 2: データベース実装', () => {
               let objectId;
               if (data.inode) {
                 const fingerprintResult = await scenarioDbManager.run(
-                  'INSERT OR IGNORE INTO object_fingerprint (inode) VALUES (?)',
+                  'INSERT OR IGNORE INTO files (inode) VALUES (?)',
                   [data.inode]
                 );
                 
                 if (fingerprintResult.changes === 0) {
                   // 既存のレコード
                   const existing = await scenarioDbManager.get(
-                    'SELECT id FROM object_fingerprint WHERE inode = ?',
+                    'SELECT id FROM files WHERE inode = ?',
                     [data.inode]
                   );
                   objectId = existing.id;
@@ -184,7 +184,7 @@ describe('Feature 2: データベース実装', () => {
               } else {
                 // inodeなしの場合
                 const result = await scenarioDbManager.run(
-                  'INSERT INTO object_fingerprint (inode) VALUES (NULL)'
+                  'INSERT INTO files (inode) VALUES (NULL)'
                 );
                 objectId = result.lastID;
               }
@@ -192,7 +192,7 @@ describe('Feature 2: データベース実装', () => {
               // イベントを挿入
               const result = await scenarioDbManager.run(
                 `INSERT INTO events (
-                  timestamp, event_type_id, object_id, file_path, 
+                  timestamp, event_type_id, file_id, file_path, 
                   file_name, directory, file_size, line_count, block_count
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                 [
@@ -225,14 +225,14 @@ describe('Feature 2: データベース実装', () => {
             
             case 'insertFingerprint': {
               const result = await scenarioDbManager.run(
-                'INSERT OR IGNORE INTO object_fingerprint (inode) VALUES (?)',
+                'INSERT OR IGNORE INTO files (inode) VALUES (?)',
                 [data.inode]
               );
               
               if (result.changes === 0) {
                 // 既存のレコード
                 const existing = await scenarioDbManager.get(
-                  'SELECT id FROM object_fingerprint WHERE inode = ?',
+                  'SELECT id FROM files WHERE inode = ?',
                   [data.inode]
                 );
                 result.id = existing.id;
@@ -240,7 +240,7 @@ describe('Feature 2: データベース実装', () => {
                 result.id = result.lastID;
               }
               
-              // 最初のobject_idを記憶
+              // 最初のfile_idを記憶
               if (!context.firstObjectId) {
                 context.firstObjectId = result.id;
               }
@@ -264,7 +264,7 @@ describe('Feature 2: データベース実装', () => {
                   `SELECT e.*, et.code as event_type, of.inode
                    FROM events e 
                    JOIN event_types et ON e.event_type_id = et.id 
-                   JOIN object_fingerprint of ON e.object_id = of.id
+                   JOIN files of ON e.file_id = of.id
                    WHERE e.file_path = ?
                    ORDER BY e.timestamp`,
                   [data.file_path]
@@ -309,14 +309,14 @@ describe('Feature 2: データベース実装', () => {
     
     // オブジェクトフィンガープリントを作成（実際のinode使用）
     const fingerprintResult = await dbManager.run(
-      'INSERT INTO object_fingerprint (inode) VALUES (?)',
+      'INSERT INTO files (inode) VALUES (?)',
       [stats.ino]
     );
     
     // イベントを挿入（実際のメタデータ使用）
     const eventResult = await dbManager.run(
       `INSERT INTO events (
-        timestamp, event_type_id, object_id, file_path, 
+        timestamp, event_type_id, file_id, file_path, 
         file_name, directory, file_size, line_count, block_count
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
@@ -341,11 +341,11 @@ describe('Feature 2: データベース実装', () => {
     // ハードコードではなく実際の値と比較
     expect(savedEvent.file_size).toBe(stats.size);
     expect(savedEvent.line_count).toBe(lineCount);
-    expect(savedEvent.object_id).toBe(fingerprintResult.lastID);
+    expect(savedEvent.file_id).toBe(fingerprintResult.lastID);
     
     // オブジェクトフィンガープリントの確認
     const savedFingerprint = await dbManager.get(
-      'SELECT * FROM object_fingerprint WHERE id = ?',
+      'SELECT * FROM files WHERE id = ?',
       [fingerprintResult.lastID]
     );
     expect(savedFingerprint.inode).toBe(stats.ino);
@@ -380,13 +380,13 @@ describe('Feature 2: データベース実装', () => {
     );
     
     const result = await dbManager.run(
-      'INSERT INTO object_fingerprint (inode) VALUES (?)',
+      'INSERT INTO files (inode) VALUES (?)',
       [testData.inode]
     );
     
     const eventResult = await dbManager.run(
       `INSERT INTO events (
-        timestamp, event_type_id, object_id, file_path, 
+        timestamp, event_type_id, file_id, file_path, 
         file_name, directory, file_size, line_count, block_count
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [

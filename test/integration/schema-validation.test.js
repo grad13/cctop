@@ -4,9 +4,10 @@ import path from 'path';
 import { ConfigSchema, ConfigRequiredFieldsSchema, ConfigValueRangesSchema } from '../schema/config-schema.js';
 import { 
   EventRecordSchema, 
-  ObjectFingerprintSchema, 
+  FilesSchema, 
   EventTypeSchema,
-  ObjectStatisticsSchema,
+  MeasurementsSchema,
+  AggregatesSchema,
   ExpectedTablesSchema 
 } from '../schema/database-schema.js';
 
@@ -75,7 +76,7 @@ describe('Schema Validation Suite', () => {
         },
         display: {
           maxEvents: 20,
-          refreshInterval: 100  // ❌ Wrong property name (should be refreshRateMs)
+          refreshInterval: 100  // Wrong property name (should be refreshRateMs)
         }
       };
 

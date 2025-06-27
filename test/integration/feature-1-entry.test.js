@@ -1,6 +1,6 @@
 /**
- * Feature 1 Test: 基本エントリポイント
- * 動作確認中心のアプローチ（メッセージ依存を除去）
+ * Feature 1 Test: Basic Entry Point
+ * Behavior-focused approach (removing message dependencies)
  */
 
 const { spawn } = require('child_process');
@@ -8,36 +8,36 @@ const path = require('path');
 const fs = require('fs');
 const os = require('os');
 
-// インフラのインポート
+// Infrastructure imports
 const SideEffectTracker = require('../helpers/side-effect-tracker');
 const { InitializationContract } = require('../contracts/initialization.contract');
 
-describe('Feature 1: 基本エントリポイント', () => {
+describe('Feature 1: Basic Entry Point', () => {
   const cctopPath = path.join(__dirname, '../../bin/cctop');
   const sideEffectTracker = new SideEffectTracker();
   
   /**
-   * 基本的な起動テスト
+   * Basic startup test
    */
   test('Should start successfully within time limit', async () => {
     const testDir = path.join(os.tmpdir(), `test-cctop-entry-${Date.now()}`);
     fs.mkdirSync(testDir, { recursive: true });
     
-    // 副作用トラッキング開始
+    // Start side effect tracking
     sideEffectTracker.captureState();
     
     try {
       const result = await runCctopWithTimeout(cctopPath, testDir, 3000);
       
-      // 起動が成功することを確認（エラーがないこと）
+      // Confirm startup is successful (no errors)
       expect(result.exitCode).toBe(0);
       expect(result.stderr).toBe('');
       
-      // 3秒以内に起動することを確認（仕様書準拠）
-      // 少し余裕を持たせて3100msとする（システムの負荷を考慮）
+      // Confirm startup within 3 seconds (specification compliant)
+      // Allow slight margin to 3100ms (considering system load)
       expect(result.duration).toBeLessThan(3100);
       
-      // 必要なファイルが作成されていることを確認
+      // Confirm required files are created
       const changes = sideEffectTracker.detectChanges();
       const expectedFiles = [
         path.join(os.homedir(), '.cctop', 'activity.db'),
@@ -48,7 +48,7 @@ describe('Feature 1: 基本エントリポイント', () => {
         const wasCreated = changes.created.some(file => 
           file === expectedFile || file.endsWith(path.basename(expectedFile))
         );
-        // ファイルが既に存在する場合も考慮
+        // Consider case where file already exists
         expect(wasCreated || fs.existsSync(expectedFile)).toBe(true);
       }
       
@@ -60,7 +60,7 @@ describe('Feature 1: 基本エントリポイント', () => {
   });
   
   /**
-   * SIGINT（Ctrl+C）での正常終了テスト
+   * Graceful exit test with SIGINT (Ctrl+C)
    */
   test('Should exit gracefully with SIGINT', async () => {
     const testDir = path.join(os.tmpdir(), `test-cctop-sigint-${Date.now()}`);
@@ -79,7 +79,7 @@ describe('Feature 1: 基本エントリポイント', () => {
       
       child.stdout.on('data', (data) => {
         stdout += data.toString();
-        // 起動が完了したと判断（1秒待機）
+        // Determine startup is complete (wait 1 second)
         if (!isReady) {
           setTimeout(() => {
             isReady = true;
@@ -98,7 +98,7 @@ describe('Feature 1: 基本エントリポイント', () => {
         });
       });
       
-      // タイムアウト
+      // Timeout
       const timeoutPromise = new Promise((resolve) => {
         setTimeout(() => {
           child.kill('SIGKILL');
@@ -108,9 +108,9 @@ describe('Feature 1: 基本エントリポイント', () => {
       
       const result = await Promise.race([exitPromise, timeoutPromise]);
       
-      // 正常終了することを確認
+      // Confirm normal exit
       expect(result.code).toBe(0);
-      expect(result.signal).toBe(null); // 正常終了時はsignalはnull
+      expect(result.signal).toBe(null); // Signal is null on normal exit
       expect(result.stderr).toBe('');
       
     } finally {
@@ -121,7 +121,7 @@ describe('Feature 1: 基本エントリポイント', () => {
   });
   
   /**
-   * エントリポイントの基本的な初期化契約テスト
+   * Basic initialization contract test for entry point
    */
   test('Should follow initialization order contract', async () => {
     const testDir = path.join(os.tmpdir(), `test-cctop-contract-${Date.now()}`);
@@ -130,17 +130,17 @@ describe('Feature 1: 基本エントリポイント', () => {
     try {
       const result = await runCctopWithTimeout(cctopPath, testDir, 3000);
       
-      // 初期化が成功することを確認
+      // Confirm initialization is successful
       expect(result.exitCode).toBe(0);
       
-      // 初期化契約の基本的な確認
-      // エラーがないことで、各コンポーネントが正しい順序で初期化されたと判断
+      // Basic confirmation of initialization contract
+      // Determine components were initialized in correct order by absence of errors
       const initOrder = InitializationContract.InitializationOrder.sequence;
       
-      // 致命的エラーがないことを確認
+      // Confirm no fatal errors
       for (const step of initOrder) {
         if (step.errorHandling.includes('Fatal')) {
-          // 致命的エラーのコンポーネントに関するエラーがないこと
+          // No errors related to fatal error components
           expect(result.stderr).not.toContain(step.component);
         }
       }
@@ -153,7 +153,7 @@ describe('Feature 1: 基本エントリポイント', () => {
   });
   
   /**
-   * 異なる環境変数での起動テスト
+   * Startup test with different environment variables
    */
   test('Should handle different NODE_ENV values', async () => {
     const environments = ['test', 'development', 'production'];
@@ -170,7 +170,7 @@ describe('Feature 1: 基本エントリポイント', () => {
           { NODE_ENV: env }
         );
         
-        // どの環境でも起動できることを確認
+        // Confirm can start in any environment
         expect(result.exitCode).toBe(0);
         expect(result.stderr).toBe('');
         
@@ -184,7 +184,7 @@ describe('Feature 1: 基本エントリポイント', () => {
 });
 
 /**
- * cctopを実行してタイムアウト付きで結果を取得
+ * Execute cctop and get results with timeout
  */
 function runCctopWithTimeout(cctopPath, cwd, timeout, env = {}) {
   return new Promise((resolve) => {
@@ -207,7 +207,7 @@ function runCctopWithTimeout(cctopPath, cwd, timeout, env = {}) {
       stderr += data.toString();
     });
     
-    // タイムアウト後にプロセスを終了
+    // Terminate process after timeout
     const timer = setTimeout(() => {
       child.kill('SIGTERM');
     }, timeout);

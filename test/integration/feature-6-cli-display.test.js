@@ -118,7 +118,7 @@ describe('Feature 6: CLI Display (ui001準拠)', () => {
 
     // イベントをDBに挿入
     for (const event of testEvents) {
-      await dbManager.insertEvent(event);
+      await dbManager.recordEvent(event);
     }
 
     // 初期データ読み込み

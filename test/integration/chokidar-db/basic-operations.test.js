@@ -1,7 +1,7 @@
 /**
- * r002 Phase 1: Basic Operations Test
- * BP-000準拠 - create/find/modify/delete動作確認
- * chokidar → DB → 表示の完全な動作保証
+ * FUNC-000: Database Foundation Basic Operations Test
+ * BP-001 compliant - create/find/modify/delete operation verification
+ * Complete operation guarantee: chokidar → events/measurements DB → display
  */
 
 const fs = require('fs');
@@ -11,7 +11,7 @@ const FileMonitor = require('../../../src/monitors/file-monitor');
 const EventProcessor = require('../../../src/monitors/event-processor');
 const DatabaseManager = require('../../../src/database/database-manager');
 
-describe('r002 Phase 1: Basic Operations (chokidar-DB統合)', () => {
+describe('FUNC-000: Basic Operations (chokidar-5table DB integration)', () => {
   let testDir;
   let fileMonitor;
   let eventProcessor;
@@ -19,34 +19,43 @@ describe('r002 Phase 1: Basic Operations (chokidar-DB統合)', () => {
   let dbPath;
 
   beforeEach(async () => {
-    // テスト用一時ディレクトリ
-    testDir = path.join(os.tmpdir(), `r002-basic-${Date.now()}`);
+    // Temporary directory for testing
+    testDir = path.join(os.tmpdir(), `func000-basic-${Date.now()}`);
     fs.mkdirSync(testDir, { recursive: true });
 
-    // テスト用データベース
+    // Test database
     dbPath = path.join(testDir, 'test-activity.db');
     dbManager = new DatabaseManager(dbPath);
     await dbManager.initialize();
+    
+    // Verify database initialization completion
+    expect(dbManager.isInitialized).toBe(true);
 
-    // Event Processor初期化
+    // Event Processor initialization (with database connection verification)
     eventProcessor = new EventProcessor(dbManager);
+    
+    // Wait for database connection stability
+    await new Promise(resolve => setTimeout(resolve, 200));
+    
+    // Re-verify database connection
+    expect(dbManager.isInitialized).toBe(true);
 
-    // File Monitor設定
+    // File Monitor setup (excluding WAL files as well)
     const config = {
       watchPaths: [testDir],
-      ignored: ['**/test-activity.db'],
+      ignored: ['**/test-*.db', '**/test-*.db-*', '**/*.db-wal', '**/*.db-shm'],
       depth: 10
     };
     fileMonitor = new FileMonitor(config);
     
-    // イベント連携
+    // Event coordination
     fileMonitor.on('fileEvent', (event) => {
       eventProcessor.processFileEvent(event);
     });
   });
 
   afterEach(async () => {
-    // リソースクリーンアップ
+    // Resource cleanup
     if (fileMonitor) {
       fileMonitor.removeAllListeners();
       await fileMonitor.stop();
@@ -58,14 +67,14 @@ describe('r002 Phase 1: Basic Operations (chokidar-DB統合)', () => {
       dbManager = null;
     }
 
-    // テストディレクトリ削除
+    // Delete test directory
     if (fs.existsSync(testDir)) {
       fs.rmSync(testDir, { recursive: true, force: true });
     }
   });
 
-  test('r002-001: 初期スキャンでfindイベントが正しく記録される', async () => {
-    // 事前ファイル作成
+  test('func000-001: find events are recorded in events/measurements during initial scan', async () => {
+    // Create files beforehand
     const testFiles = [
       path.join(testDir, 'existing1.txt'),
       path.join(testDir, 'existing2.js'),
@@ -76,53 +85,53 @@ describe('r002 Phase 1: Basic Operations (chokidar-DB統合)', () => {
       fs.writeFileSync(file, `Initial content ${i + 1}\nSecond line`);
     });
 
-    // 監視開始
+    // Start monitoring
     fileMonitor.start();
     
-    // 初期スキャン完了待機
+    // Wait for initial scan completion
     await new Promise((resolve) => {
       fileMonitor.once('ready', resolve);
     });
 
-    // DB記録確認
+    // Verify DB records
     const events = await dbManager.getRecentEvents(100);
     const findEvents = events.filter(e => e.event_type === 'find');
     
-    // 基本検証（テスト環境では少なくとも1つのイベント）
+    // Basic verification (at least one event in test environment)
     expect(findEvents.length).toBeGreaterThanOrEqual(1);
     expect(fileMonitor.isInitialScanComplete()).toBe(true);
     
-    // findイベント詳細検証（少なくとも1つのfindイベントがあることを確認）
+    // Detailed find event verification (confirm at least one find event exists)
     if (findEvents.length > 0) {
       expect(findEvents[0].file_path).toBeDefined();
       expect(findEvents[0].file_name).toBeDefined();
     }
 
-    // メタデータ検証（r002準拠）- ファイルのみ対象
-    const fileEvents = findEvents.filter(e => e.file_size > 0); // ディレクトリ除外
+    // Metadata verification (FUNC-000 compliant) - files only
+    const fileEvents = findEvents.filter(e => e.file_size > 0); // Exclude directories
     fileEvents.forEach(event => {
       expect(event.timestamp).toBeDefined();
       expect(event.file_size).toBeGreaterThan(0);
-      expect(event.line_count).toBeGreaterThanOrEqual(1); // 最低1行
+      expect(event.line_count).toBeGreaterThanOrEqual(1); // Minimum 1 line
       expect(event.file_name).toBeDefined();
       expect(event.directory).toBeDefined();
     });
   });
 
-  test('r002-002: リアルタイムcreateイベントが正しく記録される', async () => {
-    // 監視開始（空ディレクトリ）
+  test('func000-002: real-time create events are correctly recorded', async () => {
+    // Start monitoring (empty directory)
     fileMonitor.start();
     
-    // 初期スキャン完了待機
+    // Wait for initial scan completion
     await new Promise((resolve) => {
       fileMonitor.once('ready', resolve);
     });
 
-    // 新規ファイル作成
+    // Create new file
     const newFile = path.join(testDir, 'new-created.txt');
     const createContent = 'This is newly created file\nWith multiple lines\nThird line';
     
-    // createイベント捕捉
+    // Capture create events
     const createEvents = [];
     const eventHandler = (event) => {
       if (event.type === 'create') {
@@ -131,13 +140,13 @@ describe('r002 Phase 1: Basic Operations (chokidar-DB統合)', () => {
     };
     fileMonitor.on('fileEvent', eventHandler);
 
-    // ファイル作成実行
+    // Execute file creation
     fs.writeFileSync(newFile, createContent);
     
-    // イベント処理待機
+    // Wait for event processing
     await new Promise(resolve => setTimeout(resolve, 300));
 
-    // DB記録確認
+    // Verify DB records
     const allEvents = await dbManager.getRecentEvents(1000);
     const dbCreateEvents = allEvents.filter(e => e.event_type === 'create');
     
@@ -148,31 +157,31 @@ describe('r002 Phase 1: Basic Operations (chokidar-DB統合)', () => {
     expect(createEvent.file_size).toBe(createContent.length);
     expect(createEvent.line_count).toBe(3);
     expect(createEvent.file_name).toBe('new-created.txt');
-    // is_directoryはgetRecentEventsのクエリに含まれていないため、スキップ
+    // Skip is_directory as it's not included in getRecentEvents query
   });
 
-  test('r002-003: modifyイベントが正しく記録される', async () => {
-    // ベースファイル作成
+  test('func000-003: modify events are correctly recorded', async () => {
+    // Create base file
     const testFile = path.join(testDir, 'modify-target.txt');
     fs.writeFileSync(testFile, 'Original content');
 
-    // 監視開始
+    // Start monitoring
     fileMonitor.start();
     await new Promise((resolve) => {
       fileMonitor.once('ready', resolve);
     });
 
-    // modify前のイベント数
+    // Event count before modify
     const eventsBefore = await dbManager.getRecentEvents(1000);
     
-    // ファイル変更
+    // Modify file
     const modifiedContent = 'Modified content\nWith additional lines\nThird line\nFourth line';
     fs.writeFileSync(testFile, modifiedContent);
     
-    // 変更処理待機
+    // Wait for change processing
     await new Promise(resolve => setTimeout(resolve, 300));
 
-    // DB記録確認
+    // Verify DB records
     const eventsAfter = await dbManager.getRecentEvents(1000);
     const modifyEvents = eventsAfter.filter(e => 
       e.event_type === 'modify' && e.file_path === path.resolve(testFile)
@@ -186,24 +195,24 @@ describe('r002 Phase 1: Basic Operations (chokidar-DB統合)', () => {
     expect(modifyEvent.timestamp).toBeGreaterThan(0);
   });
 
-  test('r002-004: deleteイベントが正しく記録される', async () => {
-    // 削除対象ファイル作成
+  test('func000-004: delete events are correctly recorded', async () => {
+    // Create file to be deleted
     const deleteTarget = path.join(testDir, 'delete-target.txt');
     fs.writeFileSync(deleteTarget, 'File to be deleted');
 
-    // 監視開始
+    // Start monitoring
     fileMonitor.start();
     await new Promise((resolve) => {
       fileMonitor.once('ready', resolve);
     });
 
-    // ファイル削除
+    // Delete file
     fs.unlinkSync(deleteTarget);
     
-    // 削除処理待機
+    // Wait for deletion processing
     await new Promise(resolve => setTimeout(resolve, 300));
 
-    // DB記録確認
+    // Verify DB records
     const allEvents = await dbManager.getRecentEvents(1000);
     const deleteEvents = allEvents.filter(e => 
       e.event_type === 'delete' && e.file_path === path.resolve(deleteTarget)
@@ -214,17 +223,17 @@ describe('r002 Phase 1: Basic Operations (chokidar-DB統合)', () => {
     const deleteEvent = deleteEvents[0];
     expect(deleteEvent.file_name).toBe('delete-target.txt');
     expect(deleteEvent.timestamp).toBeGreaterThan(0);
-    // deleteイベントではfile_size等のメタデータは取得不可
+    // Metadata like file_size cannot be obtained for delete events
   });
 
-  test('r002-005: 大量ファイル操作での取りこぼしゼロ保証', async () => {
-    // 監視開始
+  test('func000-005: zero missed events guarantee for bulk file operations', async () => {
+    // Start monitoring
     fileMonitor.start();
     await new Promise((resolve) => {
       fileMonitor.once('ready', resolve);
     });
 
-    // 10ファイル高速作成（BP-000仕様）
+    // Create 10 files rapidly (FUNC-000 specification)
     const fileCount = 10;
     const createdFiles = [];
     
@@ -234,14 +243,14 @@ describe('r002 Phase 1: Basic Operations (chokidar-DB統合)', () => {
       createdFiles.push(path.resolve(filePath));
     }
 
-    // 処理完了待機（十分な時間）
+    // Wait for processing completion (sufficient time)
     await new Promise(resolve => setTimeout(resolve, 1000));
 
-    // DB記録確認
+    // Verify DB records
     const allEvents = await dbManager.getRecentEvents(1000);
     const createEvents = allEvents.filter(e => e.event_type === 'create');
     
-    // 取りこぼしゼロ確認
+    // Verify zero missed events
     expect(createEvents.length).toBeGreaterThanOrEqual(fileCount);
     
     const recordedPaths = createEvents.map(e => e.file_path);
@@ -249,7 +258,7 @@ describe('r002 Phase 1: Basic Operations (chokidar-DB統合)', () => {
       expect(recordedPaths).toContain(filePath);
     });
 
-    // 各イベントのメタデータ整合性確認
+    // Verify metadata integrity for each event
     createEvents.forEach(event => {
       expect(event.file_size).toBeGreaterThan(0);
       expect(event.line_count).toBe(2);
@@ -257,21 +266,21 @@ describe('r002 Phase 1: Basic Operations (chokidar-DB統合)', () => {
     });
   });
 
-  test('r002-006: chokidarイベント数とDB記録数の完全一致', async () => {
-    // イベントカウンター
+  test('func000-006: complete match between chokidar event count and DB record count', async () => {
+    // Event counter
     let chokidarEventCount = 0;
     
     fileMonitor.on('fileEvent', () => {
       chokidarEventCount++;
     });
 
-    // 監視開始
+    // Start monitoring
     fileMonitor.start();
     await new Promise((resolve) => {
       fileMonitor.once('ready', resolve);
     });
 
-    // 複数操作実行
+    // Execute multiple operations
     const testFile1 = path.join(testDir, 'count-test1.txt');
     const testFile2 = path.join(testDir, 'count-test2.txt');
     
@@ -280,38 +289,38 @@ describe('r002 Phase 1: Basic Operations (chokidar-DB統合)', () => {
     fs.writeFileSync(testFile1, 'Modified Content 1'); // modify
     fs.unlinkSync(testFile2); // delete
     
-    // 処理完了待機
+    // Wait for processing completion
     await new Promise(resolve => setTimeout(resolve, 800));
 
-    // DB記録数確認
+    // Verify DB record count
     const allEvents = await dbManager.getRecentEvents(1000);
     const relevantEvents = allEvents.filter(e => 
       e.file_path.includes('count-test')
     );
     
-    // イベント数一致確認（BP-000仕様: chokidarイベント数 === DB記録数）
-    // テスト環境では処理順序により完全一致は困難なため、最低限の確認
+    // Verify event count match (FUNC-000 spec: chokidar event count === DB record count)
+    // Minimum verification as complete match is difficult in test environment due to processing order
     expect(relevantEvents.length).toBeGreaterThanOrEqual(1);
     expect(chokidarEventCount).toBeGreaterThanOrEqual(1);
   });
 
-  test('r002-007: timestamp精度±50ms以内保証', async () => {
-    // 監視開始
+  test('func000-007: timestamp precision guarantee within ±50ms', async () => {
+    // Start monitoring
     fileMonitor.start();
     await new Promise((resolve) => {
       fileMonitor.once('ready', resolve);
     });
 
-    // タイムスタンプ記録
+    // Record timestamp
     const beforeCreate = Date.now();
     const testFile = path.join(testDir, 'timestamp-test.txt');
     fs.writeFileSync(testFile, 'Timestamp test content');
     const afterCreate = Date.now();
     
-    // 処理待機
+    // Wait for processing
     await new Promise(resolve => setTimeout(resolve, 300));
 
-    // DB記録確認
+    // Verify DB records
     const allEvents = await dbManager.getRecentEvents(1000);
     const createEvent = allEvents.find(e => 
       e.event_type === 'create' && e.file_path === path.resolve(testFile)
@@ -319,7 +328,7 @@ describe('r002 Phase 1: Basic Operations (chokidar-DB統合)', () => {
     
     expect(createEvent).toBeDefined();
     
-    // timestamp精度確認（BP-000仕様: ±50ms以内、実際は処理遅延を考慮）
+    // Verify timestamp precision (FUNC-000 spec: within ±50ms, considering processing delay in practice)
     expect(createEvent.timestamp).toBeGreaterThanOrEqual(beforeCreate - 200);
     expect(createEvent.timestamp).toBeLessThanOrEqual(afterCreate + 200);
   });
