@@ -3,42 +3,64 @@
 ## Overview
 cctopの開発における各バージョンの主要な変更点と改善内容を記録します。
 
+
+---
+
+## v0.2.1.0 (2025-06-27)
+### 🔇 静音監視・クリーンコンソール実現
+
+**ユーザー体験**: ファイル監視中の冗長ログを完全除去、すっきりとした表示
+
+**主要機能改善**:
+- **monitor機能とviewer機能の完全分離**
+  - Background Monitor: 静音でファイル変更を監視・データベース記録
+  - Viewer Process: データベースから情報を取得して表示
+  - 110ファイル監視時でもクリーンな端末表示を実現
+
+**システム安定性**:
+- Monitor/Database/UI三者の安定連携確立
+- Database WALモードによる並行アクセス対応
+- 長時間稼働でも安定したパフォーマンス
+
+**技術的詳細**:
+- EventDisplayManager無限ログループ解消（`process.env.CCTOP_VERBOSE`制御）
+- Monitor Process単一保証・自動起動制御
+- リアルタイム同期（60ms遅延）での表示更新
+
 ---
 
 ## v0.2.0.0 (開発中)
-### 🚀 データベース基盤刷新と機能強化
+### 🚀 大規模リファクタリング・高性能化
 
-**開発開始**: 2025年6月26日  
-**計画文書**: [BP-001](blueprints/BP-001-for-version0200-restructered.md)  
-**実装方針**: 既存v0.1.xコードの改修（2,434行を基盤として活用）
+**ユーザー体験**: 大容量ファイル監視とデータ永続化の安定性大幅向上
 
-**主要改善点**:
-- **データベース基盤刷新** ([FUNC-000](functions/FUNC-000-sqlite-database-foundation.md))
-  - 5テーブル構成への移行（events, event_types, files, measurements, aggregates）
-  - inode再利用問題への対応（UNIQUE制約なし設計）
-  - WALモード・トランザクション管理の強化
+**主要機能強化**:
+- **データベース基盤完全刷新**
+  - 5テーブル構成で大容量ファイル追跡に対応
+  - inode再利用問題解決によるファイル同一性確保
+  - WALモードで高速並行アクセス実現
 
-- **ファイルライフサイクル追跡強化** ([FUNC-001](functions/FUNC-001-file-lifecycle-tracking.md))
-  - 6イベントタイプの完全サポート（find/create/modify/delete/move/restore）
-  - ファイル同一性管理（file_id再利用システム）
-  - メタデータ完全性の保証
+- **ファイルライフサイクル完全追跡**
+  - 6イベントタイプの包括的サポート（find/create/modify/delete/move/restore）
+  - ファイル移動・リネーム時の履歴継続
+  - メタデータ完全性保証
 
 - **新機能追加**
-  - イベントタイプフィルタリング ([FUNC-023](functions/FUNC-023-event-type-filtering.md))
-  - postinstall自動初期化 ([FUNC-013](functions/FUNC-013-postinstall-auto-initialization.md))
-  - レスポンシブディレクトリ表示強化 ([FUNC-024](functions/FUNC-024-responsive-directory-display.md))
+  - イベントタイプフィルタリング（特定操作のみ表示）
+  - 自動初期化（npm install時の自動セットアップ）
+  - レスポンシブディスプレイ強化
 
-- **設定システム改善** ([FUNC-010](functions/FUNC-010-local-global-storage-management.md)/[011](functions/FUNC-011-hierarchical-config-management.md))
+- **設定システム階層化**
   - ローカル優先設定（.cctop/config.json）
   - グローバル設定オプション（--global）
-  - 階層的設定管理
+  - プロジェクト別カスタマイズ対応
 
 **技術的改善**:
-- chokidar統合の最適化（初期スキャンとリアルタイム監視の明確な区別）
-- 二重バッファ描画とEast Asian Width対応の統合
-- テスト駆動開発の徹底（機能追加時のテスト必須化）
+- 初期スキャンとリアルタイム監視の分離最適化
+- 既存UI機能（二重バッファ・East Asian Width）との統合
+- テスト駆動開発による品質保証
 
-**推定完成**: 3-4日（Builder/Validatorによる実装中）
+**開発状況**: 実装中（Builder/Validator協働）
 
 ---
 
