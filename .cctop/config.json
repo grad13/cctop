@@ -25,10 +25,15 @@
       "checkOnStartup": true,
       "warnIfInsufficient": true,
       "recommendedValue": 524288
+    },
+    "backgroundMonitor": {
+      "enabled": true,
+      "logLevel": "info",
+      "heartbeatInterval": 30000
     }
   },
   "database": {
-    "path": "./.cctop/activity.db",
+    "path": "/Users/takuo-h/Workspace/Code/06-cctop/.cctop/activity.db",
     "mode": "WAL"
   },
   "display": {

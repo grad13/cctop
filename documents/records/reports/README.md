@@ -40,6 +40,9 @@ REP-XXXX-title.md
 | REP-0091-test-async-interference-investigation.md | 2025-06-24 | テスト非同期干渉問題の調査 | 活動中 |
 | REP-0098-bp000-test-environment-critical-analysis.md | 2025-06-25 | BP-000テスト環境の根本問題分析レポート | 活動中 |
 | REP-0099-lost-refind-event-design-rationale.md | 2025-06-25 | Lost/Refindイベント設計思想の記録 | 活動中 |
+| completed-implementations-june26-builder-report.md | 2025-06-27 | Builder完了実装記録（2025年6月26日セッション群）| 活動中 |
+| rangeerror-invalid-string-length-fix-report.md | 2025-06-27 | RangeError無限ループ修正レポート | 活動中 |
+| validator-status-l1-to-l2-migration-20250627.md | 2025-06-27 | Validator Status L1→L2移行記録 | 活動中 |
 
 ## 📁 アーカイブされたレポート（archives/）
 

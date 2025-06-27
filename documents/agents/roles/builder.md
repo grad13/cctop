@@ -109,6 +109,16 @@
 5. **原因特定・report作成**: 調査結果に基づく原因を調査し、1ファイル1バグの記録義務に従ってファイル作成する
 6. **根本修正**: 原因を除去する修正を実装
 
+## 一時ファイル規約
+
+デバッグ・検証用の一時ファイルは必ず `/tmp` を使用すること：
+- ❌ プロジェクト内: `test-debug.js`、`temp.txt` 等
+- ✅ `/tmp` 内: `/tmp/cctop-test-*.js`、`/tmp/debug-*.log`
+
+**理由**: Git誤コミット防止・ディレクトリクリーン性維持
+
+**注意**: 永続的なテストファイルが必要な場合は、Validatorに依頼してtest/に作成してもらうこと
+
 **詳細**: `documents/rules/meta/protocols/p011-coder-bug-recording-protocol.md`参照（現在はBuilder/Validatorエージェントに適用）
 
 ### ユーザーへの質問・協力依頼原則

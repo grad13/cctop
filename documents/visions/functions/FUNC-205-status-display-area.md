@@ -3,8 +3,8 @@
 **作成日**: 2025年6月26日 16:15  
 **更新日**: 2025年6月26日 16:15  
 **作成者**: Architect Agent  
-**ステータス**: Active  
-**Version**: 0.2.1.0
+**Version**: 0.2.0.0  
+**関連仕様**: FUNC-202, FUNC-206
 
 ## 📊 機能概要
 
@@ -36,10 +36,10 @@
 ## 📋 必要な仕様
 
 ### **配置場所**
-現在のFUNC-022レイアウトの下部に設定可能行数追加（デフォルト3行）：
+現在のFUNC-202レイアウトの下部に設定可能行数追加（デフォルト3行）：
 
 ```
-Modified             Elapsed  File Name                           Event    Lines  Blocks  Directory
+Event Timestamp      Elapsed  File Name                           Event    Lines  Blocks  Directory
 ────────────────────────────────────────────────────
 2025-06-25 19:07:51    00:04  FUNC-120-event-type-filte...       modify     197      16  documents/visions/functions
 ────────────────────────────────────────────────────
@@ -201,7 +201,7 @@ class StatusDisplay {
 
 ### **config.json設定拡張**
 
-FUNC-011（階層的設定管理）のconfig.jsonに以下を追加：
+FUNC-101（階層的設定管理）のconfig.jsonに以下を追加：
 
 ```json
 "display": {
@@ -244,7 +244,7 @@ ORDER BY event_count DESC
 LIMIT 1;
 ```
 
-### **FUNC-022との統合**
+### **FUNC-202との統合**
 - 既存レイアウトの下部に設定可能行数追加
 - 二重バッファ描画システム（FUNC-021）との連携
 - 動的行数調整（1〜maxLines行）

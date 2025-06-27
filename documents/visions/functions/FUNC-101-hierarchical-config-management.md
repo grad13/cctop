@@ -3,8 +3,8 @@
 **作成日**: 2025年6月24日 10:00  
 **更新日**: 2025年6月26日 00:00  
 **作成者**: Architect Agent  
-**ステータス**: Active  
 **Version**: 0.2.0.0  
+**関連仕様**: FUNC-102, FUNC-104, func-105, CG-002  
 
 ## 📊 機能概要
 
@@ -39,7 +39,7 @@ CLI引数・config.json・デフォルト値の階層的設定管理を行う機
 
 ```json
 {
-  "version": "0.1.0",
+  "version": "0.2.0.0",
   "monitoring": {
     "watchPaths": [],              // 監視対象パス（複数指定可）
     "excludePatterns": [           // 除外パターン（FUNC-002 chokidar.ignoredと同期）
@@ -55,10 +55,15 @@ CLI引数・config.json・デフォルト値の階層的設定管理を行う機
       "requiredLimit": 524288,     // 必要な上限値（OS共通）
       "checkOnStartup": true,      // 起動時上限チェック
       "warnIfInsufficient": true   // 不足時警告表示
+    },
+    "backgroundMonitor": {         // バックグラウンド監視設定（FUNC-003）
+      "enabled": true,             // バックグラウンド監視の有効/無効
+      "logLevel": "info",          // ログレベル（error, warn, info, debug）
+      "heartbeatInterval": 30000   // ハートビート間隔（ms）
     }
   },
   "database": {
-    "path": "~/.cctop/activity.db", // DBファイルパス（FUNC-000準拠）
+    "path": ".cctop/activity.db", // DBファイルパス（FUNC-000準拠）
     "mode": "WAL"                    // SQLiteモード
   },
   "display": {
@@ -133,6 +138,23 @@ CLI引数・config.json・デフォルト値の階層的設定管理を行う機
               "type": "boolean"
             }
           }
+        },
+        "backgroundMonitor": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "logLevel": {
+              "type": "string",
+              "enum": ["error", "warn", "info", "debug"]
+            },
+            "heartbeatInterval": {
+              "type": "integer",
+              "minimum": 5000,
+              "maximum": 300000
+            }
+          }
         }
       }
     },
@@ -203,18 +225,19 @@ CLI引数・config.json・デフォルト値の階層的設定管理を行う機
 
 ### **CLI引数定義**
 
-**CLI仕様統合**: CLI引数の詳細は **[FUNC-014: CLIインターフェース統合仕様](./FUNC-014-cli-interface-specification.md)** を参照
+**CLI仕様統合**: CLI引数の詳細は **[FUNC-104: CLIインターフェース統合仕様](./FUNC-104-cli-interface-specification.md)** を参照
 
 ```bash
 cctop [options] [directory]
 
 Options:
-  -d, --dir <directory>       監視ディレクトリ (default: .)
-  -t, --timeout               タイムアウト(sec)
-  -v, --verbose               詳細出力
-  -q, --quiet                 静寂モード
-  -h, --help                  ヘルプ表示
-  --version                   バージョン表示
+  --timeout <seconds>         タイムアウト時間（秒）
+  --daemon --start            背景監視プロセス開始
+  --daemon --stop             背景監視プロセス停止
+  --view                      Monitor起動なし、既存DBから表示のみ
+  --verbose                   詳細出力モード
+  --check-limits              ファイル監視制限の確認と推奨設定表示
+  -h, --help                  ヘルプメッセージ表示
 ```
 
 

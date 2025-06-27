@@ -3,8 +3,8 @@
 **作成日**: 2025年6月25日 10:00  
 **更新日**: 2025年6月26日 00:00  
 **作成者**: Architect Agent  
-**ステータス**: Active  
 **Version**: 0.2.0.0  
+**関連仕様**: FUNC-101, FUNC-104  
 
 ## 📊 機能概要
 
@@ -28,7 +28,7 @@ OS固有のファイル監視上限（Linux: inotify、macOS: ファイルディ
 
 ### **config.jsonスキーマ拡張**
 
-FUNC-011（階層的設定管理）のconfig.jsonに以下を追加：
+FUNC-101（階層的設定管理）のconfig.jsonに以下を追加：
 
 ```json
 "monitoring": {
@@ -74,7 +74,7 @@ cctop --check-limits
 ```
 ⚠️  WARNING: inotify limit may be insufficient
    Current: 8192 watches
-   Required: 524288 watches (configured in ~/.cctop/config.json)
+   Required: 524288 watches (configured in .cctop/config.json)
    
    Large projects may encounter "ENOSPC" errors.
    To increase limit permanently:

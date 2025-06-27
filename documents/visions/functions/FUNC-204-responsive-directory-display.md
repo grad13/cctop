@@ -3,8 +3,8 @@
 **作成日**: 2025年6月26日 01:00
 **更新日**: 2025年6月26日 01:00 
 **作成者**: Architect Agent  
-**ステータス**: Active  
-**Version**: 0.2.0.0
+**Version**: 0.2.0.0  
+**関連仕様**: FUNC-200, FUNC-201, FUNC-202
 
 ## 📊 機能概要
 
@@ -34,7 +34,7 @@
 calculateDynamicWidth() {
   const terminalWidth = process.stdout.columns || 80;
   // 固定カラム幅の合計: 88文字
-  // Modified(19) + Elapsed(10) + FileName(28) + Event(8) + Lines(5) + Blocks(6) + スペース(12)
+  // Event Timestamp(19) + Elapsed(10) + FileName(28) + Event(8) + Lines(5) + Blocks(6) + スペース(12)
   const fixedWidth = 88;
   const directoryWidth = Math.max(10, terminalWidth - fixedWidth - 2);
   
@@ -72,7 +72,7 @@ truncateDirectoryPathWithWidth(path, maxWidth) {
 
 ### 表示レイアウト
 ```
-Modified               Elapsed  File Name                    Event    Lines Blocks  Directory
+Event Timestamp        Elapsed  File Name                    Event    Lines Blocks  Directory
 ────────────────────────────────────────────────────────────────────────────────────────────
 2025-06-26 10:30:45    00:05  config.json                  modify       50    120  src/config/
 2025-06-26 10:30:40    00:10  database-manager.js          create      350   1200  ...ong/path/to/src/database/
@@ -114,6 +114,6 @@ Modified               Elapsed  File Name                    Event    Lines Bloc
 
 ## 🔗 関連仕様
 
-- **FUNC-020**: East Asian Width対応（文字幅計算で使用）
+- **FUNC-200**: East Asian Width対応（文字幅計算で使用）
 - **FUNC-021**: 二重バッファ描画（リサイズ時の再描画で活用）
-- **FUNC-022**: CLI表示統合（全体のレイアウト設計）
+- **FUNC-202**: CLI表示統合（全体のレイアウト設計）

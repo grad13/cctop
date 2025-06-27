@@ -2,7 +2,8 @@
 
 **作成日**: 2025-06-24  
 **作成者**: Builder Agent  
-**目的**: v0.1.0.0の詳細実装計画（基盤確立版）
+**目的**: v0.1.0.0の詳細実装計画（基盤確立版）  
+**関連仕様**: FUNC-000, FUNC-002, FUNC-202
 
 ## 🎯 v0.1.0.0の目標
 
@@ -475,7 +476,7 @@ const keyBindings = {
 
 **全体レイアウト**:
 ```
-Modified             Elapsed    File Name             Directory       Event   Lines  Blocks
+Event Timestamp      Elapsed    File Name             Directory       Event   Lines  Blocks
 -------------------------------------------------------------------------------------------------
 2025-06-24 14:30:15   00:01:23  index.js             src/            modify    125      8
 2025-06-24 14:28:03   00:01:07  new-test.js          test/           create     45      3
@@ -488,7 +489,7 @@ All Activities  Cached Events: 3/156
 **カラム仕様**:
 | カラム | 幅 | 配置 | 説明 |
 |--------|-----|------|------|
-| Modified | 19 | 右寄せ | ファイル変更時刻 |
+| Event Timestamp | 19 | 右寄せ | イベント発生時刻 |
 | Elapsed | 10 | 右寄せ | 経過時間 |
 | File Name | 28 | 左寄せ | ファイル名 |
 | Directory | 15 | 左寄せ | ディレクトリパス |

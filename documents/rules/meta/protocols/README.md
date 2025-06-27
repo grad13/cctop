@@ -64,10 +64,11 @@
 | P045 | p045-git-management-separation-protocol.md | Git管理分離プロトコル（親git・子git境界管理） |
 | P046 | 欠番 | （P045が重複して作成されたため） |
 | P047 | p047-visions-structure-classification-guide.md | visions/構造分類ガイドライン（functions/code-guides/blueprints/） |
+| P048 | p048-npm-package-publish-protocol.md | npm Package Publish Protocol（RELEASEsディレクトリ公開手続き） |
 
 **参照例**: 「P000を確認してください」「P007実施完了」
 
-**新規Protocol番号**: P048から（P009、P021、P023、P027はDDD2またはP022に統合済み、P032はP031に統合済み、P046は欠番）
+**新規Protocol番号**: P049から（P009、P021、P023、P027はDDD2またはP022に統合済み、P032はP031に統合済み、P046は欠番）
 
 
 ## 📁 ファイル構成（番号順）
@@ -305,6 +306,11 @@
   - code-guides/: 実装ガイド（どう作るか）
   - blueprints/: 統合設計（全体像）
 
+- **P048: [p048-npm-package-publish-protocol.md](p048-npm-package-publish-protocol.md)** - npm Package Publish Protocol
+  - RELEASEsディレクトリからのnpm公開手続き
+  - package.json修正・バイナリファイル準備・メタデータ更新
+  - 本番公開準備プロセス（テストファイル除外・最適化）
+
 ## 🎯 使い方
 
 ### 新規参加者の場合
@@ -352,6 +358,7 @@
 - L1→L2移行 → **P044**
 - Git管理分離 → **P045**
 - visions/構造分類 → **P047**
+- npm Package公開 → **P048**
 
 ### 番号での簡潔参照
 - 「P007を実施してください」

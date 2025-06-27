@@ -3,16 +3,13 @@
 **作成日**: 2025年6月26日 19:30  
 **更新日**: 2025年6月26日 19:30  
 **作成者**: Architect Agent  
-**ステータス**: Active  
-**Version**: 0.2.0.0
+**Version**: 0.2.0.0  
+**関連仕様**: FUNC-101, FUNC-104
 
 ## 📊 機能概要
 
 cctopの設定・データベースを現在ディレクトリ（.cctop/）で管理し、初回実行時の自動初期化を行うシンプルなローカル設定システム。
 
-**統合元機能**:
-- **FUNC-100**: ローカル設定管理機能
-- **FUNC-103**: postinstall自動初期化機能
 
 **ユーザー価値**: 
 - プロジェクト毎の独立した設定管理
@@ -96,15 +93,10 @@ Starting monitoring...
 const fs = require('fs');
 const path = require('path');
 
-// グローバルインストール時のみ簡単なメッセージ表示
-// ローカル.cctop/の作成は初回実行時に行う
-if (process.env.npm_config_global) {
-  console.log('cctop installed globally');
-  console.log('Run "cctop" in your project directory to start monitoring');
-} else {
-  console.log('cctop installed locally');
-  console.log('Run "cctop" to initialize .cctop/ and start monitoring');
-}
+// インストール完了メッセージ（ローカル専用システム）
+// .cctop/の作成は初回実行時に行う
+console.log('cctop installed successfully');
+console.log('Run "cctop" to initialize .cctop/ and start monitoring');
 ```
 
 ### **ランタイム初期化処理**
@@ -143,7 +135,6 @@ if (process.env.npm_config_global) {
 
 4. **postinstall確認**
    - npm install時の適切なメッセージ表示
-   - グローバル・ローカルインストールの区別
    - エラーなしでの完了
 
 ## 💡 使用シナリオ
@@ -168,8 +159,9 @@ cctop                 # project-bの.cctop/設定で監視（独立）
 
 ### **npm インストール体験**
 ```bash
-# ローカルインストール
+# インストール
 npm install cctop
+# → "cctop installed successfully"
 # → "Run cctop to initialize .cctop/ and start monitoring"
 
 # 初回実行
@@ -203,14 +195,10 @@ cctop
 
 ## 📝 移行・廃止情報
 
-### **統合元機能**
-- **FUNC-100**: ローカル・グローバル設定管理機能 → **廃止**
-- **FUNC-103**: postinstall自動初期化機能 → **廃止**
-
-### **主な変更点**
-- **グローバル設定**: 完全削除（~/.cctop/使用禁止）
-- **postinstall**: 簡素化（メッセージのみ、実際の初期化は初回実行時）
-- **統合効果**: 設定管理の一元化・複雑性の排除
+### **主な設計方針**
+- **ローカル専用**: プロジェクト毎の独立した設定管理
+- **自動初期化**: 初回実行時の自動セットアップ
+- **シンプル設計**: 複雑な優先順位や継承システムの除外
 
 ---
 

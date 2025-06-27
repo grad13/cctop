@@ -3,8 +3,8 @@
 **作成日**: 2025年6月25日 10:00  
 **更新日**: 2025年6月26日 03:00  
 **作成者**: Architect Agent  
-**ステータス**: Active  
 **Version**: 0.2.0.0  
+**関連仕様**: FUNC-000, FUNC-202, FUNC-300  
 
 ## 📊 機能概要
 
@@ -16,34 +16,50 @@
 
 ### ✅ **実行する**
 - イベントタイプ別フィルタリング（find/create/modify/delete/move/restore）
-- キーボードショートカット（f,c,m,d,v,r）による切り替え
+- フィルタロジックの実装・状態管理
 - フィルタ状態の視覚的表示
 - リアルタイム反映（既存表示も即座更新）
 
 ### ❌ **実行しない**
+- **キーボード入力の直接処理（FUNC-300の責務）**
 - ファイル名・パス・サイズによるフィルタリング
 - 複雑な検索クエリ・正規表現フィルタ
 - フィルタ状態の永続化（セッション限定）
 
 ## 📋 必要な仕様
 
-### **キーバインド定義**
+### **FUNC-300連携によるキー処理**
 
-| キー | イベントタイプ | 説明 |
-|------|---------------|------|
-| `f` | find | 初期スキャン |
-| `c` | create | ファイル作成 |
-| `m` | modify | ファイル変更 |
-| `d` | delete | ファイル削除 |
-| `v` | move | 移動・リネーム |
-| `r` | restore | ファイル復元 |
+**基本方針**: キーボード入力はFUNC-300が受信し、待機状態時にFUNC-203がフィルタ処理を実行
+
+| キー | イベントタイプ | 説明 | 登録優先度 |
+|------|---------------|------|-----------|
+| `f` | find | 初期スキャン | 低(10) |
+| `c` | create | ファイル作成 | 低(10) |
+| `m` | modify | ファイル変更 | 低(10) |
+| `d` | delete | ファイル削除 | 低(10) |
+| `v` | move | 移動・リネーム | 低(10) |
+| `r` | restore | ファイル復元 | 低(10) |
+
+**FUNC-300登録例**:
+```javascript
+KeyInputManager.register({
+  id: 'event-filter-control',
+  mode: 'waiting',
+  keys: ['f', 'c', 'm', 'd', 'v', 'r'],
+  priority: 10,
+  callback: (key) => FUNC203.toggleEventFilter(key)
+});
+```
+
+**注意**: 選択状態（PIL-002）時はこれらのキーは無効化され、選択操作が優先される
 
 ### **フィルタ状態表示**
 
-FUNC-022の表示に追加される形で、画面最下段に固定表示：
+FUNC-202の表示に追加される形で、画面最下段に固定表示：
 
 ```
-Modified             Elapsed  File Name                           Event    Lines  Blocks  Directory
+Event Timestamp      Elapsed  File Name                           Event    Lines  Blocks  Directory
 ────────────────────────────────────────────────────
 2025-06-25 19:07:51    00:04  FUNC-120-event-type-filte...       modify     197      16  documents/visions/functions
 2025-06-25 19:07:33    00:22  FUNC-001-file-lifecycle-t...       create     207      16  documents/visions/functions
@@ -66,7 +82,7 @@ All Activities  (4/156)
 ## 🔗 関連仕様
 
 - **イベント定義**: [FUNC-001: ファイルライフサイクル追跡](./FUNC-001-file-lifecycle-tracking.md)
-- **表示システム**: [FUNC-022: CLI表示統合](./FUNC-022-cli-display-integration.md)
+- **表示システム**: [FUNC-202: CLI表示統合](./FUNC-202-cli-display-integration.md)
 
 ---
 

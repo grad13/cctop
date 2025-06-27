@@ -3,8 +3,8 @@
 **作成日**: 2025年6月24日 10:00  
 **更新日**: 2025年6月25日 21:30  
 **作成者**: Architect Agent  
-**ステータス**: Active  
 **Version**: 0.2.0.0  
+**関連仕様**: FUNC-000, FUNC-200, FUNC-201, FUNC-203, FUNC-204, FUNC-205, FUNC-300  
 
 ## 📊 機能概要
 
@@ -20,14 +20,16 @@ FUNC-000のデータベースから取得したファイルイベントを、リ
 ### ✅ **実行する**
 - データベースからのイベント取得・表示
 - All/Uniqueモード切り替え
-- FUNC-021（二重バッファ）による描画
-- FUNC-020（East Asian Width）対応
-- キーボード操作処理
+- FUNC-201（二重バッファ）による描画
+- FUNC-200（East Asian Width）対応
+- 基本的な表示状態管理（待機状態）
 
 ### ❌ **実行しない**
 - ファイル監視（FUNC-002の責務）
 - データベース管理（FUNC-000の責務）
-- 設定管理（FUNC-010/011の責務）
+- 設定管理（FUNC-101/105の責務）
+- **キーボード入力処理（FUNC-300の責務）**
+- バックグラウンド監視（FUNC-003 Monitor Processの責務）
 - イベントフィルタリング（FUNC-023の責務）
 
 ## 📋 必要な仕様
@@ -37,7 +39,7 @@ FUNC-000のデータベースから取得したファイルイベントを、リ
 #### **カラム構成**
 | カラム | 幅 | 配置 | 説明 |
 |--------|-----|------|------|
-| Modified | 19 | 左寄せ | ファイル変更時刻 |
+| Event Timestamp | 19 | 左寄せ | イベント発生時刻 |
 | Elapsed | 9 | 右寄せ | 経過時間 |
 | File Name | 35 | 左寄せ | ファイル名（省略表示） |
 | Event | 8 | 左寄せ | イベントタイプ |
@@ -47,7 +49,7 @@ FUNC-000のデータベースから取得したファイルイベントを、リ
 
 #### **表示例**
 ```
-Modified             Elapsed  File Name                           Event    Lines  Blocks  Directory
+Event Timestamp      Elapsed  File Name                           Event    Lines  Blocks  Directory
 ────────────────────────────────────────────────────
 2025-06-25 19:07:51    00:04  FUNC-112-cli-display-inte...       modify     197      16  documents/visions/functions
 2025-06-25 19:07:33    00:22  FUNC-001-file-lifecycle-t...       modify     207      16  documents/visions/functions
@@ -76,17 +78,30 @@ All Activities  (4/156)
   - 最新の測定値を表示
 - **更新頻度**: 100ms毎（Allモードと同じ）
 
-### **キーボード操作仕様**
+### **FUNC-300連携によるキー処理**
 
-| キー | 機能 | 説明 |
-|------|------|------|
-| `a` | Allモード | 全イベント表示に切り替え |
-| `u` | Uniqueモード | ユニークファイル表示に切り替え |
-| `q` | 終了 | アプリケーション終了 |
+**基本方針**: キーボード入力はFUNC-300が一元管理し、待機状態時にFUNC-202が処理を受け取る
+
+| キー | 機能 | 説明 | 登録優先度 |
+|------|------|------|-----------|
+| `a` | Allモード | 全イベント表示に切り替え | 低(10) |
+| `u` | Uniqueモード | ユニークファイル表示に切り替え | 低(10) |
+| `q` | 終了 | アプリケーション終了 | 低(10) |
+
+**FUNC-300登録例**:
+```javascript
+KeyInputManager.register({
+  id: 'display-mode-control',
+  mode: 'waiting',
+  keys: ['a', 'u', 'q'],
+  priority: 10,
+  callback: (key) => FUNC202.handleDisplayMode(key)
+});
+```
 
 ### **色分け仕様**
 
-イベント種別の色分けは、config.jsonで設定可能。デフォルト値は **[FUNC-011: 階層的設定管理](./FUNC-011-hierarchical-config-management.md)** で定義。
+イベント種別の色分けは、config.jsonで設定可能。デフォルト値は **[FUNC-101: 階層的設定管理](./FUNC-101-hierarchical-config-management.md)** で定義。
 
 ## 🔧 実装ガイドライン
 
@@ -98,7 +113,7 @@ All Activities  (4/156)
    - 結果セットのキャッシュ管理
 
 2. **Formatter クラス**
-   - カラム幅計算（FUNC-020対応）
+   - カラム幅計算（FUNC-200対応）
    - 時刻・サイズのフォーマット
    - パス名の省略表示
 
@@ -109,7 +124,7 @@ All Activities  (4/156)
 
 ### **East Asian Width対応**
 
-- FUNC-020の文字幅計算を使用
+- FUNC-200の文字幅計算を使用
 - ファイル名の省略表示（...で終端）
 - 日本語ファイル名の正確な幅計算
 
@@ -148,6 +163,14 @@ cctop ./dist
 
 # 生成されるファイルをリアルタイムで確認
 ```
+
+## 🔗 他機能との連携
+
+### FUNC-003: Background Activity Monitor
+- **標準モード**: FUNC-202単独でCLI表示実行
+- **バックグラウンド監視モード**: FUNC-202をViewer Process内で実行
+- **責務継承**: Viewer ProcessはFUNC-202の表示機能を完全継承
+- **プロセス分離**: Monitor（データ書き込み）とViewer（FUNC-202ベース表示）の分離
 
 ## 🎯 成功指標
 

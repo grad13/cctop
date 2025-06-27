@@ -21,6 +21,11 @@
 
 ## 現在のドラフト
 
+### DRAFT-20250627-201-intentional-code-deletion-methodology.md
+- **作成日**: 2025年6月27日
+- **内容**: Code Antifragility Engineering: Intentional Code Deletion for Quality Improvement
+- **状態**: 新手法提案ドラフト（既存類似手法なし・学術的価値あり）
+
 ### DRAFT-20250623-003-claude-md-cctop-complete.md
 - **作成日**: 2025年6月23日
 - **内容**: cctopプロジェクト向けCLAUDE.md完全版

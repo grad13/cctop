@@ -3,8 +3,8 @@
 **作成日**: 2025年6月24日 14:00  
 **更新日**: 2025年6月25日 18:30  
 **作成者**: Architect Agent  
-**ステータス**: Active  
-**Version**: 0.2.0.0
+**Version**: 0.2.0.0  
+**関連仕様**: FUNC-001, FUNC-002, FUNC-003, CG-003
 
 ## 📊 機能概要
 
@@ -107,6 +107,25 @@ CREATE TABLE aggregates (
     total_moves INTEGER DEFAULT 0,        -- 移動イベント数
     total_restores INTEGER DEFAULT 0,     -- 復活イベント数
     
+    -- 時系列統計
+    first_event_timestamp INTEGER,        -- 最初のイベント時刻
+    last_event_timestamp INTEGER,         -- 最新のイベント時刻
+    
+    -- メトリック統計（Size）
+    first_size INTEGER,                   -- 最初のファイルサイズ
+    max_size INTEGER,                     -- 最大ファイルサイズ
+    last_size INTEGER,                    -- 最新のファイルサイズ
+    
+    -- メトリック統計（Lines）
+    first_lines INTEGER,                  -- 最初の行数
+    max_lines INTEGER,                    -- 最大行数
+    last_lines INTEGER,                   -- 最新の行数
+    
+    -- メトリック統計（Blocks）
+    first_blocks INTEGER,                 -- 最初のブロック数
+    max_blocks INTEGER,                   -- 最大ブロック数
+    last_blocks INTEGER,                  -- 最新のブロック数
+    
     -- メタデータ
     last_updated INTEGER DEFAULT CURRENT_TIMESTAMP,
     calculation_method TEXT DEFAULT 'trigger',
@@ -158,7 +177,7 @@ INSERT INTO event_types (code, name, description) VALUES
 
 #### ファイル管理仕様
 ```
-.cctop/ または ~/.cctop/
+.cctop/
 ├── activity.db      # メインDBファイル（永続保存）
 ├── activity.db-wal  # WALファイル（SQLite自動生成）
 └── activity.db-shm  # SHMファイル（SQLite自動生成）
@@ -175,7 +194,7 @@ INSERT INTO event_types (code, name, description) VALUES
 ### **"activity.db"記述の統合**
 - **FUNC-001**: 5テーブル構成詳述
 - **FUNC-002**: chokidar→DB記録連携言及
-- **FUNC-011**: 設定ファイルでのDB設定言及
+- **FUNC-101**: 設定ファイルでのDB設定言及
 - **FUNC-007**: postinstall時のDB初期化言及  
 - **FUNC-008**: パフォーマンス監視でのDB最適化言及
 
@@ -189,7 +208,7 @@ INSERT INTO event_types (code, name, description) VALUES
    - event_types → files → events → measurements → aggregates
    - 外部キー制約のため順序厳守
 3. **エラー処理**: 
-   - ディレクトリ不在時: ~/.cctop/ディレクトリ自動作成
+   - ディレクトリ不在時: .cctop/ディレクトリ自動作成
    - 権限エラー時: 明確なエラーメッセージ表示
    - DB破損時: バックアップ作成後に再作成提案
 

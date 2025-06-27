@@ -1,10 +1,11 @@
 # cctop 0.2.0.0 実装計画書
 
 **作成日**: 2025年6月25日 10:00  
-**更新日**: 2025年6月26日 04:45  
+**更新日**: 2025年6月27日 01:15  
 **作成者**: Architect Agent  
 **ステータス**: Active  
 **Version**: 0.2.0.0  
+**関連仕様**: FUNC-000-206, func-105, CG-001-004  
 
 ## 🎯 0.2.0.0の目標
 
@@ -16,6 +17,7 @@
 - イベントタイプフィルタリング機能
 - postinstall自動初期化による導入の簡素化
 - バックグラウンド監視モード（Monitor/Viewer分離アーキテクチャ）
+- 即時表示・プログレッシブローディング（0.1秒以内の起動体験）
 
 ## 📊 実装スコープ
 
@@ -31,7 +33,8 @@
    - レスポンシブディレクトリ表示（[FUNC-204](../../functions/FUNC-204-responsive-directory-display.md)）
 7. **イベントフィルタリング**（[FUNC-203](../../functions/FUNC-203-event-type-filtering.md)準拠）
 8. **自動初期化**（[FUNC-105](../../functions/func-105-local-setup-initialization.md)準拠）
-9. **バックグラウンド監視**（[FUNC-300](../../functions/FUNC-300-background-activity-monitor.md)準拠）
+9. **バックグラウンド監視**（[FUNC-003](../../functions/FUNC-003-background-activity-monitor.md)準拠）
+10. **即時表示・プログレッシブローディング**（[FUNC-206](../../functions/FUNC-206-instant-view-progressive-loading.md)準拠）
 
 ### 含まれないもの
 - プラグインシステム（FUNC-901）
@@ -43,6 +46,7 @@
 
 ## 🏗️ システムアーキテクチャ
 
+### 標準モード（単一プロセス）
 ```
 ┌─────────────────┐
 │   File System   │
@@ -66,6 +70,31 @@
 └─────────────────┘
 ```
 
+### バックグラウンド監視モード（FUNC-003: 2プロセス分離）
+```
+┌─────────────────┐
+│   File System   │
+└────────┬────────┘
+         │ ファイル変更
+┌────────▼────────┐  Monitor Process (独立実行)
+│    chokidar     │  ├── PID管理
+└────────┬────────┘  ├── ログ出力
+         │ イベント検出  └── 自動復旧
+┌────────▼────────┐
+│ Event Processor │ ← 設定システム
+└────────┬────────┘
+         │ 正規化・メタデータ付加
+┌────────▼────────┐
+│ SQLite (FUNC-000)│  ← WAL mode並行アクセス
+│   activity.db   │     (ファイル監視データ専用)
+└────────┬────────┘
+         │ データ取得（60ms遅延）
+┌────────▼────────┐  Viewer Process (フォアグラウンド)
+│   CLI Display   │  ├── リアルタイム表示
+│  (All/Unique)   │  ├── Monitor状態確認
+└─────────────────┘  └── 自動起動制御
+```
+
 ## 📁 ディレクトリ構造
 
 ### プロジェクトディレクトリ
@@ -83,15 +112,18 @@ cctop/
 │   │   └── event-manager.js
 │   ├── monitors/
 │   │   ├── file-monitor.js
-│   │   └── event-processor.js
+│   │   ├── event-processor.js
+│   │   ├── monitor-process.js      # FUNC-003: Monitor Process
+│   │   └── process-manager.js      # FUNC-003: PID/ログ管理
 │   ├── ui/
 │   │   ├── cli-display.js
 │   │   ├── stream-renderer.js
-│   │   └── keyboard-handler.js
-│   └── utils/                    # v0.2.0新設
-│       ├── display-width.js       # East Asian Width対応
-│       ├── buffered-renderer.js   # 二重バッファ描画
-│       └── line-counter.js        # 行数カウント
+│   │   ├── keyboard-handler.js
+│   │   └── viewer-process.js       # FUNC-003: Viewer Process
+│   └── utils/                      # v0.2.0新設
+│       ├── display-width.js         # East Asian Width対応
+│       ├── buffered-renderer.js     # 二重バッファ描画
+│       └── line-counter.js          # 行数カウント
 ├── test/
 │   └── integration/
 │       └── chokidar-db/
@@ -107,7 +139,14 @@ cctop/
 .cctop/                     # カレントディレクトリ配下
 ├── config.json            # メイン設定ファイル（ネスト構造）
 ├── plugin/                # プラグイン用（v0.2.0.0では未使用）
-└── activity.db            # データベースファイル
+├── activity.db            # データベースファイル
+├── activity.db-wal        # WAL ファイル（FUNC-003並行アクセス用）
+├── activity.db-shm        # SHM ファイル（FUNC-003並行アクセス用）
+├── monitor.pid            # FUNC-003: Monitor プロセスID
+└── logs/                  # FUNC-003: ログディレクトリ
+    ├── monitor.log        # 現在のMonitorログ
+    ├── 2025-06-26.log     # 日次ローテーション済みログ
+    └── 2025-06-25.log     # 前日ログ
 ```
 
 ## 🔄 実装フェーズ
@@ -123,8 +162,9 @@ cctop/
 
 #### 1.2 データベース実装（[FUNC-000](../../functions/FUNC-000-sqlite-database-foundation.md)準拠）
 - 5テーブル構成（event_types, files, events, measurements, aggregates）
-- SQLite WALモードでの運用
-- 実装例: [CG-003: Database Schema実装ガイド](../code-guides/CG-003-database-schema-implementation.md)
+- ファイル監視データ専用（Monitor状態管理は別途PIDファイル・ログで実装）
+- SQLite WALモードでの運用（Monitor/Viewer並行アクセス対応）
+- 実装例: [CG-003: Database Schema実装ガイド](../supplementary/CG-003-database-schema-implementation.md)
 
 #### 1.3 設定システム基本実装（[FUNC-105](../../functions/func-105-local-setup-initialization.md)準拠）
 
@@ -141,7 +181,7 @@ cctop/
 **設定ファイル管理のポイント**:
 - 設定不在時は自動初期化の実行
 - エラーハンドリングの詳細は[FUNC-105]を参照
-- 実装例: [CG-002: Config Manager実装ガイド](../code-guides/CG-002-config-manager-implementation.md)
+- 実装例: [CG-002: Config Manager実装ガイド](../supplementary/CG-002-config-manager-implementation.md)
 
 
 ### Phase 2: chokidar統合（2日）
@@ -171,7 +211,7 @@ this.watcher = chokidar.watch(config.paths, {
 - chokidarイベントをDBイベントに変換
 - 初期スキャンとリアルタイム監視の区別
 - lost/refindロジックの実装
-- 実装例: [CG-001: Event Processor実装ガイド](../code-guides/CG-001-event-processor-implementation.md)
+- 実装例: [CG-001: Event Processor実装ガイド](../supplementary/CG-001-event-processor-implementation.md)
 
 ### Phase 3: テスト実装（2日）
 
@@ -195,7 +235,7 @@ this.watcher = chokidar.watch(config.paths, {
 
 ### Phase 4: CLI実装（1日）
 
-**CLI仕様統合**: CLI全体の仕様は **[FUNC-104: CLIインターフェース統合仕様](../functions/FUNC-104-cli-interface-specification.md)** を参照
+**CLI仕様統合**: CLI全体の仕様は **[FUNC-104: CLIインターフェース統合仕様](../../functions/FUNC-104-cli-interface-specification.md)** を参照
 
 #### 4.1 基本表示機能（[FUNC-202](../../functions/FUNC-202-cli-display-integration.md)準拠）
 - All/Uniqueモードの切り替え
@@ -206,7 +246,7 @@ this.watcher = chokidar.watch(config.paths, {
 
 **全体レイアウト**:
 ```
-Modified             Elapsed    File Name             Directory       Event   Lines  Blocks
+Event Timestamp      Elapsed    File Name             Directory       Event   Lines  Blocks
 -------------------------------------------------------------------------------------------------
 2025-06-24 14:30:15   00:01:23  index.js             src/            modify    125      8
 2025-06-24 14:28:03   00:01:07  new-test.js          test/           create     45      3
@@ -219,7 +259,7 @@ All Activities  Cached Events: 3/156
 **カラム仕様（v0.2.0最新）**:
 | カラム | 幅 | 配置 | 説明 |
 |--------|-----|------|------|
-| Modified | 19 | 左寄せ | ファイル変更時刻 |
+| Event Timestamp | 19 | 左寄せ | イベント発生時刻 |
 | Elapsed | 7 | 右寄せ | 経過時間 |
 | File Name | 28 | 左寄せ | ファイル名（East Asian Width対応） |
 | Event | 8 | 左寄せ | イベントタイプ |
@@ -251,7 +291,7 @@ All Activities  Cached Events: 3/156
 - [ ] All/Uniqueモード切り替えが動作する
 - [ ] Ctrl+Cで正常終了する
 - [ ] 1000ファイル監視での安定動作
-- [ ] ~/.cctop/activity.dbが正しく作成される
+- [ ] .cctop/activity.dbが正しく作成される
 
 #### 5.2 統合テスト（実環境）
 - 実際のプロジェクトディレクトリでの動作確認
