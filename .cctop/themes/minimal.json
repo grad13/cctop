@@ -1,0 +1,50 @@
+{
+  "name": "minimal",
+  "description": "Minimal color scheme with subtle distinctions",
+  "version": "1.0.0",
+  "colors": {
+    "table": {
+      "column_headers": "white",
+      "row": {
+        "modified_time": "gray",
+        "elapsed_time": "gray",
+        "file_name": "white",
+        "event_type": {
+          "find": "gray",
+          "create": "white",
+          "modify": "white",
+          "delete": "dim",
+          "move": "gray",
+          "restore": "white"
+        },
+        "lines": "dim",
+        "blocks": "dim",
+        "directory": "gray"
+      }
+    },
+    "status_bar": {
+      "label": "white",
+      "count": "white",
+      "separator": "dim"
+    },
+    "general_keys": {
+      "key_active": "white",
+      "key_inactive": "dim",
+      "label_active": "white",
+      "label_inactive": "dim"
+    },
+    "event_filters": {
+      "key_active": "white",
+      "key_inactive": "dim",
+      "label_active": "white",
+      "label_inactive": "dim"
+    },
+    "message_area": {
+      "prompt": "white",
+      "label": "gray",
+      "status": "white",
+      "pid": "dim",
+      "summary": "white"
+    }
+  }
+}

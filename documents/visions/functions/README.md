@@ -34,20 +34,19 @@ FUNC-003-configuration-management.md
 
 ## 📁 現在のファイル一覧
 
-### 0-Core Functions
+### 0-Monitor
 | ファイル | 機能 |
 |---------|------|
 | FUNC-000-sqlite-database-foundation.md | SQLiteデータベース基盤 |
 | FUNC-001-file-lifecycle-tracking.md | ファイルライフサイクル追跡 |
 | FUNC-002-chokidar-database-integration.md | chokidar-Database統合監視 |
+| FUNC-003-background-activity-monitor.md | バックグラウンド監視モード |
 
 ### 1-Configuration & Settings
 | ファイル | 機能 | ステータス |
 |---------|------|----------|
-| ~~FUNC-100-local-global-storage-management.md~~ | ~~ローカル・グローバル設定管理~~ | **Deprecated** |
 | FUNC-101-hierarchical-config-management.md | 階層的設定管理 | Active |
 | FUNC-102-file-watch-limit-management.md | ファイル監視上限管理 | Active |
-| ~~FUNC-103-postinstall-auto-initialization.md~~ | ~~postinstall自動初期化~~ | **Deprecated** |
 | FUNC-104-cli-interface-specification.md | CLIインターフェース統合仕様 | Active |
 | **FUNC-105-local-setup-initialization.md** | **ローカル設定・初期化** | **Active** |
 
@@ -60,11 +59,13 @@ FUNC-003-configuration-management.md
 | FUNC-203-event-type-filtering.md | イベントタイプフィルタリング |
 | FUNC-204-responsive-directory-display.md | レスポンシブディレクトリ表示 |
 | FUNC-205-status-display-area.md | ステータス表示エリア |
+| FUNC-206-instant-view-progressive-loading.md | 即時表示・プログレッシブローディング |
+| FUNC-207-display-color-customization.md | 表示色カスタマイズ |
 
 ### 3-Extension
 | ファイル | 機能 |
 |---------|------|
-| FUNC-300-background-activity-monitor.md | バックグラウンド監視モード |
+| - | - |
 
 ## 📊 管理方針
 
@@ -95,7 +96,7 @@ FUNC-003-configuration-management.md
 - **改善予定**: 将来的な改善・拡張計画
 
 ### 記録しない内容
-- **実装詳細**: コードレベルの詳細（code-guides/に記載）
+- **実装詳細**: コードレベルの詳細（supplementary/に記載）
 - **設計の全体図**: 機能をどう組み合わせるか（blueprints/に記載）
 - **実験的機能**: Draft段階の機能（pilots/に記載）
 
@@ -106,8 +107,8 @@ FUNC-003-configuration-management.md
 - **昇格プロセス**: 成熟したDraft機能の受け入れ先
 - **設計継承**: パイロット機能の設計を正式採用
 
-### code-guides/との関係
-- **実装詳細**: code-guides/で技術実装の詳細管理
+### supplementary/との関係
+- **実装詳細**: supplementary/で技術実装の詳細管理
 - **機能概要**: functions/でユーザー視点の機能説明
 
 ### blueprints/との関係
@@ -126,14 +127,18 @@ FUNC-003-configuration-management.md
 
 ## 📝 更新履歴
 
+### 2025年6月27日
+- **FUNC-206新設**: 即時表示・プログレッシブローディング機能をActive機能として追加
+- **ユーザー体験改善**: コマンド実行から0.1秒以内の画面表示実現
+- **13機能体制確立**: View & Display機能が7機能に拡張
+
 ### 2025年6月26日
 - **構造改革**: functions/をActive機能専用に変更
 - **pilots/新設**: Draft機能の専用管理ディレクトリ作成
-- **Active機能確定**: 14機能をActive機能として管理
-  - Core: FUNC-000,001,002
-  - Configuration: FUNC-100,101,102,103,104
+- **Active機能確定**: 12機能をActive機能として管理
+  - Core: FUNC-000,001,002,003
+  - Configuration: FUNC-101,102,104,105
   - View: FUNC-200,201,202,203,204,205
-  - Extension: FUNC-300 - バックグラウンド監視モード
 - **Draft機能分離**: FUNC-900,901,903,904をpilots/に移行
 - **管理方針変更**: Active/Draft混在問題の構造的解決
 

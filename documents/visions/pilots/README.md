@@ -14,9 +14,9 @@ pilotsディレクトリは、まだ確定していないDraft段階の機能仕
 PIL-XXX-functional-description.md
 
 例:
-PIL-000-display-color-customization.md
 PIL-001-plugin-architecture.md
 PIL-002-interactive-selection-mode.md
+PIL-003-detailed-inspection-mode.md
 ```
 
 ### ヘッダー形式
@@ -34,7 +34,6 @@ PIL-002-interactive-selection-mode.md
 ### Display & UI Experiments
 | ファイル | 機能 | 対象バージョン | 更新日 |
 |---------|------|---------------|--------|
-| PIL-000-display-color-customization.md | 表示色カスタマイズ | 未定 | 2025-06-26 |
 | PIL-002-interactive-selection-mode.md | インタラクティブ選択モード | v0.3.0.0候補 | 2025-06-26 |
 | PIL-003-detailed-inspection-mode.md | 詳細検査モード | v0.3.0.0候補 | 2025-06-26 |
 
@@ -100,7 +99,7 @@ PIL-002-interactive-selection-mode.md
 - **実装計画**: パイロット機能の実装ロードマップ
 - **統合設計**: 複数パイロット機能の組み合わせ設計
 
-### code-guides/との関係
+### supplementary/との関係
 - **実装指針**: パイロット機能の実装方針
 - **技術検証**: 実装アプローチの検証結果
 
@@ -121,10 +120,10 @@ PIL-002-interactive-selection-mode.md
 ### 2025年6月26日
 - **pilots/ディレクトリ新設**: README作成・管理方針策定
 - **Draft機能分離**: functions/からの4機能移行完了
-- **PIL-番号体系採用**: PIL-000からの連番管理開始
-- **ファイル名統一**: FUNC-XXX → PIL-XXX命名規則変更
+- **PIL-番号体系採用**: 000から開始の連番管理
+- **ファイル名統一**: PIL-XXX命名規則採用
 - **ヘッダー統一**: 全パイロット機能のフォーマット統一
-- **カテゴリ分類**: Display & UI Experiments(3) + Extension Experiments(1)
+- **カテゴリ分類**: Display & UI Experiments(2) + System & Daemon Experiments(2) + Analytics(1) + Extension Experiments(1)
 - **Active/Draft混在問題の構造的解決**: 完全分離による混乱防止
 
 ---
