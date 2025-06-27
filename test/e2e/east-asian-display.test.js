@@ -221,7 +221,7 @@ describe('FUNC-200: East Asian Width Display', () => {
     expect(emojiOutput).toMatch(/フォルダ|日本|ジャパン|温泉|列島/);
 
     // Column structure should not be completely broken
-    expect(emojiOutput).toMatch(/Modified.*Elapsed.*File Name.*Event/);
+    expect(emojiOutput).toMatch(/Event Timestamp.*Elapsed.*File Name.*Event/);
   }, 10000);
 
   test('should handle width calculation correctly in different terminal sizes', async () => {
@@ -267,8 +267,8 @@ describe('FUNC-200: East Asian Width Display', () => {
     expect(wideOutput).toMatch(/日本語テスト/);
 
     // Both should maintain column structure
-    expect(narrowOutput).toMatch(/Modified.*File Name/);
-    expect(wideOutput).toMatch(/Modified.*File Name/);
+    expect(narrowOutput).toMatch(/Event Timestamp.*File Name/);
+    expect(wideOutput).toMatch(/Event Timestamp.*File Name/);
 
     // Wide terminal should have more space for directory column
     const narrowLines = narrowOutput.split('\n');

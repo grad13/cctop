@@ -14,7 +14,7 @@ class LayoutManager {
    */
   calculateDynamicWidth() {
     const terminalWidth = process.stdout.columns || 80;
-    // Fixed columns: Modified(19) + Elapsed(10) + FileName(28) + Event(8) + Lines(5) + Blocks(6) + Spaces(6*2=12)
+    // Fixed columns: Event Timestamp(19) + Elapsed(10) + FileName(28) + Event(8) + Lines(5) + Blocks(6) + Spaces(6*2=12)
     const fixedWidth = 19 + 10 + 28 + 8 + 5 + 6 + 12; // 88文字
     const directoryWidth = Math.max(10, terminalWidth - fixedWidth - 2); // Minimum 10 chars guaranteed, last 2 chars for spacing
     

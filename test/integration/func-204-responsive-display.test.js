@@ -138,7 +138,7 @@ describe('FUNC-204: Responsive Directory Display', () => {
     expect(hasDetailedPaths, 'Should show more detailed paths in wide terminal').toBe(true);
 
     // Should maintain column structure
-    expect(wideOutput).toMatch(/Modified.*Elapsed.*File Name.*Event.*Lines.*Blocks.*Directory/);
+    expect(wideOutput).toMatch(/Event Timestamp.*Elapsed.*File Name.*Event.*Lines.*Blocks.*Directory/);
   }, 8000);
 
   test('should handle terminal resize during runtime (SIGWINCH)', async () => {
@@ -181,7 +181,7 @@ describe('FUNC-204: Responsive Directory Display', () => {
     expect(hasFiles, 'Should display files before and after resize').toBe(true);
 
     // Should maintain proper display structure after resize
-    expect(resizeOutput).toMatch(/Modified.*File Name.*Directory/);
+    expect(resizeOutput).toMatch(/Event Timestamp.*File Name.*Directory/);
     
     // Process should not crash from resize signal
     expect(cctopProcess.killed, 'Process should survive terminal resize').toBe(false);
@@ -256,7 +256,7 @@ describe('FUNC-204: Responsive Directory Display', () => {
 
     const lines = columnOutput.split('\n');
     const headerLine = lines.find(line => 
-      line.includes('Modified') && 
+      line.includes('Event Timestamp') && 
       line.includes('Elapsed') && 
       line.includes('File Name')
     );
@@ -265,13 +265,13 @@ describe('FUNC-204: Responsive Directory Display', () => {
 
     if (headerLine) {
       // FUNC-204 Requirement: Fixed column widths maintained
-      const modifiedPos = headerLine.indexOf('Modified');
+      const modifiedPos = headerLine.indexOf('Event Timestamp');
       const elapsedPos = headerLine.indexOf('Elapsed');
       const fileNamePos = headerLine.indexOf('File Name');
       const eventPos = headerLine.indexOf('Event');
       const directoryPos = headerLine.indexOf('Directory');
 
-      expect(modifiedPos).toBe(0); // Modified starts at beginning
+      expect(modifiedPos).toBe(0); // Event Timestamp starts at beginning
       expect(elapsedPos).toBeGreaterThan(modifiedPos);
       expect(fileNamePos).toBeGreaterThan(elapsedPos);
       expect(eventPos).toBeGreaterThan(fileNamePos);
@@ -318,7 +318,7 @@ describe('FUNC-204: Responsive Directory Display', () => {
 
     // Even with very narrow terminal, should maintain basic functionality
     expect(minWidthOutput).toMatch(/root-file\.txt/);
-    expect(minWidthOutput).toMatch(/Modified.*File Name/);
+    expect(minWidthOutput).toMatch(/Event Timestamp.*File Name/);
 
     // Should show at least minimal directory information
     const hasDirectoryCol = minWidthOutput.includes('./') || 
@@ -345,7 +345,7 @@ describe('FUNC-204: Responsive Directory Display', () => {
 export class ResponsiveDisplayAnalyzer {
   static measureColumnWidths(headerLine) {
     const columnPositions = {
-      modified: headerLine.indexOf('Modified'),
+      modified: headerLine.indexOf('Event Timestamp'),
       elapsed: headerLine.indexOf('Elapsed'),
       fileName: headerLine.indexOf('File Name'),
       event: headerLine.indexOf('Event'),
@@ -379,7 +379,7 @@ export class ResponsiveDisplayAnalyzer {
 
     return {
       maintainsStructure: afterLines.some(line => 
-        line.includes('Modified') && line.includes('File Name')
+        line.includes('Event Timestamp') && line.includes('File Name')
       ),
       showsNewContent: afterOutput.length > beforeOutput.length,
       noDisplayCorruption: afterLines.every(line => {
@@ -392,7 +392,7 @@ export class ResponsiveDisplayAnalyzer {
   static validateFUNC204Compliance(output, terminalWidth) {
     const lines = output.split('\n');
     const headerLine = lines.find(line => 
-      line.includes('Modified') && line.includes('Directory')
+      line.includes('Event Timestamp') && line.includes('Directory')
     );
 
     if (!headerLine) return { compliant: false, reason: 'No header found' };

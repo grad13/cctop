@@ -114,7 +114,7 @@ describe('RDD Actual Behavior Verification', () => {
         output += data.toString();
         
         // CLIDisplayの表示形式を確認
-        if (!displayStarted && output.includes('Modified')) {
+        if (!displayStarted && output.includes('Event Timestamp')) {
           displayStarted = true;
           console.log('[DISPLAY FORMAT]:\n', output);
           
@@ -129,7 +129,7 @@ describe('RDD Actual Behavior Verification', () => {
               console.log('[FINAL DISPLAY]:\n', output);
               
               // 表示形式の確認
-              expect(output).toContain('Modified');
+              expect(output).toContain('Event Timestamp');
               expect(output).toContain('Elapsed');
               expect(output).toContain('File Name');
               expect(output).toContain('Event');

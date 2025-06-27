@@ -92,7 +92,7 @@ describe('Visual Display System Integration', () => {
     expect(finalOutput).toMatch(/create|modify/);
 
     // 5. Should show header with columns
-    expect(finalOutput).toMatch(/Modified.*Elapsed.*File Name.*Event/);
+    expect(finalOutput).toMatch(/Event Timestamp.*Elapsed.*File Name.*Event/);
 
     // 6. Should show footer with statistics
     expect(finalOutput).toMatch(/Unique Files.*files/);
@@ -209,7 +209,7 @@ export class ScreenContentAnalyzer {
   }
 
   static validateHeaderFooter(output) {
-    const hasHeader = /Modified.*Elapsed.*File Name.*Event/.test(output);
+    const hasHeader = /Event Timestamp.*Elapsed.*File Name.*Event/.test(output);
     const hasFooter = /Unique Files.*Monitor/.test(output);
     return { hasHeader, hasFooter };
   }

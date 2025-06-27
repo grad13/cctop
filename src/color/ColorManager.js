@@ -87,7 +87,7 @@ class ColorManager {
         "table": {
           "column_headers": "white",
           "row": {
-            "modified_time": "white",
+            "event_timestamp": "white",
             "elapsed_time": "white", 
             "file_name": "white",
             "event_type": {

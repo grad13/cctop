@@ -75,7 +75,7 @@ describe('FUNC-206: Instant View & Progressive Loading', () => {
     expect(startupTime, 'Viewer should start within 0.1 seconds').toBeLessThan(100);
 
     // Should show initial screen elements immediately
-    expect(firstOutput).toMatch(/Modified|Elapsed|File Name|Event/); // Header
+    expect(firstOutput).toMatch(/Event Timestamp|Elapsed|File Name|Event/); // Header
     
     // Status area should show initialization message
     // (FUNC-205 status area integration)
@@ -147,7 +147,7 @@ describe('FUNC-206: Instant View & Progressive Loading', () => {
     await new Promise(resolve => setTimeout(resolve, 2000));
 
     // FUNC-206 Requirement: Screen should remain visible even with errors
-    expect(outputCapture).toMatch(/Modified|Elapsed|File Name|Event/); // Header maintained
+    expect(outputCapture).toMatch(/Event Timestamp|Elapsed|File Name|Event/); // Header maintained
     
     // Should show error in status area, not crash the display
     expect(outputCapture).toMatch(/Error|Failed|Retry/i);
@@ -216,7 +216,7 @@ describe('FUNC-206: Instant View & Progressive Loading', () => {
     await new Promise(resolve => setTimeout(resolve, 1000));
 
     // Display should remain functional after resize
-    expect(outputCapture).toMatch(/Modified|Elapsed|File Name|Event/);
+    expect(outputCapture).toMatch(/Event Timestamp|Elapsed|File Name|Event/);
     expect(outputCapture).toMatch(/post-resize-file\.txt/);
     
     // Process should not crash
@@ -265,7 +265,7 @@ export class StartupPerformanceAnalyzer {
     return {
       instantStartup: startupTime < 100, // 0.1 second requirement
       hasProgressiveStates: outputStates.length > 3,
-      maintainsDisplay: outputStates.every(s => s.content.includes('Modified')),
+      maintainsDisplay: outputStates.every(s => s.content.includes('Event Timestamp')),
       reachesLiveMode: outputStates.some(s => s.content.includes('running'))
     };
   }

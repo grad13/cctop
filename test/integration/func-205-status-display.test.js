@@ -235,7 +235,7 @@ describe('FUNC-205: Status Display Area', () => {
     
     // Look for main content area (file events)
     const hasMainContent = lines.some(line => 
-      /Modified.*Elapsed.*File Name.*Event/.test(line) ||
+      /Event Timestamp.*Elapsed.*File Name.*Event/.test(line) ||
       /test-file\.txt.*create|find/.test(line)
     );
     

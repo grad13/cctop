@@ -106,7 +106,7 @@ class RDDVerificationRunner {
 
   analyzeVisualContent(output) {
     // Check for header presence
-    const hasHeader = /Modified.*Elapsed.*File Name.*Event/.test(output);
+    const hasHeader = /Event Timestamp.*Elapsed.*File Name.*Event/.test(output);
     
     // Check for content density (not 90% blank)
     const lines = output.split('\n');

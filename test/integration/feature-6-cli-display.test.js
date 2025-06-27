@@ -319,7 +319,7 @@ describe('Feature 6: CLI Display (ui001準拠)', () => {
     capturedOutput = '';
     cliDisplay.renderHeader();
     
-    expect(capturedOutput).toContain('Modified');
+    expect(capturedOutput).toContain('Event Timestamp');
     expect(capturedOutput).toContain('File Name');
     expect(capturedOutput).toContain('Event');
     expect(capturedOutput).toContain('─'); // セパレーター

@@ -77,7 +77,7 @@ class ThemeLoader {
         "table": {
           "column_headers": "white",
           "row": {
-            "modified_time": "white",
+            "event_timestamp": "white",
             "elapsed_time": "white",
             "file_name": "white",
             "event_type": {
@@ -133,7 +133,7 @@ class ThemeLoader {
         "table": {
           "column_headers": "brightWhite",
           "row": {
-            "modified_time": "brightWhite",
+            "event_timestamp": "brightWhite",
             "elapsed_time": "brightWhite",
             "file_name": "brightWhite",
             "event_type": {
@@ -189,7 +189,7 @@ class ThemeLoader {
         "table": {
           "column_headers": "brightMagenta",
           "row": {
-            "modified_time": "brightCyan",
+            "event_timestamp": "brightCyan",
             "elapsed_time": "brightYellow",
             "file_name": "brightWhite",
             "event_type": {
@@ -245,7 +245,7 @@ class ThemeLoader {
         "table": {
           "column_headers": "white",
           "row": {
-            "modified_time": "gray",
+            "event_timestamp": "gray",
             "elapsed_time": "gray",
             "file_name": "white",
             "event_type": {

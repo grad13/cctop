@@ -194,7 +194,7 @@ class CLIDisplay extends EventEmitter {
   buildHeader() {
     const directoryHeaderWidth = this.widthConfig.directory;
     const directoryHeader = padEndWithWidth('Directory', directoryHeaderWidth);
-    const header = `Modified               Elapsed  File Name                    Event    Lines Blocks ${directoryHeader}`;
+    const header = `Event Timestamp       Elapsed  File Name                    Event    Lines Blocks ${directoryHeader}`;
     const separator = '─'.repeat(this.widthConfig.terminal || 97);
     
     this.renderer.addLine(chalk.bold(header));
@@ -340,7 +340,7 @@ class CLIDisplay extends EventEmitter {
    */
   calculateDynamicWidth() {
     const terminalWidth = process.stdout.columns || 80;
-    // Fixed columns: Modified(19) + Elapsed(10) + FileName(28) + Event(8) + Lines(5) + Blocks(6) + Spaces(6*2=12)
+    // Fixed columns: Event Timestamp(19) + Elapsed(10) + FileName(28) + Event(8) + Lines(5) + Blocks(6) + Spaces(6*2=12)
     const fixedWidth = 19 + 10 + 28 + 8 + 5 + 6 + 12; // 88文字
     const directoryWidth = Math.max(10, terminalWidth - fixedWidth - 2); // Minimum 10 chars guaranteed, last 2 chars for spacing
     

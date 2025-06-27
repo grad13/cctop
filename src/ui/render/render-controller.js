@@ -113,7 +113,7 @@ class RenderController {
     const widthConfig = this.layoutManager.getWidthConfig();
     const directoryHeaderWidth = widthConfig.directory;
     const directoryHeader = padEndWithWidth('Directory', directoryHeaderWidth);
-    const header = `Modified               Elapsed  File Name                    Event    Lines Blocks ${directoryHeader}`;
+    const header = `Event Timestamp       Elapsed  File Name                    Event    Lines Blocks ${directoryHeader}`;
     const separator = '─'.repeat(widthConfig.terminal || 97);
     
     // FUNC-207: Apply theme colors to header

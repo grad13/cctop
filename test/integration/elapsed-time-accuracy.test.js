@@ -72,7 +72,7 @@ describe('Elapsed Time Accuracy', () => {
         }
         
         // Parse elapsed time from output
-        // Based on actual output format: "Modified               Elapsed  File Name"
+        // Based on actual output format: "Event Timestamp      Elapsed  File Name"
         // The elapsed time appears in the format "MM:SS" in the second column
         const lines = chunk.split('\n');
         for (const line of lines) {
@@ -92,7 +92,7 @@ describe('Elapsed Time Accuracy', () => {
         }
         
         // Wait for initial display before parsing elapsed time
-        if (!firstElapsedCapture && chunk.includes('Modified') && chunk.includes('Elapsed') && chunk.includes('File Name')) {
+        if (!firstElapsedCapture && chunk.includes('Event Timestamp') && chunk.includes('Elapsed') && chunk.includes('File Name')) {
           console.log('=== Found header, looking for data lines ===');
         }
         

@@ -207,7 +207,7 @@ describe('FUNC-207: RGB Support Validation', () => {
       
       // Test general colorize method
       const headerColored = colorManager.colorize('Header', 'table.column_headers');      // Preset
-      const modifiedColored = colorManager.colorize('Modified', 'table.row.modified_time'); // RGB
+      const modifiedColored = colorManager.colorize('Event Timestamp', 'table.row.event_timestamp'); // RGB
       
       // All should work correctly
       expect(findColored).toContain('find');
@@ -215,7 +215,7 @@ describe('FUNC-207: RGB Support Validation', () => {
       expect(deleteColored).toContain('delete');
       expect(moveColored).toContain('move');
       expect(headerColored).toContain('Header');
-      expect(modifiedColored).toContain('Modified');
+      expect(modifiedColored).toContain('Event Timestamp');
     });
   });
 
