@@ -6,6 +6,35 @@ cctopの開発における各バージョンの主要な変更点と改善内容
 
 ---
 
+## v0.2.2.0 (2025-06-27)
+### 🎨 表示色カスタマイズ機能・RGB指定サポート
+
+**ユーザー体験**: プリセット色名と16進数色（#000000形式）による柔軟な色設定
+
+**主要機能追加**:
+- **RGB指定サポート**
+  - プリセット色名: 'black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white'
+  - 16進数色: "#000000"形式での直接色指定
+  - ColorManager.js parseColorValue()による色値解析機能
+
+- **テーマ管理システム**
+  - .cctop/themes/ディレクトリによるテーマファイル管理
+  - default, minimal, colorful, high-contrast の4つのプリセットテーマ
+  - current-theme.json経由のシンプルなテーマ切り替え
+
+**技術的詳細**:
+- FUNC-207 Display Color Customization正式採用（PIL-000から昇格）
+- chalk.hex()活用による16進数色の直接指定対応
+- テーマファイルの独立管理でconfig.json分離
+- supplementary/統合によるcode-guides + diagrams統一管理
+
+**設計改善**:
+- 関連仕様システム導入で文書間関係の可視化・修正効率化実現
+- 機能仕様vs実装例の責務分離徹底
+- Builder/Validator実装・検証体制確立
+
+---
+
 ## v0.2.1.0 (2025-06-27)
 ### 🔇 静音監視・クリーンコンソール実現
 
