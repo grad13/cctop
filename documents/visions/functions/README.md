@@ -65,7 +65,15 @@ FUNC-003-configuration-management.md
 ### 3-Extension
 | ファイル | 機能 |
 |---------|------|
-| - | - |
+| FUNC-300-key-input-manager.md | キー入力管理システム |
+
+### 4-Interactive
+| ファイル | 機能 |
+|---------|------|
+| FUNC-400-interactive-selection-mode.md | インタラクティブ選択モード |
+| FUNC-401-detailed-inspection-mode.md | 詳細検査モード |
+| FUNC-402-aggregate-display-module.md | 集約表示モジュール |
+| FUNC-403-history-display-module.md | 履歴表示モジュール |
 
 ## 📊 管理方針
 
@@ -79,6 +87,7 @@ FUNC-003-configuration-management.md
 - **Configuration (100番台)**: 設定・初期化機能
 - **View (200番台)**: 表示・UI機能
 - **Extension (300番台)**: 拡張・プラグイン機能
+- **Interactive (400番台)**: インタラクティブ機能
 
 ### Active機能管理ルール
 - **機能確定**: 実装対象として確定済みの機能のみ
@@ -127,10 +136,20 @@ FUNC-003-configuration-management.md
 
 ## 📝 更新履歴
 
-### 2025年6月27日
+### 2025年6月27日 (23:00)
+- **FUNC-300新設**: キー入力管理システムをExtension機能として追加
+- **システム基盤強化**: 複数機能間のキー競合を根本的に解決
+- **17機能体制確立**: Extension機能が1機能に拡張
+
+### 2025年6月27日 (22:00)
+- **FUNC-207新設**: 表示色カスタマイズ機能をActive機能として追加
+- **RGB指定サポート**: プリセット色名 + "#000000"形式の色指定対応
+- **16機能体制確立**: View & Display機能が8機能に拡張
+
+### 2025年6月27日 (01:00)
 - **FUNC-206新設**: 即時表示・プログレッシブローディング機能をActive機能として追加
 - **ユーザー体験改善**: コマンド実行から0.1秒以内の画面表示実現
-- **13機能体制確立**: View & Display機能が7機能に拡張
+- **15機能体制確立**: View & Display機能が7機能に拡張
 
 ### 2025年6月26日
 - **構造改革**: functions/をActive機能専用に変更
