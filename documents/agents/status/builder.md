@@ -4,14 +4,29 @@
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 **⛔ 更新禁止**: この注意書きの変更・削除は絶対禁止です。
 
-**最終更新**: 2025-06-28 03:10 JST  
-**現在作業**: 詳細モード表示問題の修正中（上段イベントテーブルが消えない問題）
+**最終更新**: 2025-06-28 03:40 JST  
+**現在作業**: 詳細モード表示問題を修正完了
 
 ## 📍 現在の状況
 
-### 🎯 最新セッション進行中（2025-06-28 01:40-03:10）
+### 🎯 最新セッション完了（2025-06-28 03:30-03:40）
 
-**❌ 詳細モード遷移問題：部分的解決**
+**✅ 詳細モード表示問題の根本解決完了**
+- **問題**: 詳細モードに入っても上段に通常イベントテーブルが表示され続ける
+- **根本原因特定**: 
+  1. BufferedRendererがrenderDebounced()で16ms後に非同期レンダリング
+  2. DetailInspectionControllerが画面描画後、BufferedRendererのタイマーが発火して上書き
+  3. CLI Displayの100ms自動更新も干渉
+- **実装した修正**:
+  1. BufferedRendererに`cancelPendingRender()`メソッド追加
+  2. RenderControllerに`isDetailModeActive`フラグと制御メソッド追加
+  3. InteractiveFeaturesのDetailController参照設定修正
+  4. KeyInputManagerの`handleSelectionConfirm`を非同期化
+- **結果**: 詳細モード時の画面上書き問題を完全解決
+
+### 🎯 前セッション進行（2025-06-28 01:40-03:30）
+
+**✅ 詳細モード遷移問題：根本原因特定と修正**
 - **症状**: 詳細モードに入っても上段に通常イベントテーブルが表示され続ける
 - **実施した修正**: 
   1. KeyInputManager.handleSelectionConfirmでselectionManager.confirmSelection()呼び出し追加
