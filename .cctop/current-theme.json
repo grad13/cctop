@@ -1,48 +1,49 @@
 {
-  "name": "rgb-test",
-  "description": "Test theme with mixed preset and RGB colors",
+  "name": "default",
+  "description": "Default color scheme for cctop",
+  "lastUpdated": "2025-06-27T16:33:11.712Z",
   "version": "1.0.0",
   "colors": {
     "table": {
       "column_headers": "white",
       "row": {
-        "modified_time": "#00FF00",
-        "elapsed_time": "yellow",
+        "event_timestamp": "white",
+        "elapsed_time": "white",
         "file_name": "white",
         "event_type": {
           "find": "blue",
-          "create": "#00FF00",
-          "modify": "yellow",
-          "delete": "#FF0000",
-          "move": "magenta",
-          "restore": "#00FFFF"
+          "create": "brightGreen",
+          "modify": "white",
+          "delete": "gray",
+          "move": "cyan",
+          "restore": "brightYellow"
         },
-        "lines": "cyan",
-        "blocks": "dim",
-        "directory": "#0000FF"
+        "lines": "white",
+        "blocks": "white",
+        "directory": "white"
       }
     },
     "status_bar": {
-      "label": "gray",
+      "label": "white",
       "count": "white",
-      "separator": "dim"
+      "separator": "gray"
     },
     "general_keys": {
-      "key_active": "green",
-      "key_inactive": "#000000",
+      "key_active": "white",
+      "key_inactive": "dim",
       "label_active": "white",
-      "label_inactive": "gray"
+      "label_inactive": "dim"
     },
     "event_filters": {
-      "key_active": "#00FF00",
-      "key_inactive": "#000000",
+      "key_active": "green",
+      "key_inactive": "dim",
       "label_active": "white",
       "label_inactive": "gray"
     },
     "message_area": {
       "prompt": "cyan",
       "label": "gray",
-      "status": "#00FF00",
+      "status": "green",
       "pid": "dim",
       "summary": "white"
     }
