@@ -49,7 +49,8 @@ class CLIDisplay extends EventEmitter {
     this.layoutManager = new LayoutManager();
     this.eventFormatter = new EventFormatter({
       widthConfig: this.layoutManager.getWidthConfig(),
-      startTime: this.startTime
+      startTime: this.startTime,
+      configPath: displayConfig.configPath || '.cctop'
     });
     this.renderController = new RenderController(displayConfig);
     this.inputHandler = new InputHandler();

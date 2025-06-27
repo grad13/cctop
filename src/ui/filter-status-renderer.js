@@ -1,16 +1,23 @@
 /**
  * Filter Status Renderer (FUNC-020)
  * Filter status line rendering
+ * FUNC-207: Integrated with ColorManager for customizable colors
  */
+
+const ColorManager = require('../color/ColorManager');
 
 class FilterStatusRenderer {
   /**
    * Render filter line
    * @param {Object} filters - Filter state object
    * @param {number} width - Screen width (optional)
+   * @param {string} configPath - Config path for ColorManager (optional)
    * @returns {string} Rendering string
    */
-  static renderFilterLine(filters, width = process.stdout.columns || 80) {
+  static renderFilterLine(filters, width = process.stdout.columns || 80, configPath = '.cctop') {
+    // FUNC-207: Initialize ColorManager for theming
+    const colorManager = new ColorManager(configPath);
+    
     const filterItems = [
       { key: 'f', name: 'Find', type: 'find' },
       { key: 'c', name: 'Create', type: 'create' },
@@ -23,7 +30,7 @@ class FilterStatusRenderer {
     // Render each filter item
     const filterParts = filterItems.map(item => {
       const isActive = filters[item.type];
-      return this.renderFilterItem(item.key, item.name, isActive);
+      return this.renderFilterItem(item.key, item.name, isActive, colorManager);
     });
     
     // Build filter line
@@ -36,29 +43,22 @@ class FilterStatusRenderer {
   }
   
   /**
-   * Render individual filter item
+   * Render individual filter item (FUNC-207: Theme-based coloring)
    * @param {string} key - Key character
    * @param {string} name - Filter name
    * @param {boolean} isActive - Active state
+   * @param {ColorManager} colorManager - ColorManager instance
    * @returns {string} Rendering string
    */
-  static renderFilterItem(key, name, isActive) {
-    const colors = {
-      // Colors when active
-      activeKey: '\x1b[32m',      // Green
-      activeName: '\x1b[37m',     // White
-      // Colors when inactive
-      inactiveKey: '\x1b[30m',    // Black (dark)
-      inactiveName: '\x1b[90m',   // Dark gray
-      // Reset
-      reset: '\x1b[0m'
-    };
+  static renderFilterItem(key, name, isActive, colorManager) {
+    // FUNC-207: Use ColorManager for theme-based colors
+    const keyColorPath = isActive ? 'event_filters.key_active' : 'event_filters.key_inactive';
+    const nameColorPath = isActive ? 'event_filters.label_active' : 'event_filters.label_inactive';
     
-    if (isActive) {
-      return `${colors.activeKey}[${key}]${colors.reset}:${colors.activeName}${name}${colors.reset}`;
-    } else {
-      return `${colors.inactiveKey}[${key}]${colors.reset}:${colors.inactiveName}${name}${colors.reset}`;
-    }
+    const coloredKey = colorManager.colorize(`[${key}]`, keyColorPath);
+    const coloredName = colorManager.colorize(name, nameColorPath);
+    
+    return `${coloredKey}:${coloredName}`;
   }
   
   /**

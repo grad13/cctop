@@ -1,16 +1,21 @@
 /**
  * Event Formatter (Single Responsibility: Event line formatting)
  * Extracted from cli-display.js for better maintainability
+ * FUNC-207: Integrated with ColorManager for customizable colors
  */
 
 const chalk = require('chalk');
 const stringWidth = require('string-width');
 const { padEndWithWidth, padStartWithWidth } = require('../../utils/display-width');
+const ColorManager = require('../../color/ColorManager');
 
 class EventFormatter {
   constructor(config = {}) {
     this.widthConfig = config.widthConfig || {};
     this.startTime = config.startTime || Date.now();
+    
+    // FUNC-207: Initialize ColorManager
+    this.colorManager = new ColorManager(config.configPath || '.cctop');
   }
 
   /**
@@ -122,7 +127,7 @@ class EventFormatter {
   }
 
   /**
-   * Color formatting for event types
+   * Color formatting for event types (FUNC-207: Theme-based coloring)
    */
   formatEventType(eventType) {
     if (!eventType) {
@@ -130,22 +135,8 @@ class EventFormatter {
     }
     const formatted = padEndWithWidth(eventType, 8);
     
-    switch (eventType) {
-      case 'find':
-        return chalk.blue(formatted);
-      case 'create':
-        return chalk.greenBright(formatted);
-      case 'modify':
-        return formatted; // Default color
-      case 'move':
-        return chalk.cyan(formatted);
-      case 'delete':
-        return chalk.gray(formatted);
-      case 'restore':
-        return chalk.yellowBright(formatted);
-      default:
-        return formatted;
-    }
+    // FUNC-207: Use ColorManager for theme-based coloring
+    return this.colorManager.colorizeEventType(formatted, eventType);
   }
 
   /**

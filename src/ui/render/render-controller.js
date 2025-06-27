@@ -1,12 +1,14 @@
 /**
  * Render Controller (Single Responsibility: Screen rendering control)
  * Extracted from cli-display.js for better maintainability
+ * FUNC-207: Integrated with ColorManager for customizable colors
  */
 
 const chalk = require('chalk');
 const { padEndWithWidth } = require('../../utils/display-width');
 const BufferedRenderer = require('../../utils/buffered-renderer');
 const FilterStatusRenderer = require('../filter-status-renderer');
+const ColorManager = require('../../color/ColorManager');
 
 class RenderController {
   constructor(config = {}) {
@@ -18,6 +20,9 @@ class RenderController {
       renderInterval: 16, // 60fps limit
       clearOnRender: true
     });
+    
+    // FUNC-207: Initialize ColorManager
+    this.colorManager = new ColorManager(config.configPath || '.cctop');
     
     // Dependencies (set externally)
     this.eventDisplayManager = null;
@@ -111,8 +116,12 @@ class RenderController {
     const header = `Modified               Elapsed  File Name                    Event    Lines Blocks ${directoryHeader}`;
     const separator = '─'.repeat(widthConfig.terminal || 97);
     
-    this.renderer.addLine(chalk.bold(header));
-    this.renderer.addLine(chalk.gray(separator));
+    // FUNC-207: Apply theme colors to header
+    const coloredHeader = this.colorManager.colorize(header, 'table.column_headers');
+    const coloredSeparator = this.colorManager.colorize(separator, 'status_bar.separator');
+    
+    this.renderer.addLine(coloredHeader);
+    this.renderer.addLine(coloredSeparator);
   }
 
   /**
@@ -160,14 +169,19 @@ class RenderController {
     const statusLine = `${stats.modeIndicator}  ${stats.displayMode === 'all' ? stats.totalEvents : stats.uniqueFiles} ${stats.displayMode === 'all' ? 'events' : 'files'}`;
     const helpLine = '[a] All  [u] Unique  [q] Exit';
     
-    this.renderer.addLine(chalk.gray(separator));
-    this.renderer.addLine(chalk.bold(statusLine));
-    this.renderer.addLine(chalk.dim(helpLine));
+    // FUNC-207: Apply theme colors to footer elements
+    const coloredSeparator = this.colorManager.colorize(separator, 'status_bar.separator');
+    const coloredStatusLine = this.colorManager.colorize(statusLine, 'status_bar.label');
+    const coloredHelpLine = this.colorManager.colorize(helpLine, 'general_keys.label_active');
+    
+    this.renderer.addLine(coloredSeparator);
+    this.renderer.addLine(coloredStatusLine);
+    this.renderer.addLine(coloredHelpLine);
     
     // Filter line (FUNC-020)
     if (this.filterManager) {
       const filterStates = this.filterManager.getFilterStates();
-      const filterLine = FilterStatusRenderer.renderFilterLine(filterStates, widthConfig.terminal);
+      const filterLine = FilterStatusRenderer.renderFilterLine(filterStates, widthConfig.terminal, this.colorManager.configPath);
       this.renderer.addLine(filterLine);
     }
     
