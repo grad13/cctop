@@ -46,6 +46,7 @@ class DatabaseManager {
       // 3. Schema initialization
       await this.createTables();
       await this.createIndexes();
+      await this.createTriggers();
       await this.insertInitialData();
       
       // 4. Final connection confirmation
@@ -90,6 +91,7 @@ class DatabaseManager {
         await this.connect();
         await this.createTables();
         await this.createIndexes();
+        await this.createTriggers();
         await this.insertInitialData();
         
         // Final connection confirmation for recovered database
@@ -182,6 +184,30 @@ class DatabaseManager {
     }
     if (this.verbose) {
       console.log(`Indexes created`);
+    }
+  }
+
+  /**
+   * Create database triggers (HO-003)
+   */
+  async createTriggers() {
+    try {
+      if (!schema.triggers) {
+        return; // No triggers defined
+      }
+      
+      for (const trigger of schema.triggers) {
+        await this.run(trigger);
+        if (this.verbose) {
+          const triggerName = trigger.match(/CREATE TRIGGER IF NOT EXISTS (\w+)/)?.[1] || 'unknown';
+          console.log(`Trigger created: ${triggerName}`);
+        }
+      }
+    } catch (error) {
+      if (this.verbose) {
+        console.error('Failed to create triggers:', error);
+      }
+      throw error;
     }
   }
 

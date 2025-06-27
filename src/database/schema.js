@@ -46,7 +46,7 @@ const schema = {
       FOREIGN KEY (event_id) REFERENCES events(id)
     )`,
     
-  // 5. Aggregates table (FUNC-000 compliant structure)
+  // 5. Aggregates table (FUNC-000 compliant structure + HO-003 extensions)
   aggregates: `
     CREATE TABLE IF NOT EXISTS aggregates (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -66,6 +66,25 @@ const schema = {
       total_moves INTEGER DEFAULT 0,
       total_restores INTEGER DEFAULT 0,
       
+      -- HO-003: Time series statistics
+      first_event_timestamp INTEGER,
+      last_event_timestamp INTEGER,
+      
+      -- HO-003: Size metrics (First/Max/Last)
+      first_size INTEGER,
+      max_size INTEGER,
+      last_size INTEGER,
+      
+      -- HO-003: Lines metrics (First/Max/Last)
+      first_lines INTEGER,
+      max_lines INTEGER,
+      last_lines INTEGER,
+      
+      -- HO-003: Blocks metrics (First/Max/Last)
+      first_blocks INTEGER,
+      max_blocks INTEGER,
+      last_blocks INTEGER,
+      
       -- Metadata
       last_updated INTEGER DEFAULT CURRENT_TIMESTAMP,
       calculation_method TEXT DEFAULT 'trigger',
@@ -83,6 +102,62 @@ const schema = {
     'CREATE INDEX IF NOT EXISTS idx_measurements_event_id ON measurements(event_id)',
     'CREATE INDEX IF NOT EXISTS idx_files_inode ON files(inode)',
     'CREATE INDEX IF NOT EXISTS idx_aggregates_file_id ON aggregates(file_id)'
+  ],
+
+  // HO-003: Triggers for automatic aggregates updates
+  triggers: [
+    `CREATE TRIGGER IF NOT EXISTS update_aggregates_on_event
+    AFTER INSERT ON events
+    FOR EACH ROW
+    BEGIN
+      -- Create aggregates record if not exists
+      INSERT OR IGNORE INTO aggregates (file_id) VALUES (NEW.file_id);
+      
+      -- Update basic statistics
+      UPDATE aggregates SET
+        total_events = total_events + 1,
+        total_creates = total_creates + CASE WHEN NEW.event_type_id = 2 THEN 1 ELSE 0 END,
+        total_modifies = total_modifies + CASE WHEN NEW.event_type_id = 3 THEN 1 ELSE 0 END,
+        total_deletes = total_deletes + CASE WHEN NEW.event_type_id = 4 THEN 1 ELSE 0 END,
+        total_moves = total_moves + CASE WHEN NEW.event_type_id = 5 THEN 1 ELSE 0 END,
+        total_restores = total_restores + CASE WHEN NEW.event_type_id = 6 THEN 1 ELSE 0 END,
+        
+        -- Update time series statistics
+        first_event_timestamp = COALESCE(first_event_timestamp, NEW.timestamp),
+        last_event_timestamp = NEW.timestamp,
+        
+        last_updated = CURRENT_TIMESTAMP
+      WHERE file_id = NEW.file_id;
+    END`,
+
+    `CREATE TRIGGER IF NOT EXISTS update_aggregates_on_measurement
+    AFTER INSERT ON measurements
+    FOR EACH ROW
+    BEGIN
+      UPDATE aggregates SET
+        -- Update cumulative statistics
+        total_size = total_size + COALESCE(NEW.file_size, 0),
+        total_lines = total_lines + COALESCE(NEW.line_count, 0),
+        total_blocks = total_blocks + COALESCE(NEW.block_count, 0),
+        
+        -- Update First values (only if NULL)
+        first_size = COALESCE(first_size, NEW.file_size),
+        first_lines = COALESCE(first_lines, NEW.line_count),
+        first_blocks = COALESCE(first_blocks, NEW.block_count),
+        
+        -- Update Max values
+        max_size = MAX(COALESCE(max_size, 0), COALESCE(NEW.file_size, 0)),
+        max_lines = MAX(COALESCE(max_lines, 0), COALESCE(NEW.line_count, 0)),
+        max_blocks = MAX(COALESCE(max_blocks, 0), COALESCE(NEW.block_count, 0)),
+        
+        -- Update Last values
+        last_size = NEW.file_size,
+        last_lines = NEW.line_count,
+        last_blocks = NEW.block_count,
+        
+        last_updated = CURRENT_TIMESTAMP
+      WHERE file_id = (SELECT file_id FROM events WHERE id = NEW.event_id);
+    END`
   ]
 };
 
