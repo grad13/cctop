@@ -1070,3 +1070,38 @@ export interface CLIDisplayForInteractive {
     toggleFilter(eventType: EventType): void;
   };
 }
+
+// DetailInspector interfaces
+export interface DetailInspectorCallbacks {
+  onExit?: () => void;
+  onUpdate?: (data: DetailInspectorUpdateData) => void;
+}
+
+export interface DetailInspectorUpdateData {
+  fileId: number;
+  fileName: string | null;
+  aggregateData: any;
+  historyInfo: any;
+  focusedItem: any;
+}
+
+export interface InspectionState {
+  isActive: boolean;
+  fileId: number | null;
+  fileName: string | null;
+  historyPagination: any;
+  focusedItem: any;
+}
+
+export interface DisplayStats {
+  fileId: number;
+  fileName: string | null;
+  totalHistoryItems: number;
+  currentHistoryPage: number;
+  totalHistoryPages: number;
+  currentFocusIndex: number;
+  terminalSize: {
+    width: number;
+    height: number;
+  };
+}
