@@ -857,4 +857,53 @@ export interface DatabaseManager {
   recordEvent(metadata: FileEventMetadata): Promise<number>;
   findByPath(filePath: string): Promise<any>;
   get(sql: string, params?: any[]): Promise<any>;
+  getRecentEvents(limit: number): Promise<EventData[]>;
+}
+
+// CLI Display Legacy interfaces
+export interface CLIDisplayLegacyConfig {
+  mode?: 'all' | 'unique';
+  maxEvents?: number;
+  [key: string]: any;
+}
+
+export interface CLIDisplayLegacyStats {
+  isRunning: boolean;
+  displayMode: 'all' | 'unique';
+  totalEvents: number;
+  uniqueFiles: number;
+  maxLines: number;
+  renderer: any;
+  statusDisplay: any;
+}
+
+export interface CLIDisplayLegacyWidthConfig {
+  terminal: number;
+  directory: number;
+}
+
+// Buffered Renderer interface
+export interface BufferedRenderer {
+  clear(): void;
+  addLine(line: string): void;
+  renderDebounced(): void;
+  destroy(): void;
+  reset(): void;
+  getStats(): any;
+}
+
+// Event Filter Manager interface
+export interface EventFilterManager {
+  on(event: string, callback: () => void): void;
+  emit(event: string, ...args: any[]): boolean;
+  filterEvents(events: EventData[]): EventData[];
+}
+
+// Status Display interface
+export interface StatusDisplay {
+  destroy(): void;
+  startStatisticsTimer(db: any): void;
+  addMessage(text: string, type?: string): void;
+  updateMessage(oldText: string, newText: string, type?: string): void;
+  getStatus(): any;
 }
