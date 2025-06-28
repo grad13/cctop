@@ -42,7 +42,7 @@ function truncateWithEllipsis(str: string, maxWidth: number): string {
   return truncated;
 }
 
-module.exports = {
+export {
   padEndWithWidth,
   padStartWithWidth,
   truncateWithEllipsis
