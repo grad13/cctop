@@ -689,3 +689,73 @@ export interface DatabaseWatcher {
   start(): void;
   stop(): void;
 }
+
+// ConfigManager interfaces
+export interface ConfigManagerOptions {
+  interactive?: boolean;
+  cliInterface?: CLIInterface | null;
+  promptHandler?: ((dirPath: string) => Promise<boolean>) | null;
+}
+
+export interface CLIArgs {
+  config?: string;
+  watchPath?: string | string[];
+  dbPath?: string;
+  maxLines?: string | number;
+  [key: string]: any;
+}
+
+export interface InotifyConfig {
+  requiredMaxUserWatches: number;
+  checkOnStartup: boolean;
+  warnIfInsufficient: boolean;
+  recommendedValue: number;
+}
+
+export interface BackgroundMonitorConfig {
+  enabled: boolean;
+  logLevel: string;
+  heartbeatInterval: number;
+}
+
+export interface MonitoringConfigFull {
+  watchPaths: string[];
+  excludePatterns: string[];
+  debounceMs: number;
+  maxDepth: number;
+  eventFilters: FilterState;
+  inotify: InotifyConfig;
+  backgroundMonitor: BackgroundMonitorConfig;
+}
+
+export interface DatabaseConfig {
+  path: string;
+  mode: string;
+}
+
+export interface StatusAreaConfig {
+  maxLines: number;
+  enabled: boolean;
+  scrollSpeed: number;
+  updateInterval: number;
+}
+
+export interface DisplayConfig {
+  maxEvents: number;
+  refreshRateMs: number;
+  statusArea: StatusAreaConfig;
+}
+
+export interface FullConfig {
+  version: string;
+  monitoring: MonitoringConfigFull;
+  database: DatabaseConfig;
+  display: DisplayConfig;
+}
+
+export interface CLIInterface {
+  waitForUserConfirmation(): Promise<boolean>;
+  promptAddDirectory(dirPath: string, timeout?: number): Promise<boolean>;
+  success(message: string): void;
+  info(message: string): void;
+}
