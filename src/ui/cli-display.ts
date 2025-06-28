@@ -24,7 +24,7 @@ import {
   CLIDisplayConfig,
   CLIDisplayStats,
   WidthConfig,
-  MonitorStatus
+  ProcessMonitorStatus
 } from '../types/common';
 
 class CLIDisplay extends EventEmitter {
@@ -314,7 +314,7 @@ class CLIDisplay extends EventEmitter {
   /**
    * Update monitor status (FUNC-003 integration)
    */
-  updateMonitorStatus(status: MonitorStatus): void {
+  updateMonitorStatus(status: ProcessMonitorStatus): void {
     if (!status) {
       return;
     }

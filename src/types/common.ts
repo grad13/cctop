@@ -503,7 +503,7 @@ export interface ViewerProcessConfig {
   [key: string]: any;
 }
 
-export interface MonitorStatus {
+export interface MonitorStatusLegacy {
   status: 'stopped' | 'running' | 'stale' | 'error';
   pid?: number;
   running?: boolean;
@@ -530,7 +530,7 @@ export interface DatabaseManager {
 }
 
 export interface ProcessManager {
-  getMonitorStatus(): Promise<MonitorStatus>;
+  getMonitorStatus(): Promise<ProcessMonitorStatus>;
   startMonitor(scriptPath: string, options?: StartMonitorOptions): Promise<number>;
   stopMonitor(): Promise<boolean>;
   getRecentLogs(lines: number): Promise<string[]>;
@@ -539,7 +539,7 @@ export interface ProcessManager {
 export interface CLIDisplay {
   start(): Promise<void>;
   stop(): Promise<void>;
-  updateMonitorStatus(status: MonitorStatus): void;
+  updateMonitorStatus(status: ProcessMonitorStatus): void;
   isRunning: boolean;
 }
 
@@ -758,4 +758,46 @@ export interface CLIInterface {
   promptAddDirectory(dirPath: string, timeout?: number): Promise<boolean>;
   success(message: string): void;
   info(message: string): void;
+}
+
+// ProcessManager interfaces
+export interface ProcessManagerConfig {
+  baseDir?: string;
+  configFile?: string;
+  [key: string]: any;
+}
+
+export interface ProcessManagerOptions {
+  started_by?: string;
+  [key: string]: any;
+}
+
+export interface PidInfo {
+  pid: number;
+  started_by: string;
+  started_at: number | null;
+  startTime: string | null;
+  scriptPath: string | null;
+  processName?: string;
+  parentPid?: number;
+  config_path: string | null;
+}
+
+export interface ProcessMonitorStatus {
+  status: 'stopped' | 'running' | 'stale' | 'error';
+  running: boolean;
+  pid: number | null;
+  started_by?: string;
+  started_at?: number | null;
+  startTime?: string | null;
+  scriptPath?: string | null;
+  config_path?: string | null;
+  uptime?: number | null;
+  error?: string;
+}
+
+export interface LogBackupFile {
+  name: string;
+  path: string;
+  timestamp: number;
 }

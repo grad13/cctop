@@ -10,7 +10,7 @@ import CLIDisplay = require('./cli-display');
 import * as path from 'path';
 import {
   ViewerProcessConfig,
-  MonitorStatus,
+  ProcessMonitorStatus,
   ViewerStatus,
   StartMonitorOptions
 } from '../types/common';
@@ -271,12 +271,12 @@ class ViewerProcess {
   /**
    * Get monitor status
    */
-  async getMonitorStatus(): Promise<MonitorStatus> {
+  async getMonitorStatus(): Promise<ProcessMonitorStatus> {
     try {
       return await this.processManager.getMonitorStatus();
     } catch (error) {
       console.error('Failed to get monitor status:', error);
-      return { status: 'error', error: (error as Error).message };
+      return { status: 'error', running: false, pid: null, error: (error as Error).message };
     }
   }
 
