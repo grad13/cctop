@@ -13,7 +13,7 @@
  * - Environment independent: Eliminate NODE_ENV conditional branching
  */
 
-const readline = require('readline');
+import readline = require('readline');
 import { CLIInterfaceOptions } from '../types/common';
 
 class CLIInterface {
@@ -27,9 +27,9 @@ class CLIInterface {
 
   /**
    * Directory addition confirmation prompt
-   * @param {string} dirPath - Target directory path to add
-   * @param {number} timeout - Timeout duration (milliseconds)
-   * @returns {Promise<boolean>} - User's choice (true: add, false: skip)
+   * @param dirPath - Target directory path to add
+   * @param timeout - Timeout duration (milliseconds)
+   * @returns User's choice (true: add, false: skip)
    */
   async promptAddDirectory(dirPath: string, timeout: number = 30000): Promise<boolean> {
     const rl = readline.createInterface({
@@ -57,8 +57,7 @@ class CLIInterface {
 
   /**
    * Wait for user confirmation
-   * @param {string} message - Display message
-   * @returns {Promise<void>}
+   * @param message - Display message
    */
   async waitForUserConfirmation(message: string = 'Press Enter to exit...'): Promise<void> {
     const rl = readline.createInterface({
@@ -76,7 +75,7 @@ class CLIInterface {
 
   /**
    * Output information message
-   * @param {string} message - Message
+   * @param message - Message
    */
   info(message: string): void {
     this.output.write(`ℹ️  ${message}\n`);
@@ -84,7 +83,7 @@ class CLIInterface {
 
   /**
    * Output success message
-   * @param {string} message - Message
+   * @param message - Message
    */
   success(message: string): void {
     this.output.write(`${message}\n`);
@@ -92,7 +91,7 @@ class CLIInterface {
 
   /**
    * Output error message
-   * @param {string} message - Message
+   * @param message - Message
    */
   error(message: string): void {
     this.output.write(`${message}\n`);
@@ -100,8 +99,7 @@ class CLIInterface {
 
   /**
    * Mockable prompt handler for testing
-   * @param {string} dirPath - Directory path
-   * @returns {Promise<boolean>}
+   * @param dirPath - Directory path
    */
   async mockablePrompt(dirPath: string): Promise<boolean> {
     // This function is mocked during testing
