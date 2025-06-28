@@ -907,3 +907,113 @@ export interface StatusDisplay {
   updateMessage(oldText: string, newText: string, type?: string): void;
   getStatus(): any;
 }
+
+// Database Manager extended interfaces
+export interface DatabaseConfigExtended {
+  path?: string;
+  [key: string]: any;
+}
+
+export interface SQLiteDatabase {
+  run(sql: string, params?: any[], callback?: (err: Error | null, result?: any) => void): void;
+  get(sql: string, params?: any[], callback?: (err: Error | null, row?: any) => void): void;
+  all(sql: string, params?: any[], callback?: (err: Error | null, rows?: any[]) => void): void;
+  close(callback?: (err: Error | null) => void): void;
+  serialize(callback?: () => void): void;
+  parallelize(callback?: () => void): void;
+}
+
+export interface DatabaseSchema {
+  tables: { [tableName: string]: string };
+  indexes: string[];
+  triggers: string[];
+}
+
+export interface DatabaseInitialData {
+  event_types: Array<{ code: string; name: string }>;
+}
+
+export interface EventRecord {
+  id?: number;
+  timestamp: number;
+  event_type: EventType;
+  file_path: string;
+  file_name: string;
+  directory: string;
+  file_size?: number;
+  line_count?: number | null;
+  block_count?: number;
+  inode?: number | null;
+}
+
+export interface FileRecord {
+  id: number;
+  file_path: string;
+  inode?: number | null;
+  is_active: boolean;
+  last_event_timestamp: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AggregateRecord {
+  file_id: number;
+  inode?: number | null;
+  total_events: number;
+  total_creates: number;
+  total_modifies: number;
+  total_deletes: number;
+  total_moves: number;
+  total_restores: number;
+  first_event_timestamp?: number | null;
+  last_event_timestamp?: number | null;
+  first_size?: number | null;
+  max_size?: number | null;
+  last_size?: number | null;
+  total_size: number;
+  first_lines?: number | null;
+  max_lines?: number | null;
+  last_lines?: number | null;
+  total_lines: number;
+  first_blocks?: number | null;
+  max_blocks?: number | null;
+  last_blocks?: number | null;
+  total_blocks: number;
+}
+
+export interface EventTypeRecord {
+  id: number;
+  code: EventType;
+  name: string;
+}
+
+export interface MeasurementRecord {
+  event_id: number;
+  file_size?: number;
+  line_count?: number | null;
+  block_count?: number;
+  inode?: number | null;
+}
+
+export interface DatabaseManagerStats {
+  isInitialized: boolean;
+  transactionActive: boolean;
+  dbPath: string;
+  totalEvents?: number;
+  totalFiles?: number;
+}
+
+export interface QueryResult {
+  lastID?: number;
+  changes?: number;
+}
+
+export interface EventWithDetails extends EventRecord {
+  event_name?: string;
+  measurements?: {
+    file_size?: number;
+    line_count?: number | null;
+    block_count?: number;
+    inode?: number | null;
+  };
+}
