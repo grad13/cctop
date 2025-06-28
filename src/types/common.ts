@@ -70,6 +70,22 @@ export interface StatusDisplay {
   updateMessage(message: string): void;
 }
 
+// Buffered Renderer interfaces
+export interface BufferedRendererOptions {
+  renderInterval?: number;
+  maxBufferSize?: number;
+  enableDebounce?: boolean;
+}
+
+export interface RendererStats {
+  bufferSize: number;
+  previousBufferSize: number;
+  maxBufferSize: number;
+  renderInterval: number;
+  cursorSaved: boolean;
+  enableDebounce: boolean;
+}
+
 // CLI Interface options
 export interface CLIInterfaceOptions {
   input?: NodeJS.ReadableStream;

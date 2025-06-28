@@ -4,11 +4,7 @@
  * Ported from VERSIONs/product-v01, optimized for v0.1.0.0
  */
 
-interface BufferedRendererOptions {
-  renderInterval?: number;
-  maxBufferSize?: number;
-  enableDebounce?: boolean;
-}
+import { BufferedRendererOptions, RendererStats } from '../types/common';
 
 class BufferedRenderer {
   private buffer: string[];
@@ -32,38 +28,30 @@ class BufferedRenderer {
   }
 
   /**
-   * Add content to buffer (maintains screen position)
-   * @param {string} content Content to add
+   * Clear buffer
    */
-  addToBuffer(content: string): void {
-    if (this.buffer.length >= this.maxBufferSize) {
-      // Buffer overflow prevention
-      this.buffer = this.buffer.slice(-Math.floor(this.maxBufferSize * 0.8));
-    }
-    
-    this.buffer.push(content);
-    
-    if (this.enableDebounce) {
-      this.scheduleRender();
-    } else {
-      this.render();
-    }
-  }
-
-  /**
-   * Clear buffer completely
-   */
-  clearBuffer(): void {
+  clear(): void {
+    this.previousBuffer = [...this.buffer];
     this.buffer = [];
-    this.previousBuffer = [];
   }
 
   /**
-   * Save cursor position (used with cursor restoration)
+   * Add line to buffer
+   */
+  addLine(line: string): void {
+    // Buffer size limit
+    if (this.buffer.length >= this.maxBufferSize) {
+      this.buffer.shift(); // Remove old lines
+    }
+    this.buffer.push(line || '');
+  }
+
+  /**
+   * Save cursor position
    */
   saveCursor(): void {
     if (!this.cursorSaved) {
-      process.stdout.write('\x1b[s');  // Save cursor position
+      process.stdout.write('\x1b[s'); // Save cursor position
       this.cursorSaved = true;
     }
   }
@@ -73,26 +61,29 @@ class BufferedRenderer {
    */
   restoreCursor(): void {
     if (this.cursorSaved) {
-      process.stdout.write('\x1b[u');  // Restore cursor position
-      this.cursorSaved = false;
+      process.stdout.write('\x1b[u'); // Restore cursor position
     }
   }
 
   /**
-   * Clear screen and reset cursor
+   * Move cursor to specified line
    */
-  clearScreen(): void {
-    process.stdout.write('\x1b[2J\x1b[H');  // Clear screen and move to top
-    this.cursorSaved = false;
+  moveCursor(row: number, col: number = 1): void {
+    process.stdout.write(`\x1b[${row};${col}H`);
   }
 
   /**
-   * Move cursor to specific position
-   * @param {number} row Row position (1-based)
-   * @param {number} col Column position (1-based)
+   * Clear current line
    */
-  moveCursor(row: number, col: number): void {
-    process.stdout.write(`\x1b[${row};${col}H`);
+  clearLine(): void {
+    process.stdout.write('\x1b[2K'); // Clear entire line
+  }
+
+  /**
+   * Clear screen to bottom
+   */
+  clearToBottom(): void {
+    process.stdout.write('\x1b[J'); // Clear from cursor to end of screen
   }
 
   /**
@@ -110,14 +101,17 @@ class BufferedRenderer {
   }
 
   /**
-   * Schedule render with debounce (throttle rapid updates)
+   * Delayed rendering (60fps limit)
    */
-  private scheduleRender(): void {
-    if (this.renderTimer) {
-      return; // Already scheduled
+  renderDebounced(): void {
+    if (!this.enableDebounce) {
+      this.render();
+      return;
     }
 
-    clearTimeout(this.renderTimer);
+    if (this.renderTimer) {
+      clearTimeout(this.renderTimer);
+    }
     this.renderTimer = setTimeout(() => {
       this.render();
     }, this.renderInterval);
@@ -135,91 +129,81 @@ class BufferedRenderer {
 
   /**
    * Render buffer contents to screen (double buffer method)
-   * Only renders if content has changed to avoid flicker
    */
   render(): void {
+    // Clear entire screen on first render
+    if (!this.cursorSaved) {
+      console.clear();
+      this.saveCursor();
+    }
+
+    // Hide cursor and start rendering
+    this.hideCursor();
+
+    // Return cursor to beginning
+    this.restoreCursor();
+
+    // Update all lines (ANSI escape sequence support)
+    const maxLines: number = Math.max(this.buffer.length, this.previousBuffer.length);
+    
+    for (let i = 0; i < maxLines; i++) {
+      this.moveCursor(i + 1, 1);
+      this.clearLine();
+      
+      if (i < this.buffer.length && this.buffer[i]) {
+        process.stdout.write(this.buffer[i]);
+      }
+    }
+
+    // Move cursor after last line then show
+    this.moveCursor(this.buffer.length + 1, 1);
+    this.showCursor();
+
+    // Update previousBuffer after rendering completes
+    this.previousBuffer = [...this.buffer];
+  }
+
+  /**
+   * Complete redraw (for emergency use)
+   */
+  fullRender(): void {
+    console.clear();
+    this.buffer.forEach((line: string) => console.log(line));
+    this.cursorSaved = false;
+  }
+
+  /**
+   * Reset renderer
+   */
+  reset(): void {
+    if (this.renderTimer) {
+      clearTimeout(this.renderTimer);
+    }
     this.renderTimer = null;
-    
-    // Double buffer comparison: Only render if content changed
-    const currentContent = this.buffer.join('');
-    const previousContent = this.previousBuffer.join('');
-    
-    if (currentContent === previousContent) {
-      return; // No changes, skip render
-    }
-    
-    // Save cursor and clear for fresh render
-    this.saveCursor();
-    this.clearScreen();
-    
-    // Render current buffer
-    if (this.buffer.length > 0) {
-      process.stdout.write(currentContent);
-    }
-    
-    // Update previous buffer for next comparison
-    this.previousBuffer = [...this.buffer];
+    this.buffer = [];
+    this.previousBuffer = [];
+    this.cursorSaved = false;
+    this.showCursor(); // Ensure cursor is visible
   }
 
   /**
-   * Force render without comparison (for initial render)
+   * Release resources
    */
-  forceRender(): void {
-    this.clearScreen();
-    const content = this.buffer.join('');
-    if (content) {
-      process.stdout.write(content);
-    }
-    this.previousBuffer = [...this.buffer];
+  destroy(): void {
+    this.reset();
   }
 
   /**
-   * Get current buffer content as string
-   * @returns {string} Current buffer content
+   * Get statistics
    */
-  getBufferContent(): string {
-    return this.buffer.join('');
-  }
-
-  /**
-   * Get buffer line count
-   * @returns {number} Number of lines in buffer
-   */
-  getBufferLineCount(): number {
-    return this.buffer.length;
-  }
-
-  /**
-   * Set entire buffer content (replaces existing)
-   * @param {string[]} lines Array of lines to set as buffer
-   */
-  setBuffer(lines: string[]): void {
-    this.buffer = [...lines];
-    if (this.enableDebounce) {
-      this.scheduleRender();
-    } else {
-      this.render();
-    }
-  }
-
-  /**
-   * Check if render is pending
-   * @returns {boolean} True if render is scheduled but not executed
-   */
-  isRenderPending(): boolean {
-    return this.renderTimer !== null;
-  }
-
-  /**
-   * Get renderer statistics for debugging
-   * @returns {Object} Renderer statistics
-   */
-  getStats(): { bufferSize: number; maxBufferSize: number; renderInterval: number; isPending: boolean } {
+  getStats(): RendererStats {
     return {
       bufferSize: this.buffer.length,
+      previousBufferSize: this.previousBuffer.length,
       maxBufferSize: this.maxBufferSize,
       renderInterval: this.renderInterval,
-      isPending: this.isRenderPending()
+      cursorSaved: this.cursorSaved,
+      enableDebounce: this.enableDebounce
     };
   }
 }
