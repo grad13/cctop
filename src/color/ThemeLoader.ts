@@ -5,7 +5,17 @@
 
 const fs = require('fs');
 const path = require('path');
-import { ThemeData, ThemeInfo } from '../types/common';
+
+// Type-only imports
+import type { 
+  ThemeData,
+  ThemeInfo
+} from '../types/common';
+
+// ThemeLoader specific interfaces
+interface PresetThemes {
+  [themeName: string]: ThemeData;
+}
 
 class ThemeLoader {
   private configPath: string;
@@ -43,8 +53,8 @@ class ThemeLoader {
   /**
    * Create all preset theme files
    */
-  async createPresetThemes(): Promise<void> {
-    const presetThemes: Record<string, ThemeData> = {
+  private async createPresetThemes(): Promise<void> {
+    const presetThemes: PresetThemes = {
       'default': this.getDefaultTheme(),
       'high-contrast': this.getHighContrastTheme(),
       'colorful': this.getColorfulTheme(),
@@ -72,7 +82,7 @@ class ThemeLoader {
   /**
    * Default theme - balanced standard colors
    */
-  getDefaultTheme(): ThemeData {
+  private getDefaultTheme(): ThemeData {
     return {
       "name": "default",
       "description": "Balanced standard color scheme for general use",
@@ -128,7 +138,7 @@ class ThemeLoader {
   /**
    * High contrast theme - for better visibility
    */
-  getHighContrastTheme(): ThemeData {
+  private getHighContrastTheme(): ThemeData {
     return {
       "name": "high-contrast",
       "description": "High contrast color scheme for improved visibility",
@@ -184,7 +194,7 @@ class ThemeLoader {
   /**
    * Colorful theme - vibrant colors for clear distinction
    */
-  getColorfulTheme(): ThemeData {
+  private getColorfulTheme(): ThemeData {
     return {
       "name": "colorful",
       "description": "Vibrant color scheme with clear element distinction",
@@ -240,7 +250,7 @@ class ThemeLoader {
   /**
    * Minimal theme - subtle colors for clean appearance
    */
-  getMinimalTheme(): ThemeData {
+  private getMinimalTheme(): ThemeData {
     return {
       "name": "minimal",
       "description": "Minimal color scheme with subtle distinctions",
@@ -314,13 +324,13 @@ class ThemeLoader {
       if (fs.existsSync(this.themesDir)) {
         const files = fs.readdirSync(this.themesDir);
         return files
-          .filter(file => file.endsWith('.json'))
-          .map(file => {
+          .filter((file: string) => file.endsWith('.json'))
+          .map((file: string) => {
             const themeName = file.replace('.json', '');
             const themePath = path.join(this.themesDir, file);
             
             try {
-              const themeData = JSON.parse(fs.readFileSync(themePath, 'utf8'));
+              const themeData: ThemeData = JSON.parse(fs.readFileSync(themePath, 'utf8'));
               return {
                 name: themeName,
                 displayName: themeData.name || themeName,
@@ -350,7 +360,7 @@ class ThemeLoader {
       const themeFile = path.join(this.themesDir, `${themeName}.json`);
       
       if (fs.existsSync(themeFile)) {
-        return JSON.parse(fs.readFileSync(themeFile, 'utf8'));
+        return JSON.parse(fs.readFileSync(themeFile, 'utf8')) as ThemeData;
       }
     } catch (error: any) {
       console.warn(`[ThemeLoader] Error loading theme ${themeName}: ${error.message}`);
@@ -360,4 +370,4 @@ class ThemeLoader {
   }
 }
 
-export = ThemeLoader;
+module.exports = ThemeLoader;
