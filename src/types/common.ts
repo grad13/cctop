@@ -58,3 +58,58 @@ export interface Config {
 // Utility types for async operations
 export type PromiseResolve<T> = (value: T | PromiseLike<T>) => void;
 export type PromiseReject = (reason?: any) => void;
+
+// Theme system types
+export interface ThemeColors {
+  table: {
+    column_headers: string;
+    row: {
+      event_timestamp: string;
+      elapsed_time: string;
+      file_name: string;
+      event_type: {
+        [K in EventType]: string;
+      };
+      lines: string;
+      blocks: string;
+      directory: string;
+    };
+  };
+  status_bar: {
+    label: string;
+    count: string;
+    separator: string;
+  };
+  general_keys: {
+    key_active: string;
+    key_inactive: string;
+    label_active: string;
+    label_inactive: string;
+  };
+  event_filters: {
+    key_active: string;
+    key_inactive: string;
+    label_active: string;
+    label_inactive: string;
+  };
+  message_area: {
+    prompt: string;
+    label: string;
+    status: string;
+    pid: string;
+    summary: string;
+  };
+}
+
+export interface ThemeData {
+  name: string;
+  description: string;
+  version: string;
+  colors: ThemeColors;
+}
+
+export interface ThemeInfo {
+  name: string;
+  displayName: string;
+  description: string;
+}
