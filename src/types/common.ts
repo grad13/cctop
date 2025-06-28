@@ -35,6 +35,41 @@ export interface InotifyLimitResult {
   message: string;
 }
 
+// Progressive Loader interfaces
+export interface ProgressiveLoaderConfig {
+  batchSize?: number;
+  loadDelay?: number;
+}
+
+export interface LoadProgress {
+  loaded: number;
+  total: number;
+  percentage: number;
+}
+
+export interface LoaderStats {
+  loadedCount: number;
+  batchSize: number;
+  loadDelay: number;
+}
+
+// Database Manager interface (for Progressive Loader dependency)
+export interface DatabaseManager {
+  getEventCount(): Promise<number>;
+  getEventsBatch(offset: number, limit: number): Promise<any[]>;
+  getRecentEvents(limit: number): Promise<any[]>;
+}
+
+// Display Manager interface (for Progressive Loader dependency)
+export interface DisplayManager {
+  addEvents?(events: any[]): void;
+}
+
+// Status Display interface (for Progressive Loader dependency)
+export interface StatusDisplay {
+  updateMessage(message: string): void;
+}
+
 // CLI Interface options
 export interface CLIInterfaceOptions {
   input?: NodeJS.ReadableStream;
