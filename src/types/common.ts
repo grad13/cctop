@@ -25,6 +25,16 @@ export interface FilterState {
   restore: boolean;
 }
 
+// Inotify Checker interfaces
+export interface InotifyLimitResult {
+  status: 'sufficient' | 'insufficient' | 'unknown';
+  canCheck: boolean;
+  current?: number;
+  required?: number;
+  shortage?: number;
+  message: string;
+}
+
 // CLI Interface options
 export interface CLIInterfaceOptions {
   input?: NodeJS.ReadableStream;

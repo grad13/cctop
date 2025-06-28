@@ -3,21 +3,13 @@
  * inotify.max_user_watches limit management in Linux environments
  */
 
-const fs = require('fs').promises;
-
-interface CheckResult {
-  status: 'sufficient' | 'insufficient' | 'unknown';
-  canCheck: boolean;
-  current?: number;
-  required?: number;
-  shortage?: number;
-  message: string;
-}
+import { promises as fs } from 'fs';
+import { InotifyLimitResult } from '../types/common';
 
 class InotifyChecker {
   /**
    * Get current inotify limit value
-   * @returns {Promise<number|null>} Limit value or null (if unable to retrieve)
+   * @returns Promise of limit value or null (if unable to retrieve)
    */
   static async getCurrentLimit(): Promise<number | null> {
     // Return null for non-Linux environments
@@ -26,9 +18,9 @@ class InotifyChecker {
     }
     
     try {
-      const limitPath = '/proc/sys/fs/inotify/max_user_watches';
-      const content = await fs.readFile(limitPath, 'utf8');
-      const limit = parseInt(content.trim(), 10);
+      const limitPath: string = '/proc/sys/fs/inotify/max_user_watches';
+      const content: string = await fs.readFile(limitPath, 'utf8');
+      const limit: number = parseInt(content.trim(), 10);
       
       // Validity check
       if (isNaN(limit) || limit < 0) {
@@ -44,11 +36,11 @@ class InotifyChecker {
   
   /**
    * Check limit sufficiency
-   * @param {number|null} current - Current limit value
-   * @param {number} required - Required limit value
-   * @returns {Object} Check result
+   * @param current - Current limit value
+   * @param required - Required limit value
+   * @returns Check result
    */
-  static checkLimitSufficiency(current: number | null, required: number): CheckResult {
+  static checkLimitSufficiency(current: number | null, required: number): InotifyLimitResult {
     // When current value cannot be retrieved
     if (current === null) {
       return {
@@ -82,12 +74,12 @@ class InotifyChecker {
   
   /**
    * Generate warning message
-   * @param {number} current - Current limit value
-   * @param {number} required - Required limit value
-   * @returns {string} Warning message
+   * @param current - Current limit value
+   * @param required - Required limit value
+   * @returns Warning message
    */
   static generateWarningMessage(current: number, required: number): string {
-    const shortage = required - current;
+    const shortage: number = required - current;
     
     return `WARNING: inotify limit may be insufficient
    Current: ${current.toLocaleString()} watches
@@ -106,7 +98,7 @@ class InotifyChecker {
   
   /**
    * Generate platform-specific message
-   * @returns {string|null} Platform-specific message
+   * @returns Platform-specific message
    */
   static getPlatformMessage(): string | null {
     switch (process.platform) {
@@ -123,7 +115,7 @@ class InotifyChecker {
   
   /**
    * Determine if inotify check is needed
-   * @returns {boolean} True if check is needed
+   * @returns True if check is needed
    */
   static shouldCheckLimits(): boolean {
     return process.platform === 'linux';
@@ -131,19 +123,19 @@ class InotifyChecker {
   
   /**
    * Format for detailed information display in CLI
-   * @param {Object} checkResult - Result of checkLimitSufficiency
-   * @returns {string} Formatted string
+   * @param checkResult - Result of checkLimitSufficiency
+   * @returns Formatted string
    */
-  static formatCheckResult(checkResult: CheckResult): string {
+  static formatCheckResult(checkResult: InotifyLimitResult): string {
     if (!checkResult.canCheck) {
-      const platformMsg = this.getPlatformMessage();
+      const platformMsg: string | null = this.getPlatformMessage();
       if (platformMsg) {
         return platformMsg;
       }
       return checkResult.message;
     }
     
-    const lines = [
+    const lines: string[] = [
       `Current inotify limit: ${checkResult.current!.toLocaleString()}`,
       `Required limit: ${checkResult.required!.toLocaleString()} (configured)`,
       `Status: ${checkResult.status.toUpperCase()}`
