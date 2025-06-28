@@ -405,4 +405,4 @@ if (require.main === module) {
   });
 }
 
-export = MonitorProcess;
+module.exports = MonitorProcess;
