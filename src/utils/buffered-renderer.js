@@ -106,6 +106,16 @@ class BufferedRenderer {
   }
 
   /**
+   * Cancel pending render timer (for detail mode)
+   */
+  cancelPendingRender() {
+    if (this.renderTimer) {
+      clearTimeout(this.renderTimer);
+      this.renderTimer = null;
+    }
+  }
+
+  /**
    * Render buffer contents to screen (double buffer method)
    */
   render() {

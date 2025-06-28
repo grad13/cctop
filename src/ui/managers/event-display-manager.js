@@ -138,6 +138,13 @@ class EventDisplayManager {
   }
 
   /**
+   * Get currently displayed events (for SelectionManager)
+   */
+  getDisplayedEvents() {
+    return this.getEventsToDisplay();
+  }
+
+  /**
    * Switch display mode
    */
   setDisplayMode(mode) {

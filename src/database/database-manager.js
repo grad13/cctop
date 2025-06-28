@@ -296,7 +296,7 @@ class DatabaseManager {
   }
 
   /**
-   * データベース接続終了
+   * Close database connection
    */
   async close() {
     if (this.db) {
@@ -318,28 +318,28 @@ class DatabaseManager {
   }
 
   /**
-   * データベース状態確認
+   * Check database status
    */
   isConnected() {
     return this.db !== null && this.isInitialized;
   }
 
   /**
-   * データベースパス取得
+   * Get database path
    */
   getPath() {
     return this.dbPath;
   }
 
   /**
-   * データベースインスタンス取得（.database プロパティ用getter）
+   * Get database instance (.database property getter)
    */
   get database() {
     return this.db;
   }
 
   /**
-   * イベントタイプIDを取得
+   * Get event type ID
    */
   async getEventTypeId(eventTypeCode) {
     const row = await this.get(
@@ -385,12 +385,12 @@ class DatabaseManager {
   }
 
   /**
-   * イベントを記録（トランザクション処理）
+   * Record event (Legacy API - Transaction processing)
    */
-  async recordEvent(eventData) {
+  async recordEventLegacy(eventData) {
     const { event_type, file_path, file_name, directory, ...metadata } = eventData;
     
-    // トランザクション競合を避けるため、すでにアクティブな場合は待機
+    // Wait for transaction completion to avoid conflicts
     while (this.transactionActive) {
       await new Promise(resolve => setTimeout(resolve, 1));
     }
@@ -398,18 +398,18 @@ class DatabaseManager {
     this.transactionActive = true;
     
     try {
-      // トランザクション開始
+      // Begin transaction
       await this.run('BEGIN TRANSACTION');
-      // 1. ファイルレコードの取得または作成
+      // 1. Get or create file record
       let file = await this.getOrCreateFile(file_path, file_name, directory, metadata.inode);
       
-      // 2. イベントタイプIDの取得
+      // 2. Get event type ID
       const eventTypeId = await this.getEventTypeId(event_type);
       if (!eventTypeId) {
         throw new Error(`Unknown event type: ${event_type}`);
       }
       
-      // 3. イベントの記録
+      // 3. Record event
       const eventResult = await this.run(`
         INSERT INTO events (
           timestamp, event_type_id, file_id, file_path, 
@@ -425,7 +425,7 @@ class DatabaseManager {
         ]
       );
       
-      // 4. 測定値の記録
+      // 4. Record measurements
       if (metadata.file_size !== undefined || metadata.line_count !== undefined) {
         await this.run(`
           INSERT INTO measurements (
@@ -441,10 +441,10 @@ class DatabaseManager {
         );
       }
       
-      // 5. filesテーブルの更新
+      // 5. Update files table
       await this.updateFile(file.id, eventResult.lastID, event_type, metadata.inode);
       
-      // 6. 集計値の更新
+      // 6. Update aggregates
       await this.updateAggregates(file.id, event_type, metadata);
       
       await this.run('COMMIT');
@@ -586,7 +586,7 @@ class DatabaseManager {
   }
 
   /**
-   * 最新のイベント一覧を取得
+   * Get recent events list
    */
   async getRecentEvents(limit = 50) {
     return await this.all(`
@@ -665,22 +665,22 @@ class DatabaseManager {
   }
 
   /**
-   * 旧データベースからの移行（互換性メソッド）
+   * Migration from old database (compatibility method)
    */
   async getOrCreateObjectId(inode, filePath = null) {
-    // v0.2.0では使用しない（recordEventで直接処理）
+    // Not used in v0.2.0 (handled directly by recordEvent)
     console.warn('getOrCreateObjectId is deprecated in v0.2.0');
     return null;
   }
 
   /**
-   * 旧形式のイベント挿入（互換性メソッド）
+   * Legacy event insertion (compatibility method)
    */
   async insertEvent(eventData) {
-    // v0.2.0ではrecordEventを使用
+    // Use recordEvent in v0.2.0
     console.warn('insertEvent is deprecated in v0.2.0, use recordEvent instead');
     
-    // 旧形式のデータを新形式に変換
+    // Convert legacy format data to new format
     const newEventData = {
       event_type: eventData.event_type || 'unknown',
       file_path: eventData.file_path,
@@ -698,10 +698,10 @@ class DatabaseManager {
   }
 
   /**
-   * 旧形式の統計更新（互換性メソッド）
+   * Legacy statistics update (compatibility method)
    */
   async updateObjectStatistics(objectId, stats) {
-    // v0.2.0では自動的に処理される
+    // Automatically handled in v0.2.0
     console.warn('updateObjectStatistics is deprecated in v0.2.0');
   }
 
@@ -912,6 +912,133 @@ class DatabaseManager {
       await new Promise(resolve => setTimeout(resolve, 100));
     }
     throw new Error('Database initialization timeout');
+  }
+
+  /**
+   * HO-20250628-002: Ensure file exists in database and return file ID
+   * @param {string} filePath - Absolute path to file
+   * @returns {Promise<number>} File ID
+   */
+  async ensureFile(filePath) {
+    // Check if file exists in files table by finding through events
+    let file = await this.get(`
+      SELECT DISTINCT f.id, f.inode, f.is_active
+      FROM files f
+      LEFT JOIN events e ON f.id = e.file_id
+      WHERE e.file_path = ? AND f.is_active = 1
+      ORDER BY e.timestamp DESC
+      LIMIT 1`,
+      [filePath]
+    );
+    
+    if (!file) {
+      // Create new file record (FUNC-000 compliant)
+      const result = await this.run(`
+        INSERT INTO files (inode, is_active)
+        VALUES (NULL, 1)`,
+        []
+      );
+      
+      return result.lastID;
+    }
+    
+    return file.id;
+  }
+
+
+  /**
+   * HO-20250628-002: Get aggregate statistics for file
+   * @param {number} fileId - File ID
+   * @returns {Promise<Object|null>} Aggregate statistics or null if not found
+   */
+  async getAggregateStats(fileId) {
+    const stats = await this.get(
+      'SELECT * FROM aggregates WHERE file_id = ?',
+      [fileId]
+    );
+    
+    return stats || null;
+  }
+
+  /**
+   * Compatibility wrapper for existing event-processor.js usage
+   * Delegates to recordEventLegacy for backward compatibility
+   */
+  async recordEvent(eventDataOrFileId, eventType, measurements) {
+    // Check if this is the new API call (fileId, eventType, measurements)
+    if (typeof eventDataOrFileId === 'number' && typeof eventType === 'string') {
+      // New API: recordEvent(fileId, eventType, measurements)
+      return this.recordEventById(eventDataOrFileId, eventType, measurements);
+    } else {
+      // Legacy API: recordEvent(eventData)
+      return this.recordEventLegacy(eventDataOrFileId);
+    }
+  }
+
+  /**
+   * HO-20250628-002: New API implementation
+   */
+  async recordEventById(fileId, eventType, measurements = {}) {
+    // Wait for transaction to complete if active
+    while (this.transactionActive) {
+      await new Promise(resolve => setTimeout(resolve, 1));
+    }
+    
+    this.transactionActive = true;
+    
+    try {
+      await this.run('BEGIN TRANSACTION');
+      
+      // Get event type ID
+      const eventTypeId = await this.getEventTypeId(eventType);
+      if (!eventTypeId) {
+        throw new Error(`Unknown event type: ${eventType}`);
+      }
+      
+      // Insert into events table
+      const eventResult = await this.run(`
+        INSERT INTO events (
+          timestamp, event_type_id, file_id, file_path, 
+          file_name, directory
+        ) VALUES (?, ?, ?, ?, ?, ?)`,
+        [
+          Date.now(),
+          eventTypeId,
+          fileId,
+          measurements.file_path || '',
+          measurements.file_name || '',
+          measurements.directory || ''
+        ]
+      );
+      
+      // Insert into measurements table (if measurements provided)
+      if (measurements && (measurements.file_size !== undefined || 
+                          measurements.line_count !== undefined || 
+                          measurements.block_count !== undefined)) {
+        await this.run(`
+          INSERT INTO measurements (
+            event_id, file_size, line_count, block_count, inode
+          ) VALUES (?, ?, ?, ?, ?)`,
+          [
+            eventResult.lastID,
+            measurements.file_size,
+            measurements.line_count,
+            measurements.block_count,
+            measurements.inode
+          ]
+        );
+      }
+      
+      await this.run('COMMIT');
+      
+      return eventResult.lastID;
+      
+    } catch (error) {
+      await this.run('ROLLBACK');
+      throw error;
+    } finally {
+      this.transactionActive = false;
+    }
   }
 }
 

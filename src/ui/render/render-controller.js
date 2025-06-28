@@ -14,6 +14,14 @@ class RenderController {
   constructor(config = {}) {
     this.isRunning = false;
     this.maxLines = config.maxEvents || 20;
+    this.isDetailModeActive = false; // FUNC-401: Track detail mode to prevent interference
+    
+    // FUNC-400: Selection state
+    this.selectionState = {
+      isSelecting: false,
+      selectedIndex: -1,
+      selectionRenderer: null
+    };
     
     // Initialize BufferedRenderer
     this.renderer = new BufferedRenderer({
@@ -85,6 +93,11 @@ class RenderController {
       return;
     }
     
+    // FUNC-401: Do not render if detail mode is active (but allow selecting mode)
+    if (this.isDetailModeActive) {
+      return;
+    }
+    
     // Build buffer for BufferedRenderer
     this.renderer.clear();
     
@@ -97,8 +110,13 @@ class RenderController {
     // Add footer
     this.buildFooter();
     
-    // Double buffer rendering (delayed rendering)
-    this.renderer.renderDebounced();
+    // Double buffer rendering
+    // FUNC-401: Use immediate render during detail mode to prevent overwrites
+    if (this.isDetailModeActive) {
+      this.renderer.render(); // Direct render, no delay
+    } else {
+      this.renderer.renderDebounced(); // Normal delayed rendering
+    }
   }
 
   /**
@@ -125,6 +143,16 @@ class RenderController {
   }
 
   /**
+   * Set selection state (FUNC-400 integration)
+   */
+  setSelectionState(state) {
+    this.selectionState = {
+      ...this.selectionState,
+      ...state
+    };
+  }
+
+  /**
    * Build events list section
    */
   buildEvents() {
@@ -137,7 +165,15 @@ class RenderController {
     
     for (let i = 0; i < Math.min(eventsToShow.length, this.maxLines); i++) {
       const event = eventsToShow[i];
-      const eventLine = this.eventFormatter.formatEventLine(event);
+      let eventLine = this.eventFormatter.formatEventLine(event);
+      
+      // FUNC-400: Apply selection styling if this line is selected
+      if (this.selectionState.isSelecting && 
+          this.selectionState.selectedIndex === i && 
+          this.selectionState.selectionRenderer) {
+        eventLine = this.selectionState.selectionRenderer.renderLine(eventLine, true);
+      }
+      
       this.renderer.addLine(eventLine);
     }
     
@@ -241,6 +277,25 @@ class RenderController {
    */
   setMaxLines(maxLines) {
     this.maxLines = maxLines;
+  }
+
+  /**
+   * FUNC-401: Set detail mode state to prevent main view interference
+   */
+  setDetailModeActive(isActive) {
+    this.isDetailModeActive = isActive;
+    
+    // Cancel any pending renders when entering detail mode
+    if (isActive && this.renderer) {
+      this.renderer.cancelPendingRender();
+    }
+  }
+
+  /**
+   * FUNC-401: Check if detail mode is active
+   */
+  isDetailMode() {
+    return this.isDetailModeActive;
   }
 
   /**

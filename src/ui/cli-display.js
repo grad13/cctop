@@ -13,6 +13,9 @@ const LayoutManager = require('./layout/layout-manager');
 const RenderController = require('./render/render-controller');
 const InputHandler = require('./input/input-handler');
 
+// Interactive features (FUNC-400/401/402/403)
+const InteractiveFeatures = require('./interactive/InteractiveFeatures');
+
 // Legacy components (will be integrated)
 const EventFilterManager = require('../filter/event-filter-manager');
 const StatusDisplay = require('../display/status-display');
@@ -58,6 +61,9 @@ class CLIDisplay extends EventEmitter {
     // Legacy components (maintained for compatibility)
     this.filterManager = new EventFilterManager();
     this.statusDisplay = new StatusDisplay(displayConfig);
+    
+    // Interactive features (FUNC-400/401/402/403)
+    this.interactiveFeatures = new InteractiveFeatures(this.db, this.renderController, this);
   }
 
   /**
@@ -110,22 +116,49 @@ class CLIDisplay extends EventEmitter {
     
     // Start all subsystems
     this.renderController.start();
-    this.inputHandler.setupKeyboardHandlers();
+    // NOTE: inputHandler disabled to avoid conflict with InteractiveFeatures
+    // this.inputHandler.setupKeyboardHandlers();
     this.layoutManager.setupResizeHandler();
+    
+    // Start interactive features (FUNC-400/401/402/403)
+    if (process.env.CCTOP_VERBOSE) {
+      console.log('[CLIDisplay] Starting interactive features...');
+    }
+    // Set display renderer before initialization
+    this.interactiveFeatures.setDisplayRenderer(this.renderController);
+    await this.interactiveFeatures.initialize();
+    if (process.env.CCTOP_VERBOSE) {
+      console.log('[CLIDisplay] Interactive features started successfully');
+    }
     
     // Load initial data
     await this.eventDisplayManager.loadInitialEvents();
+    
+    // Update interactive features file list after initial events loaded
+    if (this.interactiveFeatures) {
+      console.log('[CLIDisplay] Updating interactive features file list after initial load');
+      this.interactiveFeatures.updateFileListFromEvents();
+    }
     
     // Start status display statistics
     this.statusDisplay.startStatisticsTimer(this.db);
     
     // Start refresh timer
     this.refreshInterval = setInterval(() => {
+      // FUNC-401: Don't auto-refresh if detail mode is active
+      if (this.renderController.isDetailMode && this.renderController.isDetailMode()) {
+        return;
+      }
       this.updateDisplay();
     }, 100); // 100ms refresh
     
+    // Store reference in renderController for detail mode control
+    this.renderController.cliDisplay = this;
+    
     // Initial render
-    this.renderController.render();
+    if (!this.renderController.isDetailMode || !this.renderController.isDetailMode()) {
+      this.renderController.render();
+    }
     
     if (process.env.CCTOP_VERBOSE === 'true') {
       console.log('CLIDisplay started');
@@ -171,6 +204,16 @@ class CLIDisplay extends EventEmitter {
    */
   updateDisplay() {
     if (this.isRunning) {
+      // FUNC-401: Check if detail mode is active before rendering
+      if (this.renderController.isDetailMode && this.renderController.isDetailMode()) {
+        return; // Do not render if detail mode is active
+      }
+      
+      // Update interactive features file list when display updates
+      if (this.interactiveFeatures) {
+        this.interactiveFeatures.updateFileListFromEvents();
+      }
+      
       this.renderController.render();
     }
   }
