@@ -600,3 +600,60 @@ export interface EventFilterManager {
   on(event: string, callback: () => void): void;
   getFilterStates(): FilterStates;
 }
+
+// DetailInspector interfaces
+export interface DetailInspectorCallbacks {
+  onExit?: () => void;
+  onUpdate?: (data: DetailInspectorUpdateData) => void;
+}
+
+export interface DetailInspectorUpdateData {
+  fileId: number;
+  fileName: string | null;
+  aggregateData: any;
+  historyInfo: any;
+  focusedItem: any;
+}
+
+export interface InspectionState {
+  isActive: boolean;
+  fileId: number | null;
+  fileName: string | null;
+  historyPagination: any;
+  focusedItem: any;
+}
+
+export interface DisplayStats {
+  fileId: number;
+  fileName: string | null;
+  totalHistoryItems: number;
+  currentHistoryPage: number;
+  totalHistoryPages: number;
+  currentFocusIndex: number;
+  terminalSize: {
+    width: number;
+    height: number;
+  };
+}
+
+// Display interfaces (for DetailInspector dependencies)
+export interface AggregateDisplay {
+  renderForFile(fileId: number, width: number): Promise<string>;
+  getSummaryData(fileId: number): Promise<any>;
+}
+
+export interface HistoryDisplay {
+  loadHistoryData(fileId: number): Promise<void>;
+  renderHistoryDisplay(width: number): string;
+  getPaginationInfo(): any;
+  getFocusedItemDetails(): any;
+  moveFocus(direction: 'up' | 'down'): boolean;
+  hasPrevPage(): boolean;
+  hasNextPage(): boolean;
+  navigatePage(direction: 'prev' | 'next', fileId: number): Promise<void>;
+  reset(): void;
+  currentPage: number;
+  itemsPerPage: number;
+  totalItems: number;
+  focusIndex: number;
+}
