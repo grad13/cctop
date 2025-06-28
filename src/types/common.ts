@@ -86,6 +86,81 @@ export interface RendererStats {
   enableDebounce: boolean;
 }
 
+// Database Migration interfaces
+export interface DatabaseConnection {
+  all(sql: string, params?: any[]): Promise<any[]>;
+  get(sql: string, params?: any[]): Promise<any>;
+  run(sql: string, params?: any[]): Promise<any>;
+}
+
+export interface TimeStats {
+  first_timestamp?: number;
+  last_timestamp?: number;
+}
+
+export interface MeasurementStats {
+  first_size?: number;
+  max_size?: number;
+  first_lines?: number;
+  max_lines?: number;
+  first_blocks?: number;
+  max_blocks?: number;
+}
+
+export interface LastMeasurement {
+  file_size?: number;
+  line_count?: number;
+  block_count?: number;
+}
+
+export interface TableColumnInfo {
+  name: string;
+  type: string;
+  notnull: number;
+  dflt_value: any;
+  pk: number;
+}
+
+// Selection Manager interfaces
+export interface SelectionState {
+  mode: 'waiting' | 'selecting';
+  currentIndex: number;
+  selectedFile: string | null;
+  fileList: string[];
+}
+
+export interface SelectionManagerState {
+  mode: 'waiting' | 'selecting';
+  currentIndex: number;
+  selectedFile: string | null;
+  fileCount: number;
+}
+
+export interface SelectionRenderState {
+  isSelecting: boolean;
+  selectedIndex: number;
+  selectionRenderer: any;
+}
+
+export interface KeyHandler {
+  id: string;
+  callback: () => void | Promise<void> | any;
+}
+
+// Key Input Manager interface
+export interface KeyInputManager {
+  registerHandler(mode: string, key: string, handler: KeyHandler): void;
+  unregisterHandler(mode: string, key: string): void;
+  setState(state: string): void;
+}
+
+// Render Controller interface
+export interface RenderController {
+  setSelectionState?(state: SelectionRenderState): void;
+  render?(): void;
+  isDetailMode?(): boolean;
+}
+
 // CLI Interface options
 export interface CLIInterfaceOptions {
   input?: NodeJS.ReadableStream;
