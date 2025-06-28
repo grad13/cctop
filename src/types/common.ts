@@ -199,6 +199,44 @@ export interface AggregatesDatabaseManager {
   get(sql: string, params: any[]): Promise<FileInfo | null>;
 }
 
+// History Display interfaces
+export interface HistoryEntry {
+  timestamp: number;
+  event_type: string;
+  event_code: string;
+  line_count: number | null;
+  block_count: number | null;
+  event_id: number;
+}
+
+export interface PaginationInfo {
+  currentPage: number;
+  totalPages: number;
+  currentItem: number;
+  totalItems: number;
+  itemsOnPage: number;
+}
+
+export interface FocusedItemDetails {
+  eventId: number;
+  timestamp: number;
+  eventType: string;
+  eventCode: string;
+  lineCount: number | null;
+  blockCount: number | null;
+  formattedTimestamp: string;
+}
+
+export interface EventCountResult {
+  total_events: number;
+}
+
+// History Database Manager interface
+export interface HistoryDatabaseManager {
+  get(sql: string, params: any[]): Promise<EventCountResult | null>;
+  all(sql: string, params: any[]): Promise<HistoryEntry[]>;
+}
+
 // CLI Interface options
 export interface CLIInterfaceOptions {
   input?: NodeJS.ReadableStream;
@@ -320,4 +358,41 @@ export interface ThemeInfoResult {
   description: string;
   version: string;
   lastUpdated: string;
+}
+
+// FileMonitor interfaces
+export interface FileMonitorConfig {
+  watchPaths: string[];
+  excludePatterns?: string[];
+  depth?: number;
+}
+
+export interface ChokidarOptions {
+  persistent: boolean;
+  ignoreInitial: boolean;
+  ignored: string[];
+  alwaysStat: boolean;
+  depth: number;
+  usePolling: boolean;
+  interval: number;
+  binaryInterval: number;
+  atomic?: number;
+  awaitWriteFinish?: {
+    stabilityThreshold: number;
+    pollInterval: number;
+  };
+}
+
+export interface FileMonitorEvent {
+  type: EventType;
+  path: string;
+  stats: any;
+  timestamp: number;
+}
+
+export interface FileMonitorStats {
+  isRunning: boolean;
+  isReady: boolean;
+  watchedPaths: string[];
+  ignored: string[];
 }
