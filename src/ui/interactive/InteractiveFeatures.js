@@ -14,7 +14,6 @@ class InteractiveFeatures {
     this.databaseManager = databaseManager;
     this.displayRenderer = displayRenderer;
     this.cliDisplay = cliDisplay;
-    this.debug = process.env.CCTOP_VERBOSE === 'true';
     
     // Initialize components
     this.keyInputManager = new KeyInputManager();
@@ -30,26 +29,14 @@ class InteractiveFeatures {
       this.displayRenderer
     );
     
-    if (this.debug) {
-      console.log('[InteractiveFeatures] SelectionManager created');
-    }
-    
     // Setup component integration
     this.setupIntegration();
-    
-    if (this.debug) {
-      console.log('[InteractiveFeatures] Initialized all components');
-    }
   }
 
   /**
    * Initialize interactive features
    */
   async initialize() {
-    if (this.debug) {
-      console.log('[InteractiveFeatures] Starting initialization');
-    }
-    
     // Set up callbacks for legacy functionality
     this.setupLegacyCallbacks();
     
@@ -58,10 +45,6 @@ class InteractiveFeatures {
     
     // Initial file list setup
     this.updateFileListFromEvents();
-    
-    if (this.debug) {
-      console.log('[InteractiveFeatures] Interactive features initialized successfully');
-    }
   }
 
   /**
@@ -69,18 +52,12 @@ class InteractiveFeatures {
    */
   setupLegacyCallbacks() {
     if (!this.cliDisplay) {
-      if (this.debug) {
-        console.warn('[InteractiveFeatures] No CLIDisplay provided for legacy callbacks');
-      }
       return;
     }
 
     // Hook into KeyInputManager for existing functionality
     const originalHandleDisplayAll = this.keyInputManager.handleDisplayAll;
     this.keyInputManager.handleDisplayAll = () => {
-      if (this.debug) {
-        console.log('[InteractiveFeatures] Display All mode requested');
-      }
       if (this.cliDisplay.eventDisplayManager) {
         this.cliDisplay.eventDisplayManager.setDisplayMode('all');
       }
@@ -88,9 +65,6 @@ class InteractiveFeatures {
 
     const originalHandleDisplayUnique = this.keyInputManager.handleDisplayUnique;
     this.keyInputManager.handleDisplayUnique = () => {
-      if (this.debug) {
-        console.log('[InteractiveFeatures] Display Unique mode requested');
-      }
       if (this.cliDisplay.eventDisplayManager) {
         this.cliDisplay.eventDisplayManager.setDisplayMode('unique');
       }
@@ -98,9 +72,6 @@ class InteractiveFeatures {
 
     const originalHandleEventFilter = this.keyInputManager.handleEventFilter;
     this.keyInputManager.handleEventFilter = (eventType) => {
-      if (this.debug) {
-        console.log(`[InteractiveFeatures] Event filter: ${eventType}`);
-      }
       if (this.cliDisplay.filterManager) {
         this.cliDisplay.filterManager.toggleEventFilter(eventType);
       }
@@ -120,17 +91,12 @@ class InteractiveFeatures {
    * Update file list for selection manager from current events
    */
   updateFileListFromEvents() {
-    console.log('[InteractiveFeatures] 🔄 updateFileListFromEvents called');
-    
     if (!this.cliDisplay || !this.cliDisplay.eventDisplayManager) {
-      console.log('[InteractiveFeatures] ❌ No cliDisplay or eventDisplayManager');
       return;
     }
 
     try {
       const events = this.cliDisplay.eventDisplayManager.getDisplayedEvents();
-      console.log(`[InteractiveFeatures] 📊 Got ${events.length} events from eventDisplayManager`);
-      
       const fileList = events.map(event => ({
         name: event.file_name,
         path: event.directory,
@@ -138,17 +104,9 @@ class InteractiveFeatures {
         timestamp: event.timestamp
       }));
 
-      console.log(`[InteractiveFeatures] 📋 Updating SelectionManager with ${fileList.length} files`);
-      this.selectionManager.updateFileList(fileList);
-      
-      if (this.debug) {
-        console.log(`[InteractiveFeatures] Updated file list: ${fileList.length} files`);
-      }
+this.selectionManager.updateFileList(fileList);
     } catch (error) {
       console.error('[InteractiveFeatures] ❌ Error updating file list:', error);
-      if (this.debug) {
-        console.error('[InteractiveFeatures] Error updating file list:', error);
-      }
     }
   }
 
@@ -167,25 +125,10 @@ class InteractiveFeatures {
     // Hook selection confirmation to detail mode activation
     const originalConfirmSelection = this.selectionManager.confirmSelection.bind(this.selectionManager);
     this.selectionManager.confirmSelection = async () => {
-      if (this.debug) {
-        console.log('[InteractiveFeatures] 🔄 setupIntegration hook called');
-      }
-      
       const selectedFile = await originalConfirmSelection();
       
-      if (this.debug) {
-        console.log(`[InteractiveFeatures] Selection result: ${JSON.stringify(selectedFile)}`);
-      }
-      
       if (selectedFile) {
-        if (this.debug) {
-          console.log(`[InteractiveFeatures] 🚀 CALLING detailController.activateDetailMode with: ${JSON.stringify(selectedFile)}`);
-        }
         await this.detailController.activateDetailMode(selectedFile);
-      } else {
-        if (this.debug) {
-          console.log('[InteractiveFeatures] ❌ No selectedFile returned from confirmSelection()');
-        }
       }
       return selectedFile;
     };
@@ -200,10 +143,6 @@ class InteractiveFeatures {
    * Handle state changes across the system
    */
   handleStateChange(newMode) {
-    if (this.debug) {
-      console.log(`[InteractiveFeatures] State changed to: ${newMode}`);
-    }
-
     // Update display based on new mode
     if (this.displayRenderer && this.displayRenderer.updateMode) {
       this.displayRenderer.updateMode(newMode);
@@ -317,69 +256,11 @@ class InteractiveFeatures {
     }
   }
 
-  /**
-   * Performance test method
-   */
-  async performanceTest() {
-    if (!this.debug) {
-      return;
-    }
-
-    console.log('[InteractiveFeatures] Running performance test...');
-    
-    const startTime = Date.now();
-    
-    // Test key processing speed
-    for (let i = 0; i < 1000; i++) {
-      this.keyInputManager.handleKeyInput('a');
-    }
-    
-    const keyProcessingTime = Date.now() - startTime;
-    
-    // Test display rendering speed
-    const renderStartTime = Date.now();
-    
-    if (this.aggregateDisplay && this.historyDisplay) {
-      try {
-        await this.aggregateDisplay.initialize('/test/file.txt');
-        await this.historyDisplay.initialize('/test/file.txt');
-        
-        for (let i = 0; i < 100; i++) {
-          this.aggregateDisplay.render();
-          this.historyDisplay.render();
-        }
-      } catch (error) {
-        // Expected for test file
-      }
-    }
-    
-    const renderTime = Date.now() - renderStartTime;
-    
-    console.log(`[InteractiveFeatures] Performance test results:`);
-    console.log(`  Key processing: ${keyProcessingTime}ms for 1000 keys`);
-    console.log(`  Display rendering: ${renderTime}ms for 100 renders`);
-    
-    // Verify performance requirements
-    const keyProcessingPerMs = 1000 / keyProcessingTime;
-    const renderPerMs = 100 / renderTime;
-    
-    if (keyProcessingPerMs < 10) { // Should process at least 10 keys per ms
-      console.warn(`[InteractiveFeatures] Key processing slower than expected: ${keyProcessingPerMs.toFixed(2)} keys/ms`);
-    }
-    
-    if (renderPerMs < 1) { // Should render at least 1 frame per ms
-      console.warn(`[InteractiveFeatures] Rendering slower than expected: ${renderPerMs.toFixed(2)} renders/ms`);
-    }
-  }
 
   /**
    * Cleanup and destroy all components
    */
   destroy() {
-    if (this.debug) {
-      console.log('[InteractiveFeatures] Destroying all components...');
-    }
-
     // Destroy in reverse order of creation
     if (this.selectionManager) {
       this.selectionManager.destroy();
@@ -408,10 +289,6 @@ class InteractiveFeatures {
     
     this.databaseManager = null;
     this.displayRenderer = null;
-    
-    if (this.debug) {
-      console.log('[InteractiveFeatures] All components destroyed');
-    }
   }
 }
 

@@ -39,8 +39,6 @@ class EventProcessor extends EventEmitter {
     
     // Event filtering settings (FUNC-023 compliant)
     this.eventFilters = this.initializeEventFilters();
-    
-    console.log('⚡ EventProcessor initialized');
   }
 
   /**
@@ -145,7 +143,6 @@ class EventProcessor extends EventEmitter {
       // Event type mapping
       const eventType = this.mapEventType(event.type);
       if (!eventType) {
-        console.log(`⏭️ Skipping event: ${event.type} for ${path.basename(event.path)}`);
         return null;
       }
       
@@ -262,10 +259,7 @@ class EventProcessor extends EventEmitter {
           `, [metadata.inode]);
           
           if (existingByInode) {
-            console.log(`[EventProcessor] Skipping duplicate find for inode ${metadata.inode}: ${path.basename(metadata.file_path)}`);
             return null;
-          } else {
-            console.log(`[EventProcessor] Processing find for new inode ${metadata.inode}: ${path.basename(metadata.file_path)}`);
           }
         }
       }
@@ -430,8 +424,6 @@ class EventProcessor extends EventEmitter {
    */
   async scanForMissingFiles(): Promise<number> {
     try {
-      console.log('🔍 Starting missing file scan...');
-      
       // Get all active files from database
       const activeFiles = await this.db.get(`
         SELECT f.id, f.file_path, f.inode
@@ -440,7 +432,6 @@ class EventProcessor extends EventEmitter {
       `);
       
       if (!activeFiles || activeFiles.length === 0) {
-        console.log('No active files to check');
         return 0;
       }
       
@@ -453,8 +444,6 @@ class EventProcessor extends EventEmitter {
           
           // Additional check: compare inode to detect moves
           if (file.inode && stats.ino !== file.inode) {
-            console.log(`📦 File moved or replaced: ${path.basename(file.file_path)} (inode changed)`);
-            
             // Record as delete event for old file
             await this.db.recordEvent({
               file_path: file.file_path,
@@ -472,8 +461,6 @@ class EventProcessor extends EventEmitter {
           }
         } catch (error: any) {
           if (error.code === 'ENOENT') {
-            console.log(`🗑️ Missing file detected: ${path.basename(file.file_path)}`);
-            
             // Record as delete event
             await this.db.recordEvent({
               file_path: file.file_path,
@@ -492,12 +479,6 @@ class EventProcessor extends EventEmitter {
             console.warn(`Warning: Cannot access file ${file.file_path}: ${error.message}`);
           }
         }
-      }
-      
-      if (missingCount > 0) {
-        console.log(`✅ Missing file scan complete: ${missingCount} files marked as deleted`);
-      } else {
-        console.log('✅ Missing file scan complete: No missing files detected');
       }
       
       return missingCount;
@@ -563,7 +544,6 @@ class EventProcessor extends EventEmitter {
     this.eventQueue = []; // Clear queue
     this.processing = false;
     this.removeAllListeners();
-    console.log('EventProcessor cleaned up');
   }
 }
 

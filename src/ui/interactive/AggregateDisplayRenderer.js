@@ -10,11 +10,6 @@ class AggregateDisplayRenderer {
     this.databaseManager = databaseManager;
     this.fileData = null;
     this.selectedFile = null;
-    this.debug = process.env.CCTOP_VERBOSE === 'true';
-    
-    if (this.debug) {
-      console.log('[AggregateDisplayRenderer] Initialized');
-    }
   }
 
   /**
@@ -66,13 +61,8 @@ class AggregateDisplayRenderer {
         // Add inode to existing data
         this.fileData.inode = fileInfo ? fileInfo.inode : null;
       }
-      
-      if (this.debug) {
-        console.log(`[AggregateDisplayRenderer] Initialized for file: ${selectedFile}`);
-      }
-      
     } catch (error) {
-      console.error('[AggregateDisplayRenderer] Initialization error:', error);
+      // Error handled silently
       this.fileData = null;
     }
   }
@@ -81,23 +71,11 @@ class AggregateDisplayRenderer {
    * Render aggregate statistics display
    */
   render() {
-    if (this.debug) {
-      console.log(`[AggregateDisplayRenderer] 🔥 render() called - fileData: ${!!this.fileData}, selectedFile: ${this.selectedFile}`);
-    }
-    
     if (!this.fileData || !this.selectedFile) {
-      if (this.debug) {
-        console.log('[AggregateDisplayRenderer] 📭 No data available, rendering no-data view');
-      }
       return this.renderNoData();
     }
 
     try {
-      if (this.debug) {
-        console.log(`[AggregateDisplayRenderer] 🔥 RENDERING - fileData exists: ${!!this.fileData}`);
-        console.log(`[AggregateDisplayRenderer] fileData content: ${JSON.stringify(this.fileData, null, 2)}`);
-      }
-      
       const lines = [
         chalk.green('┌─ File Details ──────────────────────────────────────────────────────────┐'),
         chalk.green(`│ FileID: ${String(this.fileData.file_id).padEnd(4)}  inode: ${String(this.fileData.inode || 'N/A').padEnd(51)} │`),
@@ -146,16 +124,10 @@ class AggregateDisplayRenderer {
       );
 
       const result = lines.join('\n');
-      
-      if (this.debug) {
-        console.log('[AggregateDisplayRenderer] ✅ Generated aggregate display content');
-        console.log(`[AggregateDisplayRenderer] Content preview: ${result.substring(0, 200)}`);
-      }
-      
       return result;
       
     } catch (error) {
-      console.error('[AggregateDisplayRenderer] Render error:', error);
+      // Error handled silently
       return this.renderError();
     }
   }
@@ -259,10 +231,6 @@ class AggregateDisplayRenderer {
   cleanup() {
     this.fileData = null;
     this.selectedFile = null;
-    
-    if (this.debug) {
-      console.log('[AggregateDisplayRenderer] Cleaned up');
-    }
   }
 }
 

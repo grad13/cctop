@@ -35,12 +35,12 @@ class CLIDisplay extends EventEmitter {
   private startTime: number = Date.now();
 
   // Manager instances
-  private eventDisplayManager: any; // EventDisplayManager
+  public eventDisplayManager: any; // EventDisplayManager
   private layoutManager: any; // LayoutManager
   private eventFormatter: any; // EventFormatter
   private renderController: any; // RenderController
   private inputHandler: any; // InputHandler
-  private filterManager: any; // EventFilterManager
+  public filterManager: any; // EventFilterManager
   private statusDisplay: any; // StatusDisplay
   private interactiveFeatures: any; // InteractiveFeatures
 
@@ -80,7 +80,7 @@ class CLIDisplay extends EventEmitter {
     
     // Legacy components (maintained for compatibility)
     this.filterManager = new EventFilterManager();
-    this.statusDisplay = new StatusDisplay(displayConfig);
+    this.statusDisplay = new StatusDisplay({ display: { statusArea: displayConfig.statusArea } });
     
     // Interactive features (FUNC-400/401/402/403)
     this.interactiveFeatures = new InteractiveFeatures(this.db, this.renderController, this);

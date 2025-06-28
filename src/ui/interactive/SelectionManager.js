@@ -19,14 +19,8 @@ class SelectionManager {
     // Initialize SelectionRenderer (FUNC-400 requirement)
     this.selectionRenderer = new SelectionRenderer();
     
-    this.debug = process.env.CCTOP_VERBOSE === 'true';
-    
     // Register with key input manager
     this.registerKeyHandlers();
-    
-    if (this.debug) {
-      console.log('[SelectionManager] Initialized');
-    }
   }
 
   /**
@@ -57,9 +51,6 @@ class SelectionManager {
     this.keyInputManager.registerHandler('selecting', 'Enter', {
       id: 'selection-confirm',
       callback: () => {
-        if (this.debug) {
-          console.log('[SelectionManager] 🔥🔥🔥 ENTER KEY PRESSED IN SELECTION MODE 🔥🔥🔥');
-        }
         return this.confirmSelection();
       }
     });
@@ -87,23 +78,13 @@ class SelectionManager {
     } else {
       this.state.selectedFile = null;
     }
-    
-    if (this.debug) {
-      console.log(`[SelectionManager] File list updated: ${this.state.fileList.length} files`);
-    }
   }
 
   /**
    * State transition: waiting → selecting
    */
   async enterSelectionMode() {
-    console.log('[SelectionManager] 🚀 ENTER SELECTION MODE CALLED!');
-    console.log(`[SelectionManager] File list length: ${this.state.fileList.length}`);
-    
     if (this.state.fileList.length === 0) {
-      if (this.debug) {
-        console.log('[SelectionManager] No files available for selection');
-      }
       return;
     }
 
@@ -116,10 +97,6 @@ class SelectionManager {
     
     // Update display
     this.updateDisplay();
-    
-    if (this.debug) {
-      console.log(`[SelectionManager] ✅ ENTERED SELECTION MODE - index: ${this.state.currentIndex}, files: ${this.state.fileList.length}`);
-    }
   }
 
   /**
@@ -141,10 +118,6 @@ class SelectionManager {
     
     this.state.selectedFile = this.state.fileList[this.state.currentIndex];
     this.updateDisplay();
-    
-    if (this.debug) {
-      console.log(`[SelectionManager] Navigate ${direction}: index ${this.state.currentIndex}, file: ${this.state.selectedFile}`);
-    }
   }
 
   /**
@@ -176,10 +149,6 @@ class SelectionManager {
     
     // Update display
     this.updateDisplay();
-    
-    if (this.debug) {
-      console.log('[SelectionManager] Exited selection mode');
-    }
   }
 
   /**
@@ -201,9 +170,6 @@ class SelectionManager {
    */
   updateDisplay() {
     if (!this.renderController) {
-      if (this.debug) {
-        console.warn('[SelectionManager] No render controller available');
-      }
       return;
     }
 
@@ -226,13 +192,7 @@ class SelectionManager {
         }
       }
 
-      if (this.debug) {
-        console.log(`[SelectionManager] Display updated - mode: ${this.state.mode}, index: ${this.state.currentIndex}`);
-      }
     } catch (error) {
-      if (this.debug) {
-        console.error('[SelectionManager] Display update failed:', error);
-      }
     }
   }
 
@@ -273,10 +233,6 @@ class SelectionManager {
     this.keyInputManager.unregisterHandler('selecting', 'ArrowDown');
     this.keyInputManager.unregisterHandler('selecting', 'Enter');
     this.keyInputManager.unregisterHandler('selecting', 'Escape');
-    
-    if (this.debug) {
-      console.log('[SelectionManager] Destroyed');
-    }
   }
 }
 

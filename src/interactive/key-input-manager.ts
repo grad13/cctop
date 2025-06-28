@@ -26,7 +26,6 @@ class KeyInputManager implements IKeyInputManager {
   public currentMode: InputMode = 'waiting';
   private modeHistory: InputMode[] = [];
   private stateMaps: Map<string, Map<string, KeyHandler>> = new Map();
-  private debug: boolean = process.env.CCTOP_VERBOSE === 'true';
   private isInputSetup: boolean = false;
   
   // Component references for handlers
@@ -39,10 +38,6 @@ class KeyInputManager implements IKeyInputManager {
     this.initializeStateMaps();
     
     // Raw input will be setup in start() method
-    
-    if (this.debug) {
-      console.log('[KeyInputManager] Initialized with state machine');
-    }
   }
 
   /**
@@ -101,16 +96,8 @@ class KeyInputManager implements IKeyInputManager {
    * Start the key input manager
    */
   async start(): Promise<void> {
-    if (this.debug) {
-      console.log('[KeyInputManager] Starting - setting up raw input');
-    }
-    
     // Setup raw input processing
     this.setupRawInput();
-    
-    if (this.debug) {
-      console.log('[KeyInputManager] Started successfully');
-    }
     return Promise.resolve();
   }
 
@@ -119,9 +106,6 @@ class KeyInputManager implements IKeyInputManager {
    */
   private setupRawInput(): void {
     if (this.isInputSetup) {
-      if (this.debug) {
-        console.log('[KeyInputManager] Raw input already setup, skipping');
-      }
       return;
     }
 
@@ -135,14 +119,6 @@ class KeyInputManager implements IKeyInputManager {
       });
       
       this.isInputSetup = true;
-      
-      if (this.debug) {
-        console.log('[KeyInputManager] Raw input setup completed');
-      }
-    } else {
-      if (this.debug) {
-        console.warn('[KeyInputManager] Not a TTY, raw input not available');
-      }
     }
   }
 
@@ -152,40 +128,21 @@ class KeyInputManager implements IKeyInputManager {
   private handleKeyInput(rawKey: any): void {
     // Parse special keys
     const key = this.parseKey(rawKey);
-    
-    // EMERGENCY DEBUG - Always log key presses
-    console.log(`[KeyInputManager] 🔑 KEY PRESSED: key=${key}, mode=${this.currentMode}, raw=${JSON.stringify(rawKey)}`);
-    
-    if (this.debug) {
-      console.log(`[KeyInputManager] Key: ${key}, Mode: ${this.currentMode}, Raw: ${JSON.stringify(rawKey)}`);
-    }
 
     // Get current state keymap
     const currentMap = this.stateMaps.get(this.currentMode);
     if (!currentMap) {
-      console.log(`[KeyInputManager] ❌ No state map for mode: ${this.currentMode}`);
-      if (this.debug) {
-        console.warn(`[KeyInputManager] Unknown state: ${this.currentMode}`);
-      }
       return;
     }
 
     // Find handler for this key
     const handler = currentMap.get(key);
     if (handler) {
-      console.log(`[KeyInputManager] ✅ Handler found for ${key}: ${handler.id}`);
       try {
         handler.callback();
       } catch (error) {
-        console.log(`[KeyInputManager] ❌ Handler error:`, error);
-        if (this.debug) {
-          console.error(`[KeyInputManager] Handler error:`, error);
-        }
+        console.error(`[KeyInputManager] Handler error:`, error);
       }
-    } else {
-      console.log(`[KeyInputManager] ⚠️ No handler for key: ${key} in mode: ${this.currentMode}`);
-      // Debug: show all available keys in current mode
-      console.log(`[KeyInputManager] Available keys in ${this.currentMode}: ${Array.from(currentMap.keys()).join(', ')}`);
     }
     // Ignore unhandled keys (silent)
   }
@@ -217,10 +174,6 @@ class KeyInputManager implements IKeyInputManager {
    * State management methods
    */
   setState(newMode: string): void {
-    if (this.debug) {
-      console.log(`[KeyInputManager] State: ${this.currentMode} → ${newMode}`);
-    }
-    
     this.modeHistory.push(this.currentMode);
     this.currentMode = newMode as InputMode;
     
@@ -231,9 +184,6 @@ class KeyInputManager implements IKeyInputManager {
   popState(): void {
     if (this.modeHistory.length > 0) {
       const previousMode = this.modeHistory.pop();
-      if (previousMode && this.debug) {
-        console.log(`[KeyInputManager] State: ${this.currentMode} → ${previousMode} (pop)`);
-      }
       if (previousMode) {
         this.currentMode = previousMode;
         this.notifyStateChange(previousMode);
@@ -253,49 +203,31 @@ class KeyInputManager implements IKeyInputManager {
    */
   private handleDisplayAll(): void {
     // FUNC-202 integration point
-    if (this.debug) {
-      console.log('[KeyInputManager] Display All mode requested');
-    }
     // TODO: Call FUNC-202 display manager
   }
 
   private handleDisplayUnique(): void {
     // FUNC-202 integration point
-    if (this.debug) {
-      console.log('[KeyInputManager] Display Unique mode requested');
-    }
     // TODO: Call FUNC-202 display manager
   }
 
   private handleQuit(): void {
-    if (this.debug) {
-      console.log('[KeyInputManager] Quit requested');
-    }
     process.exit(0);
   }
 
   private handleEventFilter(eventType: string): void {
     // FUNC-203 integration point
-    if (this.debug) {
-      console.log(`[KeyInputManager] Event filter toggle: ${eventType}`);
-    }
     // TODO: Call FUNC-203 event filter manager
   }
 
   private handleStartSelection(): void {
     // FUNC-400 integration point
-    if (this.debug) {
-      console.log('[KeyInputManager] Start selection mode');
-    }
     this.setState('selecting');
     // TODO: Call FUNC-400 selection manager
   }
 
   private handleSelectionMove(direction: string): void {
     // FUNC-400 integration point
-    if (this.debug) {
-      console.log(`[KeyInputManager] Selection move: ${direction}`);
-    }
     
     // Call selection manager to handle movement
     if (this.selectionManager) {
@@ -309,9 +241,6 @@ class KeyInputManager implements IKeyInputManager {
 
   private async handleSelectionConfirm(): Promise<void> {
     // FUNC-400 → FUNC-401 transition
-    if (this.debug) {
-      console.log('[KeyInputManager] Selection confirmed, entering detail mode');
-    }
     
     // Call selection manager to handle confirmation
     if (this.selectionManager) {
@@ -326,18 +255,12 @@ class KeyInputManager implements IKeyInputManager {
 
   private handleSelectionCancel(): void {
     // FUNC-400 → waiting transition
-    if (this.debug) {
-      console.log('[KeyInputManager] Selection cancelled, returning to waiting');
-    }
     this.setState('waiting');
     // TODO: Call FUNC-400 selection manager
   }
 
   private handleDetailExit(): void {
     // FUNC-401 → waiting transition
-    if (this.debug) {
-      console.log('[KeyInputManager] Detail mode exit, returning to waiting');
-    }
     this.setState('waiting');
     // TODO: Call FUNC-401 detail manager
   }
@@ -346,18 +269,9 @@ class KeyInputManager implements IKeyInputManager {
    * Dynamic handler registration for other components
    */
   registerHandler(state: string, key: string, handler: KeyHandler): void {
-    // EMERGENCY DEBUG - Always log handler registration
-    console.log(`[KeyInputManager] 🔥 REGISTERING HANDLER: state=${state}, key=${key}, handler=${handler.id}`);
-    
     const stateMap = this.stateMaps.get(state);
     if (stateMap) {
       stateMap.set(key, handler);
-      console.log(`[KeyInputManager] ✅ Handler registered successfully: ${state}.${key}`);
-      if (this.debug) {
-        console.log(`[KeyInputManager] Registered handler: ${state}.${key}`);
-      }
-    } else {
-      console.log(`[KeyInputManager] ❌ State map not found for state: ${state}`);
     }
   }
 
@@ -365,9 +279,6 @@ class KeyInputManager implements IKeyInputManager {
     const stateMap = this.stateMaps.get(state);
     if (stateMap) {
       stateMap.delete(key);
-      if (this.debug) {
-        console.log(`[KeyInputManager] Unregistered handler: ${state}.${key}`);
-      }
     }
   }
 
@@ -379,10 +290,6 @@ class KeyInputManager implements IKeyInputManager {
       process.stdin.setRawMode(false);
       process.stdin.pause();
       process.stdin.removeAllListeners('data');
-    }
-    
-    if (this.debug) {
-      console.log('[KeyInputManager] Destroyed');
     }
   }
 }

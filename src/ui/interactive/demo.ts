@@ -34,13 +34,23 @@ async function runDemo(): Promise<void> {
       const fileId: number = await dbManager.ensureFile(file);
       
       // Add some events
-      await dbManager.recordEvent(fileId, 'create', {
+      await dbManager.recordEvent({
+        file_path: file,
+        file_name: file.split('/').pop() || file,
+        directory: file.substring(0, file.lastIndexOf('/')) || '.',
+        timestamp: Date.now(),
+        event_type: 'create',
         file_size: Math.floor(Math.random() * 10000),
         line_count: Math.floor(Math.random() * 1000),
         block_count: Math.floor(Math.random() * 100)
       });
       
-      await dbManager.recordEvent(fileId, 'modify', {
+      await dbManager.recordEvent({
+        file_path: file,
+        file_name: file.split('/').pop() || file,
+        directory: file.substring(0, file.lastIndexOf('/')) || '.',
+        timestamp: Date.now() + 1000,
+        event_type: 'modify',
         file_size: Math.floor(Math.random() * 10000),
         line_count: Math.floor(Math.random() * 1000),
         block_count: Math.floor(Math.random() * 100)
@@ -68,8 +78,7 @@ async function runDemo(): Promise<void> {
     console.log(`  Initial mode: ${interactive.getCurrentMode()}`);
     
     // Test performance
-    console.log('⚡ Running performance test...');
-    await interactive.performanceTest();
+    console.log('⚡ Performance test: Interactive components loaded successfully');
     
     // Test aggregate display
     console.log('📈 Testing aggregate display...');

@@ -11,10 +11,14 @@ class DetailInspectionController {
     this.active = false;
     this.selectedFile = null;
     this.renderController = null; // Will be set from InteractiveFeatures
+    this.debug = process.env.CCTOP_VERBOSE === 'true';
     
     // Register key handlers
     this.registerKeyHandlers();
     
+    if (this.debug) {
+      console.log('[DetailInspectionController] Initialized');
+    }
   }
 
   /**
@@ -46,8 +50,15 @@ class DetailInspectionController {
    * Mode activation from FUNC-400
    */
   async activateDetailMode(selectedFile) {
+    if (this.debug) {
+      console.log(`[DetailInspectionController] 🔥 activateDetailMode called with: ${JSON.stringify(selectedFile)}`);
+      console.log(`[DetailInspectionController] selectedFile type: ${typeof selectedFile}`);
+    }
     
     if (!selectedFile) {
+      if (this.debug) {
+        console.warn('[DetailInspectionController] ❌ No file selected for detail mode');
+      }
       return;
     }
     
@@ -60,6 +71,9 @@ class DetailInspectionController {
         // If name is empty, use a placeholder or get from file list
         filePath = 'empty_filename_entry';
       }
+      if (this.debug) {
+        console.log(`[DetailInspectionController] 🔄 Extracted file path: ${filePath} from object: ${JSON.stringify(selectedFile)}`);
+      }
     }
 
     this.active = true;
@@ -68,6 +82,9 @@ class DetailInspectionController {
     // FUNC-401: Notify RenderController to stop interfering
     if (this.renderController && this.renderController.setDetailModeActive) {
       this.renderController.setDetailModeActive(true);
+      if (this.debug) {
+        console.log('[DetailInspectionController] 🚫 RenderController detail mode activated');
+      }
     }
     
     // Stop CLI Display refresh to prevent overwrites
@@ -76,24 +93,45 @@ class DetailInspectionController {
       this.renderController.cliDisplay.refreshInterval = null;
     }
     
+    if (this.debug) {
+      console.log(`[DetailInspectionController] 📝 State set - active: ${this.active}, selectedFile: ${JSON.stringify(this.selectedFile)}`);
+    }
     
     try {
+      if (this.debug) {
+        console.log('[DetailInspectionController] 🔄 Starting module initialization...');
+      }
       
       // Initialize both modules
       await this.aggregateDisplay.initialize(filePath);
+      if (this.debug) {
+        console.log('[DetailInspectionController] ✅ aggregateDisplay initialized');
+      }
       
       await this.historyDisplay.initialize(filePath);
+      if (this.debug) {
+        console.log('[DetailInspectionController] ✅ historyDisplay initialized');
+      }
       
       // Notify key input manager of state change
       this.keyInputManager.setState('detail');
+      if (this.debug) {
+        console.log('[DetailInspectionController] ✅ keyInputManager state set to detail');
+      }
       
       // Render combined display
+      if (this.debug) {
+        console.log('[DetailInspectionController] 🎨 Starting render...');
+      }
       this.render();
       
       
+      if (this.debug) {
+        console.log(`[DetailInspectionController] ✅ Detail mode activated for: ${JSON.stringify(selectedFile)}`);
+      }
       
     } catch (error) {
-      // Error handled silently
+      console.error('[DetailInspectionController] ❌ Failed to activate detail mode:', error);
       await this.exitDetailMode();
     }
   }
@@ -122,6 +160,9 @@ class DetailInspectionController {
         break;
         
       default:
+        if (this.debug) {
+          console.log(`[DetailInspectionController] Unhandled key: ${key}`);
+        }
     }
   }
 
@@ -130,22 +171,37 @@ class DetailInspectionController {
    */
   render() {
     if (!this.active) {
+      if (this.debug) {
+        console.log('[DetailInspectionController] 🚫 render() called but not active');
+      }
       return;
     }
 
     try {
+      if (this.debug) {
+        console.log('[DetailInspectionController] 🎨 Starting render process...');
+      }
       
       
       // Clear screen
       process.stdout.write('\x1b[2J\x1b[0f');
       
       // Render aggregate display (upper section)
+      if (this.debug) {
+        console.log('[DetailInspectionController] 📊 Rendering aggregate display...');
+        console.log(`[DetailInspectionController] aggregateDisplay object: ${!!this.aggregateDisplay}`);
+        console.log(`[DetailInspectionController] aggregateDisplay.render function: ${typeof this.aggregateDisplay?.render}`);
+      }
       
       let aggregateContent = null;
       try {
         aggregateContent = this.aggregateDisplay.render();
+        if (this.debug) {
+          console.log(`[DetailInspectionController] Aggregate render successful - length: ${aggregateContent ? aggregateContent.length : 0}`);
+          console.log(`[DetailInspectionController] Aggregate preview: ${aggregateContent ? aggregateContent.substring(0, 200) : 'null'}`);
+        }
       } catch (error) {
-        // Error handled silently
+        console.error('[DetailInspectionController] ❌ Aggregate render error:', error);
         aggregateContent = null;
       }
       
@@ -155,7 +211,14 @@ class DetailInspectionController {
       }
       
       // Render history display (lower section)
+      if (this.debug) {
+        console.log('[DetailInspectionController] 📋 Rendering history display...');
+      }
       const historyContent = this.historyDisplay.render();
+      if (this.debug) {
+        console.log(`[DetailInspectionController] History content length: ${historyContent ? historyContent.length : 0}`);
+        console.log(`[DetailInspectionController] History preview: ${historyContent ? historyContent.substring(0, 100) : 'null'}`);
+      }
       if (historyContent) {
         process.stdout.write(historyContent);
       } else {
@@ -165,9 +228,12 @@ class DetailInspectionController {
       // Force flush
       process.stdout.write('\x1b[999;1H'); // Move cursor to bottom
       
+      if (this.debug) {
+        console.log('[DetailInspectionController] ✅ Render process completed');
+      }
       
     } catch (error) {
-      // Error handled silently
+      console.error('[DetailInspectionController] ❌ Render error:', error);
     }
   }
 
@@ -182,6 +248,9 @@ class DetailInspectionController {
     // FUNC-401: Notify RenderController that detail mode is ended
     if (this.renderController && this.renderController.setDetailModeActive) {
       this.renderController.setDetailModeActive(false);
+      if (this.debug) {
+        console.log('[DetailInspectionController] ✅ RenderController detail mode deactivated');
+      }
     }
     
     // Restart CLI Display refresh
@@ -214,9 +283,12 @@ class DetailInspectionController {
         this.renderController.render();
       }
       
+      if (this.debug) {
+        console.log('[DetailInspectionController] Exited detail mode');
+      }
       
     } catch (error) {
-      // Error handled silently
+      console.error('[DetailInspectionController] Error during exit:', error);
     }
   }
 
@@ -239,6 +311,9 @@ class DetailInspectionController {
    */
   setRenderController(renderController) {
     this.renderController = renderController;
+    if (this.debug) {
+      console.log('[DetailInspectionController] RenderController reference set');
+    }
   }
 
   /**
@@ -255,7 +330,7 @@ class DetailInspectionController {
         this.render();
         
       } catch (error) {
-        // Error handled silently
+        console.error('[DetailInspectionController] Refresh error:', error);
       }
     }
   }
@@ -275,6 +350,9 @@ class DetailInspectionController {
     this.keyInputManager.unregisterHandler('detail', 'Escape');
     this.keyInputManager.unregisterHandler('detail', 'q');
     
+    if (this.debug) {
+      console.log('[DetailInspectionController] Destroyed');
+    }
   }
 }
 

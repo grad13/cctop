@@ -436,4 +436,4 @@ class StatusDisplay {
   }
 }
 
-module.exports = StatusDisplay;
+export = StatusDisplay;

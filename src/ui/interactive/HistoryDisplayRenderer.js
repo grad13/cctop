@@ -14,11 +14,6 @@ class HistoryDisplayRenderer {
     this.entriesPerPage = 20;
     this.selectedFile = null;
     this.totalEntries = 0;
-    this.debug = process.env.CCTOP_VERBOSE === 'true';
-    
-    if (this.debug) {
-      console.log('[HistoryDisplayRenderer] Initialized');
-    }
   }
 
   /**
@@ -35,10 +30,6 @@ class HistoryDisplayRenderer {
       
       // Load history data
       await this.loadHistory(fileId);
-      
-      if (this.debug) {
-        console.log(`[HistoryDisplayRenderer] Initialized for file: ${selectedFile}, ${this.historyData.length} events`);
-      }
       
     } catch (error) {
       console.error('[HistoryDisplayRenderer] Initialization error:', error);
@@ -126,23 +117,13 @@ class HistoryDisplayRenderer {
       this.focusIndex = this.historyData.length - 1; // Move to bottom of previous page
     }
 
-    if (this.debug && oldIndex !== this.focusIndex) {
-      console.log(`[HistoryDisplayRenderer] Navigate ${direction}: focus ${oldIndex} → ${this.focusIndex}`);
-    }
   }
 
   /**
    * Render history display
    */
   render() {
-    if (this.debug) {
-      console.log(`[HistoryDisplayRenderer] 🔥 render() called - historyData.length: ${this.historyData.length}, selectedFile: ${this.selectedFile}`);
-    }
-    
     if (this.historyData.length === 0) {
-      if (this.debug) {
-        console.log('[HistoryDisplayRenderer] 📭 No history data, rendering no-history view');
-      }
       return this.renderNoHistory();
     }
 
@@ -323,10 +304,6 @@ class HistoryDisplayRenderer {
     this.focusIndex = 0;
     this.currentPage = 0;
     this.totalEntries = 0;
-    
-    if (this.debug) {
-      console.log('[HistoryDisplayRenderer] Cleaned up');
-    }
   }
 }
 

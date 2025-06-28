@@ -26,7 +26,6 @@ class InteractiveFeatures {
   private databaseManager: DatabaseManager;
   private displayRenderer: DisplayRenderer | null;
   private cliDisplay: CLIDisplayForInteractive | null;
-  private debug: boolean;
   private keyInputManager: KeyInputManager;
   private aggregateDisplay: AggregateDisplayRenderer;
   private historyDisplay: HistoryDisplayRenderer;
@@ -37,7 +36,6 @@ class InteractiveFeatures {
     this.databaseManager = databaseManager;
     this.displayRenderer = displayRenderer;
     this.cliDisplay = cliDisplay;
-    this.debug = process.env.CCTOP_VERBOSE === 'true';
     
     // Initialize components
     this.keyInputManager = new KeyInputManagerClass();
@@ -53,26 +51,14 @@ class InteractiveFeatures {
       this.displayRenderer
     );
     
-    if (this.debug) {
-      console.log('[InteractiveFeatures] SelectionManager created');
-    }
-    
     // Setup component integration
     this.setupIntegration();
-    
-    if (this.debug) {
-      console.log('[InteractiveFeatures] Initialized all components');
-    }
   }
 
   /**
    * Initialize interactive features
    */
   async initialize(): Promise<void> {
-    if (this.debug) {
-      console.log('[InteractiveFeatures] Starting initialization');
-    }
-    
     // Set up callbacks for legacy functionality
     this.setupLegacyCallbacks();
     
@@ -81,10 +67,6 @@ class InteractiveFeatures {
     
     // Initial file list setup
     this.updateFileListFromEvents();
-    
-    if (this.debug) {
-      console.log('[InteractiveFeatures] Interactive features initialized successfully');
-    }
   }
 
   /**
@@ -92,18 +74,12 @@ class InteractiveFeatures {
    */
   private setupLegacyCallbacks(): void {
     if (!this.cliDisplay) {
-      if (this.debug) {
-        console.warn('[InteractiveFeatures] No CLIDisplay provided for legacy callbacks');
-      }
       return;
     }
 
     // Hook into KeyInputManager for existing functionality
     const originalHandleDisplayAll = (this.keyInputManager as any).handleDisplayAll;
     (this.keyInputManager as any).handleDisplayAll = () => {
-      if (this.debug) {
-        console.log('[InteractiveFeatures] Display All mode requested');
-      }
       if (this.cliDisplay?.eventDisplayManager) {
         this.cliDisplay.eventDisplayManager.setDisplayMode('all');
       }
@@ -111,9 +87,6 @@ class InteractiveFeatures {
 
     const originalHandleDisplayUnique = (this.keyInputManager as any).handleDisplayUnique;
     (this.keyInputManager as any).handleDisplayUnique = () => {
-      if (this.debug) {
-        console.log('[InteractiveFeatures] Display Unique mode requested');
-      }
       if (this.cliDisplay?.eventDisplayManager) {
         this.cliDisplay.eventDisplayManager.setDisplayMode('unique');
       }
@@ -121,9 +94,6 @@ class InteractiveFeatures {
 
     const originalHandleEventFilter = (this.keyInputManager as any).handleEventFilter;
     (this.keyInputManager as any).handleEventFilter = (eventType: EventType) => {
-      if (this.debug) {
-        console.log(`[InteractiveFeatures] Event filter toggle requested: ${eventType}`);
-      }
       if (this.cliDisplay?.filterManager) {
         this.cliDisplay.filterManager.toggleFilter(eventType);
       }
@@ -134,28 +104,19 @@ class InteractiveFeatures {
    * Setup integration between components
    */
   private setupIntegration(): void {
-    if (this.debug) {
-      console.log('[InteractiveFeatures] Setting up component integration');
-    }
 
     // Selection Manager → Detail Controller integration
     if (this.selectionManager && this.detailController) {
       // Connect selection events to detail inspection
       (this.selectionManager as any).onSelectionConfirmed = async (selectedFile: string) => {
-        if (this.debug) {
-          console.log(`[InteractiveFeatures] Selection confirmed: ${selectedFile}`);
-        }
-        
         try {
           // Get file ID from database
           const fileRecord = await this.databaseManager.findByPath(selectedFile);
           if (fileRecord) {
             await (this.detailController as any).showFileDetails(fileRecord.id, selectedFile);
-          } else {
-            console.warn(`[InteractiveFeatures] File not found in database: ${selectedFile}`);
           }
         } catch (error) {
-          console.error(`[InteractiveFeatures] Error showing file details:`, error);
+          // Error handled silently
         }
       };
     }
@@ -164,10 +125,6 @@ class InteractiveFeatures {
     if (this.detailController && this.selectionManager) {
       // Connect detail exit back to selection mode
       (this.detailController as any).onExit = async () => {
-        if (this.debug) {
-          console.log('[InteractiveFeatures] Detail mode exited, returning to selection');
-        }
-        
         // Refresh the main display
         this.handleStateChange('waiting');
       };
@@ -185,9 +142,6 @@ class InteractiveFeatures {
    * Handle state changes across the system
    */
   private handleStateChange(newMode: string): void {
-    if (this.debug) {
-      console.log(`[InteractiveFeatures] State changed to: ${newMode}`);
-    }
 
     // Update display based on new mode
     if (this.displayRenderer && this.displayRenderer.updateMode) {
@@ -290,10 +244,6 @@ class InteractiveFeatures {
     if (this.selectionManager) {
       (this.selectionManager as any).setDisplayRenderer(renderer);
     }
-    
-    if (this.debug) {
-      console.log('[InteractiveFeatures] Display renderer registered');
-    }
   }
 
   /**
@@ -324,13 +274,7 @@ class InteractiveFeatures {
       // Update selection manager
       this.updateFileList(fileList);
       
-      if (this.debug && fileList.length > 0) {
-        console.log(`[InteractiveFeatures] Updated file list: ${fileList.length} files`);
-      }
     } catch (error) {
-      if (this.debug) {
-        console.warn('[InteractiveFeatures] Failed to update file list from events:', error);
-      }
     }
   }
 
@@ -361,10 +305,6 @@ class InteractiveFeatures {
    * Destroy all components and clean up resources
    */
   destroy(): void {
-    if (this.debug) {
-      console.log('[InteractiveFeatures] Starting cleanup');
-    }
-    
     if (this.detailController) {
       (this.detailController as any).destroy?.();
       this.detailController = null as any;
@@ -392,10 +332,6 @@ class InteractiveFeatures {
     
     this.databaseManager = null as any;
     this.displayRenderer = null;
-    
-    if (this.debug) {
-      console.log('[InteractiveFeatures] All components destroyed');
-    }
   }
 }
 
