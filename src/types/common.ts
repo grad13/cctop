@@ -75,6 +75,7 @@ export interface BufferedRendererOptions {
   renderInterval?: number;
   maxBufferSize?: number;
   enableDebounce?: boolean;
+  clearOnRender?: boolean;
 }
 
 export interface RendererStats {
@@ -435,4 +436,60 @@ export interface FilterManager {
 // Database interface (for EventDisplayManager dependency)
 export interface EventDatabase {
   getRecentEvents(limit: number): Promise<EventData[]>;
+}
+
+// RenderController interfaces
+export interface RenderControllerConfig {
+  maxEvents?: number;
+  configPath?: string;
+}
+
+export interface RenderSelectionState {
+  isSelecting: boolean;
+  selectedIndex: number;
+  selectionRenderer: SelectionRenderer | null;
+}
+
+export interface SelectionRenderer {
+  renderLine(line: string, selected: boolean): string;
+}
+
+export interface WidthConfig {
+  terminal?: number;
+  directory: number;
+  [key: string]: any;
+}
+
+export interface EventDisplayManager {
+  getEventsToDisplay(): EventData[];
+  getStats(): EventDisplayStats;
+}
+
+export interface EventFormatter {
+  formatEventLine(event: EventData): string;
+  updateWidthConfig(widthConfig: WidthConfig): void;
+}
+
+export interface LayoutManager {
+  getWidthConfig(): WidthConfig;
+  onResize(callback: (widthConfig: WidthConfig) => void): void;
+}
+
+export interface FilterStates {
+  [key: string]: boolean;
+}
+
+export interface StatusDisplay {
+  getDisplayLines(): string[];
+}
+
+export interface BufferedRenderer {
+  clear(): void;
+  addLine(line: string): void;
+  render(): void;
+  renderDebounced(): void;
+  reset(): void;
+  cancelPendingRender(): void;
+  destroy(): void;
+  getStats(): any;
 }
