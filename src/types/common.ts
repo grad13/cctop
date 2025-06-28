@@ -493,3 +493,56 @@ export interface BufferedRenderer {
   destroy(): void;
   getStats(): any;
 }
+
+// ViewerProcess interfaces
+export interface ViewerProcessConfig {
+  baseDir?: string;
+  database?: {
+    path: string;
+  };
+  [key: string]: any;
+}
+
+export interface MonitorStatus {
+  status: 'stopped' | 'running' | 'stale' | 'error';
+  pid?: number;
+  running?: boolean;
+  started_by?: 'viewer' | 'standalone' | 'unknown';
+  error?: string;
+}
+
+export interface ViewerStatus {
+  isRunning: boolean;
+  pid: number;
+  databaseConnected: boolean;
+  displayActive: boolean;
+}
+
+export interface StartMonitorOptions {
+  started_by?: string;
+}
+
+// Manager interfaces (for ViewerProcess dependencies)
+export interface DatabaseManager {
+  initialize(): Promise<void>;
+  close(): Promise<void>;
+  isInitialized: boolean;
+}
+
+export interface ProcessManager {
+  getMonitorStatus(): Promise<MonitorStatus>;
+  startMonitor(scriptPath: string, options?: StartMonitorOptions): Promise<number>;
+  stopMonitor(): Promise<boolean>;
+  getRecentLogs(lines: number): Promise<string[]>;
+}
+
+export interface CLIDisplay {
+  start(): Promise<void>;
+  stop(): Promise<void>;
+  updateMonitorStatus(status: MonitorStatus): void;
+  isRunning: boolean;
+}
+
+export interface ConfigManager {
+  initialize(): Promise<ViewerProcessConfig>;
+}
