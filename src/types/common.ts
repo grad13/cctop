@@ -153,6 +153,8 @@ export interface KeyInputManager {
   registerHandler(mode: string, key: string, handler: KeyHandler): void;
   unregisterHandler(mode: string, key: string): void;
   setState(state: string): void;
+  start?(): Promise<void>;
+  currentMode?: string;
 }
 
 // Render Controller interface
@@ -1015,5 +1017,56 @@ export interface EventWithDetails extends EventRecord {
     line_count?: number | null;
     block_count?: number;
     inode?: number | null;
+  };
+}
+
+// InteractiveFeatures interfaces
+export interface InteractiveFeaturesConfig {
+  databaseManager: DatabaseManager;
+  displayRenderer?: any;
+  cliDisplay?: any;
+}
+
+export interface InteractiveFeaturesComponents {
+  keyInputManager: KeyInputManager;
+  selectionManager: SelectionManager;
+  detailController: DetailInspectionController;
+  aggregateDisplay: AggregateDisplayRenderer;
+  historyDisplay: HistoryDisplayRenderer;
+}
+
+export interface SelectionManager {
+  updateFileList(fileList: string[]): void;
+  getSelectionState(): any;
+  isSelecting(): boolean;
+  exitSelectionMode(): Promise<void>;
+}
+
+export interface DetailInspectionController {
+  isActive(): boolean;
+  exitDetailMode(): Promise<void>;
+  refresh(): Promise<void>;
+  showFileDetails?(fileId: number, fileName: string): Promise<void>;
+}
+
+export interface AggregateDisplayRenderer {
+  cleanup(): void;
+}
+
+export interface HistoryDisplayRenderer {
+  // Add specific methods as needed
+}
+
+export interface DisplayRenderer {
+  updateMode?(mode: string): void;
+  refresh?(): void;
+}
+
+export interface CLIDisplayForInteractive {
+  eventDisplayManager?: {
+    setDisplayMode(mode: 'all' | 'unique'): void;
+  };
+  filterManager?: {
+    toggleFilter(eventType: EventType): void;
   };
 }
