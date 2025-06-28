@@ -8,6 +8,9 @@
   },
   "scripts": {
     "start": "node bin/cctop",
+    "build": "tsc",
+    "build:watch": "tsc --watch",
+    "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:sequential": "node test/test-sequential.js",
     "test:watch": "vitest",
@@ -32,6 +35,8 @@
     "string-width": "^4.2.3"
   },
   "devDependencies": {
+    "@types/node": "^24.0.7",
+    "typescript": "^5.8.3",
     "vitest": "^3.2.4",
     "zod": "^3.25.67"
   },
