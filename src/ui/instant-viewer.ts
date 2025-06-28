@@ -3,33 +3,43 @@
  * Provides immediate visual feedback and progressive loading
  */
 
-import CLIDisplay = require('./cli-display');
-import StatusDisplay = require('../display/status-display');
-import DatabaseManager = require('../database/database-manager');
-import ProcessManager = require('../monitors/process-manager');
-import ProgressiveLoader = require('./progressive-loader');
-import DatabaseWatcher = require('../monitors/database-watcher');
-import * as path from 'path';
-import {
+const CLIDisplay = require('./cli-display');
+const StatusDisplay = require('../display/status-display');
+const DatabaseManager = require('../database/database-manager');
+const ProcessManager = require('../monitors/process-manager');
+const ProgressiveLoader = require('./progressive-loader');
+const DatabaseWatcher = require('../monitors/database-watcher');
+const path = require('path');
+
+// Type-only imports
+import type { 
   InstantViewerConfig,
-  InstantViewerStatus
+  InstantViewerStatus,
+  CLIDisplay as ICLIDisplay,
+  StatusDisplay as IStatusDisplay,
+  DatabaseManager as IDatabaseManager,
+  ProcessManager as IProcessManager,
+  ProgressiveLoader as IProgressiveLoader,
+  DatabaseWatcher as IDatabaseWatcher,
+  ProcessMonitorStatus
 } from '../types/common';
 
 class InstantViewer {
   private config: InstantViewerConfig;
-  private startTime: bigint = process.hrtime.bigint();
-  private cliDisplay: any | null = null; // CLIDisplay instance
-  private statusDisplay: any | null = null; // StatusDisplay instance
-  private databaseManager: any | null = null; // DatabaseManager instance
-  private processManager: any | null = null; // ProcessManager instance
-  private progressiveLoader: any | null = null; // ProgressiveLoader instance
-  private databaseWatcher: any | null = null; // DatabaseWatcher instance
+  private startTime: bigint;
+  private cliDisplay: ICLIDisplay | null = null;
+  private statusDisplay: IStatusDisplay | null = null;
+  private databaseManager: IDatabaseManager | null = null;
+  private processManager: IProcessManager | null = null;
+  private progressiveLoader: IProgressiveLoader | null = null;
+  private databaseWatcher: IDatabaseWatcher | null = null;
   private isRunning: boolean = false;
   private monitorCheckInterval: NodeJS.Timeout | null = null;
   private lastLoadedEventId: number | null = null;
 
   constructor(config: InstantViewerConfig = {}) {
     this.config = config;
+    this.startTime = process.hrtime.bigint();
   }
 
   /**
@@ -54,7 +64,7 @@ class InstantViewer {
       
       this.isRunning = true;
       
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to start instant viewer:', error);
       await this.stop();
       throw error;
@@ -106,10 +116,10 @@ class InstantViewer {
       if (process.env.CCTOP_VERBOSE === 'true') {
         console.log('[InstantViewer] Database initialized');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Database initialization failed:', error);
       if (this.statusDisplay) {
-        this.statusDisplay.addMessage(`!! Database init failed: ${(error as Error).message}`);
+        this.statusDisplay.addMessage(`!! Database init failed: ${error.message}`);
       }
       this.databaseManager = null;
     }
@@ -152,11 +162,12 @@ class InstantViewer {
       // Start periodic monitor status checking
       this.startMonitorStatusCheck();
       
-    } catch (error) {
-      this.statusDisplay.addMessage("!! Monitor start failed, running in read-only mode");
+    } catch (error: any) {
+      this.statusDisplay!.addMessage("!! Monitor start failed, running in read-only mode");
       console.error('Monitor start error:', error);
     }
   }
+
 
   /**
    * Load data progressively
@@ -164,18 +175,18 @@ class InstantViewer {
   private async loadDataProgressively(): Promise<void> {
     console.log('[InstantViewer] loadDataProgressively called');
     if (!this.databaseManager || !this.databaseManager.isInitialized) {
-      this.statusDisplay.addMessage(">> Database not initialized - skipping load");
+      this.statusDisplay!.addMessage(">> Database not initialized - skipping load");
       return;
     }
     
     try {
-      this.statusDisplay.updateMessage(">> Loading existing events...");
+      this.statusDisplay!.updateMessage(">> Loading existing events...", ">> Loading existing events...");
       
       // Initialize progressive loader
       // Pass the eventDisplayManager instead of cliDisplay
       this.progressiveLoader = new ProgressiveLoader(
         this.databaseManager,
-        this.cliDisplay.eventDisplayManager,
+        (this.cliDisplay as any).eventDisplayManager,
         this.statusDisplay
       );
       
@@ -189,13 +200,13 @@ class InstantViewer {
       const lastEventId = this.progressiveLoader.getLastLoadedEventId();
       
       if (loadedCount > 0) {
-        this.statusDisplay.addMessage(`>> Loaded ${loadedCount} recent events (limited to display.maxEvents)`);
+        this.statusDisplay!.addMessage(`>> Loaded ${loadedCount} recent events (limited to display.maxEvents)`);
         console.log(`[InstantViewer] Successfully loaded ${loadedCount} recent events`);
       } else {
-        this.statusDisplay.addMessage(">> No events found");
+        this.statusDisplay!.addMessage(">> No events found");
       }
       
-      this.statusDisplay.addMessage(">> Ready - Monitoring active");
+      this.statusDisplay!.addMessage(">> Ready - Monitoring active");
       
       // Store for database watcher
       this.lastLoadedEventId = lastEventId;
@@ -203,8 +214,8 @@ class InstantViewer {
       // Note: We don't load all events anymore - only recent ones
       // If user wants to see older events, they could scroll up or use a different mode
       
-    } catch (error) {
-      this.statusDisplay.addMessage(`!! Failed to load events: ${(error as Error).message}`);
+    } catch (error: any) {
+      this.statusDisplay!.addMessage(`!! Failed to load events: ${error.message}`);
       console.error('Progressive loading error:', error);
     }
   }
@@ -229,8 +240,8 @@ class InstantViewer {
       // Listen for new events
       this.databaseWatcher.on('event', (event: any) => {
         // Add event to display immediately
-        if (this.cliDisplay && this.cliDisplay.addEvent) {
-          this.cliDisplay.addEvent(event);
+        if (this.cliDisplay && (this.cliDisplay as any).addEvent) {
+          (this.cliDisplay as any).addEvent(event);
         }
       });
 
@@ -238,7 +249,7 @@ class InstantViewer {
       this.databaseWatcher.start();
       console.log('[InstantViewer] Database watcher started');
       
-    } catch (error) {
+    } catch (error: any) {
       console.error('[InstantViewer] Failed to start database watcher:', error);
     }
   }
@@ -257,7 +268,7 @@ class InstantViewer {
         const status = await this.processManager.getMonitorStatus();
         
         if (status.status === 'stopped') {
-          this.statusDisplay.addMessage('>> Monitor process stopped');
+          this.statusDisplay!.addMessage('>> Monitor process stopped');
           // Don't automatically restart - let user decide
         } else if (status.status === 'stale') {
           // Already handled in checkAndStartMonitor, just log
@@ -268,10 +279,10 @@ class InstantViewer {
         
         // Update CLI display with monitor status
         if (this.cliDisplay) {
-          this.cliDisplay.updateMonitorStatus(status);
+          (this.cliDisplay as any).updateMonitorStatus(status);
         }
         
-      } catch (error) {
+      } catch (error: any) {
         console.error('Monitor status check failed:', error);
       }
     }, 30000); // 30 seconds
@@ -284,6 +295,7 @@ class InstantViewer {
     if (!this.isRunning) {
       return;
     }
+    
     
     try {
       this.isRunning = false;
@@ -313,6 +325,7 @@ class InstantViewer {
           if (this.statusDisplay) {
             this.statusDisplay.addMessage(">> Monitor continues running (standalone)");
           }
+        } else {
         }
       }
       
@@ -328,7 +341,7 @@ class InstantViewer {
         this.databaseManager = null;
       }
       
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error stopping instant viewer:', error);
     }
   }
@@ -338,7 +351,7 @@ class InstantViewer {
    */
   private getElapsedMs(): number {
     const elapsed = process.hrtime.bigint() - this.startTime;
-    return Number(elapsed / 1000000n);
+    return Number(elapsed / BigInt(1000000));
   }
 
   /**
@@ -348,11 +361,11 @@ class InstantViewer {
     return {
       isRunning: this.isRunning,
       pid: process.pid,
-      databaseConnected: this.databaseManager ? this.databaseManager.isInitialized : false,
-      displayActive: this.cliDisplay ? this.cliDisplay.isRunning : false,
+      databaseConnected: this.databaseManager ? (this.databaseManager as any).isInitialized : false,
+      displayActive: this.cliDisplay ? (this.cliDisplay as any).isRunning : false,
       startupTime: this.getElapsedMs()
     };
   }
 }
 
-export = InstantViewer;
+module.exports = InstantViewer;
