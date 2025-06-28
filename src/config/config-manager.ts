@@ -54,12 +54,7 @@ class ConfigManager {
         // Auto-creation on first run
         await this.createDefaultConfigFile();
         
-        // Display message for configuration creation (FUNC-105 compliant)
-        if (process.env.CCTOP_VERBOSE === 'true') {
-          console.log('Created configuration in ./.cctop/');
-          console.log('Edit ./.cctop/config.json to customize settings');
-          console.log('Starting monitoring...');
-        }
+        // Configuration created
       }
       
       // 3. Load configuration file (PLAN compliant error handling)
@@ -77,9 +72,7 @@ class ConfigManager {
       }
       
       this.config = fileConfig;
-      if (process.env.NODE_ENV === 'test' || process.env.CCTOP_VERBOSE) {
-        console.log(`Config loaded from: ${this.configPath}`);
-      }
+      // Config loaded
       
       // 4. Override with CLI arguments
       this.applyCLIOverrides(cliArgs);
@@ -90,9 +83,7 @@ class ConfigManager {
       // 6. Auto-add monitoring target feature (PLAN compliant)
       await this.checkAndAddCurrentDirectory(cliArgs);
       
-      if (process.env.NODE_ENV === 'test' || process.env.CCTOP_VERBOSE) {
-        console.log('⚙️ Configuration initialized');
-      }
+      // Configuration initialized
       return this.config;
       
     } catch (error) {
@@ -112,8 +103,7 @@ class ConfigManager {
     
     // 2. Default: Always use ./.cctop/config.json in current directory
     const localConfigPath = path.join(process.cwd(), '.cctop', 'config.json');
-    console.log(`[ConfigManager] Using config path: ${localConfigPath}`);
-    console.log(`[ConfigManager] Current working directory: ${process.cwd()}`);
+    // Using local config path
     return localConfigPath;
   }
 

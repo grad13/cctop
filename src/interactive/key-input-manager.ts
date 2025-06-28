@@ -249,7 +249,7 @@ class KeyInputManager implements IKeyInputManager {
         this.setState('detail');
       }
     } else {
-      console.error('❌ [KeyInputManager] No selectionManager set!');
+      console.error('[KeyInputManager] No selectionManager set!');
     }
   }
 

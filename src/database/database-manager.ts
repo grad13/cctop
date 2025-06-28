@@ -30,15 +30,10 @@ class DatabaseManager {
   public db: SQLiteDatabase | null = null;
   public isInitialized: boolean = false;
   private transactionActive: boolean = false;
-  private verbose: boolean;
 
   constructor(dbPath: string | null = null) {
     // FUNC-100 compliant: Default is ./.cctop/activity.db (local)
     this.dbPath = dbPath || path.join(process.cwd(), '.cctop', 'activity.db');
-    this.verbose = process.env.CCTOP_VERBOSE === 'true';
-    
-    // Always log the database path for debugging
-    console.log(`[DatabaseManager] Initializing with path: ${this.dbPath}`);
   }
 
   /**
@@ -51,9 +46,7 @@ class DatabaseManager {
       const cctopDir = path.dirname(this.dbPath);
       if (!fs.existsSync(cctopDir)) {
         fs.mkdirSync(cctopDir, { recursive: true });
-        if (this.verbose) {
-          console.log(`Created ~/.cctop directory: ${cctopDir}`);
-        }
+        // Directory created
       }
 
       // 1. Database connection
@@ -73,16 +66,12 @@ class DatabaseManager {
       
       // 5. Set flag only after everything is confirmed complete
       this.isInitialized = true;
-      if (this.verbose) {
-        console.log(`Database initialized: ${this.dbPath}`);
-      }
+      // Database initialized
       
     } catch (error: any) {
       // Attempt recovery for corrupted database
       if (error.code === 'SQLITE_NOTADB' || error.message.includes('not a database')) {
-        if (this.verbose) {
-          console.warn('Corrupted database detected, attempting recovery...');
-        }
+        // Corrupted database detected, attempting recovery
         
         // Close existing connection
         if (this.db) {
@@ -97,13 +86,9 @@ class DatabaseManager {
         const backupPath = `${this.dbPath}.corrupted.${Date.now()}`;
         try {
           fs.renameSync(this.dbPath, backupPath);
-          if (this.verbose) {
-            console.log(`Backed up corrupted database to: ${path.basename(backupPath)}`);
-          }
+          // Backed up corrupted database
         } catch (backupError) {
-          if (this.verbose) {
-            console.error('Failed to backup corrupted database:', backupError);
-          }
+          // Failed to backup corrupted database
         }
         
         // Retry with new database
@@ -117,9 +102,7 @@ class DatabaseManager {
         await this.testConnection();
         
         this.isInitialized = true;
-        if (this.verbose) {
-          console.log('Database recovery completed successfully');
-        }
+        // Database recovery completed successfully
       } else {
         console.error('Database initialization failed:', error);
         throw error;
@@ -186,9 +169,7 @@ class DatabaseManager {
   private async createTables(): Promise<void> {
     for (const [tableName, createSQL] of Object.entries(schema.tables)) {
       await this.run(createSQL);
-      if (this.verbose) {
-        console.log(`Created table: ${tableName}`);
-      }
+      // Table created
     }
   }
 
@@ -206,9 +187,7 @@ class DatabaseManager {
         }
       }
     }
-    if (this.verbose) {
-      console.log('Database indexes created');
-    }
+    // Database indexes created
   }
 
   /**
@@ -225,9 +204,7 @@ class DatabaseManager {
         }
       }
     }
-    if (this.verbose) {
-      console.log('Database triggers created');
-    }
+    // Database triggers created
   }
 
   /**
@@ -248,9 +225,7 @@ class DatabaseManager {
         }
       }
     }
-    if (this.verbose) {
-      console.log('Initial data inserted');
-    }
+    // Initial data inserted
   }
 
   /**

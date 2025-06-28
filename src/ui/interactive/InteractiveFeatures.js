@@ -106,7 +106,7 @@ class InteractiveFeatures {
 
 this.selectionManager.updateFileList(fileList);
     } catch (error) {
-      console.error('[InteractiveFeatures] ❌ Error updating file list:', error);
+      console.error('[InteractiveFeatures] Error updating file list:', error);
     }
   }
 

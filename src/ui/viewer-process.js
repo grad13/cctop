@@ -137,7 +137,6 @@ class ViewerProcess {
         const pid = await this.processManager.startMonitor(monitorScript, {
           started_by: 'viewer'
         });
-        console.log(`Monitor started with PID: ${pid} (after error recovery)`);
       } catch (startError) {
         console.error('Failed to start monitor after error:', startError);
         throw error;
@@ -159,7 +158,6 @@ class ViewerProcess {
         const status = await this.processManager.getMonitorStatus();
         
         if (status.status === 'stopped' || status.status === 'stale') {
-          console.log('Monitor process stopped, attempting restart...');
           await this.ensureMonitorRunning();
         }
         
@@ -249,9 +247,7 @@ class ViewerProcess {
     try {
       const result = await this.processManager.stopMonitor();
       if (result) {
-        console.log('Monitor process stopped');
       } else {
-        console.log('ℹ️  No monitor process to stop');
       }
       return result;
     } catch (error) {
@@ -303,13 +299,11 @@ if (require.main === module) {
   
   // Handle graceful shutdown
   process.on('SIGINT', async () => {
-    console.log('\nReceived SIGINT, stopping viewer...');
     await viewer.stop();
     process.exit(0);
   });
   
   process.on('SIGTERM', async () => {
-    console.log('\nReceived SIGTERM, stopping viewer...');
     await viewer.stop();
     process.exit(0);
   });

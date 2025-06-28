@@ -136,9 +136,6 @@ class EventProcessor extends EventEmitter {
         return null;
       }
       
-      if (process.env.NODE_ENV === 'test' || process.env.CCTOP_VERBOSE) {
-        console.log('[EventProcessor] Processing event:', event.type, 'for', event.path);
-      }
       
       // Event type mapping
       const eventType = this.mapEventType(event.type);
@@ -148,9 +145,6 @@ class EventProcessor extends EventEmitter {
       
       // Event filtering check
       if (!this.eventFilters[eventType]) {
-        if (process.env.NODE_ENV === 'test' || process.env.CCTOP_VERBOSE) {
-          console.log(`[EventProcessor] Event filtered out: ${eventType}`);
-        }
         return null;
       }
 
@@ -159,9 +153,6 @@ class EventProcessor extends EventEmitter {
       
       // Skip if metadata is null (directory case)
       if (!metadata) {
-        if (process.env.NODE_ENV === 'test' || process.env.CCTOP_VERBOSE) {
-          console.log(`[EventProcessor] Skipping directory: ${event.path}`);
-        }
         return null;
       }
       
@@ -307,9 +298,6 @@ class EventProcessor extends EventEmitter {
    */
   onInitialScanComplete(): void {
     this.isInitialScanMode = false;
-    if (process.env.NODE_ENV === 'test' || process.env.CCTOP_VERBOSE) {
-      console.log('Initial scan complete - switching to real-time mode');
-    }
     this.emit('findComplete');
   }
 
@@ -529,9 +517,6 @@ class EventProcessor extends EventEmitter {
       });
       return true;
     } catch (error: any) {
-      if (process.env.CCTOP_VERBOSE === 'true') {
-        console.warn('[EventProcessor] Database connection test failed:', error.message);
-      }
       return false;
     }
   }

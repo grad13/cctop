@@ -33,9 +33,7 @@ class ViewerProcess {
    */
   async start(): Promise<void> {
     try {
-      if (process.env.CCTOP_VERBOSE === 'true') {
-        console.log('Starting CCTOP Viewer...');
-      }
+      // Starting CCTOP Viewer...
       
       // Load configuration
       if (!this.config.baseDir) {
@@ -67,9 +65,7 @@ class ViewerProcess {
       await this.cliDisplay.start();
       
       this.isRunning = true;
-      if (process.env.CCTOP_VERBOSE === 'true') {
-        console.log('CCTOP Viewer started successfully');
-      }
+      // CCTOP Viewer started successfully
       
     } catch (error) {
       console.error('Failed to start viewer:', error);
@@ -86,9 +82,7 @@ class ViewerProcess {
       const status = await this.processManager.getMonitorStatus();
       
       if (status.status === 'stopped') {
-        if (process.env.CCTOP_VERBOSE === 'true') {
-          console.log('Starting background monitor...');
-        }
+        // Starting background monitor...
         
         // Get monitor script path
         const monitorScript = path.join(__dirname, '../monitors/monitor-process.js');
@@ -97,22 +91,16 @@ class ViewerProcess {
         const pid = await this.processManager.startMonitor(monitorScript, {
           started_by: 'viewer'
         });
-        if (process.env.CCTOP_VERBOSE === 'true') {
-          console.log(`Monitor started with PID: ${pid}`);
-        }
+        // Monitor started
         
         // Wait a bit for monitor to initialize
         await new Promise(resolve => setTimeout(resolve, 2000));
         
       } else if (status.status === 'running') {
-        if (process.env.CCTOP_VERBOSE === 'true') {
-          console.log(`Monitor already running (PID: ${status.pid})`);
-        }
+        // Monitor already running
         
       } else if (status.status === 'stale') {
-        if (process.env.CCTOP_VERBOSE === 'true') {
-          console.log('Cleaning up stale monitor and restarting...');
-        }
+        // Cleaning up stale monitor and restarting...
         
         // Clean up stale process
         await this.processManager.stopMonitor();
@@ -122,9 +110,7 @@ class ViewerProcess {
         const pid = await this.processManager.startMonitor(monitorScript, {
           started_by: 'viewer'
         });
-        if (process.env.CCTOP_VERBOSE === 'true') {
-          console.log(`Monitor restarted with PID: ${pid}`);
-        }
+        // Monitor restarted
         
         // Wait for initialization
         await new Promise(resolve => setTimeout(resolve, 2000));
@@ -191,9 +177,7 @@ class ViewerProcess {
     }
     
     try {
-      if (process.env.CCTOP_VERBOSE) {
-        console.log('Stopping CCTOP Viewer...');
-      }
+      // Stopping CCTOP Viewer...
       this.isRunning = false;
       
       // Stop monitor status checking
@@ -210,20 +194,8 @@ class ViewerProcess {
           if (status.running && status.started_by === 'viewer') {
             // Viewer started monitor should be stopped
             await this.processManager.stopMonitor();
-            if (process.env.CCTOP_VERBOSE) {
-              console.log('Monitor stopped (started by viewer)');
-            }
-          } else if (status.running && status.started_by === 'standalone') {
-            // Standalone monitor continues running
-            if (process.env.CCTOP_VERBOSE) {
-              console.log('ℹ️  Monitor continues running (standalone)');
-            }
-          } else if (status.running && status.started_by === 'unknown') {
-            // Unknown origin monitor continues (safe side)
-            if (process.env.CCTOP_VERBOSE) {
-              console.log('ℹ️  Monitor continues running (unknown origin)');
-            }
           }
+          // Standalone and unknown origin monitors continue running
         } catch (error) {
           console.error('Error checking monitor status:', error);
         }
@@ -241,9 +213,7 @@ class ViewerProcess {
         this.databaseManager = null;
       }
       
-      if (process.env.CCTOP_VERBOSE) {
-        console.log('CCTOP Viewer stopped');
-      }
+      // CCTOP Viewer stopped
       
     } catch (error) {
       console.error('Error stopping viewer:', error);

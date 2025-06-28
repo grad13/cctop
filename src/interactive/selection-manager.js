@@ -16,12 +16,6 @@ class SelectionManager {
     // Color management
     this.colorManager = new ColorManager(configPath);
     this.selectionColors = this.loadSelectionColors();
-    
-    this.debug = process.env.CCTOP_VERBOSE === 'true';
-    
-    if (this.debug) {
-      console.log('[SelectionManager] Initialized');
-    }
   }
 
   /**
@@ -48,9 +42,7 @@ class SelectionManager {
       this.selectedFile = this.displayItems[0];
     }
     
-    if (this.debug) {
-      console.log(`[SelectionManager] Started selection mode with ${this.displayItems.length} items`);
-    }
+    // Started selection mode
     
     return this.getSelectionState();
   }
@@ -76,9 +68,7 @@ class SelectionManager {
       this.selectedFile = this.displayItems[this.currentIndex];
     }
 
-    if (this.debug && previousIndex !== this.currentIndex) {
-      console.log(`[SelectionManager] Selection moved ${direction}: ${previousIndex} → ${this.currentIndex}`);
-    }
+    // Selection moved
 
     return this.getSelectionState();
   }
@@ -97,9 +87,7 @@ class SelectionManager {
       displayItem: this.displayItems[this.currentIndex]
     };
 
-    if (this.debug) {
-      console.log(`[SelectionManager] Selection confirmed: ${this.selectedFile}`);
-    }
+    // Selection confirmed
 
     return selectedItem;
   }
@@ -108,9 +96,7 @@ class SelectionManager {
    * Cancel selection (Escape key)
    */
   cancelSelection() {
-    if (this.debug) {
-      console.log('[SelectionManager] Selection cancelled');
-    }
+    // Selection cancelled
     
     this.mode = 'waiting';
     this.currentIndex = 0;
@@ -158,9 +144,7 @@ class SelectionManager {
       }
     }
 
-    if (this.debug) {
-      console.log(`[SelectionManager] Updated display items: ${newDisplayItems.length} items`);
-    }
+    // Display items updated
 
     return this.getSelectionState();
   }
@@ -191,9 +175,7 @@ class SelectionManager {
   setSelectionColors(colors) {
     this.selectionColors = { ...this.selectionColors, ...colors };
     
-    if (this.debug) {
-      console.log('[SelectionManager] Selection colors updated');
-    }
+    // Selection colors updated
   }
 
   /**
@@ -247,9 +229,7 @@ class SelectionManager {
     this.selectedFile = null;
     this.displayItems = [];
     
-    if (this.debug) {
-      console.log('[SelectionManager] Reset to initial state');
-    }
+    // Reset to initial state
   }
 }
 

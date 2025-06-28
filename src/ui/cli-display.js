@@ -38,9 +38,6 @@ class CLIDisplay extends EventEmitter {
     // Setup event listeners
     this.setupEventListeners();
     
-    if (process.env.CCTOP_VERBOSE === 'true') {
-      console.log('CLIDisplay (Refactored) initialized');
-    }
   }
 
   /**
@@ -121,22 +118,15 @@ class CLIDisplay extends EventEmitter {
     this.layoutManager.setupResizeHandler();
     
     // Start interactive features (FUNC-400/401/402/403)
-    if (process.env.CCTOP_VERBOSE) {
-      console.log('[CLIDisplay] Starting interactive features...');
-    }
     // Set display renderer before initialization
     this.interactiveFeatures.setDisplayRenderer(this.renderController);
     await this.interactiveFeatures.initialize();
-    if (process.env.CCTOP_VERBOSE) {
-      console.log('[CLIDisplay] Interactive features started successfully');
-    }
     
     // Load initial data
     await this.eventDisplayManager.loadInitialEvents();
     
     // Update interactive features file list after initial events loaded
     if (this.interactiveFeatures) {
-      console.log('[CLIDisplay] Updating interactive features file list after initial load');
       this.interactiveFeatures.updateFileListFromEvents();
     }
     
@@ -160,9 +150,6 @@ class CLIDisplay extends EventEmitter {
       this.renderController.render();
     }
     
-    if (process.env.CCTOP_VERBOSE === 'true') {
-      console.log('CLIDisplay started');
-    }
   }
 
   /**
@@ -186,9 +173,6 @@ class CLIDisplay extends EventEmitter {
       this.refreshInterval = null;
     }
     
-    if (process.env.CCTOP_VERBOSE === 'true') {
-      console.log('CLIDisplay stopped');
-    }
   }
 
   /**
@@ -228,9 +212,6 @@ class CLIDisplay extends EventEmitter {
     this.renderController.reset();
     process.stdout.write('\x1b[2J\x1b[H'); // Clear screen
     
-    if (process.env.CCTOP_VERBOSE) {
-      console.log(chalk.green('cctop stopped'));
-    }
     
     // Emit SIGINT event to notify parent process
     process.kill(process.pid, 'SIGINT');

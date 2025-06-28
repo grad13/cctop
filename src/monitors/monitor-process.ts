@@ -113,11 +113,7 @@ class MonitorProcess {
       try {
         await this.eventProcessor.processFileEvent(event);
         
-        // Log high-frequency events only in verbose mode
-        if (process.env.CCTOP_VERBOSE) {
-          await this.processManager.log('debug', 
-            `Processed ${event.type} event: ${event.path}`);
-        }
+        // High-frequency events processed silently
       } catch (error: any) {
         await this.processManager.log('error', 
           `Failed to process event ${event.type} for ${event.path}: ${error.message}`);

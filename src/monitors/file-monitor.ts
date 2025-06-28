@@ -19,17 +19,11 @@ class FileMonitor extends EventEmitter {
   private watcher: chokidar.FSWatcher | null = null;
   private isReady: boolean = false;
   private isRunning: boolean = false;
-  private verbose: boolean;
 
   constructor(config: FileMonitorConfig) {
     super();
     this.setMaxListeners(20); // Memory leak countermeasure
     this.config = config;
-    this.verbose = process.env.NODE_ENV !== 'test' || !!process.env.CCTOP_VERBOSE;
-    
-    if (this.verbose) {
-      console.log('FileMonitor initialized');
-    }
   }
 
   /**
@@ -37,9 +31,7 @@ class FileMonitor extends EventEmitter {
    */
   start(): void {
     if (this.isRunning) {
-      if (this.verbose) {
-        console.warn('FileMonitor already running');
-      }
+      console.warn('FileMonitor already running');
       return;
     }
 
@@ -75,17 +67,9 @@ class FileMonitor extends EventEmitter {
       this.setupEventHandlers();
       this.isRunning = true;
       
-      if (this.verbose) {
-        console.log(`FileMonitor started watching: ${this.config.watchPaths ? this.config.watchPaths.join(', ') : 'No paths configured'}`);
-        if (this.config.excludePatterns && this.config.excludePatterns.length > 0) {
-          console.log(`🚫 Ignoring patterns: ${this.config.excludePatterns.join(', ')}`);
-        }
-      }
       
     } catch (error) {
-      if (this.verbose) {
-        console.error('FileMonitor start failed:', error);
-      }
+      console.error('FileMonitor start failed:', error);
       throw error;
     }
   }
@@ -126,11 +110,6 @@ class FileMonitor extends EventEmitter {
 
     // File deletion (Delete)
     this.watcher.on('unlink', (filePath: string) => {
-      if (process.env.NODE_ENV === 'test' || process.env.CCTOP_VERBOSE) {
-        if (this.verbose) {
-          console.log('[FileMonitor] unlink event detected:', filePath);
-        }
-      }
       this.emitFileEvent('delete', filePath, null);
     });
 
@@ -147,9 +126,7 @@ class FileMonitor extends EventEmitter {
 
     // Error handling
     this.watcher.on('error', (error: Error) => {
-      if (this.verbose) {
-        console.error('FileMonitor error:', error);
-      }
+      console.error('FileMonitor error:', error);
       this.emit('error', error);
     });
   }
@@ -170,7 +147,6 @@ class FileMonitor extends EventEmitter {
       timestamp: Date.now() // Will be overridden for 'find' events in event-processor
     };
 
-    // console.log(`📄 ${type}: ${path.basename(filePath)}`);
     this.emit('fileEvent', event);
   }
 
@@ -196,14 +172,9 @@ class FileMonitor extends EventEmitter {
       this.isRunning = false;
       this.isReady = false;
       
-      if (this.verbose) {
-        console.log('📪 FileMonitor stopped');
-      }
       
     } catch (error) {
-      if (this.verbose) {
-        console.error('FileMonitor stop failed:', error);
-      }
+      console.error('FileMonitor stop failed:', error);
       throw error;
     }
   }

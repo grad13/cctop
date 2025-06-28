@@ -26,7 +26,6 @@ class MonitorProcess {
    */
   async start() {
     try {
-      console.log('[Monitor] Starting background monitor process...');
       
       // Load configuration
       const configManager = new ConfigManager();
@@ -198,7 +197,6 @@ class MonitorProcess {
     }
 
     try {
-      console.log('[Monitor] Stopping monitor process...');
       this.isRunning = false;
 
       // Stop heartbeat
@@ -223,7 +221,6 @@ class MonitorProcess {
         await this.processManager.log('info', 'Monitor process stopped gracefully');
       }
 
-      console.log('[Monitor] Monitor process stopped');
     } catch (error) {
       console.error('[Monitor] Error during shutdown:', error);
       if (this.processManager) {
@@ -242,7 +239,6 @@ class MonitorProcess {
     }
     this.shutdownSignalReceived = true;
     
-    console.log(`[Monitor] Received ${signal}, shutting down gracefully...`);
     if (this.processManager) {
       await this.processManager.log('info', `Received ${signal}, shutting down gracefully...`);
     }
@@ -269,7 +265,6 @@ class MonitorProcess {
         await this.processManager.log('info', 'Monitor shutdown completed');
       }
       
-      console.log('[Monitor] Monitor shutdown completed');
       process.exit(0);
     } catch (error) {
       console.error('[Monitor] Error during graceful shutdown:', error);
@@ -287,7 +282,6 @@ class MonitorProcess {
     
     const pendingCount = this.eventProcessor.eventQueue.length;
     if (pendingCount > 0) {
-      console.log(`[Monitor] Flushing ${pendingCount} pending events...`);
       
       // Wait for event queue to be processed
       const maxWait = 5000; // 5 seconds max
@@ -310,7 +304,6 @@ class MonitorProcess {
    */
   async reloadConfig() {
     try {
-      console.log('[Monitor] Reloading configuration...');
       const configManager = new ConfigManager();
       this.config = await configManager.initialize();
       
@@ -321,7 +314,6 @@ class MonitorProcess {
       // Apply new config to components if needed
       if (this.fileMonitor && this.config.monitoring) {
         // Note: Would need to implement hot-reload in FileMonitor
-        console.log('[Monitor] Configuration reloaded (restart required for some changes)');
       }
     } catch (error) {
       console.error('[Monitor] Error reloading configuration:', error);
@@ -334,7 +326,6 @@ class MonitorProcess {
   async dumpStatus() {
     try {
       const status = this.getStatus();
-      console.log('[Monitor] Status dump:', JSON.stringify(status, null, 2));
       
       if (this.processManager) {
         await this.processManager.log('info', `Status dump: ${JSON.stringify(status)}`);

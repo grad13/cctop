@@ -45,9 +45,7 @@ class CLIDisplay extends EventEmitter {
       this.updateDisplay();
     });
     
-    if (process.env.NODE_ENV === 'test' || process.env.CCTOP_VERBOSE) {
-      console.log('CLIDisplay initialized');
-    }
+    // CLIDisplay initialized
     this.setupKeyboardHandlers();
     this.setupResizeHandler();
   }
@@ -71,9 +69,7 @@ class CLIDisplay extends EventEmitter {
     // Show help
     // this.showInitialHelp();
     
-    if (process.env.NODE_ENV === 'test') {
-      console.log('📺 CLI Display started');
-    }
+    // CLI Display started
   }
 
   /**
@@ -114,9 +110,7 @@ class CLIDisplay extends EventEmitter {
    * Add event (called from EventProcessor)
    */
   addEvent(eventData) {
-    if (process.env.NODE_ENV === 'test' || process.env.CCTOP_VERBOSE) {
-      console.log('[CLIDisplay] Adding event:', eventData.event_type, 'for', eventData.file_name);
-    }
+    // Adding event
     
     this.events.unshift(eventData);
     
@@ -501,9 +495,7 @@ class CLIDisplay extends EventEmitter {
           this.render(); // Redraw immediately
         }
         
-        if (process.env.NODE_ENV === 'test' || process.env.CCTOP_VERBOSE) {
-          console.log(`Terminal resized: ${this.widthConfig.terminal}x? Directory width: ${this.widthConfig.directory}`);
-        }
+        // Terminal resized
       });
     }
   }

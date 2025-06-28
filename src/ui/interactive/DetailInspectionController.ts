@@ -134,7 +134,7 @@ class DetailInspectionController implements IDetailInspectionController {
       this.render();
       
     } catch (error: any) {
-      console.error('[DetailInspectionController] ❌ Failed to activate detail mode:', error);
+      console.error('[DetailInspectionController] Failed to activate detail mode:', error);
       await this.exitDetailMode();
     }
   }
@@ -185,7 +185,7 @@ class DetailInspectionController implements IDetailInspectionController {
       try {
         aggregateContent = this.aggregateDisplay.render();
       } catch (error) {
-        console.error('[DetailInspectionController] ❌ Aggregate render error:', error);
+        console.error('[DetailInspectionController] Aggregate render error:', error);
         aggregateContent = null;
       }
       
@@ -206,7 +206,7 @@ class DetailInspectionController implements IDetailInspectionController {
       process.stdout.write('\x1b[999;1H'); // Move cursor to bottom
       
     } catch (error) {
-      console.error('[DetailInspectionController] ❌ Render error:', error);
+      console.error('[DetailInspectionController] Render error:', error);
     }
   }
 
