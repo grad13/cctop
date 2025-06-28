@@ -161,6 +161,44 @@ export interface RenderController {
   isDetailMode?(): boolean;
 }
 
+// Aggregate Display interfaces
+export interface AggregateFileData {
+  file_id: number;
+  inode?: number | null;
+  total_events: number;
+  total_creates: number;
+  total_modifies: number;
+  total_deletes: number;
+  total_moves: number;
+  total_restores: number;
+  first_event_timestamp?: number | null;
+  last_event_timestamp?: number | null;
+  first_size?: number | null;
+  max_size?: number | null;
+  last_size?: number | null;
+  total_size: number;
+  first_lines?: number | null;
+  max_lines?: number | null;
+  last_lines?: number | null;
+  total_lines: number;
+  first_blocks?: number | null;
+  max_blocks?: number | null;
+  last_blocks?: number | null;
+  total_blocks: number;
+}
+
+export interface FileInfo {
+  id: number;
+  inode?: number | null;
+}
+
+// Database Manager interface (extended for Aggregate Display)
+export interface AggregatesDatabaseManager {
+  ensureFile(filePath: string): Promise<number>;
+  getAggregateStats(fileId: number): Promise<AggregateFileData | null>;
+  get(sql: string, params: any[]): Promise<FileInfo | null>;
+}
+
 // CLI Interface options
 export interface CLIInterfaceOptions {
   input?: NodeJS.ReadableStream;
