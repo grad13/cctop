@@ -396,3 +396,43 @@ export interface FileMonitorStats {
   watchedPaths: string[];
   ignored: string[];
 }
+
+// EventDisplayManager interfaces
+export interface EventDisplayManagerConfig {
+  maxEvents?: number;
+  mode?: 'all' | 'unique';
+}
+
+export interface EventData {
+  id?: number;
+  event_type: EventType;
+  file_name: string;
+  timestamp: number;
+  [key: string]: any;
+}
+
+export interface EventDisplayStats {
+  displayMode: 'all' | 'unique';
+  modeIndicator: string;
+  totalEvents: number;
+  uniqueFiles: number;
+  stats: string;
+  displayText: string;
+}
+
+export interface EventDisplayStatus {
+  displayMode: 'all' | 'unique';
+  totalEvents: number;
+  uniqueFiles: number;
+  maxLines: number;
+}
+
+// Filter Manager interface (for EventDisplayManager dependency)
+export interface FilterManager {
+  filterEvents(events: EventData[]): EventData[];
+}
+
+// Database interface (for EventDisplayManager dependency)
+export interface EventDatabase {
+  getRecentEvents(limit: number): Promise<EventData[]>;
+}
