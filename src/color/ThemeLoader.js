@@ -22,7 +22,6 @@ class ThemeLoader {
         fs.mkdirSync(this.themesDir, { recursive: true });
         
         if (process.env.CCTOP_VERBOSE === 'true') {
-          console.log(`[ThemeLoader] Created themes directory: ${this.themesDir}`);
         }
       }
       
@@ -56,7 +55,6 @@ class ThemeLoader {
           fs.writeFileSync(themeFile, JSON.stringify(themeData, null, 2));
           
           if (process.env.CCTOP_VERBOSE === 'true') {
-            console.log(`[ThemeLoader] Created preset theme: ${themeName}`);
           }
         }
       } catch (error) {

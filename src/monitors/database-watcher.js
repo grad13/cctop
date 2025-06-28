@@ -20,7 +20,6 @@ class DatabaseWatcher extends EventEmitter {
    */
   setLastEventId(eventId) {
     this.lastEventId = eventId;
-    console.log(`[DatabaseWatcher] Set starting event ID to: ${eventId}`);
   }
 
   /**
@@ -38,7 +37,6 @@ class DatabaseWatcher extends EventEmitter {
       try {
         const result = await this.db.get('SELECT MAX(id) as maxId FROM events');
         this.lastEventId = result?.maxId || 0;
-        console.log(`[DatabaseWatcher] Starting watch from event ID: ${this.lastEventId}`);
       } catch (error) {
         console.error('[DatabaseWatcher] Error getting initial event ID:', error);
         this.lastEventId = 0;
@@ -65,7 +63,6 @@ class DatabaseWatcher extends EventEmitter {
 
     // DEBUG: Log polling activity
     if (process.env.CCTOP_VERBOSE === 'true') {
-      console.log(`[DatabaseWatcher] Checking for events > ${this.lastEventId}`);
     }
 
     try {
@@ -103,14 +100,12 @@ class DatabaseWatcher extends EventEmitter {
         }
         
         if (process.env.CCTOP_VERBOSE === 'true') {
-          console.log(`[DatabaseWatcher] Emitted ${newEvents.length} new events`);
         }
 
         // Emit batch for efficiency
         this.emit('events', newEvents);
         
         if (process.env.CCTOP_VERBOSE === 'true') {
-          console.log(`[DatabaseWatcher] Found ${newEvents.length} new events`);
         }
       }
     } catch (error) {
@@ -133,7 +128,6 @@ class DatabaseWatcher extends EventEmitter {
       this.pollInterval = null;
     }
     this.isWatching = false;
-    console.log('[DatabaseWatcher] Stopped watching');
     // Add stack trace to debug who called stop()
     if (process.env.CCTOP_VERBOSE === 'true') {
       console.trace('[DatabaseWatcher] Stop called from:');

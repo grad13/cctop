@@ -334,10 +334,6 @@ class ProcessManager {
       
       await fs.appendFile(this.logFile, logEntry, 'utf8');
       
-      // Also log to console in verbose mode
-      if (process.env.CCTOP_VERBOSE || process.env.NODE_ENV === 'test') {
-        console.log(`[ProcessManager] ${logEntry.trim()}`);
-      }
     } catch (error: any) {
       // Fallback to console if file logging fails
       console.error(`[ProcessManager] Failed to write log: ${error.message}`);

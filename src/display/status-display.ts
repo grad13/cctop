@@ -331,10 +331,6 @@ class StatusDisplay {
       return;
     }
     
-    // Debug: Show which database is being used
-    if (process.env.CCTOP_VERBOSE === 'true' && databaseManager.dbPath) {
-      console.log(`[StatusDisplay] Using database: ${databaseManager.dbPath}`);
-    }
 
     try {
       // 10 minute statistics

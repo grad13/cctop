@@ -62,7 +62,6 @@ class ColorManager {
         this.currentTheme = themeData;
         
         if (process.env.CCTOP_VERBOSE === 'true') {
-          console.log(`[ColorManager] Loaded theme: ${themeData.name || 'unknown'}`);
         }
       } else {
         // Create default theme if current-theme.json doesn't exist
@@ -140,7 +139,6 @@ class ColorManager {
       this.currentTheme = defaultTheme;
       
       if (process.env.CCTOP_VERBOSE === 'true') {
-        console.log('[ColorManager] Created default theme');
       }
     } catch (error) {
       console.warn(`[ColorManager] Error creating default theme: ${error.message}`);
@@ -171,7 +169,6 @@ class ColorManager {
     };
     
     if (process.env.CCTOP_VERBOSE === 'true') {
-      console.log('[ColorManager] Loaded fallback theme');
     }
   }
 
@@ -304,7 +301,6 @@ class ColorManager {
         this.currentTheme = themeData;
         
         if (process.env.CCTOP_VERBOSE === 'true') {
-          console.log(`[ColorManager] Switched to theme: ${themeName}`);
         }
         
         return true;

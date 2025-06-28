@@ -168,7 +168,7 @@ class BufferedRenderer {
    */
   fullRender(): void {
     console.clear();
-    this.buffer.forEach((line: string) => console.log(line));
+    this.buffer.forEach((line: string) => process.stdout.write(line + '\n'));
     this.cursorSaved = false;
   }
 
