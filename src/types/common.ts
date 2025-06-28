@@ -113,3 +113,37 @@ export interface ThemeInfo {
   displayName: string;
   description: string;
 }
+
+// ColorManager specific types
+export interface ColorMap {
+  [colorName: string]: string;
+}
+
+export interface RGBColor {
+  hex: string;
+  valid: boolean;
+}
+
+export interface ColorConfig {
+  configPath: string;
+  currentThemeFile: string;
+  themesDir: string;
+}
+
+export interface ThemeMetadata {
+  name: string;
+  description: string;
+  version: string;
+  lastUpdated: string;
+}
+
+export interface FullThemeData extends ThemeMetadata {
+  colors: ThemeColors;
+}
+
+export interface ThemeInfoResult {
+  name: string;
+  description: string;
+  version: string;
+  lastUpdated: string;
+}
