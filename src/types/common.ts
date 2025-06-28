@@ -657,3 +657,35 @@ export interface HistoryDisplay {
   totalItems: number;
   focusIndex: number;
 }
+
+// InstantViewer interfaces
+export interface InstantViewerConfig {
+  database?: {
+    path: string;
+  };
+  display?: {
+    maxEvents?: number;
+  };
+  [key: string]: any;
+}
+
+export interface InstantViewerStatus {
+  isRunning: boolean;
+  pid: number;
+  databaseConnected: boolean;
+  displayActive: boolean;
+  startupTime: number;
+}
+
+// Additional Manager interfaces (for InstantViewer dependencies)
+export interface ProgressiveLoader {
+  loadRecentEventsFirst(limit: number): Promise<number>;
+  getLastLoadedEventId(): number | null;
+}
+
+export interface DatabaseWatcher {
+  setLastEventId(eventId: number): void;
+  on(event: string, callback: (data: any) => void): void;
+  start(): void;
+  stop(): void;
+}
