@@ -546,3 +546,57 @@ export interface CLIDisplay {
 export interface ConfigManager {
   initialize(): Promise<ViewerProcessConfig>;
 }
+
+// CLIDisplay interfaces
+export interface CLIDisplayConfig {
+  refreshRate?: number;
+  showMonitorStatus?: boolean;
+  mode?: 'all' | 'unique' | string;
+  configPath?: string;
+  maxEvents?: number;
+  [key: string]: any;
+}
+
+export interface CLIDisplayStats {
+  displayMode: 'all' | 'unique';
+  modeIndicator: string;
+  totalEvents: number;
+  uniqueFiles: number;
+  stats: string;
+  displayText: string;
+  renderer: any;
+  layout: {
+    widthConfig: WidthConfig;
+    layoutMode: string;
+  };
+  isRunning: boolean;
+}
+
+// Manager interfaces (for CLIDisplay dependencies)
+export interface LayoutManager {
+  getWidthConfig(): WidthConfig;
+  getLayoutMode(): string;
+  setupResizeHandler(): void;
+  onResize(callback: (widthConfig: WidthConfig) => void): void;
+  destroy(): void;
+}
+
+export interface InputHandler {
+  setupKeyboardHandlers(): void;
+  setEventDisplayManager(manager: any): void;
+  setFilterManager(manager: any): void;
+  setRenderController(controller: any): void;
+  setExitCallback(callback: () => void): void;
+  destroy(): void;
+}
+
+export interface InteractiveFeatures {
+  setDisplayRenderer(renderer: any): void;
+  initialize(): Promise<void>;
+  updateFileListFromEvents(): void;
+}
+
+export interface EventFilterManager {
+  on(event: string, callback: () => void): void;
+  getFilterStates(): FilterStates;
+}
