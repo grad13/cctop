@@ -3,8 +3,10 @@
  * Independent background process for file monitoring
  */
 
-import { EventEmitter } from 'events';
-import { 
+const { EventEmitter } = require('events');
+
+// Type-only imports
+import type { 
   DatabaseManager, 
   ProcessManager, 
   ConfigManager, 
