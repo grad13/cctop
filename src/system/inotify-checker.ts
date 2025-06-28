@@ -3,7 +3,7 @@
  * inotify.max_user_watches limit management in Linux environments
  */
 
-import { promises as fs } from 'fs';
+const fs = require('fs').promises;
 
 interface CheckResult {
   status: 'sufficient' | 'insufficient' | 'unknown';
