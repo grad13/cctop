@@ -801,3 +801,60 @@ export interface LogBackupFile {
   path: string;
   timestamp: number;
 }
+
+// EventProcessor interfaces
+export interface EventProcessorConfig {
+  monitoring?: {
+    eventFilters?: Partial<FilterState>;
+  };
+  [key: string]: any;
+}
+
+export interface FileEventInput {
+  type: string;
+  path: string;
+  stats?: any;
+  retryCount?: number;
+}
+
+export interface FileEventMetadata {
+  file_path: string;
+  file_name: string;
+  directory: string;
+  timestamp: number;
+  event_type?: EventType;
+  file_size?: number;
+  inode?: number | null;
+  line_count?: number | null;
+  block_count?: number | null;
+}
+
+export interface ProcessedEventResult {
+  original: FileEventInput;
+  recorded: FileEventMetadata & { id: number };
+  eventType: EventType;
+}
+
+export interface EventProcessingError {
+  event: FileEventInput;
+  error: Error;
+}
+
+export interface MoveDetectionInfo {
+  inode: number;
+  timestamp: number;
+}
+
+export interface EventProcessorStats {
+  isInitialScanMode: boolean;
+  processedEvents: number;
+  errors: number;
+}
+
+export interface DatabaseManager {
+  isInitialized: boolean;
+  db: any;
+  recordEvent(metadata: FileEventMetadata): Promise<number>;
+  findByPath(filePath: string): Promise<any>;
+  get(sql: string, params?: any[]): Promise<any>;
+}
