@@ -1,3 +1,10 @@
+---
+Archive-Date: 2025-06-29
+Archive-Week: 2025-0623-0629
+Original-Path: documents/records/plans/PLAN-20250624-005-git-management-separation-implementation.md
+Keywords: git-separation, parent-git, child-git, p045-protocol, chk006-checklist, git-initialization, clean-start, boundary-enforcement, agent-guidelines, workflow-establishment, violation-response, infrastructure-setup, documentation-update
+---
+
 # PLAN-20250624-005: Git管理分離ルール化実装プラン
 
 **作成日**: 2025年6月24日  

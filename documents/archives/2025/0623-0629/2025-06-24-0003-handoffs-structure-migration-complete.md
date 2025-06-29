@@ -1,3 +1,10 @@
+---
+Archive-Date: 2025-06-29
+Archive-Week: 2025-0623-0629
+Original-Path: documents/records/reports/REP-0094-handoffs-structure-migration-complete.md
+Keywords: handoffs-migration-complete, completed-directory, 3-stage-workflow, agent-directory-deletion, pending-inprogress-completed, workflow-clarification, management-efficiency, clerk-agent, archive-policy, naming-convention
+---
+
 # REP-0094: Handoffsディレクトリ構造移行完了報告
 
 **作成日**: 2025年6月24日  

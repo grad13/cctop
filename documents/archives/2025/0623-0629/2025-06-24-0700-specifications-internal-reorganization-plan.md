@@ -1,3 +1,10 @@
+---
+Archive-Date: 2025-06-29
+Archive-Week: 2025-0623-0629
+Original-Path: documents/records/plans/PLAN-20250624-007-specifications-internal-reorganization.md
+Keywords: specifications-structure, directory-reorganization, implementation-directory, roadmaps-directory, visions-directory, file-categorization, readme-creation, duplicate-elimination, reference-updating, metadata-cleanup, technical-components, management-efficiency
+---
+
 # specifications/ 内部整理計画書
 
 **ファイル**: PLAN-20250624-007-specifications-internal-reorganization.md  

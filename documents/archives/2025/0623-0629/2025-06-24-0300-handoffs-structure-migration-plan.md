@@ -1,3 +1,10 @@
+---
+Archive-Date: 2025-06-29
+Archive-Week: 2025-0623-0629
+Original-Path: documents/records/plans/PLAN-20250624-003-handoffs-structure-migration.md
+Keywords: handoffs-migration, directory-structure, completed-directory, workflow-improvement, task-management, pending-inprogress-completed, backup-strategy, documentation-update, clerk-agent, file-organization, archive-policy, verification-testing
+---
+
 # PLAN-20250624-003: Handoffsディレクトリ構造移行計画
 
 **作成日**: 2025年6月24日  

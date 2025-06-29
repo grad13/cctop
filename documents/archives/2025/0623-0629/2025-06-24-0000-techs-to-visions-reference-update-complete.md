@@ -1,3 +1,10 @@
+---
+Archive-Date: 2025-06-29
+Archive-Week: 2025-0623-0629
+Original-Path: documents/records/reports/REP-0097-techs-to-visions-reference-update-complete.md
+Keywords: techs-to-visions-update, reference-integrity, directory-rename-complete, clerk-agent, 30-files-updated, system-documents, operational-documents, record-documents, phase-execution, quality-assurance, archive-exclusion
+---
+
 # REP-0097: techs/→visions/参照更新作業完了報告
 
 **レポートID**: REP-0097  

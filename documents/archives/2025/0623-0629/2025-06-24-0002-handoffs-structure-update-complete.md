@@ -1,3 +1,10 @@
+---
+Archive-Date: 2025-06-29
+Archive-Week: 2025-0623-0629
+Original-Path: documents/records/reports/REP-0095-handoffs-structure-update-complete.md
+Keywords: handoffs-structure-update, pending-agent-format, document-update-complete, clerk-agent, claudemd-update, agent-roles-update, protocol-update, records-update, passage-update, reference-integrity, 21-changes
+---
+
 # REP-0095: Handoffs構造変更に伴う文書更新完了レポート
 
 **作成日**: 2025年6月24日  

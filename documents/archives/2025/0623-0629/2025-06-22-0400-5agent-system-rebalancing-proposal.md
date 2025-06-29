@@ -1,3 +1,10 @@
+---
+Archive-Date: 2025-06-29
+Archive-Week: 2025-0623-0629
+Original-Path: documents/records/plans/PLAN-20250622-004-5agent-system-rebalancing-proposal.md
+Keywords: 5-agent-rebalancing, src-test-spec-equality, rdd-approach, validator-agent, architect-elevation, role-specialization, cctop-v3-lessons, real-operation-driven, mock-divergence, quality-triangle, agent-collaboration, system-redesign
+---
+
 # 5 Agent体制リバランス提案 - src/test/spec等価重要性の実現
 
 **Document ID**: PLAN-20250622-004  

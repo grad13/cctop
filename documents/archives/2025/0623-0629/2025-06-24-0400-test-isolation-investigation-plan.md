@@ -1,3 +1,10 @@
+---
+Archive-Date: 2025-06-29
+Archive-Week: 2025-0623-0629
+Original-Path: documents/records/plans/PLAN-20250624-004-test-isolation-investigation.md
+Keywords: test-isolation, test-failures, integration-testing, side-effects, resource-conflicts, test-dependencies, validator-agent, debugging-strategy, pair-testing, root-cause-analysis, ci-cd-reliability, test-matrix
+---
+
 # PLAN-20250624-004: テスト分離問題調査計画書
 
 **作成日**: 2025-06-24  

@@ -1,3 +1,10 @@
+---
+Archive-Date: 2025-06-29
+Archive-Week: 2025-0623-0629
+Original-Path: documents/records/plans/PLAN-20250623-002-vis007-tracer-implementation.md
+Keywords: vis007-tracer, 3-mode-interface, unique-mode, selection-mode, detail-mode, database-migration, db001-simplification, phased-implementation, builder-agent, ui-implementation, tracer-core, keyboard-navigation, file-history
+---
+
 # PLAN-20250623-002: vis007 Tracer機能実装計画
 
 **作成日**: 2025年6月23日 17:00  

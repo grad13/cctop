@@ -1,3 +1,10 @@
+---
+Archive-Date: 2025-06-29
+Archive-Week: 2025-0623-0629
+Original-Path: documents/records/plans/PLAN-20250624-002-test-improvement.md
+Keywords: test-improvement, side-effect-testing, data-driven-testing, contract-testing, builder-agent, rep-088-audit, test-quality, fixture-organization, test-independence, implementation-details, startup-verification, database-testing, config-testing
+---
+
 # テスト改善計画書 - 2025年6月24日（改訂版）
 
 **作成日**: 2025-06-24  

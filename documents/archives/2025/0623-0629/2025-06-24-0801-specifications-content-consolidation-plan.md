@@ -1,3 +1,10 @@
+---
+Archive-Date: 2025-06-29
+Archive-Week: 2025-0623-0629
+Original-Path: documents/records/plans/PLAN-20250624-008-specifications-content-consolidation.md
+Keywords: specifications-content, duplicate-analysis, file-quality, consolidation-plan, configuration-merge, cache-merge, roadmap-merge, phase-execution, reference-protection, git-management, technical-specifications, quality-standards, implementation-efficiency
+---
+
 # specifications/ 内容統廃合計画書
 
 **ファイル**: PLAN-20250624-008-specifications-content-consolidation.md  

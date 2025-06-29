@@ -1,3 +1,10 @@
+---
+Archive-Date: 2025-06-29
+Archive-Week: 2025-0623-0629
+Original-Path: documents/records/plans/PLAN-20250622-001-documents-mass-migration-to-cctop.md
+Keywords: documents-migration, cctop-cli-transition, timebox-legacy, web-ui-removal, archive-structure, authentication-removal, asset-management-removal, spa-cleanup, project-purification, 70percent-reduction, architect-clerk-collaboration
+---
+
 # documents/ 大規模移行計画書 - cctop CLI特化
 
 **計画番号**: PLAN-20250622-001  

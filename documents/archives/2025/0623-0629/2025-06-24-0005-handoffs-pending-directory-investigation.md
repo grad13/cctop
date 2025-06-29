@@ -1,3 +1,10 @@
+---
+Archive-Date: 2025-06-29
+Archive-Week: 2025-0623-0629
+Original-Path: documents/records/reports/REP-0092-handoffs-pending-directory-investigation.md
+Keywords: handoffs-investigation, pending-directory, inbox-outbox-deprecation, design-implementation-gap, workflow-states, in-progress-addition, document-inconsistency, clerk-agent, state-management, practical-structure
+---
+
 # REP-0092: Handoffs Pendingディレクトリ構造調査報告
 
 **作成日**: 2025年6月24日  

@@ -1,3 +1,10 @@
+---
+Archive-Date: 2025-06-29
+Archive-Week: 2025-0623-0629
+Original-Path: documents/records/plans/PLAN-20250622-003-inspector-stuff-relocation.md
+Keywords: inspector-stuff-relocation, cctop-documents, specifications-migration, blueprints-migration, reports-migration, content-analysis, architect-agent, document-organization, timebox-separation, technical-documentation
+---
+
 # PLAN-20250622-003: inspector-stuff移動計画書
 
 **作成日**: 2025年6月22日 23:58  

@@ -1,3 +1,10 @@
+---
+Archive-Date: 2025-06-29
+Archive-Week: 2025-0623-0629
+Original-Path: documents/records/plans/PLAN-20250624-008-v0100-specifications-consolidation.md
+Keywords: specifications-consolidation, duplicate-removal, file-reorganization, technical-catalog, config-system-unification, cache-system-unification, roadmap-consolidation, quality-improvement, reference-integrity, single-source-of-truth, implementation-optimization, architect-agent, document-management
+---
+
 # PLAN-20250624-008: specifications/統廃合計画書
 
 **Plan ID**: PLAN-20250624-008  

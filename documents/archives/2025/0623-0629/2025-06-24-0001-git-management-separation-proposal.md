@@ -1,3 +1,10 @@
+---
+Archive-Date: 2025-06-29
+Archive-Week: 2025-0623-0629
+Original-Path: documents/records/reports/REP-0096-git-management-separation-proposal.md
+Keywords: git-separation-proposal, parent-child-git, project-structure, separation-of-concerns, agent-responsibilities, gitignore-optimization, independent-release, cctop-tool, document-management, scalability, workflow-clarity, clerk-agent
+---
+
 # REP-0096: Git管理分離提案 - 06-cctop vs cctop独立化
 
 **作成日**: 2025年6月24日  

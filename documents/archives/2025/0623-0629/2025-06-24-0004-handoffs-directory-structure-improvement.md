@@ -1,3 +1,10 @@
+---
+Archive-Date: 2025-06-29
+Archive-Week: 2025-0623-0629
+Original-Path: documents/records/reports/REP-0093-handoffs-directory-structure-improvement.md
+Keywords: handoffs-improvement-proposal, completed-directory, 3-stage-workflow, unified-structure, pending-inprogress-completed, archive-efficiency, agent-directory-removal, date-based-organization, clerk-agent, management-simplification
+---
+
 # REP-0093: Handoffsディレクトリ構造改善提案
 
 **作成日**: 2025年6月24日  

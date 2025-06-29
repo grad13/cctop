@@ -1,3 +1,10 @@
+---
+Archive-Date: 2025-06-29
+Archive-Week: 2025-0623-0629
+Original-Path: documents/records/reports/REP-0144-ui-display-improvement-analysis-20250624.md
+Keywords: ui-improvement, column-order, directory-rightmost, display-settings, configurable-columns, stream-renderer, hot-reload, architect-agent, ui-customization, column-visibility, layout-presets, cli-arguments
+---
+
 # cctop v0.1.0.0 UI表示改善調査レポート
 
 **作成日**: 2025-06-24  

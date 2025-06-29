@@ -1,3 +1,10 @@
+---
+Archive-Date: 2025-06-29
+Archive-Week: 2025-0623-0629
+Original-Path: documents/records/reports/REP-0099-lost-refind-event-design-rationale.md
+Keywords: lost-refind-events, file-lifecycle, object-id-inheritance, inode-tracking, monitoring-gaps, design-rationale, builder-agent, delete-event-fix, startup-scanning, file-resurrection, event-types
+---
+
 # REP-0099: Lost/Refind Event Design Rationale
 
 **作成日**: 2025-06-25  

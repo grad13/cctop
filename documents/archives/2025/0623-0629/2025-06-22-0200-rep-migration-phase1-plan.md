@@ -1,3 +1,10 @@
+---
+Archive-Date: 2025-06-29
+Archive-Week: 2025-0623-0629
+Original-Path: documents/records/plans/PLAN-20250622-002-rep-migration-phase1.md
+Keywords: rep-migration, timebox-separation, general-knowledge-retention, archive-criteria, multi-agent-system, parallel-processing, documentation-management, mcp-integration, web-interface-testing, sqlite-migration, protocol-review, development-environment
+---
+
 # PLAN-20250622-002: REPファイル移行判定 Phase 1
 
 **作成日**: 2025年6月22日 22:30  

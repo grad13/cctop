@@ -1,3 +1,10 @@
+---
+Archive-Date: 2025-06-29
+Archive-Week: 2025-0623-0629
+Original-Path: documents/records/reports/REP-0090-claude-md-improvement.md
+Keywords: claudemd-improvement, documentation-fixes, filepath-correction, protocol-references, git-section-consolidation, tech-stack-integration, readme-targets, protocol-standardization, clerk-agent, draft-proposal
+---
+
 # DRAFT: CLAUDE.md改善提案
 
 **作成日**: 2025年6月24日  

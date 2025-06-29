@@ -1,9 +1,17 @@
 # Plans Directory - プロジェクト計画書管理
 
 **作成日**: 2025年6月22日  
-**最終更新**: 2025年6月26日  
+**最終更新**: 2025年6月29日  
 **管理者**: Architect Agent  
 **目的**: 大規模な計画・移行・改善計画の体系的管理
+
+## 🗄️ DDD2実行記録
+
+### L2→L3アーカイブ移行（2025-06-29）
+- **実施内容**: 3日以上経過した18ファイルをarchives/へ移行
+- **移行先**: `documents/archives/2025/0623-0629/`
+- **P043準拠**: 各ファイルにアーカイブ情報とキーワード追加
+- **検索方法**: `patterns "計画書名" archives/2025/0623-0629/`
 
 ## 📋 概要
 
@@ -28,24 +36,6 @@ PLAN-YYYYMMDD-XXX-brief-description.md
 
 | ID | ファイル名 | タイトル | 作成者 | ステータス | カテゴリ |
 |----|-----------|---------|--------|------------|----------|
-| 001 | [`PLAN-20250622-001`](PLAN-20250622-001-documents-mass-migration-to-cctop.md) | documents/大規模移行計画 | Architect | 計画書作成完了・実行承認待ち | 📁 文書管理 |
-| 002 | [`PLAN-20250622-002`](PLAN-20250622-002-rep-migration-phase1.md) | REP移行Phase1計画 | Architect | 計画書作成完了 | 📁 文書管理 |
-| 003 | [`PLAN-20250622-003`](PLAN-20250622-003-inspector-stuff-relocation.md) | inspector-stuff移転計画 | Architect | 計画書作成完了 | 📁 文書管理 |
-| 004 | [`PLAN-20250622-004`](PLAN-20250622-004-5agent-system-rebalancing-proposal.md) | 5 Agent体制リバランス提案 | Validator | 提案作成完了・検討待ち | 🔧 開発プロセス |
-| 005 | [`PLAN-20250623-001`](PLAN-20250623-001-ui-mode-separation.md) | UIモード分離計画 | Builder | 承認待ち | 🚀 機能開発 |
-| 006 | [`PLAN-20250623-002`](PLAN-20250623-002-vis007-tracer-implementation.md) | vis007 Tracer機能実装計画 | Builder | 計画書作成完了 | 🚀 機能開発 |
-| 007 | [`PLAN-20250624-002`](PLAN-20250624-002-test-improvement.md) | テスト改善計画書（改訂版） | Builder | 計画書作成完了・実行承認待ち | 🔧 開発プロセス |
-| 008 | [`PLAN-20250624-002`](PLAN-20250624-002-documents-reorganization.md)⚠️ | Documents資料整理計画書 | Architect | 計画書作成完了 | 📁 文書管理 |
-| 009 | [`PLAN-20250624-003`](PLAN-20250624-003-handoffs-structure-migration.md) | Handoffsディレクトリ構造移行計画 | Clerk | **実行完了**（REP-0094） | 🏗️ システム移行 |
-| 010 | [`PLAN-20250624-004`](PLAN-20250624-004-test-isolation-investigation.md) | テスト分離問題調査計画 | Validator | 計画書作成完了・実行承認待ち | 🔧 開発プロセス |
-| 011 | [`PLAN-20250624-005`](PLAN-20250624-005-git-management-separation-implementation.md) | Git管理分離ルール化実装プラン | Clerk | **実行完了**（親git/子git分離） | 🏗️ システム移行 |
-| 012 | [`PLAN-20250624-006`](PLAN-20250624-006-techs-to-visions-reference-update.md) | techs/→visions/参照更新計画 | Clerk | **実行完了**（REP-0097） | 📁 文書管理 |
-| 013 | [`PLAN-20250624-007`](PLAN-20250624-007-specifications-internal-reorganization.md) | specifications/内部整理計画 | Architect | **実行完了** | 📁 文書管理 |
-| 014 | [`PLAN-20250624-008`](PLAN-20250624-008-specifications-content-consolidation.md) | specifications/内容統廃合計画書 | Architect | 計画書作成完了・実行承認待ち | 📁 文書管理 |
-| 015 | [`PLAN-20250624-008`](PLAN-20250624-008-v0100-specifications-consolidation.md)⚠️ | specifications/統廃合計画書 | Architect | Active | 📁 文書管理 |
-| 016 | [`PLAN-20250624-009`](PLAN-20250624-009-functions-extraction-roadmap.md) | Functions抽出ロードマップ（修正版） | Architect | Active | 🏗️ システム移行 |
-| 017 | [`PLAN-20250625-001`](PLAN-20250625-001-test-quality-improvement.md) | テスト品質改善計画書 | Validator | **緊急度：Critical** | 🔧 開発プロセス |
-| 018 | [`PLAN-20250626-001`](PLAN-20250626-001-legacy-directory-cleanup.md) | Legacy Directory Cleanup Plan | Architect | 計画書作成完了・実行承認待ち | 📁 文書管理 |
 | 019 | [`PLAN-20250628-001`](PLAN-20250628-001-typescript-migration.md) | TypeScript Migration Plan | Builder | 計画書作成完了・実行承認待ち | 🏗️ システム移行 |
 | 020 | [`PLAN-20250628-003`](PLAN-20250628-003-typescript-refactoring-overview.md) | TypeScript移行後リファクタリング総合計画 | Builder | 計画書作成完了 | 🔧 開発プロセス改善 |
 | 021 | [`PLAN-20250628-004`](PLAN-20250628-004-colormanager-refactoring.md) | ColorManager.ts リファクタリング詳細計画 | Builder | 計画書作成完了 | 🔧 開発プロセス改善 |
@@ -59,7 +49,12 @@ PLAN-YYYYMMDD-XXX-brief-description.md
 | 029 | [`PLAN-20250628-012`](PLAN-20250628-012-typescript-refactoring-revised.md) | TypeScript移行後リファクタリング現状対応版 | Builder | 計画書作成完了・実行承認待ち | 🔧 開発プロセス改善 |
 | 030 | [`PLAN-20250628-013`](PLAN-20250628-013-typescript-gradual-introduction.md) | TypeScript段階的導入計画（安全重視版） | Builder | 計画書作成完了・実行承認待ち | 🏗️ システム移行 |
 
-⚠️ **番号重複**: PLAN-20250624-002とPLAN-20250624-008に重複があります。次回作成時は既存番号を確認してください。
+### 📝 アーカイブされた計画書
+
+2025-06-29のL2→L3移行により、以下の計画書がアーカイブされました：
+- PLAN-20250622-001 〜 PLAN-20250626-003（計18ファイル）
+- 検索は `patterns "計画書名" archives/2025/0623-0629/` で可能です
+- 番号は欠番となりますが、新規計画書は連番を継続します（次は031から）
 
 ## 🔄 計画書のライフサイクル
 

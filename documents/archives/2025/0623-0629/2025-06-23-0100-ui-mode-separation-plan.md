@@ -1,3 +1,10 @@
+---
+Archive-Date: 2025-06-29
+Archive-Week: 2025-0623-0629
+Original-Path: documents/records/plans/PLAN-20250623-001-ui-mode-separation.md
+Keywords: ui-mode-separation, classic-mode, ink-mode, esm-modules, commonjs, esbuild, bundling, stream-display, ink-v6, jsx-conversion, builder-agent, ui-implementation, command-structure
+---
+
 # cctop UIモード分離 作業計画書
 
 ## 文書情報

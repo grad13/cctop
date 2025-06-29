@@ -1,3 +1,10 @@
+---
+Archive-Date: 2025-06-29
+Archive-Week: 2025-0623-0629
+Original-Path: documents/records/plans/PLAN-20250624-006-techs-to-visions-reference-update.md
+Keywords: techs-to-visions, reference-update, directory-rename, clerk-agent, document-integrity, reference-consistency, phase-execution, system-core-documents, operational-documents, record-documents, update-patterns, quality-assurance
+---
+
 # PLAN-20250624-006: techs/→visions/参照更新計画
 
 **計画ID**: PLAN-20250624-006  

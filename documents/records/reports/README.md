@@ -1,7 +1,7 @@
 # レポート・実施記録ドキュメント
 
 **作成日**: 2025年6月23日  
-**更新日**: 2025年6月23日（P043プロトコル完了後再構築）  
+**更新日**: 2025年6月29日（L2→L3移行実施）  
 **目的**: 定期チェック実施記録、分析レポート、プロジェクト活動の履歴管理  
 
 ## 📋 概要
@@ -34,14 +34,6 @@ REP-XXXX-title.md
 
 | ファイル名 | 作成日 | 概要 | ステータス |
 |-----------|--------|------|----------|
-| REP-0090-claude-md-improvement.md | 2025-06-24 | CLAUDE.md改善提案 | 活動中 |
-| REP-0092-handoffs-pending-directory-investigation.md | 2025-06-24 | Handoffs Pendingディレクトリ構造調査報告 | 活動中 |
-| REP-0093-handoffs-directory-structure-improvement.md | 2025-06-24 | Handoffsディレクトリ構造改善提案 | 活動中 |
-| REP-0094-handoffs-structure-migration-complete.md | 2025-06-24 | Handoffsディレクトリ構造移行完了報告 | 活動中 |
-| REP-0095-handoffs-structure-update-complete.md | 2025-06-24 | Handoffs構造変更に伴う文書更新完了レポート | 活動中 |
-| REP-0096-git-management-separation-proposal.md | 2025-06-24 | Git管理分離提案 | 活動中 |
-| REP-0097-techs-to-visions-reference-update-complete.md | 2025-06-24 | techs/→visions/参照更新作業完了報告 | 活動中 |
-| REP-0099-lost-refind-event-design-rationale.md | 2025-06-25 | Lost/Refindイベント設計思想の記録 | 活動中 |
 | REP-0100-architect-status-l1-l2-migration-20250627.md | 2025-06-27 | Architect Status L1→L2移行記録 | 活動中 |
 | REP-0101-builder-status-l1-l2-migration-20250627.md | 2025-06-27 | Builder Status L1→L2移行記録 | 活動中 |
 | REP-0102-typescript-migration-phase3-database.md | 2025-06-28 | TypeScript移行Phase 3完了報告 | 完了 |
@@ -85,14 +77,27 @@ REP-XXXX-title.md
 | REP-0141-typescript-migration-phase1-20250628.md | 2025-06-28 | TypeScript移行Phase 1レポート | 活動中 |
 | REP-0142-typescript-migration-phase2-20250628.md | 2025-06-28 | TypeScript移行Phase 2レポート | 活動中 |
 | REP-0143-typescript-migration-phase3-20250628.md | 2025-06-28 | TypeScript移行Phase 3レポート | 活動中 |
-| REP-0144-ui-display-improvement-analysis-20250624.md | 2025-06-24 | UI表示改善分析 | 活動中 |
 | REP-0145-validate-006-event-filtering-test-results.md | 2025-06-26 | VALIDATE-006イベントフィルタリングテスト結果 | 活動中 |
 | REP-0146-validator-status-l1-to-l2-migration-20250627.md | 2025-06-27 | Validator Status L1→L2移行記録 | 活動中 |
 | REP-0148-clerk-status-l1-l2-migration-20250627.md | 2025-06-27 | Clerk Status L1→L2移行記録 | 活動中 |
 | REP-0149-inspector-status-l1-l2-migration-20250627.md | 2025-06-27 | Inspector Status L1→L2移行記録 | 活動中 |
 | REP-0150-clerk-status-l1-l2-migration-20250628.md | 2025-06-28 | Clerk Status L1→L2移行記録 | 完了 |
+| REP-0151-architect-status-l1-l2-migration-20250628.md | 2025-06-28 | Architect Status L1→L2移行記録 | 完了 |
+| REP-0152-builder-status-l1-l2-migration-20250628.md | 2025-06-28 | Builder Status L1→L2移行記録 | 完了 |
+| REP-0153-validator-status-l1-l2-migration-20250628.md | 2025-06-28 | Validator Status L1→L2移行記録 | 完了 |
+| REP-0154-architect-status-l1-l2-migration-20250628.md | 2025-06-28 | Architect Status L1→L2移行記録（第2回） | 完了 |
+| REP-0155-inspector-status-l1-l2-migration-20250628.md | 2025-06-28 | Inspector Status L1→L2移行記録 | 完了 |
+| REP-0156-agents-status-l1-l2-migration-summary-20250628.md | 2025-06-28 | 全エージェントStatus L1→L2移行総括 | 完了 |
+| REP-0157-typescript-migration-issues-investigation.md | 2025-06-28 | TypeScript移行問題調査 | 活動中 |
+| REP-0158-l2-l3-migration-20250629.md | 2025-06-29 | L2→L3移行実施記録 | 完了 |
 
 ## 📁 アーカイブされたレポート（archives/）
+
+### 2025年6月29日 P043実行（3日経過ルール）
+- **移行完了**: REP-0090, REP-0092～REP-0097, REP-0099, REP-0144の計9ファイルをarchives/2025/0623-0629/へ移行完了
+- **移行理由**: 3日経過による機械的判定（P043基準）
+- **検索方法**: `patterns "キーワード" archives/2025/0623-0629/` で検索可能
+- **キーワード付与**: 各ファイルに10-20個の検索キーワードを追加
 
 ### 2025年6月28日 P043実行（3日経過ルール）
 - **移行完了**: REP-0088, REP-0089, REP-0091, REP-0098, REP-0135, REP-0147の6ファイルをarchives/2025/0623-0629/へ移行完了
@@ -159,8 +164,8 @@ REP-XXXX-title.md
 ### 番号体系について
 - **正常動作**: REP番号に欠番が存在するのは正常（アーカイブ移行により発生）
 - **採番ルール**: 新規レポートは欠番を埋めず、常に最新番号+1を使用
-- **現在番号**: REP-0150（最新）
-- **次回番号**: REP-0151-（次回新規レポート用）
+- **現在番号**: REP-0158（最新）
+- **次回番号**: REP-0159-（次回新規レポート用）
 
 ### 検索・参照方法
 - **現在のレポート**: このディレクトリ内のファイル

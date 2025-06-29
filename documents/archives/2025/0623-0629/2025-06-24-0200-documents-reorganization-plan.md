@@ -1,3 +1,10 @@
+---
+Archive-Date: 2025-06-29
+Archive-Week: 2025-0623-0629
+Original-Path: documents/records/plans/PLAN-20250624-002-documents-reorganization.md
+Keywords: documents-reorganization, architect-agent, plan-placement, visions-blueprints, records-plans, classification-guidelines, technical-documents, implementation-plans, strategic-plans, file-migration, p047-protocol, document-structure
+---
+
 # cctop Documents資料整理計画書
 
 **作成日**: 2025年6月24日  
