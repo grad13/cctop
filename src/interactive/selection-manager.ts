@@ -3,10 +3,38 @@
  * Keyboard-based item selection with visual feedback
  */
 
-const ColorManager = require('../color/ColorManager');
+import ColorManager = require('../color/ColorManager');
+
+interface SelectionColors {
+  background: string;
+  foreground: string;
+  reset: string;
+}
+
+interface SelectionStateResult {
+  mode: 'waiting' | 'selecting';
+  currentIndex: number;
+  selectedFile: string | null;
+  totalItems: number;
+  isSelecting: boolean;
+}
+
+interface SelectedItem {
+  index: number;
+  file: string;
+  displayItem: string;
+}
 
 class SelectionManager {
-  constructor(configPath = '.cctop') {
+  private mode: 'waiting' | 'selecting';
+  private currentIndex: number;
+  private selectedFile: string | null;
+  private displayItems: string[];
+  private maxDisplayItems: number;
+  private colorManager: ColorManager;
+  private selectionColors: SelectionColors;
+
+  constructor(configPath: string = '.cctop') {
     this.mode = 'waiting'; // waiting | selecting
     this.currentIndex = 0;
     this.selectedFile = null;
@@ -21,7 +49,7 @@ class SelectionManager {
   /**
    * Load selection colors from theme
    */
-  loadSelectionColors() {
+  private loadSelectionColors(): SelectionColors {
     return {
       background: this.colorManager.getColor('selection.background') || '\x1b[44m', // Blue background
       foreground: this.colorManager.getColor('selection.foreground') || '\x1b[97m', // Bright white
@@ -32,7 +60,7 @@ class SelectionManager {
   /**
    * Start selection mode
    */
-  startSelection(displayItems = []) {
+  startSelection(displayItems: string[] = []): SelectionStateResult {
     this.mode = 'selecting';
     this.displayItems = displayItems;
     this.currentIndex = 0;
@@ -50,7 +78,7 @@ class SelectionManager {
   /**
    * Move selection up or down
    */
-  moveSelection(direction) {
+  moveSelection(direction: 'up' | 'down'): SelectionStateResult {
     if (this.mode !== 'selecting' || this.displayItems.length === 0) {
       return this.getSelectionState();
     }
@@ -76,12 +104,12 @@ class SelectionManager {
   /**
    * Confirm selection (Enter key)
    */
-  confirmSelection() {
+  confirmSelection(): SelectedItem | null {
     if (this.mode !== 'selecting' || !this.selectedFile) {
       return null;
     }
 
-    const selectedItem = {
+    const selectedItem: SelectedItem = {
       index: this.currentIndex,
       file: this.selectedFile,
       displayItem: this.displayItems[this.currentIndex]
@@ -95,7 +123,7 @@ class SelectionManager {
   /**
    * Cancel selection (Escape key)
    */
-  cancelSelection() {
+  cancelSelection(): SelectionStateResult {
     // Selection cancelled
     
     this.mode = 'waiting';
@@ -109,7 +137,7 @@ class SelectionManager {
   /**
    * Apply selection highlighting to display line
    */
-  applySelectionHighlight(lineText, lineIndex) {
+  applySelectionHighlight(lineText: string, lineIndex: number): string {
     if (this.mode === 'selecting' && lineIndex === this.currentIndex) {
       // Apply selection colors
       return `${this.selectionColors.background}${this.selectionColors.foreground}${lineText}${this.selectionColors.reset}`;
@@ -120,14 +148,14 @@ class SelectionManager {
   /**
    * Check if a line should be highlighted
    */
-  isLineSelected(lineIndex) {
+  isLineSelected(lineIndex: number): boolean {
     return this.mode === 'selecting' && lineIndex === this.currentIndex;
   }
 
   /**
    * Update display items (called when display refreshes)
    */
-  updateDisplayItems(newDisplayItems) {
+  updateDisplayItems(newDisplayItems: string[]): SelectionStateResult {
     const wasSelecting = this.mode === 'selecting';
     this.displayItems = newDisplayItems;
     
@@ -152,7 +180,7 @@ class SelectionManager {
   /**
    * Get current selection state
    */
-  getSelectionState() {
+  getSelectionState(): SelectionStateResult {
     return {
       mode: this.mode,
       currentIndex: this.currentIndex,
@@ -165,14 +193,14 @@ class SelectionManager {
   /**
    * Get selection colors for external use
    */
-  getSelectionColors() {
+  getSelectionColors(): SelectionColors {
     return this.selectionColors;
   }
 
   /**
    * Set custom selection colors
    */
-  setSelectionColors(colors) {
+  setSelectionColors(colors: Partial<SelectionColors>): void {
     this.selectionColors = { ...this.selectionColors, ...colors };
     
     // Selection colors updated
@@ -183,22 +211,22 @@ class SelectionManager {
    */
   
   // Called by KeyInputManager when starting selection
-  onStartSelection(displayItems) {
+  onStartSelection(displayItems: string[]): SelectionStateResult {
     return this.startSelection(displayItems);
   }
 
   // Called by KeyInputManager for selection movement
-  onSelectionMove(direction) {
+  onSelectionMove(direction: 'up' | 'down'): SelectionStateResult {
     return this.moveSelection(direction);
   }
 
   // Called by KeyInputManager for selection confirmation
-  onSelectionConfirm() {
+  onSelectionConfirm(): SelectedItem | null {
     return this.confirmSelection();
   }
 
   // Called by KeyInputManager for selection cancellation
-  onSelectionCancel() {
+  onSelectionCancel(): SelectionStateResult {
     return this.cancelSelection();
   }
 
@@ -207,12 +235,12 @@ class SelectionManager {
    */
   
   // Check if currently in selection mode
-  isInSelectionMode() {
+  isInSelectionMode(): boolean {
     return this.mode === 'selecting';
   }
 
   // Get currently selected item
-  getCurrentSelection() {
+  getCurrentSelection(): { index: number; file: string } | null {
     if (this.mode === 'selecting' && this.selectedFile) {
       return {
         index: this.currentIndex,
@@ -223,7 +251,7 @@ class SelectionManager {
   }
 
   // Reset selection state
-  reset() {
+  reset(): void {
     this.mode = 'waiting';
     this.currentIndex = 0;
     this.selectedFile = null;
@@ -233,4 +261,4 @@ class SelectionManager {
   }
 }
 
-module.exports = SelectionManager;
+export = SelectionManager;

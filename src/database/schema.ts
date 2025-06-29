@@ -4,8 +4,9 @@
  */
 
 const schema = {
-  // 1. Event types definition table
-  event_types: `
+  tables: {
+    // 1. Event types definition table
+    event_types: `
     CREATE TABLE IF NOT EXISTS event_types (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       code TEXT NOT NULL UNIQUE,
@@ -90,7 +91,8 @@ const schema = {
       calculation_method TEXT DEFAULT 'trigger',
       
       FOREIGN KEY (file_id) REFERENCES files(id)
-    )`,
+    )`
+  },
 
   // Index definitions
   indexes: [
@@ -184,4 +186,4 @@ const migration = {
   // Migration logic implementation in database-manager.js
 };
 
-module.exports = { schema, initialData, migration };
+export = { schema, initialData, migration };

@@ -3,8 +3,49 @@
  * Display file basic info and aggregate statistics in detail mode upper section
  */
 
+interface AggregateData {
+  file_id: number;
+  inode: number;
+  total_events: number;
+  total_creates: number;
+  total_modifies: number;
+  total_deletes: number;
+  total_moves: number;
+  total_restores: number;
+  first_event_timestamp: string | null;
+  last_event_timestamp: string | null;
+  first_size: number | null;
+  max_size: number | null;
+  last_size: number | null;
+  first_lines: number | null;
+  max_lines: number | null;
+  last_lines: number | null;
+  first_blocks: number | null;
+  max_blocks: number | null;
+  last_blocks: number | null;
+  total_size: number;
+  total_lines: number;
+  total_blocks: number;
+  avg_size?: number;
+  avg_lines?: number;
+  avg_blocks?: number;
+}
+
+interface SummaryData {
+  fileId: number;
+  inode: number;
+  totalEvents: number;
+  lastUpdate: string;
+  currentSize: string;
+  currentLines: number;
+}
+
 class AggregateDisplay {
-  constructor(databaseManager, configPath = '.cctop') {
+  private db: any;
+  private configPath: string;
+  private debug: boolean;
+
+  constructor(databaseManager: any, configPath: string = '.cctop') {
     this.db = databaseManager;
     this.configPath = configPath;
     this.debug = process.env.CCTOP_VERBOSE === 'true';
@@ -17,10 +58,10 @@ class AggregateDisplay {
   /**
    * Get aggregate data for a file
    */
-  async getAggregateData(fileId) {
+  async getAggregateData(fileId: number): Promise<AggregateData | null> {
     try {
       // Get main aggregate statistics
-      const aggregateData = await this.db.get(`
+      const aggregateData: AggregateData | undefined = await this.db.get(`
         SELECT 
           -- File identification
           f.id as file_id,
@@ -91,7 +132,7 @@ class AggregateDisplay {
   /**
    * Format timestamp for display
    */
-  formatTimestamp(timestamp) {
+  private formatTimestamp(timestamp: string | null): string {
     if (!timestamp) return '-';
     
     const date = new Date(timestamp);
@@ -107,7 +148,7 @@ class AggregateDisplay {
   /**
    * Format file size for display
    */
-  formatSize(bytes) {
+  private formatSize(bytes: number | null | undefined): string {
     if (bytes === null || bytes === undefined) return '-';
     if (bytes === 0) return '0';
     
@@ -128,12 +169,12 @@ class AggregateDisplay {
   /**
    * Render aggregate display section
    */
-  renderAggregateDisplay(aggregateData, width = 76) {
+  renderAggregateDisplay(aggregateData: AggregateData | null, width: number = 76): string {
     if (!aggregateData) {
       return this.renderNoDataMessage(width);
     }
 
-    const lines = [];
+    const lines: string[] = [];
     const border = '─'.repeat(width - 2);
     
     // Header
@@ -216,8 +257,8 @@ class AggregateDisplay {
   /**
    * Render no data message
    */
-  renderNoDataMessage(width = 76) {
-    const lines = [];
+  private renderNoDataMessage(width: number = 76): string {
+    const lines: string[] = [];
     const border = '─'.repeat(width - 2);
     
     lines.push(`┌─ File Details ${border.substring(0, width - 18)}┐`);
@@ -232,14 +273,14 @@ class AggregateDisplay {
   /**
    * Get display height (number of lines)
    */
-  getDisplayHeight() {
+  getDisplayHeight(): number {
     return 15; // Fixed height for aggregate display section
   }
 
   /**
    * Async method to render aggregate display for a file
    */
-  async renderForFile(fileId, width = 76) {
+  async renderForFile(fileId: number, width: number = 76): Promise<string> {
     const aggregateData = await this.getAggregateData(fileId);
     return this.renderAggregateDisplay(aggregateData, width);
   }
@@ -247,7 +288,7 @@ class AggregateDisplay {
   /**
    * Get summary data for quick display
    */
-  async getSummaryData(fileId) {
+  async getSummaryData(fileId: number): Promise<SummaryData | null> {
     try {
       const data = await this.getAggregateData(fileId);
       if (!data) return null;
@@ -269,4 +310,4 @@ class AggregateDisplay {
   }
 }
 
-module.exports = AggregateDisplay;
+export = AggregateDisplay;

@@ -6,14 +6,14 @@
  * FUNC-105 Local Setup Initialization compliant
  */
 
-const DatabaseManager = require('../src/database/database-manager');
-const ConfigManager = require('../src/config/config-manager');
-const FileMonitor = require('../src/monitors/file-monitor');
-const EventProcessor = require('../src/monitors/event-processor');
-const CLIDisplay = require('../src/ui/cli-display');
-const InotifyChecker = require('../src/system/inotify-checker');
-const ViewerProcess = require('../src/ui/viewer-process');
-const ProcessManager = require('../src/monitors/process-manager');
+const DatabaseManager = require('../dist/database/database-manager');
+const ConfigManager = require('../dist/config/config-manager');
+const FileMonitor = require('../dist/monitors/file-monitor');
+const EventProcessor = require('../dist/monitors/event-processor');
+const CLIDisplay = require('../dist/ui/cli-display');
+const InotifyChecker = require('../dist/system/inotify-checker');
+const ViewerProcess = require('../dist/ui/viewer-process');
+const ProcessManager = require('../dist/monitors/process-manager');
 
 let dbManager = null;
 let configManager = null;
@@ -205,7 +205,7 @@ async function main() {
     if (cliArgs.daemonMode) {
       // Start monitor in daemon mode only
       const processManager = new ProcessManager(config);
-      const monitorScript = require.resolve('../src/monitors/monitor-process.js');
+      const monitorScript = require.resolve('../dist/monitors/monitor-process.js');
       const pid = await processManager.startMonitor(monitorScript);
       console.log(`✅ Monitor started in background (PID: ${pid})`);
       process.exit(0);
@@ -232,7 +232,7 @@ async function main() {
     
     // Default mode: Start instant viewer for immediate feedback (FUNC-206 compliant)
     // Use InstantViewer for < 100ms startup time
-    const InstantViewer = require('../src/ui/instant-viewer');
+    const InstantViewer = require('../dist/ui/instant-viewer');
     const viewer = new InstantViewer(config);
     
     // Timeout handling (FUNC-104 compliant)

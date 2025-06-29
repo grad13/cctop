@@ -3,16 +3,31 @@
  * Extracted from cli-display.js for better maintainability
  */
 
+interface WidthConfig {
+  terminal: number;
+  directory: number;
+}
+
+interface TerminalDimensions {
+  width: number;
+  height: number;
+}
+
+type LayoutMode = 'narrow' | 'normal' | 'wide';
+type ResizeCallback = (widthConfig: WidthConfig) => void;
+
 class LayoutManager {
+  private widthConfig: WidthConfig;
+  private resizeCallbacks: ResizeCallback[] = [];
+
   constructor() {
     this.widthConfig = this.calculateDynamicWidth();
-    this.resizeCallbacks = [];
   }
 
   /**
    * Calculate dynamic width for responsive directory display
    */
-  calculateDynamicWidth() {
+  private calculateDynamicWidth(): WidthConfig {
     const terminalWidth = process.stdout.columns || 80;
     // Fixed columns: Event Timestamp(19) + Elapsed(10) + FileName(28) + Event(8) + Lines(5) + Blocks(6) + Spaces(6*2=12)
     const fixedWidth = 19 + 10 + 28 + 8 + 5 + 6 + 12; // 88文字
@@ -27,14 +42,14 @@ class LayoutManager {
   /**
    * Get current width configuration
    */
-  getWidthConfig() {
+  getWidthConfig(): WidthConfig {
     return this.widthConfig;
   }
 
   /**
    * Update width configuration (call on terminal resize)
    */
-  updateWidthConfig() {
+  updateWidthConfig(): void {
     this.widthConfig = this.calculateDynamicWidth();
     
     // Notify all callbacks about the width change
@@ -52,7 +67,7 @@ class LayoutManager {
   /**
    * Setup terminal resize event handler
    */
-  setupResizeHandler() {
+  setupResizeHandler(): void {
     if (process.stdout.isTTY) {
       process.stdout.on('resize', () => {
         this.updateWidthConfig();
@@ -67,7 +82,7 @@ class LayoutManager {
   /**
    * Register callback for resize events
    */
-  onResize(callback) {
+  onResize(callback: ResizeCallback): void {
     if (typeof callback === 'function') {
       this.resizeCallbacks.push(callback);
     }
@@ -76,7 +91,7 @@ class LayoutManager {
   /**
    * Remove resize callback
    */
-  offResize(callback) {
+  offResize(callback: ResizeCallback): void {
     const index = this.resizeCallbacks.indexOf(callback);
     if (index !== -1) {
       this.resizeCallbacks.splice(index, 1);
@@ -86,7 +101,7 @@ class LayoutManager {
   /**
    * Get terminal dimensions
    */
-  getTerminalDimensions() {
+  getTerminalDimensions(): TerminalDimensions {
     return {
       width: process.stdout.columns || 80,
       height: process.stdout.rows || 24
@@ -96,7 +111,7 @@ class LayoutManager {
   /**
    * Check if terminal is wide enough for full display
    */
-  isWideEnoughForFullDisplay() {
+  isWideEnoughForFullDisplay(): boolean {
     const minRequiredWidth = 88; // Fixed columns minimum
     return this.widthConfig.terminal >= minRequiredWidth;
   }
@@ -104,7 +119,7 @@ class LayoutManager {
   /**
    * Get layout mode based on terminal width
    */
-  getLayoutMode() {
+  getLayoutMode(): LayoutMode {
     const width = this.widthConfig.terminal;
     
     if (width < 80) {
@@ -119,11 +134,11 @@ class LayoutManager {
   /**
    * Cleanup resources
    */
-  destroy() {
+  destroy(): void {
     this.resizeCallbacks = [];
     // Note: Cannot remove process.stdout resize listeners easily
     // This is acceptable as the process will handle cleanup
   }
 }
 
-module.exports = LayoutManager;
+export = LayoutManager;

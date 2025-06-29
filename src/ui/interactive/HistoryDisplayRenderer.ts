@@ -3,10 +3,32 @@
  * Displays event history in lower section with navigation
  */
 
-const chalk = require('chalk');
+import chalk = require('chalk');
+import DatabaseManager = require('../../database/database-manager');
+
+interface HistoryEntry {
+  timestamp: number;
+  event_type: string;
+  line_count: number | null;
+  block_count: number | null;
+  file_size: number | null;
+  id: number;
+}
+
+interface CountResult {
+  total: number;
+}
 
 class HistoryDisplayRenderer {
-  constructor(databaseManager) {
+  private databaseManager: DatabaseManager;
+  private historyData: HistoryEntry[];
+  private focusIndex: number;
+  private currentPage: number;
+  private entriesPerPage: number;
+  private selectedFile: string | null;
+  private totalEntries: number;
+
+  constructor(databaseManager: DatabaseManager) {
     this.databaseManager = databaseManager;
     this.historyData = [];
     this.focusIndex = 0;
@@ -19,7 +41,7 @@ class HistoryDisplayRenderer {
   /**
    * Initialize with selected file
    */
-  async initialize(selectedFile) {
+  async initialize(selectedFile: string): Promise<void> {
     this.selectedFile = selectedFile;
     this.focusIndex = 0;
     this.currentPage = 0;
@@ -41,7 +63,7 @@ class HistoryDisplayRenderer {
   /**
    * Load history data from database
    */
-  async loadHistory(fileId) {
+  private async loadHistory(fileId: number): Promise<void> {
     try {
       // SQL query based on FUNC-403 specification
       const query = `
@@ -61,7 +83,7 @@ class HistoryDisplayRenderer {
       `;
       
       const offset = this.currentPage * this.entriesPerPage;
-      this.historyData = await this.databaseManager.all(query, [fileId, this.entriesPerPage, offset]);
+      this.historyData = await this.databaseManager.all(query, [fileId, this.entriesPerPage, offset]) as HistoryEntry[];
       
       // Get total count for pagination info
       const countQuery = `
@@ -69,7 +91,7 @@ class HistoryDisplayRenderer {
         FROM events e
         WHERE e.file_id = ?
       `;
-      const countResult = await this.databaseManager.get(countQuery, [fileId]);
+      const countResult = await this.databaseManager.get(countQuery, [fileId]) as CountResult | undefined;
       this.totalEntries = countResult ? countResult.total : 0;
       
       // Reset focus if we have data
@@ -87,7 +109,7 @@ class HistoryDisplayRenderer {
   /**
    * Navigate history list
    */
-  async navigate(direction) {
+  async navigate(direction: 'ArrowUp' | 'ArrowDown'): Promise<void> {
     if (this.historyData.length === 0) {
       return;
     }
@@ -105,14 +127,14 @@ class HistoryDisplayRenderer {
       // Try to load next page if available
       if ((this.currentPage + 1) * this.entriesPerPage < this.totalEntries) {
         this.currentPage++;
-        const fileId = await this.databaseManager.ensureFile(this.selectedFile);
+        const fileId = await this.databaseManager.ensureFile(this.selectedFile!);
         await this.loadHistory(fileId);
         this.focusIndex = 0; // Reset to top of new page
       }
     } else if (direction === 'ArrowUp' && this.focusIndex === 0 && this.currentPage > 0) {
       // Try to load previous page
       this.currentPage--;
-      const fileId = await this.databaseManager.ensureFile(this.selectedFile);
+      const fileId = await this.databaseManager.ensureFile(this.selectedFile!);
       await this.loadHistory(fileId);
       this.focusIndex = this.historyData.length - 1; // Move to bottom of previous page
     }
@@ -122,7 +144,7 @@ class HistoryDisplayRenderer {
   /**
    * Render history display
    */
-  render() {
+  render(): string {
     if (this.historyData.length === 0) {
       return this.renderNoHistory();
     }
@@ -176,7 +198,7 @@ class HistoryDisplayRenderer {
   /**
    * Render when no history available
    */
-  renderNoHistory() {
+  private renderNoHistory(): string {
     return [
       chalk.green('│ No events recorded for this file                                        │'),
       chalk.green('│                                                                          │'),
@@ -191,7 +213,7 @@ class HistoryDisplayRenderer {
   /**
    * Render error state
    */
-  renderError() {
+  private renderError(): string {
     return [
       chalk.green('│ Error loading event history                                              │'),
       chalk.green('│                                                                          │'),
@@ -206,7 +228,7 @@ class HistoryDisplayRenderer {
   /**
    * Format timestamp for history display
    */
-  formatTimestamp(timestamp) {
+  private formatTimestamp(timestamp: number): string {
     if (!timestamp) {
       return '---'.padEnd(11);
     }
@@ -223,7 +245,7 @@ class HistoryDisplayRenderer {
   /**
    * Format event type for display
    */
-  formatEventType(eventType) {
+  private formatEventType(eventType: string): string {
     if (!eventType) {
       return 'unknown'.padEnd(8);
     }
@@ -235,7 +257,7 @@ class HistoryDisplayRenderer {
   /**
    * Format metric values
    */
-  formatMetric(value, width) {
+  private formatMetric(value: number | null | undefined, width: number): string {
     if (value === null || value === undefined) {
       return '-'.padStart(width);
     }
@@ -253,7 +275,7 @@ class HistoryDisplayRenderer {
   /**
    * Apply focus highlighting to a line
    */
-  applyFocusStyle(line) {
+  private applyFocusStyle(line: string): string {
     // Apply white background with black text for focus
     const content = line.slice(2, -2); // Remove border characters
     return chalk.green('│ ') + chalk.bgWhite.black(content) + chalk.green(' │');
@@ -262,7 +284,7 @@ class HistoryDisplayRenderer {
   /**
    * Get pagination information
    */
-  getPageInfo() {
+  private getPageInfo(): string {
     if (this.totalEntries === 0) {
       return '[0/0]';
     }
@@ -274,21 +296,21 @@ class HistoryDisplayRenderer {
   /**
    * Get current history data
    */
-  getHistoryData() {
+  getHistoryData(): HistoryEntry[] {
     return [...this.historyData];
   }
 
   /**
    * Get current focus index
    */
-  getFocusIndex() {
+  getFocusIndex(): number {
     return this.focusIndex;
   }
 
   /**
    * Get focused entry
    */
-  getFocusedEntry() {
+  getFocusedEntry(): HistoryEntry | null {
     if (this.historyData.length > 0 && this.focusIndex >= 0 && this.focusIndex < this.historyData.length) {
       return this.historyData[this.focusIndex];
     }
@@ -298,7 +320,7 @@ class HistoryDisplayRenderer {
   /**
    * Cleanup
    */
-  cleanup() {
+  cleanup(): void {
     this.historyData = [];
     this.selectedFile = null;
     this.focusIndex = 0;
@@ -307,4 +329,4 @@ class HistoryDisplayRenderer {
   }
 }
 
-module.exports = HistoryDisplayRenderer;
+export = HistoryDisplayRenderer;

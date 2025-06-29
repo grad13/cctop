@@ -144,6 +144,13 @@ class DatabaseManager {
   }
 
   /**
+   * Check if database is connected
+   */
+  isConnected(): boolean {
+    return this.db !== null && this.isInitialized;
+  }
+
+  /**
    * Test database connection
    */
   private async testConnection(): Promise<void> {

@@ -241,9 +241,11 @@ class InteractiveFeatures {
     this.displayRenderer = renderer;
     
     // Update selection manager with new renderer
-    if (this.selectionManager) {
-      (this.selectionManager as any).setDisplayRenderer(renderer);
-    }
+    // Note: SelectionManager doesn't have setDisplayRenderer method
+    // This was likely from an older version
+    // if (this.selectionManager) {
+    //   (this.selectionManager as any).setDisplayRenderer(renderer);
+    // }
   }
 
   /**
