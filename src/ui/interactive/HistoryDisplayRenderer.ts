@@ -20,7 +20,7 @@ interface CountResult {
 }
 
 class HistoryDisplayRenderer {
-  private databaseManager: DatabaseManager;
+  private databaseManager: typeof DatabaseManager.prototype;
   private historyData: HistoryEntry[];
   private focusIndex: number;
   private currentPage: number;
@@ -28,7 +28,7 @@ class HistoryDisplayRenderer {
   private selectedFile: string | null;
   private totalEntries: number;
 
-  constructor(databaseManager: DatabaseManager) {
+  constructor(databaseManager: typeof DatabaseManager.prototype) {
     this.databaseManager = databaseManager;
     this.historyData = [];
     this.focusIndex = 0;
