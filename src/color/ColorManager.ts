@@ -1,403 +1,187 @@
 /**
- * ColorManager - FUNC-207 Display Color Customization
- * Manages theme loading and color application for all display elements
+ * ColorManager - Facade for color management system
+ * FUNC-207: Display Color Customization
+ * Maintains backward compatibility while delegating to specialized components
  */
 
-import fs = require('fs');
-import path = require('path');
-import chalk = require('chalk');
+import { ThemeLoader } from './loaders/ThemeLoader';
+import { ColorConverter } from './converters/ColorConverter';
+import { ColorApplier } from './appliers/ColorApplier';
 import { 
-  ColorMap, 
-  ColorConfig, 
-  RGBColor, 
-  ThemeMetadata, 
-  FullThemeData, 
-  ThemeInfoResult,
-  ThemeColors 
-} from '../types/common';
+  ColorTheme,
+  EventTypeColor,
+  TableElementType,
+  StatusType,
+  MessageType,
+  ThemeInfo
+} from './types/ThemeTypes';
 
 class ColorManager {
-  private configPath: string;
-  private currentThemeFile: string;
-  private themesDir: string;
-  private currentTheme: FullThemeData | null;
-  private colorMap: ColorMap;
+  private themeLoader: ThemeLoader;
+  private colorConverter: ColorConverter;
+  private colorApplier: ColorApplier;
+  private currentTheme: ColorTheme | null = null;
+  private initialized: boolean = false;
 
   constructor(configPath: string = '.cctop') {
-    this.configPath = configPath;
-    this.currentThemeFile = path.join(configPath, 'current-theme.json');
-    this.themesDir = path.join(configPath, 'themes');
-    this.currentTheme = null;
-    this.colorMap = this.initializeColorMap();
+    this.themeLoader = new ThemeLoader(configPath);
+    this.colorConverter = new ColorConverter();
+    this.colorApplier = new ColorApplier(this.colorConverter, null);
     
-    // Load theme on initialization
+    // Start async initialization
     this.loadCurrentTheme();
   }
 
   /**
-   * Initialize ANSI color code mapping
+   * Load current theme asynchronously
    */
-  private initializeColorMap(): ColorMap {
-    return {
-      // Basic colors
-      'black': '\x1b[30m',
-      'red': '\x1b[31m',
-      'green': '\x1b[32m',
-      'yellow': '\x1b[33m',
-      'blue': '\x1b[34m',
-      'magenta': '\x1b[35m',
-      'cyan': '\x1b[36m',
-      'white': '\x1b[37m',
-      
-      // Bright colors
-      'brightBlack': '\x1b[90m',
-      'brightRed': '\x1b[91m',
-      'brightGreen': '\x1b[92m',
-      'brightYellow': '\x1b[93m',
-      'brightBlue': '\x1b[94m',
-      'brightMagenta': '\x1b[95m',
-      'brightCyan': '\x1b[96m',
-      'brightWhite': '\x1b[97m',
-      
-      // Special colors
-      'gray': '\x1b[90m',
-      'dim': '\x1b[2m',
-      'default': '\x1b[39m',
-      'reset': '\x1b[0m'
-    };
-  }
-
-  /**
-   * Load current theme from current-theme.json
-   */
-  private loadCurrentTheme(): void {
+  private async loadCurrentTheme(): Promise<void> {
     try {
-      if (fs.existsSync(this.currentThemeFile)) {
-        const themeData = JSON.parse(fs.readFileSync(this.currentThemeFile, 'utf8')) as FullThemeData;
-        this.currentTheme = themeData;
-        
-        if (process.env.CCTOP_VERBOSE === 'true') {
-          console.log(`[ColorManager] Loaded theme: ${themeData.name || 'unknown'}`);
-        }
-      } else {
-        // Create default theme if current-theme.json doesn't exist
-        this.createDefaultTheme();
-      }
-    } catch (error: any) {
-      console.warn(`[ColorManager] Error loading theme: ${error.message}`);
-      this.loadFallbackTheme();
+      this.currentTheme = await this.themeLoader.getCurrentTheme();
+      this.colorApplier.updateTheme(this.currentTheme);
+      this.initialized = true;
+    } catch (error) {
+      console.warn('[ColorManager] Failed to load theme, using defaults:', error);
+      this.initialized = true;
     }
   }
 
   /**
-   * Create default current-theme.json
+   * Get color for specific element (backward compatibility)
    */
-  private createDefaultTheme(): void {
-    const defaultTheme: FullThemeData = {
-      "name": "default",
-      "description": "Default color scheme for cctop",
-      "lastUpdated": new Date().toISOString(),
-      "version": "1.0.0",
-      "colors": {
-        "table": {
-          "column_headers": "white",
-          "row": {
-            "event_timestamp": "white",
-            "elapsed_time": "white", 
-            "file_name": "white",
-            "event_type": {
-              "find": "blue",
-              "create": "brightGreen",
-              "modify": "white",
-              "delete": "gray",
-              "move": "cyan",
-              "restore": "brightYellow"
-            },
-            "lines": "white",
-            "blocks": "white",
-            "directory": "white"
-          }
-        },
-        "status_bar": {
-          "label": "white",
-          "count": "white",
-          "separator": "gray"
-        },
-        "general_keys": {
-          "key_active": "white",
-          "key_inactive": "dim",
-          "label_active": "white",
-          "label_inactive": "dim"
-        },
-        "event_filters": {
-          "key_active": "green",
-          "key_inactive": "dim",
-          "label_active": "white",
-          "label_inactive": "gray"
-        },
-        "message_area": {
-          "prompt": "cyan",
-          "label": "gray",
-          "status": "green",
-          "pid": "dim",
-          "summary": "white"
-        }
-      }
-    };
-
-    try {
-      // Ensure .cctop directory exists
-      if (!fs.existsSync(this.configPath)) {
-        fs.mkdirSync(this.configPath, { recursive: true });
-      }
-      
-      fs.writeFileSync(this.currentThemeFile, JSON.stringify(defaultTheme, null, 2));
-      this.currentTheme = defaultTheme;
-      
-      if (process.env.CCTOP_VERBOSE === 'true') {
-        console.log('[ColorManager] Created default theme');
-      }
-    } catch (error: any) {
-      console.warn(`[ColorManager] Error creating default theme: ${error.message}`);
-      this.loadFallbackTheme();
-    }
-  }
-
-  /**
-   * Load hardcoded fallback theme
-   */
-  private loadFallbackTheme(): void {
-    this.currentTheme = {
-      "name": "fallback",
-      "description": "Fallback color scheme",
-      "version": "1.0.0",
-      "lastUpdated": new Date().toISOString(),
-      "colors": {
-        "table": {
-          "column_headers": "white",
-          "row": {
-            "event_timestamp": "white",
-            "elapsed_time": "white", 
-            "file_name": "white",
-            "event_type": {
-              "find": "blue",
-              "create": "brightGreen", 
-              "modify": "white",
-              "delete": "gray",
-              "move": "cyan",
-              "restore": "brightYellow"
-            },
-            "lines": "white",
-            "blocks": "white",
-            "directory": "white"
-          }
-        },
-        "status_bar": {
-          "label": "white",
-          "count": "white",
-          "separator": "gray"
-        },
-        "general_keys": {
-          "key_active": "white",
-          "key_inactive": "dim",
-          "label_active": "white",
-          "label_inactive": "dim"
-        },
-        "event_filters": {
-          "key_active": "green",
-          "key_inactive": "dim",
-          "label_active": "white",
-          "label_inactive": "gray"
-        },
-        "message_area": {
-          "prompt": "cyan",
-          "label": "gray",
-          "status": "green",
-          "pid": "dim",
-          "summary": "white"
-        }
-      }
-    };
-    
-    if (process.env.CCTOP_VERBOSE === 'true') {
-      console.log('[ColorManager] Loaded fallback theme');
-    }
-  }
-
-  /**
-   * Parse color value (RGB support added)
-   * @param colorValue - Color value (preset name or hex)
-   * @returns ANSI color code or empty string
-   */
-  private parseColorValue(colorValue: string): string {
-    if (!colorValue) {
-      return '';
-    }
-    
-    // RGB hex color support: #FF0000, #00FF00, etc.
-    if (colorValue.startsWith('#') && colorValue.length === 7) {
-      try {
-        // Validate hex format
-        const hexPattern = /^#[0-9A-Fa-f]{6}$/;
-        if (hexPattern.test(colorValue)) {
-          // Force chalk to enable colors for hex processing
-          const originalLevel = chalk.level;
-          chalk.level = 3; // Force truecolor support
-          
-          // Extract ANSI code from chalk.hex output
-          const coloredText = chalk.hex(colorValue)('test');
-          const resetCode = '\x1b[39m'; // Reset foreground color
-          const ansiCode = coloredText.replace('test', '').replace(resetCode, '');
-          
-          // Restore original chalk level
-          chalk.level = originalLevel;
-          
-          return ansiCode;
-        }
-      } catch (error: any) {
-        if (process.env.CCTOP_VERBOSE === 'true') {
-          console.warn(`[ColorManager] Invalid hex color: ${colorValue}`);
-        }
-      }
-    }
-    
-    // Preset color name support (existing functionality)
-    if (this.colorMap[colorValue]) {
-      return this.colorMap[colorValue];
-    }
-    
-    return '';
-  }
-
-  /**
-   * Get color code for a given path (RGB support added)
-   * @param colorPath - Dot notation path like 'table.row.event_type.create'
-   * @returns ANSI color code or empty string
-   */
-  public getColor(colorPath: string): string {
+  getColor(path: string): string | undefined {
     if (!this.currentTheme || !this.currentTheme.colors) {
-      return '';
+      return undefined;
     }
     
-    try {
-      const colorValue = colorPath.split('.').reduce((obj: any, key: string) => obj?.[key], this.currentTheme.colors);
-      return this.parseColorValue(colorValue);
-    } catch (error: any) {
-      if (process.env.CCTOP_VERBOSE === 'true') {
-        console.warn(`[ColorManager] Error getting color for path: ${colorPath}`);
-      }
-    }
+    const parts = path.split('.');
+    let current: any = this.currentTheme.colors;
     
-    return '';
-  }
-
-  /**
-   * Apply color to text
-   * @param text - Text to colorize
-   * @param colorPath - Color path in theme
-   * @returns Colorized text
-   */
-  public colorize(text: string, colorPath: string): string {
-    const colorCode = this.getColor(colorPath);
-    if (colorCode) {
-      return `${colorCode}${text}\x1b[0m`;
-    }
-    return text;
-  }
-
-  /**
-   * Get event type color (FUNC-202 integration)
-   * @param eventType - Event type (find, create, modify, etc.)
-   * @returns ANSI color code
-   */
-  public getEventTypeColor(eventType: string): string {
-    return this.getColor(`table.row.event_type.${eventType}`);
-  }
-
-  /**
-   * Apply event type color (for existing formatEventType integration)
-   * @param text - Text to colorize
-   * @param eventType - Event type
-   * @returns Colorized text
-   */
-  public colorizeEventType(text: string, eventType: string): string {
-    const colorCode = this.getEventTypeColor(eventType);
-    if (colorCode) {
-      return `${colorCode}${text}\x1b[0m`;
-    }
-    return text;
-  }
-
-  /**
-   * Reload theme from disk
-   */
-  public reloadTheme(): void {
-    this.loadCurrentTheme();
-  }
-
-  /**
-   * Switch to a different preset theme
-   * @param themeName - Theme name (without .json extension)
-   */
-  public switchTheme(themeName: string): boolean {
-    try {
-      const themeFile = path.join(this.themesDir, `${themeName}.json`);
-      
-      if (fs.existsSync(themeFile)) {
-        const themeData = JSON.parse(fs.readFileSync(themeFile, 'utf8')) as FullThemeData;
-        
-        // Update lastUpdated and copy to current-theme.json
-        themeData.lastUpdated = new Date().toISOString();
-        fs.writeFileSync(this.currentThemeFile, JSON.stringify(themeData, null, 2));
-        
-        this.currentTheme = themeData;
-        
-        if (process.env.CCTOP_VERBOSE === 'true') {
-          console.log(`[ColorManager] Switched to theme: ${themeName}`);
-        }
-        
-        return true;
+    for (const part of parts) {
+      if (current && typeof current === 'object' && part in current) {
+        current = current[part];
       } else {
-        console.warn(`[ColorManager] Theme file not found: ${themeFile}`);
-        return false;
+        return undefined;
       }
-    } catch (error: any) {
-      console.error(`[ColorManager] Error switching theme: ${error.message}`);
-      return false;
     }
+    
+    return typeof current === 'string' ? current : undefined;
   }
 
   /**
-   * Get current theme info
+   * Apply table colors (backward compatibility)
    */
-  public getCurrentThemeInfo(): ThemeInfoResult | null {
-    if (this.currentTheme) {
-      return {
-        name: this.currentTheme.name || 'unknown',
-        description: this.currentTheme.description || '',
-        version: this.currentTheme.version || '1.0.0',
-        lastUpdated: this.currentTheme.lastUpdated || ''
-      };
-    }
-    return null;
+  applyTableColors(text: string, type: string): string {
+    return this.colorApplier.applyTableColors(text, type as TableElementType);
   }
 
   /**
-   * List available preset themes
+   * Apply event type colors (backward compatibility)
    */
-  public getAvailableThemes(): string[] {
+  applyEventTypeColor(text: string, eventType: string): string {
+    return this.colorApplier.applyEventTypeColor(text, eventType as EventTypeColor);
+  }
+
+  /**
+   * Apply status colors (backward compatibility)
+   */
+  applyStatusColor(text: string, type: string): string {
+    return this.colorApplier.applyStatusColor(text, type as StatusType);
+  }
+
+  /**
+   * Apply general key colors (backward compatibility)
+   */
+  applyGeneralKeyColor(text: string, active: boolean): string {
+    return this.colorApplier.applyGeneralKeyColor(text, active);
+  }
+
+  /**
+   * Apply filter key colors (backward compatibility)
+   */
+  applyFilterKeyColor(text: string, filterType: string, active: boolean): string {
+    return this.colorApplier.applyFilterKeyColor(text, filterType as EventTypeColor, active);
+  }
+
+  /**
+   * Apply message colors (backward compatibility)
+   */
+  applyMessageColor(text: string, type: string): string {
+    return this.colorApplier.applyMessageColor(text, type as MessageType);
+  }
+
+  /**
+   * Convert to ANSI code (backward compatibility)
+   */
+  convertToANSI(color: string): string {
+    return this.colorConverter.convertToANSI(color);
+  }
+
+  /**
+   * Parse color value (backward compatibility)
+   */
+  parseColorValue(value: string | undefined): any {
+    return this.colorConverter.parseColorValue(value);
+  }
+
+  /**
+   * Parse RGB hex (backward compatibility)
+   */
+  parseRGBHex(hex: string): any {
+    return this.colorConverter.parseRGBHex(hex);
+  }
+
+  /**
+   * List available themes (backward compatibility)
+   */
+  async listAvailableThemes(): Promise<ThemeInfo[]> {
+    return this.themeLoader.listAvailableThemes();
+  }
+
+  /**
+   * Load theme (backward compatibility)
+   */
+  async loadTheme(name: string): Promise<void> {
     try {
-      if (fs.existsSync(this.themesDir)) {
-        const files = fs.readdirSync(this.themesDir);
-        return files
-          .filter(file => file.endsWith('.json'))
-          .map(file => file.replace('.json', ''));
-      }
-    } catch (error: any) {
-      console.warn(`[ColorManager] Error listing themes: ${error.message}`);
+      const theme = await this.themeLoader.loadTheme(name);
+      this.currentTheme = theme;
+      this.colorApplier.updateTheme(theme);
+      await this.themeLoader.setCurrentTheme(name);
+    } catch (error) {
+      console.error('[ColorManager] Failed to load theme:', error);
+      throw error;
     }
-    return [];
+  }
+
+  /**
+   * Get current theme (backward compatibility)
+   */
+  getCurrentTheme(): ColorTheme | null {
+    return this.currentTheme;
+  }
+
+  /**
+   * Check if initialized
+   */
+  isInitialized(): boolean {
+    return this.initialized;
+  }
+
+  /**
+   * Colorize text (backward compatibility)
+   */
+  colorize(text: string, color: string | undefined): string {
+    if (!color) return text;
+    return this.colorConverter.parseColorValue(color)(text);
+  }
+
+  /**
+   * Colorize event type (backward compatibility)
+   */
+  colorizeEventType(text: string, eventType: string): string {
+    return this.colorApplier.applyEventTypeColor(text, eventType as EventTypeColor);
   }
 }
 
+// Export for backward compatibility
 export = ColorManager;
