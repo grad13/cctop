@@ -3,58 +3,35 @@
  * Coordinates FUNC-402 and FUNC-403 modules
  */
 
-// Type-only imports
+// Type imports
 import type { 
-  DetailInspectionController as IDetailInspectionController,
+  IDetailInspectionController,
   KeyInputManager,
-  AggregateDisplay,
-  HistoryDisplay,
-  RenderController
-} from '../../types/common';
+  IAggregateDisplay,
+  IHistoryDisplay,
+  IRenderController,
+  SelectedFile,
+  ISelectedFile,
+  IKeyHandler
+} from './interfaces/ControllerInterfaces';
 
-// Detail Inspection Controller specific interfaces
-interface SelectedFileObject {
-  name?: string;
-  path?: string;
-  [key: string]: any;
-}
-
-type SelectedFile = string | SelectedFileObject;
-
-interface DetailRenderController extends RenderController {
-  setDetailModeActive?(active: boolean): void;
-  cliDisplay?: {
-    refreshInterval?: NodeJS.Timeout | null;
-    updateDisplay?(): void;
-  };
-  isDetailMode?(): boolean;
-  render?(): void;
-}
-
-interface DetailAggregateDisplay extends AggregateDisplay {
-  initialize(filePath: string): Promise<void>;
-  render(): string | null;
-  cleanup?(): void;
-}
-
-interface DetailHistoryDisplay extends HistoryDisplay {
-  initialize(filePath: string): Promise<void>;
-  render(): string | null;
-  navigate?(key: string): Promise<void>;
-  cleanup?(): void;
-}
+// Component imports
+import { DetailModeState } from './state/DetailModeState';
+import { DisplayCoordinator } from './coordinators/DisplayCoordinator';
+import { DetailRenderer } from './renderers/DetailRenderer';
 
 class DetailInspectionController implements IDetailInspectionController {
-  private aggregateDisplay: DetailAggregateDisplay;
-  private historyDisplay: DetailHistoryDisplay;
+  private displayCoordinator: DisplayCoordinator;
+  private detailState: DetailModeState;
+  private detailRenderer: DetailRenderer;
   private keyInputManager: KeyInputManager;
-  private active: boolean = false;
-  private selectedFile: SelectedFile | null = null;
-  private renderController: DetailRenderController | null = null;
+  private renderController: IRenderController | null = null;
   
-  constructor(aggregateDisplay: DetailAggregateDisplay, historyDisplay: DetailHistoryDisplay, keyInputManager: KeyInputManager) {
-    this.aggregateDisplay = aggregateDisplay;  // FUNC-402
-    this.historyDisplay = historyDisplay;      // FUNC-403
+  constructor(aggregateDisplay: IAggregateDisplay, historyDisplay: IHistoryDisplay, keyInputManager: KeyInputManager) {
+    // Initialize components
+    this.displayCoordinator = new DisplayCoordinator(aggregateDisplay, historyDisplay);
+    this.detailState = new DetailModeState();
+    this.detailRenderer = new DetailRenderer(aggregateDisplay, historyDisplay);
     this.keyInputManager = keyInputManager;
     
     // Register key handlers
@@ -65,24 +42,15 @@ class DetailInspectionController implements IDetailInspectionController {
    * Register key handlers with FUNC-300
    */
   private registerKeyHandlers(): void {
-    this.keyInputManager.registerHandler('detail', 'ArrowUp', {
-      id: 'detail-navigate-up',
-      callback: () => this.handleKeyInput('ArrowUp')
-    });
-    
-    this.keyInputManager.registerHandler('detail', 'ArrowDown', {
-      id: 'detail-navigate-down',
-      callback: () => this.handleKeyInput('ArrowDown')
-    });
+    const handlers: Array<[string, IKeyHandler]> = [
+      ['ArrowUp', { id: 'detail-navigate-up', callback: () => this.handleKeyInput('ArrowUp') }],
+      ['ArrowDown', { id: 'detail-navigate-down', callback: () => this.handleKeyInput('ArrowDown') }],
+      ['Escape', { id: 'detail-exit-esc', callback: () => this.handleKeyInput('Escape') }],
+      ['q', { id: 'detail-exit-q', callback: () => this.handleKeyInput('q') }]
+    ];
 
-    this.keyInputManager.registerHandler('detail', 'Escape', {
-      id: 'detail-exit-esc',
-      callback: () => this.handleKeyInput('Escape')
-    });
-
-    this.keyInputManager.registerHandler('detail', 'q', {
-      id: 'detail-exit-q',
-      callback: () => this.handleKeyInput('q')
+    handlers.forEach(([key, handler]) => {
+      this.keyInputManager.registerHandler('detail', key, handler);
     });
   }
 
@@ -94,38 +62,18 @@ class DetailInspectionController implements IDetailInspectionController {
       return;
     }
     
-    // Extract file path from selectedFile object if needed
-    let filePath = selectedFile as string;
-    if (typeof selectedFile === 'object') {
-      const fileObj = selectedFile as SelectedFileObject;
-      if (fileObj.name && fileObj.name.trim()) {
-        filePath = fileObj.path ? `${fileObj.path}/${fileObj.name}` : fileObj.name;
-      } else {
-        // If name is empty, use a placeholder or get from file list
-        filePath = 'empty_filename_entry';
-      }
-    }
-
-    this.active = true;
-    this.selectedFile = selectedFile;
-    
-    // FUNC-401: Notify RenderController to stop interfering
-    if (this.renderController && this.renderController.setDetailModeActive) {
-      this.renderController.setDetailModeActive(true);
-    }
-    
-    // Stop CLI Display refresh to prevent overwrites
-    if (this.renderController && this.renderController.cliDisplay && this.renderController.cliDisplay.refreshInterval) {
-      clearInterval(this.renderController.cliDisplay.refreshInterval);
-      this.renderController.cliDisplay.refreshInterval = null;
-    }
-    
     try {
+      // Activate state
+      this.detailState.activate(selectedFile);
       
-      // Initialize both modules
-      await this.aggregateDisplay.initialize(filePath);
+      // Notify RenderController to stop interfering
+      this.notifyRenderController(true);
       
-      await this.historyDisplay.initialize(filePath);
+      // Stop CLI Display refresh to prevent overwrites
+      this.stopCliRefresh();
+      
+      // Coordinate displays
+      await this.displayCoordinator.coordinateDisplays(selectedFile);
       
       // Notify key input manager of state change
       this.keyInputManager.setState('detail');
@@ -143,18 +91,16 @@ class DetailInspectionController implements IDetailInspectionController {
    * Key distribution to modules
    */
   private async handleKeyInput(key: string): Promise<void> {
-    if (!this.active) {
+    if (!this.detailState.isActive()) {
       return;
     }
     
     switch (key) {
       case 'ArrowUp':
       case 'ArrowDown':
-        // Forward to FUNC-403 for history navigation
-        if (this.historyDisplay && this.historyDisplay.navigate) {
-          await this.historyDisplay.navigate(key);
-          this.render(); // Re-render after navigation
-        }
+        // Forward navigation to coordinator
+        await this.displayCoordinator.handleKeyNavigation(key);
+        this.render(); // Re-render after navigation
         break;
         
       case 'Escape':
@@ -171,40 +117,16 @@ class DetailInspectionController implements IDetailInspectionController {
    * Render combined display (FUNC-402 + FUNC-403)
    */
   private render(): void {
-    if (!this.active) {
+    if (!this.detailState.isActive()) {
       return;
     }
 
     try {
-      // Clear screen
-      process.stdout.write('\x1b[2J\x1b[0f');
+      const content = this.detailRenderer.renderDetailMode();
       
-      // Render aggregate display (upper section)
-      
-      let aggregateContent: string | null = null;
-      try {
-        aggregateContent = this.aggregateDisplay.render();
-      } catch (error) {
-        console.error('[DetailInspectionController] Aggregate render error:', error);
-        aggregateContent = null;
+      if (content) {
+        DetailRenderer.writeToStdout(content);
       }
-      
-      if (aggregateContent) {
-        process.stdout.write(aggregateContent);
-        process.stdout.write('\n');
-      }
-      
-      // Render history display (lower section)
-      const historyContent = this.historyDisplay.render();
-      if (historyContent) {
-        process.stdout.write(historyContent);
-      } else {
-        process.stdout.write('(No history content)\n');
-      }
-      
-      // Force flush
-      process.stdout.write('\x1b[999;1H'); // Move cursor to bottom
-      
     } catch (error) {
       console.error('[DetailInspectionController] Render error:', error);
     }
@@ -214,39 +136,24 @@ class DetailInspectionController implements IDetailInspectionController {
    * Mode termination
    */
   async exitDetailMode(): Promise<void> {
-    this.active = false;
-    this.selectedFile = null;
+    // Deactivate state
+    this.detailState.deactivate();
     
-    
-    // FUNC-401: Notify RenderController that detail mode is ended
-    if (this.renderController && this.renderController.setDetailModeActive) {
-      this.renderController.setDetailModeActive(false);
-    }
+    // Notify RenderController that detail mode is ended
+    this.notifyRenderController(false);
     
     // Restart CLI Display refresh
-    if (this.renderController && this.renderController.cliDisplay && !this.renderController.cliDisplay.refreshInterval) {
-      this.renderController.cliDisplay.refreshInterval = setInterval(() => {
-        if (!this.renderController!.isDetailMode || !this.renderController!.isDetailMode()) {
-          this.renderController!.cliDisplay!.updateDisplay!();
-        }
-      }, 100);
-    }
+    this.restartCliRefresh();
     
     try {
-      // Cleanup modules
-      if (this.aggregateDisplay && this.aggregateDisplay.cleanup) {
-        this.aggregateDisplay.cleanup();
-      }
-      
-      if (this.historyDisplay && this.historyDisplay.cleanup) {
-        this.historyDisplay.cleanup();
-      }
+      // Cleanup displays
+      this.displayCoordinator.cleanupDisplays();
       
       // Return to waiting mode
       this.keyInputManager.setState('waiting');
       
       // Clear detail display
-      process.stdout.write('\x1b[2J\x1b[0f');
+      DetailRenderer.clearDisplay();
       
       // Re-enable main view rendering
       if (this.renderController && this.renderController.render) {
@@ -262,20 +169,20 @@ class DetailInspectionController implements IDetailInspectionController {
    * Check if detail mode is active
    */
   isActive(): boolean {
-    return this.active;
+    return this.detailState.isActive();
   }
 
   /**
    * Get current selected file
    */
   getSelectedFile(): SelectedFile | null {
-    return this.selectedFile;
+    return this.detailState.getSelectedFile();
   }
 
   /**
    * FUNC-401: Set RenderController reference to prevent interference
    */
-  setRenderController(renderController: DetailRenderController): void {
+  setRenderController(renderController: IRenderController): void {
     this.renderController = renderController;
   }
 
@@ -283,22 +190,16 @@ class DetailInspectionController implements IDetailInspectionController {
    * Force refresh display
    */
   async refresh(): Promise<void> {
-    if (this.active && this.selectedFile) {
+    if (this.detailState.isActive()) {
       try {
-        // Extract file path for refresh
-        let filePath = this.selectedFile as string;
-        if (typeof this.selectedFile === 'object') {
-          const fileObj = this.selectedFile as SelectedFileObject;
-          filePath = fileObj.path ? `${fileObj.path}/${fileObj.name}` : fileObj.name || 'empty_filename_entry';
+        const selectedFile = this.detailState.getSelectedFile();
+        if (selectedFile) {
+          // Re-coordinate displays with fresh data
+          await this.displayCoordinator.coordinateDisplays(selectedFile);
+          
+          // Re-render
+          this.render();
         }
-        
-        // Re-initialize modules with fresh data
-        await this.aggregateDisplay.initialize(filePath);
-        await this.historyDisplay.initialize(filePath);
-        
-        // Re-render
-        this.render();
-        
       } catch (error) {
         console.error('[DetailInspectionController] Refresh error:', error);
       }
@@ -310,26 +211,50 @@ class DetailInspectionController implements IDetailInspectionController {
    */
   destroy(): void {
     // Exit detail mode if active
-    if (this.active) {
+    if (this.detailState.isActive()) {
       this.exitDetailMode();
     }
     
     // Unregister key handlers
-    this.keyInputManager.unregisterHandler('detail', 'ArrowUp');
-    this.keyInputManager.unregisterHandler('detail', 'ArrowDown');
-    this.keyInputManager.unregisterHandler('detail', 'Escape');
-    this.keyInputManager.unregisterHandler('detail', 'q');
+    const keys = ['ArrowUp', 'ArrowDown', 'Escape', 'q'];
+    keys.forEach(key => {
+      this.keyInputManager.unregisterHandler('detail', key);
+    });
   }
 
   // Interface compatibility methods
   async showFileDetails?(fileId: number, fileName: string): Promise<void> {
     // Convert to SelectedFile format and activate
-    const selectedFile: SelectedFileObject = {
+    const selectedFile: ISelectedFile = {
       name: fileName,
       path: '', // Will be handled in activateDetailMode
       fileId: fileId
     };
     await this.activateDetailMode(selectedFile);
+  }
+
+  // Private helper methods
+  private notifyRenderController(active: boolean): void {
+    if (this.renderController?.setDetailModeActive) {
+      this.renderController.setDetailModeActive(active);
+    }
+  }
+
+  private stopCliRefresh(): void {
+    if (this.renderController?.cliDisplay?.refreshInterval) {
+      clearInterval(this.renderController.cliDisplay.refreshInterval);
+      this.renderController.cliDisplay.refreshInterval = null;
+    }
+  }
+
+  private restartCliRefresh(): void {
+    if (this.renderController?.cliDisplay && !this.renderController.cliDisplay.refreshInterval) {
+      this.renderController.cliDisplay.refreshInterval = setInterval(() => {
+        if (!this.renderController!.isDetailMode || !this.renderController!.isDetailMode()) {
+          this.renderController!.cliDisplay!.updateDisplay!();
+        }
+      }, 100);
+    }
   }
 }
 
