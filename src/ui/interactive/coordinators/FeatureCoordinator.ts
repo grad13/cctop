@@ -102,9 +102,9 @@ export class FeatureCoordinator {
       this.components.selectionManager.onSelectionConfirmed = async (selectedFile: string) => {
         try {
           if (this.databaseManager) {
-            const fileRecord = await this.databaseManager.findByPath(selectedFile);
-            if (fileRecord && this.components.detailController.showFileDetails) {
-              await this.components.detailController.showFileDetails(fileRecord.id, selectedFile);
+            const fileRecords = await this.databaseManager.findByPath(selectedFile);
+            if (fileRecords && fileRecords.length > 0 && this.components.detailController.showFileDetails) {
+              await this.components.detailController.showFileDetails(fileRecords[0].id, selectedFile);
             }
           }
         } catch (error) {

@@ -4,7 +4,7 @@
  */
 
 const EventEmitter = require('events');
-import { EventType, FilterState, KeyMapping, FilterChangeEvent, FileEvent, Config } from '../types/common';
+import { EventType, FilterState, KeyMapping, FilterChangeEvent, FileEvent, Config } from '../types';
 
 class EventFilterManager extends EventEmitter {
   private filters: FilterState;

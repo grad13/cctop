@@ -14,7 +14,7 @@ import {
   FullThemeData, 
   ThemeInfoResult,
   ThemeColors 
-} from '../types/common';
+} from '../types';
 
 class ColorManager {
   private configPath: string;
@@ -96,9 +96,20 @@ class ColorManager {
     const defaultTheme: FullThemeData = {
       "name": "default",
       "description": "Default color scheme for cctop",
-      "lastUpdated": new Date().toISOString(),
+      "lastUpdated": Date.now(),
       "version": "1.0.0",
       "colors": {
+        "find": "blue",
+        "create": "brightGreen",
+        "modify": "white",
+        "delete": "gray",
+        "move": "cyan",
+        "restore": "brightYellow",
+        "header": "white",
+        "footer": "gray",
+        "border": "gray",
+        "selection": "cyan",
+        "default": "white",
         "table": {
           "column_headers": "white",
           "row": {
@@ -171,8 +182,19 @@ class ColorManager {
       "name": "fallback",
       "description": "Fallback color scheme",
       "version": "1.0.0",
-      "lastUpdated": new Date().toISOString(),
+      "lastUpdated": Date.now(),
       "colors": {
+        "find": "blue",
+        "create": "brightGreen",
+        "modify": "white",
+        "delete": "gray",
+        "move": "cyan",
+        "restore": "brightYellow",
+        "header": "white",
+        "footer": "gray",
+        "border": "gray",
+        "selection": "cyan",
+        "default": "white",
         "table": {
           "column_headers": "white",
           "row": {
@@ -347,7 +369,7 @@ class ColorManager {
         const themeData = JSON.parse(fs.readFileSync(themeFile, 'utf8')) as FullThemeData;
         
         // Update lastUpdated and copy to current-theme.json
-        themeData.lastUpdated = new Date().toISOString();
+        themeData.lastUpdated = Date.now();
         fs.writeFileSync(this.currentThemeFile, JSON.stringify(themeData, null, 2));
         
         this.currentTheme = themeData;
@@ -374,9 +396,11 @@ class ColorManager {
     if (this.currentTheme) {
       return {
         name: this.currentTheme.name || 'unknown',
+        isDefault: this.currentTheme.name === 'default',
+        colors: this.currentTheme.colors,
         description: this.currentTheme.description || '',
         version: this.currentTheme.version || '1.0.0',
-        lastUpdated: this.currentTheme.lastUpdated || ''
+        lastUpdated: this.currentTheme.lastUpdated || Date.now()
       };
     }
     return null;

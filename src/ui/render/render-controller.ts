@@ -19,7 +19,7 @@ import {
   FilterManager,
   StatusDisplay,
   FilterStates
-} from '../../types/common';
+} from '../../types';
 
 class RenderController {
   private isRunning: boolean = false;
@@ -41,6 +41,9 @@ class RenderController {
     
     // FUNC-400: Selection state
     this.selectionState = {
+      enabled: false,
+      index: -1,
+      count: 0,
       isSelecting: false,
       selectedIndex: -1,
       selectionRenderer: null
@@ -71,12 +74,14 @@ class RenderController {
     this.layoutManager = layoutManager;
     
     // Register for resize events
-    this.layoutManager.onResize((widthConfig: WidthConfig) => {
-      if (this.eventFormatter) {
-        this.eventFormatter.updateWidthConfig(widthConfig);
-      }
-      this.handleResize();
-    });
+    if ((this.layoutManager as any).onResize) {
+      (this.layoutManager as any).onResize((widthConfig: WidthConfig) => {
+        if (this.eventFormatter && (this.eventFormatter as any).updateWidthConfig) {
+          (this.eventFormatter as any).updateWidthConfig(widthConfig);
+        }
+        this.handleResize();
+      });
+    }
   }
 
   setFilterManager(filterManager: FilterManager): void {
@@ -144,7 +149,7 @@ class RenderController {
       return;
     }
 
-    const widthConfig = this.layoutManager.getWidthConfig();
+    const widthConfig = (this.layoutManager as any).getWidthConfig?.() || {};
     const directoryHeaderWidth = widthConfig.directory;
     const directoryHeader = padEndWithWidth('Directory', directoryHeaderWidth);
     const header = `Event Timestamp       Elapsed  File Name                    Event    Lines Blocks ${directoryHeader}`;
@@ -181,7 +186,7 @@ class RenderController {
     
     for (let i = 0; i < Math.min(eventsToShow.length, this.maxLines); i++) {
       const event = eventsToShow[i];
-      let eventLine = this.eventFormatter.formatEventLine(event);
+      let eventLine = (this.eventFormatter as any).formatEventLine?.(event) || '';
       
       // FUNC-400: Apply selection styling if this line is selected
       if (this.selectionState.isSelecting && 
@@ -210,7 +215,7 @@ class RenderController {
     }
 
     const stats = this.eventDisplayManager.getStats();
-    const widthConfig = this.layoutManager.getWidthConfig();
+    const widthConfig = (this.layoutManager as any).getWidthConfig?.() || {};
     
     const separator = '─'.repeat(widthConfig.terminal || 97);
     // DEBUG: Log render values

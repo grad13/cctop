@@ -14,11 +14,12 @@ import {
   BufferedRenderer,
   EventFilterManager,
   StatusDisplay
-} from '../types/common';
+} from '../types';
 import { EventFormatter } from './renderers/EventFormatter';
 import { HeaderFooterRenderer } from './renderers/HeaderFooterRenderer';
 import { EventDataManager } from './managers/EventDataManager';
 import { InputHandler } from './managers/InputHandler';
+import { padEndWithWidth, padStartWithWidth, truncateWithEllipsis } from '../utils/display-width';
 
 const BufferedRendererClass = require('../utils/buffered-renderer');
 const EventFilterManagerClass = require('../filter/event-filter-manager');
@@ -42,11 +43,15 @@ class CLIDisplayLegacy extends EventEmitter {
   private headerFooterRenderer: HeaderFooterRenderer;
   private eventDataManager: EventDataManager;
   private inputHandler: InputHandler;
+  
+  // Event storage
+  private events: EventData[] = [];
+  private uniqueEvents: Map<string, EventData> = new Map();
 
   constructor(databaseManager: DatabaseManager, displayConfig: CLIDisplayLegacyConfig = {}) {
     super();
     this.db = databaseManager;
-    this.displayMode = displayConfig.mode || 'all'; // 'all' or 'unique'
+    this.displayMode = (displayConfig.mode || 'all') as 'all' | 'unique'; // 'all' or 'unique'
     this.maxLines = displayConfig.maxEvents || 20; // Always comes from config.json
     this.displayConfig = displayConfig;
     
@@ -369,7 +374,11 @@ class CLIDisplayLegacy extends EventEmitter {
     
     return {
       terminal: terminalWidth,
-      directory: directoryWidth
+      directory: directoryWidth,
+      eventCode: 8,
+      timestamp: 19,
+      fileSize: 5,
+      filePath: 28
     };
   }
 

@@ -143,7 +143,7 @@ class InteractiveFeatures {
    * Get component references for external integration
    */
   getComponents(): InteractiveFeaturesComponents {
-    return this.components as InteractiveFeaturesComponents;
+    return this.components as unknown as InteractiveFeaturesComponents;
   }
 
   /**

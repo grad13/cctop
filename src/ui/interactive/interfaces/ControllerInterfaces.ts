@@ -5,12 +5,12 @@
 
 // Re-export common types for convenience
 export type { 
-  DetailInspectionController as IDetailInspectionController,
+  DetailInspector as IDetailInspectionController,
   KeyInputManager,
   AggregateDisplay,
   HistoryDisplay,
   RenderController
-} from '../../../types/common';
+} from '../../../types';
 
 // File selection interfaces
 export interface ISelectedFile {

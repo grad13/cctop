@@ -5,12 +5,14 @@
 
 import { 
   SelectionState, 
-  SelectionManagerState, 
-  SelectionRenderState, 
   KeyHandler, 
   KeyInputManager, 
   RenderController 
-} from '../../types/common';
+} from '../../types';
+
+// Type aliases for compatibility
+type SelectionManagerState = SelectionState;
+type SelectionRenderState = SelectionState;
 
 const SelectionRenderer = require('./SelectionRenderer');
 
@@ -25,6 +27,9 @@ class SelectionManager {
     this.keyInputManager = keyInputManager;
     this.renderController = renderController;
     this.state = {
+      enabled: false,
+      index: -1,
+      count: 0,
       mode: 'waiting',           // 'waiting' | 'selecting'
       currentIndex: -1,          // Selected item index
       selectedFile: null,        // Selected file name
@@ -42,38 +47,24 @@ class SelectionManager {
    * Register key handlers with FUNC-300
    */
   private registerKeyHandlers(): void {
+    // Check if registerHandler method exists
+    if (!this.keyInputManager.registerHandler) {
+      console.error('[SelectionManager] KeyInputManager does not support registerHandler method');
+      return;
+    }
+
     // Override FUNC-300 default handlers for selection control
-    this.keyInputManager.registerHandler('waiting', 'ArrowUp', {
-      id: 'start-selection-up',
-      callback: () => this.enterSelectionMode()
-    });
+    this.keyInputManager.registerHandler('waiting', 'ArrowUp', (() => this.enterSelectionMode()) as any, 'start-selection-up');
     
-    this.keyInputManager.registerHandler('waiting', 'ArrowDown', {
-      id: 'start-selection-down', 
-      callback: () => this.enterSelectionMode()
-    });
+    this.keyInputManager.registerHandler('waiting', 'ArrowDown', (() => this.enterSelectionMode()) as any, 'start-selection-down');
 
-    this.keyInputManager.registerHandler('selecting', 'ArrowUp', {
-      id: 'selection-navigate-up',
-      callback: () => this.navigate('up')
-    });
+    this.keyInputManager.registerHandler('selecting', 'ArrowUp', (() => this.navigate('up')) as any, 'selection-navigate-up');
     
-    this.keyInputManager.registerHandler('selecting', 'ArrowDown', {
-      id: 'selection-navigate-down',
-      callback: () => this.navigate('down')
-    });
+    this.keyInputManager.registerHandler('selecting', 'ArrowDown', (() => this.navigate('down')) as any, 'selection-navigate-down');
 
-    this.keyInputManager.registerHandler('selecting', 'Enter', {
-      id: 'selection-confirm',
-      callback: () => {
-        return this.confirmSelection();
-      }
-    });
+    this.keyInputManager.registerHandler('selecting', 'Enter', (() => this.confirmSelection()) as any, 'selection-confirm');
 
-    this.keyInputManager.registerHandler('selecting', 'Escape', {
-      id: 'selection-cancel',
-      callback: () => this.exitSelectionMode()
-    });
+    this.keyInputManager.registerHandler('selecting', 'Escape', (() => this.exitSelectionMode()) as any, 'selection-cancel');
   }
 
   /**
@@ -178,7 +169,7 @@ class SelectionManager {
     try {
       // Set selection state in render controller
       if (this.renderController.setSelectionState) {
-        const selectionState: SelectionRenderState = {
+        const selectionState = {
           isSelecting: this.state.mode === 'selecting',
           selectedIndex: this.state.currentIndex,
           selectionRenderer: this.selectionRenderer
@@ -203,6 +194,9 @@ class SelectionManager {
    */
   getSelectionState(): SelectionManagerState {
     return {
+      enabled: this.state.enabled,
+      index: this.state.index,
+      count: this.state.count,
       mode: this.state.mode,
       currentIndex: this.state.currentIndex,
       selectedFile: this.state.selectedFile,
@@ -228,13 +222,15 @@ class SelectionManager {
    * Cleanup
    */
   destroy(): void {
-    // Unregister key handlers
-    this.keyInputManager.unregisterHandler('waiting', 'ArrowUp');
-    this.keyInputManager.unregisterHandler('waiting', 'ArrowDown');
-    this.keyInputManager.unregisterHandler('selecting', 'ArrowUp');
-    this.keyInputManager.unregisterHandler('selecting', 'ArrowDown');
-    this.keyInputManager.unregisterHandler('selecting', 'Enter');
-    this.keyInputManager.unregisterHandler('selecting', 'Escape');
+    // Unregister key handlers if supported
+    if (this.keyInputManager.unregisterHandler) {
+      this.keyInputManager.unregisterHandler('waiting', 'ArrowUp');
+      this.keyInputManager.unregisterHandler('waiting', 'ArrowDown');
+      this.keyInputManager.unregisterHandler('selecting', 'ArrowUp');
+      this.keyInputManager.unregisterHandler('selecting', 'ArrowDown');
+      this.keyInputManager.unregisterHandler('selecting', 'Enter');
+      this.keyInputManager.unregisterHandler('selecting', 'Escape');
+    }
   }
 }
 

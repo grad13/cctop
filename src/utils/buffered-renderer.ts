@@ -4,7 +4,7 @@
  * Ported from VERSIONs/product-v01, optimized for v0.1.0.0
  */
 
-import { BufferedRendererOptions, RendererStats } from '../types/common';
+import { BufferedRendererOptions, RendererStats } from '../types';
 
 class BufferedRenderer {
   private buffer: string[];

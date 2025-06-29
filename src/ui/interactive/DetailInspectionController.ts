@@ -50,7 +50,7 @@ class DetailInspectionController implements IDetailInspectionController {
     ];
 
     handlers.forEach(([key, handler]) => {
-      this.keyInputManager.registerHandler('detail', key, handler);
+      this.keyInputManager.registerHandler('detail', key, handler as any);
     });
   }
 
@@ -116,7 +116,7 @@ class DetailInspectionController implements IDetailInspectionController {
   /**
    * Render combined display (FUNC-402 + FUNC-403)
    */
-  private render(): void {
+  render(): void {
     if (!this.detailState.isActive()) {
       return;
     }
@@ -255,6 +255,46 @@ class DetailInspectionController implements IDetailInspectionController {
         }
       }, 100);
     }
+  }
+
+  // DetailInspector interface implementation
+  enterDetailMode(eventData: any): void {
+    const selectedFile: ISelectedFile = {
+      name: eventData.filename || '',
+      path: eventData.directory || '',
+      fileId: eventData.id
+    };
+    this.activateDetailMode(selectedFile);
+  }
+
+  isInDetailMode(): boolean {
+    return this.detailState.isActive();
+  }
+
+  getCurrentMode(): any {
+    return (this.detailState as any).getMode?.() || null;
+  }
+
+  handleKeyPress(key: string): boolean {
+    // Delegate to internal key handler
+    return this.handleDetailKey(key);
+  }
+
+  private handleDetailKey(key: string): boolean {
+    // Handle key press in detail mode
+    if (key === 'q' || key === 'ESC') {
+      this.deactivateDetailMode();
+      return true;
+    }
+    // Add more key handling logic as needed
+    return false;
+  }
+
+  deactivateDetailMode(): void {
+    // Exit detail mode
+    (this.detailState as any).setActive?.(false);
+    this.notifyRenderController(false);
+    this.restartCliRefresh();
   }
 }
 

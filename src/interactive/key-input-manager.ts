@@ -9,7 +9,7 @@ import type {
   KeyHandler,
   SelectionManager,
   RenderController
-} from '../types/common';
+} from '../types';
 
 // Key Input Manager specific interfaces
 interface StateMaps {
@@ -22,10 +22,16 @@ interface StateChangeCallback {
 
 type InputMode = 'waiting' | 'selecting' | 'detail';
 
+// Internal handler structure
+interface InternalHandler {
+  id: string;
+  callback: KeyHandler;
+}
+
 class KeyInputManager implements IKeyInputManager {
   public currentMode: InputMode = 'waiting';
   private modeHistory: InputMode[] = [];
-  private stateMaps: Map<string, Map<string, KeyHandler>> = new Map();
+  private stateMaps: Map<string, Map<string, InternalHandler>> = new Map();
   private isInputSetup: boolean = false;
   
   // Component references for handlers
@@ -139,7 +145,14 @@ class KeyInputManager implements IKeyInputManager {
     const handler = currentMap.get(key);
     if (handler) {
       try {
-        handler.callback();
+        // Debug logging
+        if (!handler.callback) {
+          console.error(`[KeyInputManager] Handler for key '${key}' has no callback property:`, handler);
+          console.error(`[KeyInputManager] Handler type:`, typeof handler);
+          console.error(`[KeyInputManager] Handler keys:`, Object.keys(handler));
+          return;
+        }
+        handler.callback(key);
       } catch (error) {
         console.error(`[KeyInputManager] Handler error:`, error);
       }
@@ -268,10 +281,15 @@ class KeyInputManager implements IKeyInputManager {
   /**
    * Dynamic handler registration for other components
    */
-  registerHandler(state: string, key: string, handler: KeyHandler): void {
+  registerHandler(state: string, key: string, handler: KeyHandler, id?: string): void {
     const stateMap = this.stateMaps.get(state);
     if (stateMap) {
-      stateMap.set(key, handler);
+      // Debug log
+      console.log(`[KeyInputManager] Registering handler for state '${state}', key '${key}', id '${id}'`);
+      stateMap.set(key, {
+        id: id || `dynamic-${key}`,
+        callback: handler
+      });
     }
   }
 
@@ -283,6 +301,35 @@ class KeyInputManager implements IKeyInputManager {
   }
 
   /**
+   * Stop the key input manager
+   */
+  stop(): void {
+    this.destroy();
+  }
+
+  /**
+   * Add a key handler
+   */
+  addHandler(key: string, handler: KeyHandler, options?: any): void {
+    const state = options?.state || this.currentMode;
+    this.registerHandler(state, key, handler, options?.id);
+  }
+
+  /**
+   * Remove a key handler
+   */
+  removeHandler(key: string): void {
+    this.unregisterHandler(this.currentMode, key);
+  }
+
+  /**
+   * Check if the key input manager is active
+   */
+  isActive(): boolean {
+    return this.isInputSetup;
+  }
+
+  /**
    * Cleanup
    */
   destroy(): void {
@@ -291,6 +338,7 @@ class KeyInputManager implements IKeyInputManager {
       process.stdin.pause();
       process.stdin.removeAllListeners('data');
     }
+    this.isInputSetup = false;
   }
 }
 

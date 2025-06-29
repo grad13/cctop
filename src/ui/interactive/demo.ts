@@ -65,7 +65,7 @@ async function runDemo(): Promise<void> {
     interactive.updateFileList(testFiles);
     
     // Test component access
-    const components: DemoComponents = interactive.getComponents();
+    const components = interactive.getComponents() as any as DemoComponents;
     console.log('✅ Components initialized:');
     console.log(`  - KeyInputManager: ${components.keyInputManager ? 'OK' : 'FAIL'}`);
     console.log(`  - SelectionManager: ${components.selectionManager ? 'OK' : 'FAIL'}`);

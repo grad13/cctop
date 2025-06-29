@@ -5,7 +5,7 @@
 
 import chalk = require('chalk');
 import { padEndWithWidth } from '../../utils/display-width';
-import { CLIDisplayLegacyWidthConfig, CLIDisplayLegacyStats } from '../../types/common';
+import { CLIDisplayLegacyWidthConfig, CLIDisplayLegacyStats } from '../../types';
 
 export class HeaderFooterRenderer {
   private widthConfig: CLIDisplayLegacyWidthConfig;

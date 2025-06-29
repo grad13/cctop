@@ -14,7 +14,7 @@
  */
 
 import readline = require('readline');
-import { CLIInterfaceOptions } from '../types/common';
+import { CLIInterfaceOptions } from '../types';
 
 class CLIInterface {
   private input: NodeJS.ReadableStream;

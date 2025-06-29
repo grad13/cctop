@@ -9,8 +9,9 @@ import {
   DetailInspectorCallbacks,
   DetailInspectorUpdateData,
   InspectionState,
-  DisplayStats
-} from '../types/common';
+  DisplayStats,
+  DetailMode
+} from '../types';
 
 class DetailInspector {
   private db: any; // DatabaseManager instance
@@ -196,11 +197,14 @@ class DetailInspector {
       // Notify update callback
       if (this.onUpdate) {
         this.onUpdate({
+          mode: 'file' as DetailMode,
           fileId: this.currentFileId,
           fileName: this.currentFileName,
-          aggregateData: await this.aggregateDisplay.getSummaryData(this.currentFileId),
-          historyInfo: this.historyDisplay.getPaginationInfo(),
-          focusedItem: this.historyDisplay.getFocusedItemDetails()
+          data: {
+            aggregateData: await this.aggregateDisplay.getSummaryData(this.currentFileId),
+            historyInfo: this.historyDisplay.getPaginationInfo(),
+            focusedItem: this.historyDisplay.getFocusedItemDetails()
+          }
         });
       }
       
@@ -229,11 +233,15 @@ class DetailInspector {
    */
   getInspectionState(): InspectionState {
     return {
-      isActive: this.isActive,
+      active: this.isActive,
+      isActive: this.isActive,  // Backward compatibility
+      mode: 'file' as DetailMode,
+      targetPath: this.currentFileName,
       fileId: this.currentFileId,
-      fileName: this.currentFileName,
-      historyPagination: this.historyDisplay.getPaginationInfo(),
-      focusedItem: this.historyDisplay.getFocusedItemDetails()
+      data: {
+        historyPagination: this.historyDisplay.getPaginationInfo(),
+        focusedItem: this.historyDisplay.getFocusedItemDetails()
+      }
     };
   }
 
@@ -322,16 +330,13 @@ class DetailInspector {
     }
 
     return {
+      totalEvents: this.historyDisplay.totalItems,
+      filteredEvents: this.historyDisplay.totalItems,
+      displayedEvents: this.historyDisplay.itemsPerPage,
+      lastUpdate: Date.now(),
       fileId: this.currentFileId!,
       fileName: this.currentFileName,
-      totalHistoryItems: this.historyDisplay.totalItems,
-      currentHistoryPage: this.historyDisplay.currentPage + 1,
-      totalHistoryPages: Math.ceil(this.historyDisplay.totalItems / this.historyDisplay.itemsPerPage),
-      currentFocusIndex: this.historyDisplay.focusIndex,
-      terminalSize: {
-        width: this.terminalWidth,
-        height: this.terminalHeight
-      }
+      totalHistoryItems: this.historyDisplay.totalItems
     };
   }
 

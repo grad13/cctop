@@ -9,7 +9,7 @@ import {
   FocusedItemDetails, 
   EventCountResult, 
   HistoryDatabaseManager 
-} from '../types/common';
+} from '../types';
 
 class HistoryDisplay {
   private db: HistoryDatabaseManager;
@@ -267,8 +267,9 @@ class HistoryDisplay {
     return {
       currentPage: this.currentPage + 1,
       totalPages: maxPages,
-      currentItem: this.currentPage * this.itemsPerPage + this.focusIndex + 1,
+      itemsPerPage: this.itemsPerPage,
       totalItems: this.totalItems,
+      currentItem: this.currentPage * this.itemsPerPage + this.focusIndex + 1,
       itemsOnPage: this.historyData.length
     };
   }
@@ -307,13 +308,12 @@ class HistoryDisplay {
     if (!entry) return null;
 
     return {
+      index: this.focusIndex,
+      item: entry,
+      relativeIndex: this.focusIndex,
       eventId: entry.event_id,
       timestamp: entry.timestamp,
-      eventType: entry.event_type,
-      eventCode: entry.event_code,
-      lineCount: entry.line_count,
-      blockCount: entry.block_count,
-      formattedTimestamp: this.formatTimestamp(entry.timestamp)
+      eventType: entry.event_type
     };
   }
 }

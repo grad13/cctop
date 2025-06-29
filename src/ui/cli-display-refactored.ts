@@ -12,7 +12,7 @@ import {
   BufferedRenderer,
   EventFilterManager,
   StatusDisplay
-} from '../types/common';
+} from '../types';
 import { EventFormatter } from './renderers/EventFormatter';
 import { HeaderFooterRenderer } from './renderers/HeaderFooterRenderer';
 import { EventDataManager } from './managers/EventDataManager';
@@ -45,7 +45,7 @@ export class CLIDisplayRefactored extends EventEmitter {
   constructor(databaseManager: DatabaseManager, displayConfig: CLIDisplayLegacyConfig = {}) {
     super();
     this.db = databaseManager;
-    this.displayMode = displayConfig.mode || 'all';
+    this.displayMode = (displayConfig.mode || 'all') as 'all' | 'unique';
     this.maxLines = displayConfig.maxEvents || 20;
     this.displayConfig = displayConfig;
     
@@ -183,7 +183,7 @@ export class CLIDisplayRefactored extends EventEmitter {
       });
       
       // Update status display
-      this.statusDisplay.update();
+      this.statusDisplay.update(`Events: ${stats.totalEvents}, Files: ${stats.uniqueFiles}`);
       
       // Render if needed
       if (this.renderer.isDirty) {
@@ -210,7 +210,7 @@ export class CLIDisplayRefactored extends EventEmitter {
     this.buildFooter();
     
     // Render status display
-    this.statusDisplay.render(this.renderer);
+    this.statusDisplay.render();
     
     // Flush to terminal
     this.renderer.render();
@@ -274,7 +274,7 @@ export class CLIDisplayRefactored extends EventEmitter {
       case 'd':
       case 'v':
       case 'r':
-        this.filterManager.toggleFilter(key.toLowerCase());
+        this.filterManager.toggleFilter(key.toLowerCase() as any);
         break;
       case 'h':
       case '?':
@@ -307,10 +307,10 @@ export class CLIDisplayRefactored extends EventEmitter {
     this.headerFooterRenderer.updateWidthConfig(this.widthConfig);
     
     // Update renderer dimensions
-    this.renderer.updateDimensions({
-      width: process.stdout.columns || 120,
-      height: process.stdout.rows || 40
-    });
+    this.renderer.updateDimensions(
+      process.stdout.columns || 120,
+      process.stdout.rows || 40
+    );
     
     // Re-render
     this.render();
@@ -339,7 +339,11 @@ export class CLIDisplayRefactored extends EventEmitter {
     return {
       totalWidth: termWidth,
       fileNameWidth: Math.max(20, fileNameWidth),
-      directoryWidth: Math.max(20, directoryWidth)
+      directoryWidth: Math.max(20, directoryWidth),
+      eventCode: 8,
+      timestamp: 19,
+      fileSize: 10,
+      filePath: 28
     };
   }
 

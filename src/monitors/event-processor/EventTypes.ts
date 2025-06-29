@@ -4,7 +4,7 @@
  */
 
 import { EventEmitter } from 'events';
-import { FilterState, EventType } from '../../types/common';
+import { FilterState, EventType } from '../../types';
 
 /**
  * File event input from monitoring system

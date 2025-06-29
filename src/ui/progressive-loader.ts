@@ -11,7 +11,7 @@ import {
   LoadProgress, 
   LoaderStats,
   ProgressiveLoaderConfig 
-} from '../types/common';
+} from '../types';
 
 class ProgressiveLoader extends EventEmitter {
   private db: DatabaseManager;

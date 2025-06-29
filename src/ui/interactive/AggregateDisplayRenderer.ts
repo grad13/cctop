@@ -4,7 +4,19 @@
  */
 
 import chalk from 'chalk';
-import { AggregateFileData, FileInfo, AggregatesDatabaseManager } from '../../types/common';
+import { AggregateData, DatabaseManager } from '../../types';
+
+// Local type definitions
+interface FileInfo {
+  path: string;
+  eventCount: number;
+  lastModified: Date;
+  size?: number;
+  inode?: number;
+}
+
+type AggregateFileData = AggregateData;
+type AggregatesDatabaseManager = DatabaseManager;
 
 class AggregateDisplayRenderer {
   private databaseManager: AggregatesDatabaseManager;

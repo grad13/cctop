@@ -8,13 +8,13 @@ export type {
   DatabaseManager,
   KeyInputManager,
   SelectionManager,
-  DetailInspectionController,
-  AggregateDisplayRenderer,
-  HistoryDisplayRenderer,
-  DisplayRenderer,
-  CLIDisplayForInteractive,
-  InteractiveFeaturesComponents
-} from '../../../types/common';
+  DetailInspector as DetailInspectionController,
+  AggregateDisplay as AggregateDisplayRenderer,
+  HistoryDisplay as HistoryDisplayRenderer,
+  DisplayManager as DisplayRenderer,
+  CLIDisplayConfig as CLIDisplayForInteractive,
+  InteractiveFeatures as InteractiveFeaturesComponents
+} from '../../../types';
 
 // Event type definition
 export type EventType = 'find' | 'create' | 'modify' | 'delete' | 'move' | 'rename';

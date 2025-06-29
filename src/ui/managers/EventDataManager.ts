@@ -3,7 +3,7 @@
  * Manages event storage and retrieval
  */
 
-import { EventData, DatabaseManager } from '../../types/common';
+import { EventData, DatabaseManager } from '../../types';
 
 export class EventDataManager {
   private db: DatabaseManager;

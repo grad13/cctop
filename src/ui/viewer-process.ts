@@ -13,7 +13,7 @@ import {
   ProcessMonitorStatus,
   ViewerStatus,
   StartMonitorOptions
-} from '../types/common';
+} from '../types';
 
 class ViewerProcess {
   private config: ViewerProcessConfig;
@@ -246,7 +246,7 @@ class ViewerProcess {
       return await this.processManager.getMonitorStatus();
     } catch (error) {
       console.error('Failed to get monitor status:', error);
-      return { status: 'error', running: false, pid: null, error: (error as Error).message };
+      return { status: 'error', running: false, pid: null, error: error as Error };
     }
   }
 
@@ -267,6 +267,7 @@ class ViewerProcess {
    */
   getStatus(): ViewerStatus {
     return {
+      running: this.isRunning,
       isRunning: this.isRunning,
       pid: process.pid,
       databaseConnected: this.databaseManager ? this.databaseManager.isInitialized : false,

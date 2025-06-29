@@ -228,7 +228,10 @@ class DatabaseManager {
         transactionActive: false,
         dbPath: this.dbPath,
         totalEvents: 0,
-        totalFiles: 0
+        totalFiles: 0,
+        uniqueFiles: 0,
+        eventsByType: {},
+        lastUpdate: Date.now()
       };
     }
 
@@ -255,7 +258,10 @@ class DatabaseManager {
       transactionActive: this.transactionManager?.isInTransaction() || false,
       dbPath: this.dbPath,
       totalEvents: stats?.totalEvents || 0,
-      totalFiles: stats?.totalFiles || 0
+      totalFiles: stats?.totalFiles || 0,
+      uniqueFiles: stats?.activeFiles || 0,
+      eventsByType: breakdown,
+      lastUpdate: Date.now()
     };
   }
 

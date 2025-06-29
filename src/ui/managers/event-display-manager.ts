@@ -11,7 +11,7 @@ import {
   EventDisplayStatus,
   FilterManager,
   EventDatabase
-} from '../../types/common';
+} from '../../types';
 
 class EventDisplayManager {
   private maxLines: number;
@@ -23,7 +23,7 @@ class EventDisplayManager {
 
   constructor(config: EventDisplayManagerConfig = {}) {
     this.maxLines = config.maxEvents || 20;
-    this.displayMode = config.mode || 'all'; // 'all' or 'unique'
+    this.displayMode = (config.mode || 'all') as 'all' | 'unique'; // 'all' or 'unique'
   }
 
   /**
@@ -197,7 +197,10 @@ class EventDisplayManager {
       totalEvents,
       uniqueFiles,
       stats,
-      displayText: stats
+      displayText: stats,
+      visibleEvents: this.displayMode === 'unique' ? uniqueFiles : totalEvents,
+      filteredEvents: 0,
+      lastUpdate: Date.now()
     };
   }
 
@@ -240,6 +243,8 @@ class EventDisplayManager {
    */
   getStatus(): EventDisplayStatus {
     return {
+      active: true,
+      mode: this.displayMode,
       displayMode: this.displayMode,
       totalEvents: this.events.length,
       uniqueFiles: this.uniqueEvents.size,

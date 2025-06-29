@@ -3,7 +3,7 @@
  * Centralizes all configuration-related types and interfaces
  */
 
-import { FilterState } from '../../types/common';
+import { FilterState } from '../../types';
 
 // Main configuration structure
 export interface FullConfig {

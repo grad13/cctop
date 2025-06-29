@@ -17,7 +17,7 @@ export {
   DatabaseManagerStats,
   QueryResult,
   EventWithDetails
-} from '../../types/common';
+} from '../../types';
 
 /**
  * SQLite database instance type

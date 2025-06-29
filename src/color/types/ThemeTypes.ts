@@ -4,7 +4,7 @@
  */
 
 // Import existing ThemeColors from common.ts for compatibility
-import { ThemeColors as CommonThemeColors } from '../../types/common';
+import { ThemeColors as CommonThemeColors } from '../../types';
 
 // Basic color types
 export type EventTypeColor = 'find' | 'create' | 'modify' | 'delete' | 'move' | 'restore';

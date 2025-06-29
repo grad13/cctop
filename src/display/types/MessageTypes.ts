@@ -63,7 +63,7 @@ export type {
   StatusAreaConfig,
   EventTypeRecord,
   StatusDisplay as IStatusDisplay
-} from '../../types/common';
+} from '../../types';
 
 // Extended DatabaseManager interface with necessary methods
 export interface DatabaseManager {

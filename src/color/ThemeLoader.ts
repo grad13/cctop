@@ -10,7 +10,7 @@ const path = require('path');
 import type { 
   ThemeData,
   ThemeInfo
-} from '../types/common';
+} from '../types';
 
 // ThemeLoader specific interfaces
 interface PresetThemes {
@@ -86,6 +86,17 @@ class ThemeLoader {
       "description": "Balanced standard color scheme for general use",
       "version": "1.0.0",
       "colors": {
+        "find": "blue",
+        "create": "brightGreen",
+        "modify": "white",
+        "delete": "gray",
+        "move": "cyan",
+        "restore": "brightYellow",
+        "header": "white",
+        "footer": "gray",
+        "border": "gray",
+        "selection": "cyan",
+        "default": "white",
         "table": {
           "column_headers": "white",
           "row": {
@@ -142,6 +153,17 @@ class ThemeLoader {
       "description": "High contrast color scheme for improved visibility",
       "version": "1.0.0",
       "colors": {
+        "find": "blue",
+        "create": "brightGreen",
+        "modify": "white",
+        "delete": "gray",
+        "move": "cyan",
+        "restore": "brightYellow",
+        "header": "white",
+        "footer": "gray",
+        "border": "gray",
+        "selection": "cyan",
+        "default": "white",
         "table": {
           "column_headers": "brightWhite",
           "row": {
@@ -198,6 +220,17 @@ class ThemeLoader {
       "description": "Vibrant color scheme with clear element distinction",
       "version": "1.0.0",
       "colors": {
+        "find": "blue",
+        "create": "brightGreen",
+        "modify": "white",
+        "delete": "gray",
+        "move": "cyan",
+        "restore": "brightYellow",
+        "header": "white",
+        "footer": "gray",
+        "border": "gray",
+        "selection": "cyan",
+        "default": "white",
         "table": {
           "column_headers": "brightMagenta",
           "row": {
@@ -254,6 +287,17 @@ class ThemeLoader {
       "description": "Minimal color scheme with subtle distinctions",
       "version": "1.0.0",
       "colors": {
+        "find": "blue",
+        "create": "brightGreen",
+        "modify": "white",
+        "delete": "gray",
+        "move": "cyan",
+        "restore": "brightYellow",
+        "header": "white",
+        "footer": "gray",
+        "border": "gray",
+        "selection": "cyan",
+        "default": "white",
         "table": {
           "column_headers": "white",
           "row": {

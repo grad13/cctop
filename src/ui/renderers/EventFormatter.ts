@@ -5,7 +5,7 @@
 
 import chalk = require('chalk');
 import { padEndWithWidth, padStartWithWidth, truncateWithEllipsis } from '../../utils/display-width';
-import { EventData, CLIDisplayLegacyWidthConfig } from '../../types/common';
+import { EventData, CLIDisplayLegacyWidthConfig } from '../../types';
 
 export class EventFormatter {
   private widthConfig: CLIDisplayLegacyWidthConfig;
@@ -40,8 +40,8 @@ export class EventFormatter {
   /**
    * Format timestamp for display (HH:MM:SS format)
    */
-  formatTimestamp(date: Date | string): string {
-    const d = typeof date === 'string' ? new Date(date) : date;
+  formatTimestamp(date: Date | string | number): string {
+    const d = typeof date === 'string' || typeof date === 'number' ? new Date(date) : date;
     
     const hours = String(d.getHours()).padStart(2, '0');
     const minutes = String(d.getMinutes()).padStart(2, '0');

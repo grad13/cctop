@@ -25,7 +25,7 @@ import {
   CLIDisplayStats,
   WidthConfig,
   ProcessMonitorStatus
-} from '../types/common';
+} from '../types';
 
 class CLIDisplay extends EventEmitter {
   private db: any; // DatabaseManager instance
@@ -83,7 +83,7 @@ class CLIDisplay extends EventEmitter {
     this.statusDisplay = new StatusDisplay({ display: { statusArea: displayConfig.statusArea } });
     
     // Interactive features (FUNC-400/401/402/403)
-    this.interactiveFeatures = new InteractiveFeatures(this.db, this.renderController, this);
+    this.interactiveFeatures = new InteractiveFeatures(this.db, this.renderController, this as any);
   }
 
   /**

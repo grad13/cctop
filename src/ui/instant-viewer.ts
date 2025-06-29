@@ -22,7 +22,7 @@ import type {
   ProgressiveLoader as IProgressiveLoader,
   DatabaseWatcher as IDatabaseWatcher,
   ProcessMonitorStatus
-} from '../types/common';
+} from '../types';
 
 class InstantViewer {
   private config: InstantViewerConfig;
@@ -140,9 +140,10 @@ class InstantViewer {
         this.statusDisplay.addMessage(">> Starting background monitor...");
         
         const monitorScript = path.join(__dirname, '../monitors/monitor-process.js');
-        const pid = await this.processManager.startMonitor(monitorScript, {
+        const pid = await this.processManager.startMonitor({
+          script: monitorScript,
           started_by: 'viewer'
-        });
+        } as any);
         
         this.statusDisplay.addMessage(`>> Background monitor started (PID: ${pid})`);
         
@@ -192,9 +193,10 @@ class InstantViewer {
       
       // Load only recent events first for instant display
       // Use display.maxEvents from config as the limit
-      const displayLimit = this.config.display?.maxEvents || 20;
+      const displayLimit = (this.config.display as any)?.maxEvents || 20;
       console.log(`[InstantViewer] Loading only ${displayLimit} recent events (display.maxEvents)`);
-      const loadedCount = await this.progressiveLoader.loadRecentEventsFirst(displayLimit);
+      const events = await this.progressiveLoader.loadRecentEventsFirst(displayLimit);
+      const loadedCount = events?.length || 0;
       
       // Get the last loaded event ID from recent events
       const lastEventId = this.progressiveLoader.getLastLoadedEventId();
@@ -316,8 +318,8 @@ class InstantViewer {
       if (this.processManager) {
         const status = await this.processManager.getMonitorStatus();
         
-        if (status.running && status.started_by === 'viewer') {
-          await this.processManager.stopMonitor();
+        if (status.running && status.started_by === 'viewer' && status.pid) {
+          await this.processManager.stopMonitor(status.pid);
           if (this.statusDisplay) {
             this.statusDisplay.addMessage(">> Monitor stopped (started by viewer)");
           }
@@ -359,6 +361,7 @@ class InstantViewer {
    */
   getStatus(): InstantViewerStatus {
     return {
+      running: this.isRunning,
       isRunning: this.isRunning,
       pid: process.pid,
       databaseConnected: this.databaseManager ? (this.databaseManager as any).isInitialized : false,

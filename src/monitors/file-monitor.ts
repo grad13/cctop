@@ -12,13 +12,14 @@ import {
   FileMonitorEvent, 
   FileMonitorStats,
   EventType 
-} from '../types/common';
+} from '../types';
 
 class FileMonitor extends EventEmitter {
   private config: FileMonitorConfig;
   private watcher: chokidar.FSWatcher | null = null;
   private isReady: boolean = false;
   private isRunning: boolean = false;
+  private startTime?: number;
 
   constructor(config: FileMonitorConfig) {
     super();
@@ -38,6 +39,7 @@ class FileMonitor extends EventEmitter {
     try {
       // PLAN-20250624-001 chokidar settings (vis005 compliant)
       const chokidarOptions: ChokidarOptions = {
+        paths: this.config.watchPaths || [],
         persistent: true,
         ignoreInitial: false,  // Enable initial scan
         ignored: this.config.excludePatterns || [],
@@ -66,6 +68,7 @@ class FileMonitor extends EventEmitter {
 
       this.setupEventHandlers();
       this.isRunning = true;
+      this.startTime = Date.now();
       
       
     } catch (error) {
@@ -205,10 +208,11 @@ class FileMonitor extends EventEmitter {
    */
   getStats(): FileMonitorStats {
     return {
-      isRunning: this.isRunning,
-      isReady: this.isReady,
-      watchedPaths: this.config.watchPaths,
-      ignored: this.config.excludePatterns || []
+      running: this.isRunning,
+      paths: this.config.watchPaths || [],
+      fileCount: 0,  // TODO: implement file count tracking
+      eventCount: 0, // TODO: implement event count tracking
+      startTime: this.startTime
     };
   }
 }

@@ -13,7 +13,7 @@ import type {
   FullConfig,
   FileMonitorStats,
   ProcessMonitorStatus
-} from '../types/common';
+} from '../types';
 
 const FileMonitor = require('./file-monitor');
 const EventProcessor = require('./event-processor');

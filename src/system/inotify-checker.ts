@@ -4,7 +4,7 @@
  */
 
 import { promises as fs } from 'fs';
-import { InotifyLimitResult } from '../types/common';
+import { InotifyLimitResult } from '../types';
 
 class InotifyChecker {
   /**

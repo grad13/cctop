@@ -205,6 +205,17 @@ export class ThemeLoader {
       version: '1.0.0',
       lastUpdated: new Date().toISOString(),
       colors: {
+        find: 'cyan',
+        create: 'green',
+        modify: 'yellow',
+        delete: 'red',
+        move: 'magenta',
+        restore: 'blue',
+        header: 'white',
+        footer: 'gray',
+        border: 'gray',
+        selection: 'cyan',
+        default: 'white',
         table: {
           column_headers: 'white',
           row: {
