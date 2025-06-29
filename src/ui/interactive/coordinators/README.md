@@ -5,3 +5,4 @@ This directory contains coordinator classes that manage the interaction between 
 ## Files
 
 - `DisplayCoordinator.ts` - Coordinates the initialization and interaction between aggregate and history displays
+- `FeatureCoordinator.ts` - Coordinates interaction between all interactive features and manages state transitions
