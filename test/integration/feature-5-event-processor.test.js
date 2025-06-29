@@ -6,9 +6,9 @@
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
-const DatabaseManager = require('../../src/database/database-manager');
-const FileMonitor = require('../../src/monitors/file-monitor');
-const EventProcessor = require('../../src/monitors/event-processor');
+const DatabaseManager = require('../../dist/src/database/database-manager');
+const FileMonitor = require('../../dist/src/monitors/file-monitor');
+const EventProcessor = require('../../dist/src/monitors/event-processor');
 
 describe('Feature 5: Event Processor (chokidar→DB integration)', () => {
   let testDir;

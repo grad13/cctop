@@ -6,7 +6,7 @@
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
-const DatabaseManager = require('../../src/database/database-manager');
+const DatabaseManager = require('../../dist/src/database/database-manager');
 
 // Import test fixtures and contracts
 const { databaseScenarios } = require('../fixtures/database-scenarios');

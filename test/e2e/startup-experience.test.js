@@ -44,7 +44,7 @@ describe('FUNC-206: Instant View & Progressive Loading', () => {
   test('should display viewer within 0.1 seconds (FUNC-206 Core Requirement)', async () => {
     startTime = Date.now();
     
-    cctopProcess = spawn('node', ['../../src/main.js', '--dir', testDir], {
+    cctopProcess = spawn('node', ['../../bin/cctop', '--dir', testDir], {
       cwd: path.resolve(__dirname, '../../'),
       stdio: ['pipe', 'pipe', 'pipe'],
       env: { ...process.env, NODE_ENV: 'test' }
@@ -85,7 +85,7 @@ describe('FUNC-206: Instant View & Progressive Loading', () => {
   test('should show progressive loading states (FUNC-206 State Transitions)', async () => {
     const outputStates = [];
     
-    cctopProcess = spawn('node', ['../../src/main.js', '--dir', testDir], {
+    cctopProcess = spawn('node', ['../../bin/cctop', '--dir', testDir], {
       cwd: path.resolve(__dirname, '../../'),
       stdio: ['pipe', 'pipe', 'pipe'],
       env: { ...process.env, NODE_ENV: 'test' }
@@ -129,7 +129,7 @@ describe('FUNC-206: Instant View & Progressive Loading', () => {
     
     let outputCapture = '';
     
-    cctopProcess = spawn('node', ['../../src/main.js', '--dir', testDir], {
+    cctopProcess = spawn('node', ['../../bin/cctop', '--dir', testDir], {
       cwd: path.resolve(__dirname, '../../'),
       stdio: ['pipe', 'pipe', 'pipe'],
       env: { ...process.env, NODE_ENV: 'test' }
@@ -159,7 +159,7 @@ describe('FUNC-206: Instant View & Progressive Loading', () => {
   test('should show real-time file events after startup (Progressive Data)', async () => {
     let fullOutput = '';
     
-    cctopProcess = spawn('node', ['../../src/main.js', '--dir', testDir], {
+    cctopProcess = spawn('node', ['../../bin/cctop', '--dir', testDir], {
       cwd: path.resolve(__dirname, '../../'),
       stdio: ['pipe', 'pipe', 'pipe'],
       env: { ...process.env, NODE_ENV: 'test' }
@@ -193,7 +193,7 @@ describe('FUNC-206: Instant View & Progressive Loading', () => {
   }, 12000);
 
   test('should handle terminal resize during startup gracefully', async () => {
-    cctopProcess = spawn('node', ['../../src/main.js', '--dir', testDir], {
+    cctopProcess = spawn('node', ['../../bin/cctop', '--dir', testDir], {
       cwd: path.resolve(__dirname, '../../'),
       stdio: ['pipe', 'pipe', 'pipe'],
       env: { ...process.env, NODE_ENV: 'test', COLUMNS: '80', LINES: '24' }

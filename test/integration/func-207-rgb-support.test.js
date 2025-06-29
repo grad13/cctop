@@ -6,7 +6,7 @@
 const { describe, test, expect, beforeEach, afterEach } = global;
 const fs = require('fs');
 const path = require('path');
-const ColorManager = require('../../src/color/ColorManager');
+const ColorManager = require('../../dist/src/color/ColorManager');
 
 describe('FUNC-207: RGB Support Validation', () => {
   const testConfigDir = '.cctop-rgb-test';

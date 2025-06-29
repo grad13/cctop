@@ -6,8 +6,8 @@
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
-const DatabaseManager = require('../../src/database/database-manager');
-const CLIDisplay = require('../../src/ui/cli-display');
+const DatabaseManager = require('../../dist/src/database/database-manager');
+const CLIDisplay = require('../../dist/src/ui/cli-display');
 
 describe('Feature 6: CLI Display (ui001準拠)', () => {
   let dbManager;

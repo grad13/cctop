@@ -6,7 +6,7 @@
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
-const FileMonitor = require('../../src/monitors/file-monitor');
+const FileMonitor = require('../../dist/src/monitors/file-monitor');
 
 describe('Feature 4: File Monitor (chokidar統合)', () => {
   let testDir;

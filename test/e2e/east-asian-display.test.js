@@ -53,7 +53,7 @@ describe('FUNC-200: East Asian Width Display', () => {
 
     let outputBuffer = '';
     
-    cctopProcess = spawn('node', ['../../src/main.js', '--dir', testDir], {
+    cctopProcess = spawn('node', ['../../bin/cctop', '--dir', testDir], {
       cwd: path.resolve(__dirname, '../../'),
       stdio: ['pipe', 'pipe', 'pipe'],
       env: { ...process.env, NODE_ENV: 'test' }
@@ -107,7 +107,7 @@ describe('FUNC-200: East Asian Width Display', () => {
 
     let displayOutput = '';
     
-    cctopProcess = spawn('node', ['../../src/main.js', '--dir', testDir], {
+    cctopProcess = spawn('node', ['../../bin/cctop', '--dir', testDir], {
       cwd: path.resolve(__dirname, '../../'),
       stdio: ['pipe', 'pipe', 'pipe'],
       env: { ...process.env, NODE_ENV: 'test' }
@@ -152,7 +152,7 @@ describe('FUNC-200: East Asian Width Display', () => {
 
     let truncationOutput = '';
     
-    cctopProcess = spawn('node', ['../../src/main.js', '--dir', testDir], {
+    cctopProcess = spawn('node', ['../../bin/cctop', '--dir', testDir], {
       cwd: path.resolve(__dirname, '../../'),
       stdio: ['pipe', 'pipe', 'pipe'],
       env: { ...process.env, NODE_ENV: 'test' }
@@ -200,7 +200,7 @@ describe('FUNC-200: East Asian Width Display', () => {
 
     let emojiOutput = '';
     
-    cctopProcess = spawn('node', ['../../src/main.js', '--dir', testDir], {
+    cctopProcess = spawn('node', ['../../bin/cctop', '--dir', testDir], {
       cwd: path.resolve(__dirname, '../../'),
       stdio: ['pipe', 'pipe', 'pipe'],
       env: { ...process.env, NODE_ENV: 'test' }
@@ -228,7 +228,7 @@ describe('FUNC-200: East Asian Width Display', () => {
     // Test with narrow terminal
     let narrowOutput = '';
     
-    cctopProcess = spawn('node', ['../../src/main.js', '--dir', testDir], {
+    cctopProcess = spawn('node', ['../../bin/cctop', '--dir', testDir], {
       cwd: path.resolve(__dirname, '../../'),
       stdio: ['pipe', 'pipe', 'pipe'],
       env: { ...process.env, NODE_ENV: 'test', COLUMNS: '80', LINES: '24' }
@@ -250,7 +250,7 @@ describe('FUNC-200: East Asian Width Display', () => {
 
     let wideOutput = '';
     
-    cctopProcess = spawn('node', ['../../src/main.js', '--dir', testDir], {
+    cctopProcess = spawn('node', ['../../bin/cctop', '--dir', testDir], {
       cwd: path.resolve(__dirname, '../../'),
       stdio: ['pipe', 'pipe', 'pipe'],
       env: { ...process.env, NODE_ENV: 'test', COLUMNS: '120', LINES: '30' }

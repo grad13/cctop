@@ -8,8 +8,8 @@ const { promisify } = require('util');
 const fs = require('fs').promises;
 const path = require('path');
 const os = require('os');
-const ConfigManager = require('../../src/config/config-manager');
-const InotifyChecker = require('../../src/system/inotify-checker');
+const ConfigManager = require('../../dist/src/config/config-manager');
+const InotifyChecker = require('../../dist/src/system/inotify-checker');
 
 const execAsync = promisify(exec);
 

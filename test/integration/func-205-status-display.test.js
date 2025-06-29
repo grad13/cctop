@@ -46,7 +46,7 @@ describe('FUNC-205: Status Display Area', () => {
   test('should display initialization status during startup', async () => {
     let outputBuffer = '';
     
-    cctopProcess = spawn('node', ['../../src/main.js', '--dir', testDir], {
+    cctopProcess = spawn('node', ['../../bin/cctop', '--dir', testDir], {
       cwd: path.resolve(__dirname, '../../'),
       stdio: ['pipe', 'pipe', 'pipe'],
       env: { ...process.env, NODE_ENV: 'test' }
@@ -78,7 +78,7 @@ describe('FUNC-205: Status Display Area', () => {
   test('should display monitor status and process information', async () => {
     let fullOutput = '';
     
-    cctopProcess = spawn('node', ['../../src/main.js', '--dir', testDir], {
+    cctopProcess = spawn('node', ['../../bin/cctop', '--dir', testDir], {
       cwd: path.resolve(__dirname, '../../'),
       stdio: ['pipe', 'pipe', 'pipe'],
       env: { ...process.env, NODE_ENV: 'test' }
@@ -103,7 +103,7 @@ describe('FUNC-205: Status Display Area', () => {
   test('should display activity statistics in status area', async () => {
     let outputCapture = '';
     
-    cctopProcess = spawn('node', ['../../src/main.js', '--dir', testDir], {
+    cctopProcess = spawn('node', ['../../bin/cctop', '--dir', testDir], {
       cwd: path.resolve(__dirname, '../../'),
       stdio: ['pipe', 'pipe', 'pipe'],
       env: { ...process.env, NODE_ENV: 'test' }
@@ -146,7 +146,7 @@ describe('FUNC-205: Status Display Area', () => {
     
     let errorOutput = '';
     
-    cctopProcess = spawn('node', ['../../src/main.js', '--dir', testDir], {
+    cctopProcess = spawn('node', ['../../bin/cctop', '--dir', testDir], {
       cwd: path.resolve(__dirname, '../../'),
       stdio: ['pipe', 'pipe', 'pipe'],
       env: { ...process.env, NODE_ENV: 'test' }
@@ -175,7 +175,7 @@ describe('FUNC-205: Status Display Area', () => {
   test('should show real-time status updates during file operations', async () => {
     let statusUpdates = [];
     
-    cctopProcess = spawn('node', ['../../src/main.js', '--dir', testDir], {
+    cctopProcess = spawn('node', ['../../bin/cctop', '--dir', testDir], {
       cwd: path.resolve(__dirname, '../../'),
       stdio: ['pipe', 'pipe', 'pipe'],
       env: { ...process.env, NODE_ENV: 'test' }
@@ -218,7 +218,7 @@ describe('FUNC-205: Status Display Area', () => {
   test('should display status area separate from main content area', async () => {
     let fullCapture = '';
     
-    cctopProcess = spawn('node', ['../../src/main.js', '--dir', testDir], {
+    cctopProcess = spawn('node', ['../../bin/cctop', '--dir', testDir], {
       cwd: path.resolve(__dirname, '../../'),
       stdio: ['pipe', 'pipe', 'pipe'],
       env: { ...process.env, NODE_ENV: 'test' }

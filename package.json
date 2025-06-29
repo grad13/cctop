@@ -2,7 +2,7 @@
   "name": "cctop",
   "version": "0.2.0",
   "description": "File system monitoring tool with real-time event tracking",
-  "main": "src/index.js",
+  "main": "dist/index.js",
   "bin": {
     "cctop": "./bin/cctop"
   },

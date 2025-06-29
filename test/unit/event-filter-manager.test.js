@@ -2,7 +2,7 @@
  * EventFilterManager Unit Tests (FUNC-020)
  */
 
-const EventFilterManager = require('../../src/filter/event-filter-manager');
+const EventFilterManager = require('../../dist/src/filter/event-filter-manager');
 
 describe('EventFilterManager', () => {
   let filterManager;

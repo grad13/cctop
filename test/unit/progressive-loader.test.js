@@ -91,7 +91,7 @@ vi.mock('../../src/ui/progressive-loader', () => {
   };
 });
 
-const ProgressiveLoader = require('../../src/ui/progressive-loader');
+const ProgressiveLoader = require('../../dist/src/ui/progressive-loader');
 const { EventEmitter } = require('events');
 
 describe('Progressive Loader (FUNC-206 Compliance)', () => {

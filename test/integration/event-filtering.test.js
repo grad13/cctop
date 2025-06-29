@@ -3,10 +3,10 @@
  */
 
 import { describe, test, expect, vi, beforeEach, afterEach } from 'vitest';
-const EventFilterManager = require('../../src/filter/event-filter-manager');
-const FilterStatusRenderer = require('../../src/ui/filter-status-renderer');
-const CLIDisplay = require('../../src/ui/cli-display');
-const DatabaseManager = require('../../src/database/database-manager');
+const EventFilterManager = require('../../dist/src/filter/event-filter-manager');
+const FilterStatusRenderer = require('../../dist/src/ui/filter-status-renderer');
+const CLIDisplay = require('../../dist/src/ui/cli-display');
+const DatabaseManager = require('../../dist/src/database/database-manager');
 const path = require('path');
 const os = require('os');
 const fs = require('fs').promises;

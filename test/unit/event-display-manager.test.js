@@ -4,7 +4,7 @@
  */
 
 import { describe, test, expect, beforeEach, vi } from 'vitest';
-const EventDisplayManager = require('../../src/ui/managers/event-display-manager');
+const EventDisplayManager = require('../../dist/src/ui/managers/event-display-manager');
 const chalk = require('chalk');
 
 describe('Event Display Manager (FUNC-202 Compliance)', () => {

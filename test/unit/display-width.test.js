@@ -1,4 +1,4 @@
-const { padEndWithWidth, padStartWithWidth, truncateWithEllipsis } = require('../../src/utils/display-width');
+const { padEndWithWidth, padStartWithWidth, truncateWithEllipsis } = require('../../dist/src/utils/display-width');
 const stringWidth = require('string-width');
 
 describe('East Asian Width Support', () => {

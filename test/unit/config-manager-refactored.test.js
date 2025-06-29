@@ -4,8 +4,8 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-const ConfigManager = require('../../src/config/config-manager');
-const CLIInterface = require('../../src/interfaces/cli-interface');
+const ConfigManager = require('../../dist/src/config/config-manager');
+const CLIInterface = require('../../dist/src/interfaces/cli-interface');
 
 describe('ConfigManager Architecture Refactoring (REP-0098)', () => {
   describe('責任分離とテスト可能性', () => {

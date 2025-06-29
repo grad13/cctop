@@ -2,7 +2,7 @@
  * FilterStatusRenderer Unit Tests (FUNC-020)
  */
 
-const FilterStatusRenderer = require('../../src/ui/filter-status-renderer');
+const FilterStatusRenderer = require('../../dist/src/ui/filter-status-renderer');
 
 describe('FilterStatusRenderer', () => {
   describe('renderFilterLine', () => {

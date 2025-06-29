@@ -8,7 +8,7 @@ import { describe, test, expect, beforeEach, afterEach } from 'vitest';
 import fs from 'fs/promises';
 import path from 'path';
 import { spawn } from 'child_process';
-const DatabaseManager = require('../../src/database/database-manager.js');
+const DatabaseManager = require('../../dist/src/database/database-manager.js');
 
 describe('Aggregates Statistics Validation (FUNC-000/402 Specification)', () => {
   let testDir;

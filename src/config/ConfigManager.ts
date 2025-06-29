@@ -16,6 +16,9 @@ import {
 import { ConfigLoader } from './loaders/ConfigLoader';
 import { ConfigValidator } from './validators/ConfigValidator';
 import { ConfigMerger } from './mergers/ConfigMerger';
+import { ErrorHandler } from './handlers/ErrorHandler';
+import { DirectoryHandler } from './handlers/DirectoryHandler';
+import { ConfigSaver } from './savers/ConfigSaver';
 
 const CLIInterfaceClass = require('../interfaces/cli-interface');
 
@@ -24,11 +27,13 @@ export class ConfigManager {
   private configPath: string | null = null;
   private interactive: boolean;
   private cliInterface: any;
-  private promptHandler: (dirPath: string) => Promise<boolean>;
   
   private configLoader: ConfigLoader | null = null;
   private configValidator: ConfigValidator;
   private configMerger: ConfigMerger;
+  private errorHandler: ErrorHandler;
+  private directoryHandler: DirectoryHandler;
+  private configSaver: ConfigSaver;
 
   constructor({ 
     interactive = true, 
@@ -37,10 +42,16 @@ export class ConfigManager {
   }: ConfigManagerOptions = {}) {
     this.interactive = interactive;
     this.cliInterface = cliInterface || new CLIInterfaceClass();
-    this.promptHandler = promptHandler || this.defaultPromptHandler.bind(this);
     
     this.configValidator = new ConfigValidator();
     this.configMerger = new ConfigMerger();
+    this.errorHandler = new ErrorHandler(interactive);
+    this.directoryHandler = new DirectoryHandler(
+      this.cliInterface,
+      interactive,
+      promptHandler
+    );
+    this.configSaver = new ConfigSaver();
   }
 
   /**
@@ -110,32 +121,7 @@ export class ConfigManager {
    * Handle validation errors
    */
   private handleValidationErrors(errors: string[]): void {
-    const errorMsg = `Configuration validation failed:\n${errors.map(e => `  - ${e}`).join('\n')}`;
-    
-    if (this.interactive) {
-      console.error(`\nError: ${errorMsg}`);
-      console.error('\nPlease check ./.cctop/config.json and fix the issues.\n');
-      process.exit(1);
-    } else {
-      if (process.env.CCTOP_VERBOSE) {
-        console.error(`Error: ${errorMsg}`);
-      }
-      throw new ConfigError(
-        ConfigErrorType.VALIDATION_FAILED,
-        `Validation failed: ${errors.join(', ')}`
-      );
-    }
-  }
-
-  /**
-   * Default prompt handler
-   */
-  private async defaultPromptHandler(dirPath: string): Promise<boolean> {
-    if (!this.interactive) {
-      return false;
-    }
-    
-    return this.cliInterface.promptAddDirectory(dirPath, 30000);
+    this.errorHandler.handleValidationErrors(errors);
   }
 
   /**
@@ -143,37 +129,12 @@ export class ConfigManager {
    */
   private async checkAndAddCurrentDirectory(cliArgs: CLIArgs = {}): Promise<void> {
     if (!this.config) return;
-
-    const targetDir = Array.isArray(cliArgs.watchPath) 
-      ? cliArgs.watchPath[0] 
-      : (cliArgs.watchPath || process.cwd());
-    const absoluteTargetDir = path.resolve(targetDir);
     
-    // Ensure monitoring config exists
-    if (!this.config.monitoring) {
-      this.config.monitoring = {} as any;
-    }
-    if (!Array.isArray(this.config.monitoring.watchPaths)) {
-      this.config.monitoring.watchPaths = [];
-    }
-    
-    // Normalize paths to absolute
-    this.config.monitoring.watchPaths = this.config.monitoring.watchPaths.map(
-      watchPath => path.resolve(watchPath)
+    await this.directoryHandler.checkAndAddCurrentDirectory(
+      this.config,
+      cliArgs,
+      () => this.save()
     );
-    
-    const isAlreadyWatched = this.config.monitoring.watchPaths.includes(absoluteTargetDir);
-    
-    if (!isAlreadyWatched) {
-      const shouldAdd = await this.promptHandler(absoluteTargetDir);
-      if (shouldAdd) {
-        this.config.monitoring.watchPaths.push(absoluteTargetDir);
-        await this.save();
-        this.cliInterface.success(`Added to monitor: ${absoluteTargetDir}`);
-      } else {
-        this.cliInterface.info('Monitoring with current config only');
-      }
-    }
   }
 
   /**
@@ -225,19 +186,12 @@ export class ConfigManager {
       }
 
       const savePath = this.configPath || path.join(process.cwd(), '.cctop', 'config.json');
-      const configDir = path.dirname(savePath);
       
-      // Ensure directory exists
-      await fs.promises.mkdir(configDir, { recursive: true });
-      
-      // Save config
-      const content = JSON.stringify(this.config, null, 2);
-      await fs.promises.writeFile(savePath, content, 'utf8');
-      
-      console.log(`💾 Configuration saved to: ${savePath}`);
+      await this.configSaver.saveConfig(this.config, savePath);
+      this.errorHandler.logSuccess(`Configuration saved to: ${savePath}`);
       
     } catch (error: any) {
-      console.error('Failed to save configuration:', error);
+      this.errorHandler.handleFileSystemError(error, 'save configuration');
       throw error;
     }
   }
@@ -288,9 +242,6 @@ export class ConfigManager {
    * Load config file (internal backward compatible)
    */
   private loadConfigFile(configPath: string): FullConfig | null {
-    // This method is called by old code, redirect to new implementation
-    const loader = new ConfigLoader(configPath);
-    
     try {
       // Synchronous loading for backward compatibility
       const content = fs.readFileSync(configPath, 'utf8');
@@ -303,24 +254,23 @@ export class ConfigManager {
       
       return config;
     } catch (error: any) {
-      if (error.code === 'ENOENT') {
-        if (this.interactive || process.env.CCTOP_VERBOSE) {
-          console.error(`File not found: ${configPath}`);
-        }
-        return null;
-      } else if (error instanceof SyntaxError) {
-        if (this.interactive || process.env.CCTOP_VERBOSE) {
-          console.error(`JSON syntax error: ${configPath}`);
-          console.error(`Details: ${error.message}`);
-          console.error('Fix: Please correct to valid JSON format');
-        }
-        return null;
-      } else {
-        if (this.interactive || process.env.CCTOP_VERBOSE) {
-          console.error(`Configuration file load error: ${error.message}`);
-        }
-        return null;
-      }
+      this.handleLoadError(error, configPath);
+      return null;
+    }
+  }
+
+  /**
+   * Handle config load errors
+   */
+  private handleLoadError(error: any, configPath: string): void {
+    if (error.code === 'ENOENT') {
+      this.errorHandler.logInfo(`File not found: ${configPath}`);
+    } else if (error instanceof SyntaxError) {
+      this.errorHandler.logWarning(`JSON syntax error: ${configPath}`);
+      this.errorHandler.logWarning(`Details: ${error.message}`);
+      this.errorHandler.logInfo('Fix: Please correct to valid JSON format');
+    } else {
+      this.errorHandler.logWarning(`Configuration file load error: ${error.message}`);
     }
   }
 

@@ -20,7 +20,7 @@ describe('Status display area basic operation', () => {
     };
 
     // TODO: Uncomment after StatusDisplay class implementation
-    // const StatusDisplay = require('../../src/ui/status-display');
+    // const StatusDisplay = require('../../dist/src/ui/status-display');
     // statusDisplay = new StatusDisplay(mockConfig);
   });
 

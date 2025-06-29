@@ -43,7 +43,7 @@ describe('FUNC-203: Event Type Filtering', () => {
   test('should filter create events with c key toggle', async () => {
     let outputBuffer = '';
     
-    cctopProcess = spawn('node', ['../../src/main.js', '--dir', testDir], {
+    cctopProcess = spawn('node', ['../../bin/cctop', '--dir', testDir], {
       cwd: path.resolve(__dirname, '../../'),
       stdio: ['pipe', 'pipe', 'pipe'],
       env: { ...process.env, NODE_ENV: 'test' }
@@ -91,7 +91,7 @@ describe('FUNC-203: Event Type Filtering', () => {
   test('should filter modify events with m key toggle', async () => {
     let modifyOutput = '';
     
-    cctopProcess = spawn('node', ['../../src/main.js', '--dir', testDir], {
+    cctopProcess = spawn('node', ['../../bin/cctop', '--dir', testDir], {
       cwd: path.resolve(__dirname, '../../'),
       stdio: ['pipe', 'pipe', 'pipe'],
       env: { ...process.env, NODE_ENV: 'test' }
@@ -133,7 +133,7 @@ describe('FUNC-203: Event Type Filtering', () => {
   test('should filter delete events with d key toggle', async () => {
     let deleteOutput = '';
     
-    cctopProcess = spawn('node', ['../../src/main.js', '--dir', testDir], {
+    cctopProcess = spawn('node', ['../../bin/cctop', '--dir', testDir], {
       cwd: path.resolve(__dirname, '../../'),
       stdio: ['pipe', 'pipe', 'pipe'],
       env: { ...process.env, NODE_ENV: 'test' }
@@ -177,7 +177,7 @@ describe('FUNC-203: Event Type Filtering', () => {
   test('should show all filter states in status display area', async () => {
     let filterStatusOutput = '';
     
-    cctopProcess = spawn('node', ['../../src/main.js', '--dir', testDir], {
+    cctopProcess = spawn('node', ['../../bin/cctop', '--dir', testDir], {
       cwd: path.resolve(__dirname, '../../'),
       stdio: ['pipe', 'pipe', 'pipe'],
       env: { ...process.env, NODE_ENV: 'test' }
@@ -220,7 +220,7 @@ describe('FUNC-203: Event Type Filtering', () => {
   test('should support multiple filter combinations', async () => {
     let comboOutput = '';
     
-    cctopProcess = spawn('node', ['../../src/main.js', '--dir', testDir], {
+    cctopProcess = spawn('node', ['../../bin/cctop', '--dir', testDir], {
       cwd: path.resolve(__dirname, '../../'),
       stdio: ['pipe', 'pipe', 'pipe'],
       env: { ...process.env, NODE_ENV: 'test' }
@@ -264,7 +264,7 @@ describe('FUNC-203: Event Type Filtering', () => {
   test('should reset filters when toggled off', async () => {
     let resetOutput = '';
     
-    cctopProcess = spawn('node', ['../../src/main.js', '--dir', testDir], {
+    cctopProcess = spawn('node', ['../../bin/cctop', '--dir', testDir], {
       cwd: path.resolve(__dirname, '../../'),
       stdio: ['pipe', 'pipe', 'pipe'],
       env: { ...process.env, NODE_ENV: 'test' }

@@ -40,7 +40,7 @@ describe('Visual Display System Integration', () => {
 
   test('should display multiple events on screen (not 90% blank)', async () => {
     // Launch cctop in test directory
-    cctopProcess = spawn('node', ['../../src/main.js', '--dir', testDir], {
+    cctopProcess = spawn('node', ['../../bin/cctop', '--dir', testDir], {
       cwd: path.resolve(__dirname, '../../'),
       stdio: ['pipe', 'pipe', 'pipe'],
       env: { ...process.env, NODE_ENV: 'test' }
@@ -100,7 +100,7 @@ describe('Visual Display System Integration', () => {
   }, 10000);
 
   test('should handle terminal resize without blank screen', async () => {
-    cctopProcess = spawn('node', ['../../src/main.js', '--dir', testDir], {
+    cctopProcess = spawn('node', ['../../bin/cctop', '--dir', testDir], {
       cwd: path.resolve(__dirname, '../../'),
       stdio: ['pipe', 'pipe', 'pipe'],
       env: { ...process.env, NODE_ENV: 'test', COLUMNS: '120', LINES: '30' }
@@ -145,7 +145,7 @@ describe('Visual Display System Integration', () => {
   }, 15000);
 
   test('should maintain display quality with high event volume', async () => {
-    cctopProcess = spawn('node', ['../../src/main.js', '--dir', testDir], {
+    cctopProcess = spawn('node', ['../../bin/cctop', '--dir', testDir], {
       cwd: path.resolve(__dirname, '../../'),
       stdio: ['pipe', 'pipe', 'pipe'],
       env: { ...process.env, NODE_ENV: 'test' }

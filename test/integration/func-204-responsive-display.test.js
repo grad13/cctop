@@ -49,7 +49,7 @@ describe('FUNC-204: Responsive Directory Display', () => {
   test('should adapt directory column width to narrow terminal (80 columns)', async () => {
     let narrowOutput = '';
     
-    cctopProcess = spawn('node', ['../../src/main.js', '--dir', testDir], {
+    cctopProcess = spawn('node', ['../../bin/cctop', '--dir', testDir], {
       cwd: path.resolve(__dirname, '../../'),
       stdio: ['pipe', 'pipe', 'pipe'],
       env: { 
@@ -101,7 +101,7 @@ describe('FUNC-204: Responsive Directory Display', () => {
   test('should expand directory column width in wide terminal (120 columns)', async () => {
     let wideOutput = '';
     
-    cctopProcess = spawn('node', ['../../src/main.js', '--dir', testDir], {
+    cctopProcess = spawn('node', ['../../bin/cctop', '--dir', testDir], {
       cwd: path.resolve(__dirname, '../../'),
       stdio: ['pipe', 'pipe', 'pipe'],
       env: { 
@@ -144,7 +144,7 @@ describe('FUNC-204: Responsive Directory Display', () => {
   test('should handle terminal resize during runtime (SIGWINCH)', async () => {
     let resizeOutput = '';
     
-    cctopProcess = spawn('node', ['../../src/main.js', '--dir', testDir], {
+    cctopProcess = spawn('node', ['../../bin/cctop', '--dir', testDir], {
       cwd: path.resolve(__dirname, '../../'),
       stdio: ['pipe', 'pipe', 'pipe'],
       env: { 
@@ -196,7 +196,7 @@ describe('FUNC-204: Responsive Directory Display', () => {
 
     let truncationOutput = '';
     
-    cctopProcess = spawn('node', ['../../src/main.js', '--dir', testDir], {
+    cctopProcess = spawn('node', ['../../bin/cctop', '--dir', testDir], {
       cwd: path.resolve(__dirname, '../../'),
       stdio: ['pipe', 'pipe', 'pipe'],
       env: { 
@@ -237,7 +237,7 @@ describe('FUNC-204: Responsive Directory Display', () => {
   test('should maintain fixed column widths while adjusting directory column', async () => {
     let columnOutput = '';
     
-    cctopProcess = spawn('node', ['../../src/main.js', '--dir', testDir], {
+    cctopProcess = spawn('node', ['../../bin/cctop', '--dir', testDir], {
       cwd: path.resolve(__dirname, '../../'),
       stdio: ['pipe', 'pipe', 'pipe'],
       env: { 
@@ -299,7 +299,7 @@ describe('FUNC-204: Responsive Directory Display', () => {
   test('should handle minimum directory column width gracefully', async () => {
     let minWidthOutput = '';
     
-    cctopProcess = spawn('node', ['../../src/main.js', '--dir', testDir], {
+    cctopProcess = spawn('node', ['../../bin/cctop', '--dir', testDir], {
       cwd: path.resolve(__dirname, '../../'),
       stdio: ['pipe', 'pipe', 'pipe'],
       env: { 

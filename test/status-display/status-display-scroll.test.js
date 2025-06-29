@@ -20,7 +20,7 @@ describe('横スクロール機能', () => {
     };
 
     // TODO: StatusDisplayクラス実装後にコメントアウト解除
-    // const StatusDisplay = require('../../src/ui/status-display');
+    // const StatusDisplay = require('../../dist/src/ui/status-display');
     // statusDisplay = new StatusDisplay(mockConfig);
     // statusDisplay.terminalWidth = 80; // テスト用固定幅
   });

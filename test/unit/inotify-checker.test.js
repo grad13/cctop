@@ -3,7 +3,7 @@
  */
 
 const fs = require('fs').promises;
-const InotifyChecker = require('../../src/system/inotify-checker');
+const InotifyChecker = require('../../dist/src/system/inotify-checker');
 
 describe('InotifyChecker', () => {
   beforeEach(() => {

@@ -20,7 +20,7 @@ describe('他システムとの統合', () => {
     };
 
     // TODO: StatusDisplayクラス実装後にコメントアウト解除
-    // const StatusDisplay = require('../../src/ui/status-display');
+    // const StatusDisplay = require('../../dist/src/ui/status-display');
     // statusDisplay = new StatusDisplay(mockConfig);
   });
 
@@ -35,7 +35,7 @@ describe('他システムとの統合', () => {
     expect(true).toBe(true); // Placeholder
     
     // 期待する実装:
-    // const CLIDisplay = require('../../src/ui/cli-display');
+    // const CLIDisplay = require('../../dist/src/ui/cli-display');
     // const cliDisplay = new CLIDisplay(mockDatabaseManager, mockConfig);
     // 
     // // StatusDisplayがCLI下部に正しく統合されることを確認
@@ -48,7 +48,7 @@ describe('他システムとの統合', () => {
     expect(true).toBe(true); // Placeholder
     
     // 期待する実装:
-    // const BufferedRenderer = require('../../src/utils/buffered-renderer');
+    // const BufferedRenderer = require('../../dist/src/utils/buffered-renderer');
     // 
     // // StatusDisplayがBufferedRendererを使用することを確認
     // expect(statusDisplay.renderer).toBeInstanceOf(BufferedRenderer);

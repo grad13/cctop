@@ -28,7 +28,7 @@ describe('設定システム連携', () => {
     //   }
     // };
     // 
-    // const StatusDisplay = require('../../src/ui/status-display');
+    // const StatusDisplay = require('../../dist/src/ui/status-display');
     // statusDisplay = new StatusDisplay(config);
     // 
     // expect(statusDisplay.maxLines).toBe(5);
@@ -115,7 +115,7 @@ describe('設定システム連携', () => {
     //   }
     // };
     // 
-    // const StatusDisplay = require('../../src/ui/status-display');
+    // const StatusDisplay = require('../../dist/src/ui/status-display');
     // statusDisplay = new StatusDisplay(customConfig);
     // 
     // expect(statusDisplay.scrollSpeed).toBe(100);
@@ -138,7 +138,7 @@ describe('設定システム連携', () => {
     //   }
     // };
     // 
-    // const StatusDisplay = require('../../src/ui/status-display');
+    // const StatusDisplay = require('../../dist/src/ui/status-display');
     // statusDisplay = new StatusDisplay(invalidConfig);
     // 
     // // デフォルト値にフォールバック
@@ -154,7 +154,7 @@ describe('設定システム連携', () => {
     
     // 期待する実装:
     // // 設定なしでの初期化
-    // const StatusDisplay = require('../../src/ui/status-display');
+    // const StatusDisplay = require('../../dist/src/ui/status-display');
     // statusDisplay = new StatusDisplay({});
     // 
     // // デフォルト値確認
@@ -188,7 +188,7 @@ describe('設定システム連携', () => {
     //   }
     // };
     // 
-    // const StatusDisplay = require('../../src/ui/status-display');
+    // const StatusDisplay = require('../../dist/src/ui/status-display');
     // statusDisplay = new StatusDisplay(hierarchicalConfig);
     // 
     // expect(statusDisplay.maxLines).toBe(4);

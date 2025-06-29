@@ -6,7 +6,7 @@
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
-const ConfigManager = require('../../src/config/config-manager');
+const ConfigManager = require('../../dist/src/config/config-manager');
 
 // テストフィクスチャとコントラクトのインポート
 const { configScenarios } = require('../fixtures/config-scenarios');

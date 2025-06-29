@@ -7,7 +7,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import path from 'path';
 import os from 'os';
 import fs from 'fs';
-const DatabaseManager = require('../../src/database/database-manager');
+const DatabaseManager = require('../../dist/src/database/database-manager');
 
 describe('FUNC-000: SQLite Database Foundation v0.2.0.0', () => {
   let tempDir;

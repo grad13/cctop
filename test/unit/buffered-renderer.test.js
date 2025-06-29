@@ -3,7 +3,7 @@
  */
 
 // Vitest globals setup (automatically available with globals: true in vitest.config.js)
-const BufferedRenderer = require('../../src/utils/buffered-renderer');
+const BufferedRenderer = require('../../dist/src/utils/buffered-renderer');
 
 describe('BufferedRenderer', () => {
   let renderer;

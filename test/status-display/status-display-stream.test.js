@@ -20,7 +20,7 @@ describe('ストリーム形式表示', () => {
     };
 
     // TODO: StatusDisplayクラス実装後にコメントアウト解除
-    // const StatusDisplay = require('../../src/ui/status-display');
+    // const StatusDisplay = require('../../dist/src/ui/status-display');
     // statusDisplay = new StatusDisplay(mockConfig);
   });
 

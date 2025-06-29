@@ -3,7 +3,7 @@
  */
 
 // Vitest globals配置（vitest.config.jsのglobals: trueで自動利用可能）
-const CLIDisplay = require('../../src/ui/cli-display');
+const CLIDisplay = require('../../dist/src/ui/cli-display');
 
 // モックデータベースマネージャー
 class MockDatabaseManager {

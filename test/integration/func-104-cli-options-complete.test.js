@@ -47,7 +47,7 @@ describe('FUNC-104: CLI Interface Complete Options', () => {
 
   test('should support --dir option to specify monitor directory', async () => {
     return new Promise((resolve, reject) => {
-      const cctopProcess = spawn('node', ['../../src/main.js', '--dir', altTestDir], {
+      const cctopProcess = spawn('node', ['../../bin/cctop', '--dir', altTestDir], {
         cwd: path.resolve(__dirname, '../../'),
         stdio: ['pipe', 'pipe', 'pipe'],
         env: { ...process.env, NODE_ENV: 'test' }
@@ -91,7 +91,7 @@ describe('FUNC-104: CLI Interface Complete Options', () => {
 
   test('should support -d short option for directory specification', async () => {
     return new Promise((resolve, reject) => {
-      const cctopProcess = spawn('node', ['../../src/main.js', '-d', testDir], {
+      const cctopProcess = spawn('node', ['../../bin/cctop', '-d', testDir], {
         cwd: path.resolve(__dirname, '../../'),
         stdio: ['pipe', 'pipe', 'pipe'],
         env: { ...process.env, NODE_ENV: 'test' }
@@ -125,7 +125,7 @@ describe('FUNC-104: CLI Interface Complete Options', () => {
 
   test('should support --verbose option for detailed output', async () => {
     return new Promise((resolve, reject) => {
-      const cctopProcess = spawn('node', ['../../src/main.js', '--verbose', '--dir', testDir], {
+      const cctopProcess = spawn('node', ['../../bin/cctop', '--verbose', '--dir', testDir], {
         cwd: path.resolve(__dirname, '../../'),
         stdio: ['pipe', 'pipe', 'pipe'],
         env: { ...process.env, NODE_ENV: 'test' }
@@ -163,7 +163,7 @@ describe('FUNC-104: CLI Interface Complete Options', () => {
 
   test('should support --quiet option for minimal output', async () => {
     return new Promise((resolve, reject) => {
-      const cctopProcess = spawn('node', ['../../src/main.js', '--quiet', '--dir', testDir], {
+      const cctopProcess = spawn('node', ['../../bin/cctop', '--quiet', '--dir', testDir], {
         cwd: path.resolve(__dirname, '../../'),
         stdio: ['pipe', 'pipe', 'pipe'],
         env: { ...process.env, NODE_ENV: 'test' }
@@ -197,7 +197,7 @@ describe('FUNC-104: CLI Interface Complete Options', () => {
 
   test('should support --help option and display usage information', async () => {
     return new Promise((resolve, reject) => {
-      const cctopProcess = spawn('node', ['../../src/main.js', '--help'], {
+      const cctopProcess = spawn('node', ['../../bin/cctop', '--help'], {
         cwd: path.resolve(__dirname, '../../'),
         stdio: ['pipe', 'pipe', 'pipe'],
         env: { ...process.env, NODE_ENV: 'test' }
@@ -236,7 +236,7 @@ describe('FUNC-104: CLI Interface Complete Options', () => {
 
   test('should support --version option and display version information', async () => {
     return new Promise((resolve, reject) => {
-      const cctopProcess = spawn('node', ['../../src/main.js', '--version'], {
+      const cctopProcess = spawn('node', ['../../bin/cctop', '--version'], {
         cwd: path.resolve(__dirname, '../../'),
         stdio: ['pipe', 'pipe', 'pipe'],
         env: { ...process.env, NODE_ENV: 'test' }
@@ -274,7 +274,7 @@ describe('FUNC-104: CLI Interface Complete Options', () => {
 
   test('should support --check-limits option for file watch limits', async () => {
     return new Promise((resolve, reject) => {
-      const cctopProcess = spawn('node', ['../../src/main.js', '--check-limits'], {
+      const cctopProcess = spawn('node', ['../../bin/cctop', '--check-limits'], {
         cwd: path.resolve(__dirname, '../../'),
         stdio: ['pipe', 'pipe', 'pipe'],
         env: { ...process.env, NODE_ENV: 'test' }
@@ -309,7 +309,7 @@ describe('FUNC-104: CLI Interface Complete Options', () => {
 
   test('should support positional directory argument', async () => {
     return new Promise((resolve, reject) => {
-      const cctopProcess = spawn('node', ['../../src/main.js', altTestDir], {
+      const cctopProcess = spawn('node', ['../../bin/cctop', altTestDir], {
         cwd: path.resolve(__dirname, '../../'),
         stdio: ['pipe', 'pipe', 'pipe'],
         env: { ...process.env, NODE_ENV: 'test' }
@@ -351,7 +351,7 @@ describe('FUNC-104: CLI Interface Complete Options', () => {
     return new Promise((resolve, reject) => {
       const startTime = Date.now();
       
-      const cctopProcess = spawn('node', ['../../src/main.js', '--timeout', '2', '--dir', testDir], {
+      const cctopProcess = spawn('node', ['../../bin/cctop', '--timeout', '2', '--dir', testDir], {
         cwd: path.resolve(__dirname, '../../'),
         stdio: ['pipe', 'pipe', 'pipe'],
         env: { ...process.env, NODE_ENV: 'test' }
@@ -387,7 +387,7 @@ describe('FUNC-104: CLI Interface Complete Options', () => {
 
   test('should display error for invalid options', async () => {
     return new Promise((resolve, reject) => {
-      const cctopProcess = spawn('node', ['../../src/main.js', '--invalid-option'], {
+      const cctopProcess = spawn('node', ['../../bin/cctop', '--invalid-option'], {
         cwd: path.resolve(__dirname, '../../'),
         stdio: ['pipe', 'pipe', 'pipe'],
         env: { ...process.env, NODE_ENV: 'test' }

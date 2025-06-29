@@ -4,12 +4,12 @@
  */
 
 import { describe, test, expect, beforeEach, vi } from 'vitest';
-const MonitorProcess = require('../../src/monitors/monitor-process');
-const FileMonitor = require('../../src/monitors/file-monitor');
-const EventProcessor = require('../../src/monitors/event-processor');
-const DatabaseManager = require('../../src/database/database-manager');
-const ConfigManager = require('../../src/config/config-manager');
-const ProcessManager = require('../../src/monitors/process-manager');
+const MonitorProcess = require('../../dist/src/monitors/monitor-process');
+const FileMonitor = require('../../dist/src/monitors/file-monitor');
+const EventProcessor = require('../../dist/src/monitors/event-processor');
+const DatabaseManager = require('../../dist/src/database/database-manager');
+const ConfigManager = require('../../dist/src/config/config-manager');
+const ProcessManager = require('../../dist/src/monitors/process-manager');
 
 // Create mock constructors
 const mockFileMonitor = vi.fn();
@@ -538,7 +538,7 @@ describe('Monitor Process (FUNC-003 Compliance)', () => {
       // The module should handle direct execution case
       expect(() => {
         delete require.cache[require.resolve('../../src/monitors/monitor-process')];
-        require('../../src/monitors/monitor-process');
+        require('../../dist/src/monitors/monitor-process');
       }).not.toThrow();
 
       require.main = originalMain;

@@ -6,8 +6,8 @@
 const { describe, test, expect, beforeEach, afterEach } = global;
 const fs = require('fs');
 const path = require('path');
-const ColorManager = require('../../src/color/ColorManager');
-const ThemeLoader = require('../../src/color/ThemeLoader');
+const ColorManager = require('../../dist/src/color/ColorManager');
+const ThemeLoader = require('../../dist/src/color/ThemeLoader');
 
 describe('FUNC-207: Implementation Validation', () => {
   const testConfigDir = '.cctop-impl-test';
