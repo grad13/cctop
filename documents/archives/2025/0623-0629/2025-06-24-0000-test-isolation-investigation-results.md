@@ -1,3 +1,8 @@
+---
+archived: 2025-06-24
+keywords: テスト分離, 調査結果, EventProcessor干渉, REP-090関連, isolation問題, 副作用分析
+---
+
 # REP-090: テスト分離問題調査結果
 
 **作成日**: 2025-06-24  

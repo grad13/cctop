@@ -1,3 +1,8 @@
+---
+archived: 2025-06-25
+keywords: BP-000, テスト環境, 214秒ハングアップ, config-005, critical問題, Builder分析, 根本原因
+---
+
 # REP-025: BP-000テスト環境の根本問題分析レポート
 
 **作成者**: Validator Agent  

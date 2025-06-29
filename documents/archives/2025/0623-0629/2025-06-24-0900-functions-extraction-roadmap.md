@@ -1,3 +1,10 @@
+---
+Archive-Date: 2025-06-29
+Archive-Week: 2025-0623-0629
+Original-Path: documents/records/plans/PLAN-20250624-009-functions-extraction-roadmap.md
+Keywords: functions-extraction, func-analysis, sqlite-database, chokidar-integration, cli-display, configuration-management, postinstall-setup, performance-monitoring, migration-features, functional-boundaries, user-value, modular-design, duplicate-removal, implementation-roadmap
+---
+
 # PLAN-20250624-009: Functions抽出ロードマップ（修正版）
 
 **作成日**: 2025年6月24日  

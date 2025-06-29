@@ -1,3 +1,8 @@
+---
+archived: 2025-06-24
+keywords: 非同期干渉, テスト失敗, EventProcessor, cleanup問題, setTimeout, afterEach, 統合テスト
+---
+
 # REP-0091: Test Async Interference Investigation
 
 **作成日**: 2025-06-24

@@ -1,10 +1,10 @@
 {
-  "pid": 32395,
+  "pid": 95389,
   "started_by": "viewer",
-  "started_at": 1751041997,
-  "startTime": "2025-06-27T16:33:17.389Z",
+  "started_at": 1751101032,
+  "startTime": "2025-06-28T08:57:12.491Z",
   "scriptPath": "/Users/takuo-h/Workspace/Code/06-cctop/cctop/src/monitors/monitor-process.js",
   "processName": "cctop-monitor",
-  "parentPid": 32385,
+  "parentPid": 95379,
   "config_path": ".cctop/config.json"
 }

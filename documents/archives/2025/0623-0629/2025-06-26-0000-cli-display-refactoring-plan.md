@@ -1,3 +1,10 @@
+---
+Archive-Date: 2025-06-29
+Archive-Week: 2025-0623-0629
+Original-Path: documents/records/plans/PLAN-20250626-003-cli-display-refactoring.md
+Keywords: cli-display, refactoring, single-responsibility, eventformatter, layoutmanager, rendercontroller, inputhandler, eventdisplaymanager, 613lines, phase1, phase2, phase3, modularization, ui-components, separation-of-concerns, code-splitting, maintainability, testability
+---
+
 # PLAN-20250626-003: CLI Display リファクタリング計画
 
 **作成日**: 2025年6月26日  

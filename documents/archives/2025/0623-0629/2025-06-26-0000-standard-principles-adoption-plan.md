@@ -1,3 +1,10 @@
+---
+Archive-Date: 2025-06-29
+Archive-Week: 2025-0623-0629
+Original-Path: documents/records/plans/PLAN-20250626-002-standard-principles-adoption.md
+Keywords: standard-principles, kiss, yagni, dry, solid, srp, tdd, cache-hierarchy, strategic-tactical-programming, development-principles, cognitive-load, knowledge-reuse, terminology-standardization, best-practices, refactoring, documentation-update, learning-curve, maintainability
+---
+
 # PLAN-20250626-002: 標準開発原則採用による概念統一計画
 
 **作成日**: 2025年6月26日  

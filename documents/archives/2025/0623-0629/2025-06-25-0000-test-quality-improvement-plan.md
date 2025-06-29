@@ -1,3 +1,10 @@
+---
+Archive-Date: 2025-06-29
+Archive-Week: 2025-0623-0629
+Original-Path: documents/records/plans/PLAN-20250625-001-test-quality-improvement.md
+Keywords: test-quality, jest-vitest-migration, test-success-rate, memory-leak-fix, eventlistener-management, validator-compliance, quality-gate, test-architecture, rdd-principles, continuous-improvement, ci-cd-integration, test-automation, e2e-testing, performance-testing
+---
+
 # テスト品質改善計画書
 
 **作成日**: 2025-06-25  

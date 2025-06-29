@@ -1,3 +1,10 @@
+---
+Archive-Date: 2025-06-29
+Archive-Week: 2025-0623-0629
+Original-Path: documents/records/plans/PLAN-20250626-001-legacy-directory-cleanup.md
+Keywords: legacy-cleanup, directory-reorganization, document-management, value-preservation, duplicate-removal, func-consolidation, 50percent-compression, archives-backup, reference-documents, vision-v4, rdd-methodology, maintenance, documentation-strategy, file-cleanup
+---
+
 # PLAN-20250626-001: Legacy Directory Cleanup Plan
 
 **作成日**: 2025年6月26日  

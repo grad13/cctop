@@ -46,27 +46,20 @@ PLAN-YYYYMMDD-XXX-brief-description.md
 | 016 | [`PLAN-20250624-009`](PLAN-20250624-009-functions-extraction-roadmap.md) | Functions抽出ロードマップ（修正版） | Architect | Active | 🏗️ システム移行 |
 | 017 | [`PLAN-20250625-001`](PLAN-20250625-001-test-quality-improvement.md) | テスト品質改善計画書 | Validator | **緊急度：Critical** | 🔧 開発プロセス |
 | 018 | [`PLAN-20250626-001`](PLAN-20250626-001-legacy-directory-cleanup.md) | Legacy Directory Cleanup Plan | Architect | 計画書作成完了・実行承認待ち | 📁 文書管理 |
+| 019 | [`PLAN-20250628-001`](PLAN-20250628-001-typescript-migration.md) | TypeScript Migration Plan | Builder | 計画書作成完了・実行承認待ち | 🏗️ システム移行 |
+| 020 | [`PLAN-20250628-003`](PLAN-20250628-003-typescript-refactoring-overview.md) | TypeScript移行後リファクタリング総合計画 | Builder | 計画書作成完了 | 🔧 開発プロセス改善 |
+| 021 | [`PLAN-20250628-004`](PLAN-20250628-004-colormanager-refactoring.md) | ColorManager.ts リファクタリング詳細計画 | Builder | 計画書作成完了 | 🔧 開発プロセス改善 |
+| 022 | [`PLAN-20250628-005`](PLAN-20250628-005-detailinspection-refactoring.md) | DetailInspectionController.ts リファクタリング詳細計画 | Builder | 計画書作成完了 | 🔧 開発プロセス改善 |
+| 023 | [`PLAN-20250628-006`](PLAN-20250628-006-statusdisplay-refactoring.md) | status-display.ts リファクタリング詳細計画 | Builder | 計画書作成完了 | 🔧 開発プロセス改善 |
+| 024 | [`PLAN-20250628-007`](PLAN-20250628-007-interactivefeatures-refactoring.md) | InteractiveFeatures.ts リファクタリング詳細計画 | Builder | 計画書作成完了 | 🔧 開発プロセス改善 |
+| 025 | [`PLAN-20250628-008`](PLAN-20250628-008-processmanager-refactoring.md) | process-manager.ts リファクタリング詳細計画 | Builder | 計画書作成完了 | 🔧 開発プロセス改善 |
+| 026 | [`PLAN-20250628-009`](PLAN-20250628-009-configmanager-refactoring.md) | config-manager.ts リファクタリング詳細計画 | Builder | 計画書作成完了 | 🔧 開発プロセス改善 |
+| 027 | [`PLAN-20250628-010`](PLAN-20250628-010-eventprocessor-refactoring.md) | event-processor.ts リファクタリング詳細計画 | Builder | 計画書作成完了 | 🔧 開発プロセス改善 |
+| 028 | [`PLAN-20250628-011`](PLAN-20250628-011-databasemanager-refactoring.md) | database-manager.ts リファクタリング詳細計画 | Builder | 計画書作成完了 | 🔧 開発プロセス改善 |
+| 029 | [`PLAN-20250628-012`](PLAN-20250628-012-typescript-refactoring-revised.md) | TypeScript移行後リファクタリング現状対応版 | Builder | 計画書作成完了・実行承認待ち | 🔧 開発プロセス改善 |
+| 030 | [`PLAN-20250628-013`](PLAN-20250628-013-typescript-gradual-introduction.md) | TypeScript段階的導入計画（安全重視版） | Builder | 計画書作成完了・実行承認待ち | 🏗️ システム移行 |
 
 ⚠️ **番号重複**: PLAN-20250624-002とPLAN-20250624-008に重複があります。次回作成時は既存番号を確認してください。
-
-### 📈 ステータス別集計
-
-| ステータス | 件数 | 割合 |
-|-----------|------|------|
-| 計画書作成完了・実行承認待ち | 6 | 33% |
-| **実行完了** | 4 | 22% |
-| 計画書作成完了 | 3 | 17% |
-| Active | 2 | 11% |
-| その他（承認待ち、提案等） | 3 | 17% |
-
-### 📊 カテゴリ別集計
-
-| カテゴリ | 件数 | アイコン | 説明 |
-|----------|------|----------|------|
-| 📁 文書管理・整理 | 9 | 📁 | ディレクトリ構造、文書移行、命名規則統一 |
-| 🔧 開発プロセス改善 | 5 | 🔧 | ワークフロー、プロトコル、エージェント体制 |
-| 🏗️ システム移行・アーキテクチャ | 3 | 🏗️ | 大規模移行、アーキテクチャ変更、DB移行 |
-| 🚀 機能開発・実装 | 2 | 🚀 | 新機能開発、Phase別実装、技術統合 |
 
 ## 🔄 計画書のライフサイクル
 

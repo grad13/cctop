@@ -1,3 +1,8 @@
+---
+archived: 2025-06-24
+keywords: handoffs, user/outbox, ディレクトリ構造, 対称性, Producer-Consumer, 設計判断, Clerk分析
+---
+
 # User Outbox Directory Necessity Analysis
 
 **作成日**: 2025-06-24  
