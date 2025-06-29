@@ -5,8 +5,6 @@
 
 import chalk = require('chalk');
 import { EventEmitter } from 'events';
-import stringWidth = require('string-width');
-import { padEndWithWidth, padStartWithWidth, truncateWithEllipsis } from '../utils/display-width';
 import {
   CLIDisplayLegacyConfig,
   CLIDisplayLegacyStats,
@@ -17,6 +15,10 @@ import {
   EventFilterManager,
   StatusDisplay
 } from '../types/common';
+import { EventFormatter } from './renderers/EventFormatter';
+import { HeaderFooterRenderer } from './renderers/HeaderFooterRenderer';
+import { EventDataManager } from './managers/EventDataManager';
+import { InputHandler } from './managers/InputHandler';
 
 const BufferedRendererClass = require('../utils/buffered-renderer');
 const EventFilterManagerClass = require('../filter/event-filter-manager');
@@ -27,8 +29,6 @@ class CLIDisplayLegacy extends EventEmitter {
   private db: DatabaseManager;
   private displayMode: 'all' | 'unique';
   private maxLines: number;
-  private events: EventData[] = [];
-  private uniqueEvents: Map<string, EventData> = new Map();
   private isRunning: boolean = false;
   private refreshInterval: NodeJS.Timeout | null = null;
   private displayConfig: CLIDisplayLegacyConfig;
@@ -36,6 +36,12 @@ class CLIDisplayLegacy extends EventEmitter {
   private renderer: BufferedRenderer;
   private filterManager: EventFilterManager;
   private statusDisplay: StatusDisplay;
+  
+  // New modular components
+  private eventFormatter: EventFormatter;
+  private headerFooterRenderer: HeaderFooterRenderer;
+  private eventDataManager: EventDataManager;
+  private inputHandler: InputHandler;
 
   constructor(databaseManager: DatabaseManager, displayConfig: CLIDisplayLegacyConfig = {}) {
     super();
