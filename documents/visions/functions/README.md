@@ -40,7 +40,7 @@ FUNC-003-configuration-management.md
 | FUNC-000-sqlite-database-foundation.md | SQLiteデータベース基盤 |
 | FUNC-001-file-lifecycle-tracking.md | ファイルライフサイクル追跡 |
 | FUNC-002-chokidar-database-integration.md | chokidar-Database統合監視 |
-| FUNC-003-background-activity-daemon.md | バックグラウンドデーモン |
+| FUNC-003-background-activity-monitor.md | バックグラウンドデーモン |
 
 ### 100番台 - Configuration & CLI Management
 | ファイル | 機能 | ステータス |
