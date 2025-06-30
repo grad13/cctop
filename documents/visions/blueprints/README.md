@@ -41,11 +41,24 @@ BP-002-for-version0300-plugin-system.md
   - a002-configuration-system.md（設定システム）
 - **除外機能**: プラグインシステム、Selection/Detailモード、高度Filter
 
+### BP-001-for-version0200-restructered.md
+- **目標**: v0.2.0.0 - 表示機能強化とインタラクティブ機能
+- **スコープ**: East Asian Width対応、二重バッファ、インタラクティブ機能
+- **参照specifications**: FUNC-200-206、FUNC-400-403
+- **ステータス**: Active（実装中）
+
+### BP-002-for-version0300-daemon-cli-architecture.md
+- **目標**: v0.3.0.0 - Daemon-CLI分離アーキテクチャ
+- **スコープ**: プロセス分離、堅牢性向上、テスト基盤強化
+- **参照specifications**: PLAN-20250630-001
+- **ステータス**: 設計完了、実装待機
+
 ## 🔄 バージョン進行管理
 
 ### 現在の状況
-1. **v0.1.0.0**: 設計完了、実装準備段階
-2. **v0.2.0.0**: 未着手（v0.1.0.0完了後に設計開始）
+1. **v0.1.0.0**: 完了
+2. **v0.2.0.0**: 実装中（BP-001）
+3. **v0.3.0.0**: 設計完了、実装待機（BP-002）
 
 ### 次期予定機能
 - **Selection/Detailモード**: vis007-tracer-analysis-vision.md参照
