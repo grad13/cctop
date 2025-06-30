@@ -1,88 +1,76 @@
-# FUNC-101: 階層的設定管理機能
+# FUNC-101: 共通設定管理機能
 
 **作成日**: 2025年6月24日 10:00  
-**更新日**: 2025年6月26日 00:00  
+**更新日**: 2025年6月30日 15:00  
 **作成者**: Architect Agent  
-**Version**: 0.2.0.0  
-**関連仕様**: FUNC-102, FUNC-104, func-105, CG-002  
+**Version**: 0.3.0.0  
+**関連仕様**: FUNC-105, FUNC-106, FUNC-107  
 
 ## 📊 機能概要
 
-CLI引数・config.json・デフォルト値の階層的設定管理を行う機能。
+DaemonとCLIで共有される基本設定を管理する機能。データベースパス、基本ディレクトリ、プロジェクト情報など、システム全体で一貫性が必要な設定を扱う。
 
-**ユーザー価値**: 柔軟な設定変更・環境固有設定・簡単な初期設定・一貫した設定体験
+**ユーザー価値**: 
+- システム全体の一貫性確保
+- 設定の重複排除
+- 基本設定の一元管理
+- バージョン管理の統一
 
 ## 🎯 機能境界
 
 ### ✅ **実行する**
-- 設定ファイル読み込み・CLI引数パース
-- 設定値マージ・デフォルト値提供
-- 設定検証・エラーハンドリング
-- 設定優先順位管理
+- 共通設定ファイル（shared-config.json）の読み込み
+- プロジェクト全体の基本設定管理
+- データベースパスの管理
+- バージョン情報の管理
+- 設定マージの基本ロジック提供
 
 ### ❌ **実行しない**
-- ファイル監視・DB管理・UI表示
-- メタデータ収集・ネットワーク通信
-- 動的アップデート
+- Daemon固有設定（FUNC-106の責務）
+- CLI固有設定（FUNC-107の責務）
+- 色テーマ管理（FUNC-108の責務）
+- 設定ファイルの初期化（FUNC-105の責務）
 
 ## 📋 必要な仕様
 
-### **設定管理構造**
+### **3層設定アーキテクチャ**
 
-1. **CLI引数** - 一時的なオーバーライド
-2. **config.json** - メイン設定ファイル（.cctop/config.json）
+```
+.cctop/
+├── shared-config.json    # 共通設定（このFUNCの管理対象）
+├── daemon-config.json    # Daemon専用設定（FUNC-106）
+├── cli-config.json       # CLI専用設定（FUNC-107）
+└── current-theme.json    # 色テーマ設定（FUNC-108）
+```
 
-**注意**: 
-- JSコード内に設定値を一切定義しない（定数除く）
+### **設定読み込み階層**
 
-### **config.jsonスキーマ定義**
+1. **shared-config.json** - 基本設定（必須）
+2. **プロセス固有設定** - daemon-config.json または cli-config.json
+3. **CLI引数** - 一時的なオーバーライド
+
+### **shared-config.jsonスキーマ定義**
 
 ```json
 {
-  "version": "0.2.0.0",
-  "monitoring": {
-    "watchPaths": [],              // 監視対象パス（複数指定可）
-    "excludePatterns": [           // 除外パターン（FUNC-002 chokidar.ignoredと同期）
-      "**/node_modules/**",
-      "**/.git/**",
-      "**/.*",                     // 全隠しファイル（.DS_Store, .eslintrc等含む）
-      "**/.cctop/**"
-    ],
-    "debounceMs": 100,             // イベントデバウンス時間
-    "maxDepth": 10,                // 最大監視深度
-    "moveThresholdMs": 100,        // moveイベント判定時間（FUNC-001）
-    "systemLimits": {              // ファイル監視上限管理（FUNC-012）
-      "requiredLimit": 524288,     // 必要な上限値（OS共通）
-      "checkOnStartup": true,      // 起動時上限チェック
-      "warnIfInsufficient": true   // 不足時警告表示
-    },
-    "backgroundMonitor": {         // バックグラウンド監視設定（FUNC-003）
-      "enabled": true,             // バックグラウンド監視の有効/無効
-      "logLevel": "info",          // ログレベル（error, warn, info, debug）
-      "heartbeatInterval": 30000   // ハートビート間隔（ms）
-    }
+  "version": "0.3.0.0",
+  "project": {
+    "name": "cctop",
+    "description": "Code Change Top - Real-time file monitoring tool"
   },
   "database": {
-    "path": ".cctop/activity.db", // DBファイルパス（FUNC-000準拠）
-    "mode": "WAL"                    // SQLiteモード
+    "path": ".cctop/data/activity.db",     // DBファイルパス（FUNC-000準拠）
+    "maxSize": 104857600                   // 最大DBサイズ（100MB）
   },
-  "display": {
-    "maxEvents": 20,               // 最大表示イベント数
-    "refreshRateMs": 100,          // 表示更新間隔
-    "colors": {                    // 色カスタマイズ（基本色のみ）
-      "find": "cyan",
-      "create": "green",
-      "modify": "yellow",
-      "move": "blue",
-      "delete": "red",
-      "restore": "magenta"
-    },
-    "statusArea": {                // ステータス表示エリア（FUNC-902）
-      "maxLines": 3,               // ステータス表示行数（1-10）
-      "enabled": true,             // ステータス表示のON/OFF
-      "scrollSpeed": 200,          // 横スクロール速度（ms）
-      "updateInterval": 5000       // 統計更新間隔（ms）
-    }
+  "directories": {
+    "config": ".cctop",               // 設定ディレクトリ
+    "logs": ".cctop/logs",            // ログディレクトリ
+    "temp": ".cctop/temp"             // 一時ファイルディレクトリ
+  },
+  "logging": {
+    "maxFileSize": 10485760,          // ログファイル最大サイズ（10MB）
+    "maxFiles": 5,                    // ログファイル最大数
+    "datePattern": "YYYY-MM-DD"       // ログファイル日付パターン
   }
 }
 ```
@@ -93,68 +81,21 @@ CLI引数・config.json・デフォルト値の階層的設定管理を行う機
 {
   "$schema": "https://json-schema.org/draft/2019-09/schema",
   "type": "object",
-  "required": ["version", "monitoring", "database", "display"],
+  "required": ["version", "project", "database", "directories"],
   "properties": {
     "version": {
       "type": "string",
-      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+      "pattern": "^\\d+\\.\\d+\\.\\d+\\.\\d+$"
     },
-    "monitoring": {
+    "project": {
       "type": "object",
-      "required": ["watchPaths", "excludePatterns"],
+      "required": ["name", "description"],
       "properties": {
-        "watchPaths": {
-          "type": "array",
-          "items": { "type": "string" }
+        "name": {
+          "type": "string"
         },
-        "excludePatterns": {
-          "type": "array",
-          "items": { "type": "string" }
-        },
-        "debounceMs": {
-          "type": "integer",
-          "minimum": 50
-        },
-        "maxDepth": {
-          "type": "integer",
-          "minimum": 1
-        },
-        "moveThresholdMs": {
-          "type": "integer",
-          "minimum": 50,
-          "maximum": 1000
-        },
-        "systemLimits": {
-          "type": "object",
-          "properties": {
-            "requiredLimit": {
-              "type": "integer",
-              "minimum": 1024
-            },
-            "checkOnStartup": {
-              "type": "boolean"
-            },
-            "warnIfInsufficient": {
-              "type": "boolean"
-            }
-          }
-        },
-        "backgroundMonitor": {
-          "type": "object",
-          "properties": {
-            "enabled": {
-              "type": "boolean"
-            },
-            "logLevel": {
-              "type": "string",
-              "enum": ["error", "warn", "info", "debug"]
-            },
-            "heartbeatInterval": {
-              "type": "integer",
-              "minimum": 5000,
-              "maximum": 300000
-            }
-          }
+        "description": {
+          "type": "string"
         }
       }
     },
@@ -165,57 +106,40 @@ CLI引数・config.json・デフォルト値の階層的設定管理を行う機
         "path": {
           "type": "string"
         },
-        "mode": {
-          "type": "string",
-          "enum": ["WAL", "DELETE", "TRUNCATE", "PERSIST", "MEMORY"]
+        "maxSize": {
+          "type": "integer",
+          "minimum": 1048576
         }
       }
     },
-    "display": {
+    "directories": {
       "type": "object",
-      "required": ["maxEvents", "refreshRateMs"],
+      "required": ["config", "logs", "temp"],
       "properties": {
-        "maxEvents": {
+        "config": {
+          "type": "string"
+        },
+        "logs": {
+          "type": "string"
+        },
+        "temp": {
+          "type": "string"
+        }
+      }
+    },
+    "logging": {
+      "type": "object",
+      "properties": {
+        "maxFileSize": {
+          "type": "integer",
+          "minimum": 1048576
+        },
+        "maxFiles": {
           "type": "integer",
           "minimum": 1
         },
-        "refreshRateMs": {
-          "type": "integer",
-          "minimum": 50
-        },
-        "colors": {
-          "type": "object",
-          "properties": {
-            "find": { "type": "string" },
-            "create": { "type": "string" },
-            "modify": { "type": "string" },
-            "move": { "type": "string" },
-            "delete": { "type": "string" },
-            "restore": { "type": "string" }
-          }
-        },
-        "statusArea": {
-          "type": "object",
-          "properties": {
-            "maxLines": {
-              "type": "integer",
-              "minimum": 1,
-              "maximum": 10
-            },
-            "enabled": {
-              "type": "boolean"
-            },
-            "scrollSpeed": {
-              "type": "integer",
-              "minimum": 100,
-              "maximum": 1000
-            },
-            "updateInterval": {
-              "type": "integer",
-              "minimum": 1000,
-              "maximum": 30000
-            }
-          }
+        "datePattern": {
+          "type": "string"
         }
       }
     }
@@ -223,81 +147,133 @@ CLI引数・config.json・デフォルト値の階層的設定管理を行う機
 }
 ```
 
-### **CLI引数定義**
+### **設定マージ戦略**
 
-**CLI仕様統合**: CLI引数の詳細は **[FUNC-104: CLIインターフェース統合仕様](./FUNC-104-cli-interface-specification.md)** を参照
-
-```bash
-cctop [options] [directory]
-
-Options:
-  --timeout <seconds>         タイムアウト時間（秒）
-  --daemon --start            背景監視プロセス開始
-  --daemon --stop             背景監視プロセス停止
-  --view                      Monitor起動なし、既存DBから表示のみ
-  --verbose                   詳細出力モード
-  --check-limits              ファイル監視制限の確認と推奨設定表示
-  -h, --help                  ヘルプメッセージ表示
+```javascript
+// 設定読み込み関数の例
+async function loadConfiguration(processType) {
+  // 1. 共通設定を読み込み
+  const sharedConfig = await loadSharedConfig();
+  
+  // 2. プロセス固有設定を読み込み
+  let processConfig = {};
+  if (processType === 'daemon') {
+    processConfig = await loadDaemonConfig();
+  } else if (processType === 'cli') {
+    processConfig = await loadCliConfig();
+  }
+  
+  // 3. 設定をマージ（深いマージ）
+  const finalConfig = deepMerge(sharedConfig, processConfig);
+  
+  // 4. CLI引数でオーバーライド
+  applyCliOverrides(finalConfig, process.argv);
+  
+  return finalConfig;
+}
 ```
 
 
 ## 🔍 関連機能との連携
 
+### **3層設定アーキテクチャでの役割**
+- **FUNC-101（本機能）**: 共通設定管理・マージロジック提供
+- **FUNC-106**: Daemon専用設定管理
+- **FUNC-107**: CLI専用設定管理
+- **FUNC-108**: 色テーマ設定管理
+
 ### **FUNC-105との役割分担**
-- **FUNC-105**: 設定ファイルの初期化・自動セットアップ
-- **FUNC-101**: config.jsonスキーマ定義・設定値の階層的マージ処理
+- **FUNC-105**: 全設定ファイルの初期化・自動セットアップ
+- **FUNC-101**: 共通設定のスキーマ定義・読み込みロジック
 
 ### **他機能との統合ポイント**
-- **FUNC-000**: データベースパス設定の管理
-- **FUNC-105**: ローカル設定初期化との連携
-- **FUNC-203**: イベントフィルタリング設定の管理
+- **FUNC-000**: データベースパス設定の提供
+- **全機能**: 基本ディレクトリパスの提供
 
 ## 🎯 機能要件
 
+### **共通設定管理要件**
+1. **必須設定の保証**: システム動作に必要な設定の確実な提供
+2. **ディレクトリ作成**: 設定で指定されたディレクトリの自動作成
+3. **バージョン互換性**: 設定フォーマットのバージョン管理
+
 ### **設定読み込み要件**
-1. **起動時設定読み込み**: アプリケーション開始時の全設定統合
+1. **共通設定の読み込み**: shared-config.jsonの確実な読み込み
+2. **デフォルト値提供**: 設定が存在しない場合の適切なデフォルト
 3. **エラー耐性**: 不正な設定値の検証・修正
 
 ### **設定マージ要件**
-1. **優先順位適用**: CLI引数 > config.json設定
-2. **部分マージ**: オブジェクト単位での細かい設定上書き
-3. **型変換**: 文字列→数値、boolean等の自動変換
+1. **深いマージ**: ネストされたオブジェクトの適切なマージ
+2. **配列マージ戦略**: 配列値の置換・追加の制御
+3. **型保証**: マージ後の型の一貫性確保
 
 ### **設定検証要件**
 1. **スキーマ検証**: JSONスキーマによる構造・型チェック
-2. **範囲検証**: 数値の最小・最大値チェック
-3. **依存関係検証**: 設定間の論理的整合性チェック
+2. **パス検証**: ファイル・ディレクトリパスの妥当性確認
+3. **サイズ制限検証**: 最大値・最小値の範囲チェック
 
 ## 📊 設定処理フロー
 
-### **起動時設定統合フロー**
+### **プロセス起動時の設定統合フロー**
 ```
-1. config.json読み込み → ファイル設定適用
-2. CLI引数解析 → ユーザー指定設定適用
-3. 設定検証 → 最終設定の妥当性確認
-4. 設定確定 → アプリケーション設定完了
+1. shared-config.json読み込み → 共通設定確立
+2. プロセス固有設定読み込み → daemon/cli-config.json適用
+3. CLI引数解析 → コマンドライン指定の適用
+4. 設定検証 → 全設定の妥当性確認
+5. ディレクトリ作成 → 必要なディレクトリの生成
+6. 設定確定 → プロセス起動準備完了
 ```
 
-## 🔧 実装仕槕
+### **設定ファイル不在時の処理**
+```
+1. デフォルト設定生成 → 最小限の動作保証
+2. FUNC-105呼び出し → 設定ファイル初期化
+3. 設定再読み込み → 生成された設定を適用
+```
+
+## 🔧 実装仕様
 
 ### **設定管理の設計原則**
-- **設定の一元化**: config.jsonがメイン設定ソース（.cctop/config.json）
-- **JSコードのクリーン化**: ハードコード値を完全排除
-- **ユーザーフレンドリー**: 設定変更 = config.json編集のみ
-- **明確な責任分離**: config.json=デフォルト、CLI=一時上書き
+- **責務の明確化**: 共通設定のみを管理、プロセス固有設定は各FUNCへ
+- **疎結合**: 各設定ファイルは独立して存在可能
+- **段階的拡張**: 基本設定から順次高度な設定へ
+- **後方互換性**: 旧バージョン設定の自動マイグレーション
+
+### **設定マージユーティリティ**
+```javascript
+// 共通マージ関数の提供
+export const ConfigMerger = {
+  // 深いマージ（オブジェクト用）
+  deepMerge(target, source),
+  
+  // 配列マージ（戦略選択可能）
+  mergeArrays(target, source, strategy),
+  
+  // CLI引数適用
+  applyCliArgs(config, args),
+  
+  // 設定検証
+  validate(config, schema)
+};
+```
 
 ## 📊 期待効果
 
-### **ユーザビリティ向上**
-- 環境に応じた柔軟な設定変更
-- CLI・ファイル・環境変数による多様な設定方法
-- 設定エラーの早期発見・修正
+### **アーキテクチャ改善**
+- Daemon/CLI完全分離による安定性向上
+- 設定の責務分離による保守性向上
+- プロセス独立進化の実現
 
-### **運用効率向上**
-- 設定の一元管理・バージョン管理
-- 環境固有設定の分離・管理
-- 動的設定変更による再起動不要
+### **ユーザビリティ向上**
+- 明確な設定構造による理解容易性
+- プロセス別の最適化可能
+- 設定競合の完全排除
+
+### **開発効率向上**
+- 共通ロジックの再利用
+- テスト容易性の向上
+- 設定関連バグの削減
 
 ---
 
-**核心価値**: 柔軟で堅牢な設定管理により、様々な環境・用途でのcctop利用を最適化
+**核心価値**: 3層設定アーキテクチャの基盤として、システム全体の一貫性と各プロセスの独立性を両立

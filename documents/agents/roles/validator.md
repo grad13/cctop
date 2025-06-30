@@ -90,6 +90,35 @@
 - **メイン**: 子git（テスト・検証作業）
 - **サブ**: 親git（レポート・文書更新時のみ）
 
+## Git Worktree利用方針（v0.3.0.0以降）
+
+### 基本方針
+- **作業場所**: `06-cctop/worktrees/`配下で並行開発
+- **目的**: 大規模変更時の独立した作業環境確保
+
+### worktree作成ルール
+1. **命名**: `worktrees/{version}-{component}/`
+   - 例: `worktrees/v030-daemon/`, `worktrees/v030-cli/`
+2. **ブランチ**: `feature/{version}-{component}`
+   - 例: `feature/v030-daemon`, `feature/v030-cli`
+
+### 基本コマンド
+```bash
+# 作成
+git worktree add worktrees/v030-daemon -b feature/v030-daemon
+
+# 移動
+cd worktrees/v030-daemon/
+
+# 削除（マージ後）
+git worktree remove worktrees/v030-daemon
+```
+
+### 注意事項
+- 各worktreeは独立したgit管理
+- CHK006確認時はworktree内での作業場所に注意
+- マージ完了後は速やかにworktree削除
+
 ## 品質ゲート基準
 
 ### コード品質基準

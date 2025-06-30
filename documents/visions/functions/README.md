@@ -45,7 +45,7 @@ FUNC-003-configuration-management.md
 ### 100番台 - Configuration & CLI Management
 | ファイル | 機能 | ステータス |
 |---------|------|----------|
-| FUNC-101-hierarchical-config-management.md | 共通設定管理 | Active |
+| FUNC-101-hierarchical-config-management.md | 共通設定管理機能 | Active |
 | FUNC-102-file-watch-limit-management.md | ファイル監視上限管理 | Active |
 | FUNC-104-cli-interface-specification.md | CLIインターフェース統合仕様 | Active |
 | FUNC-105-local-setup-initialization.md | ローカル設定・初期化 | Active |

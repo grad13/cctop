@@ -80,6 +80,7 @@ v0.3.0.0では、致命的なバグ（terminal/ブラウザクラッシュ）の
 
 ### ディレクトリ構造
 
+#### **コードベース構造**
 ```
 cctop/
 ├── shared/               # 共通モジュール
@@ -109,7 +110,51 @@ cctop/
 └── integration/          # 統合テスト
 ```
 
+#### **ユーザーデータ構造（.cctop/）**
+```
+.cctop/
+├── config/                   # 設定ファイル用
+│   ├── shared-config.json    # 共通設定（FUNC-101）
+│   ├── daemon-config.json    # Daemon設定（FUNC-106）
+│   └── cli-config.json       # CLI設定（FUNC-107）
+├── themes/                   # カラーテーマ集（FUNC-108）
+│   ├── current-theme.json    # 現在適用中の色設定
+│   ├── default.json          # デフォルトテーマ
+│   ├── high-contrast.json    # 高コントラストテーマ
+│   └── custom/               # ユーザーカスタムテーマ
+├── data/                     # データファイル用
+│   ├── activity.db           # メインデータベース
+│   ├── activity.db-wal       # SQLite WALファイル
+│   └── activity.db-shm       # SQLite共有メモリ
+├── logs/                     # ログファイル用
+│   ├── daemon.log            # Daemonログ
+│   └── cli.log               # CLIログ
+├── runtime/                  # 実行時ファイル用
+│   ├── daemon.pid            # DaemonプロセスID
+│   └── daemon.sock           # Unixソケット
+├── temp/                     # 一時ファイル用
+└── .gitignore                # Git除外設定
+```
+
 ## 📋 技術仕様参照
+
+### 3層設定アーキテクチャ
+v0.3.0.0では、Daemon-CLI分離に伴い設定管理を3層構造に分離：
+
+1. **共通設定層（shared-config.json）** - FUNC-101
+   - データベースパス、ディレクトリ構造
+   - プロジェクト情報、ログ設定
+   - DaemonとCLIで共有される基本設定
+
+2. **Daemon設定層（daemon-config.json）** - FUNC-106
+   - ファイル監視パラメータ
+   - イベント処理設定
+   - プロセス管理設定
+
+3. **CLI設定層（cli-config.json）** - FUNC-107
+   - 表示設定、レンダリング設定
+   - インタラクティブ機能設定
+   - ポーリング間隔設定
 
 ### データベース層
 - **SQLite WALモード**: 
@@ -176,10 +221,20 @@ git worktree add ../06-cctop-cli cli-dev
 
 ## 🔗 関連ドキュメント
 
+### 実装計画・設計
 - [PLAN-20250630-001](../../records/plans/PLAN-20250630-001-monitor-viewer-separation.md): 詳細実装計画
+
+### 機能仕様
 - [FUNC-000](../../functions/FUNC-000-sqlite-database-foundation.md): DB基盤仕様
 - [FUNC-200-206](../../functions/): 表示機能仕様
 - [FUNC-400-403](../../functions/): インタラクティブ機能仕様
+
+### 設定管理機能（v0.3.0.0 新規）
+- [FUNC-101](../../functions/FUNC-101-hierarchical-config-management.md): 共通設定管理
+- [FUNC-105](../../functions/FUNC-105-local-setup-initialization.md): ローカル設定・初期化
+- [FUNC-106](../../functions/FUNC-106-daemon-configuration-management.md): Daemon設定管理
+- [FUNC-107](../../functions/FUNC-107-cli-configuration-management.md): CLI設定管理
+- [FUNC-108](../../functions/FUNC-108-color-theme-configuration.md): カラーテーマ設定
 
 ---
 
