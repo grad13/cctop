@@ -1,14 +1,14 @@
 # FUNC-206: 即時表示・プログレッシブローディング機能
 
 **作成日**: 2025年6月27日 01:00  
-**更新日**: 2025年6月27日 01:00  
+**更新日**: 2025年6月30日  
 **作成者**: Architect Agent  
 **Version**: 0.2.0.0  
 **関連仕様**: FUNC-003, FUNC-202, FUNC-205
 
 ## 📊 機能概要
 
-`cctop`コマンド実行時に即座にViewerを起動し、Monitor起動やデータ読み込みの進捗を表示しながらプログレッシブにコンテンツを表示する。
+`cctop`コマンド実行時に即座にCLIを起動し、Daemon起動やデータ読み込みの進捗を表示しながらプログレッシブにコンテンツを表示する。
 
 **ユーザー価値**:
 - 即座の視覚的フィードバック（0.1秒以内）
@@ -19,14 +19,14 @@
 ## 🎯 機能境界
 
 ### ✅ **実行する**
-- Viewer即時起動（0.1秒以内）
-- Monitor起動状況の表示
+- CLI即時起動（0.1秒以内）
+- Daemon起動状況の表示
 - Database接続進捗の表示
 - データのプログレッシブ読み込み
 - エラー時の画面維持とリトライ表示
 
 ### ❌ **実行しない**
-- Monitor起動のブロッキング待機
+- Daemon起動のブロッキング待機
 - データ完全読み込みまでの画面非表示
 - エラー時の即座終了
 - 複雑な起動アニメーション
@@ -36,15 +36,15 @@
 ### **起動フロー仕様**
 
 #### **ユーザー体験の流れ**
-1. **即時画面表示**: コマンド実行から0.1秒以内にViewer画面を表示
-2. **Monitor起動表示**: "Starting background monitor..."等の進捗をFUNC-205のステータスエリアにリアルタイム表示
-3. **データ流入**: Monitorからのデータが到着次第、画面に反映
+1. **即時画面表示**: コマンド実行から0.1秒以内にCLI画面を表示
+2. **Daemon起動表示**: "Starting background daemon..."等の進捗をFUNC-205のステータスエリアにリアルタイム表示
+3. **データ流入**: Daemonからのデータが到着次第、画面に反映
 
 #### **表示状態の遷移**
 | 状態 | 表示内容 | 表示場所 | 時間 |
 |------|---------|---------|------|
 | Initial | 空の表示エリア + "Initializing..." | FUNC-205ステータスエリア | 0-100ms |
-| Monitor Starting | "Starting background monitor..." | FUNC-205ステータスエリア | 100-500ms |
+| Daemon Starting | "Starting background daemon..." | FUNC-205ステータスエリア | 100-500ms |
 | Data Loading | "Loading file events..." + 既存データ | FUNC-205ステータスエリア + メインエリア | 500ms-2s |
 | Live Mode | リアルタイムイベント表示 | メインエリア（通常動作） | 2s以降 |
 
@@ -54,11 +54,11 @@
 
 ```
 Phase 1: ">> Initializing cctop..."
-Phase 2: ">> Checking monitor status..."
-Phase 3: ">> Starting background monitor..." (必要時)
+Phase 2: ">> Checking daemon status..."
+Phase 3: ">> Starting background daemon..." (必要時)
 Phase 4: ">> Connecting to database..."
 Phase 5: ">> Loading existing events..." 
-Phase 6: ">> Ready - Monitoring active"
+Phase 6: ">> Ready - Watching active"
 ```
 
 ## 🔧 実装ガイドライン
@@ -67,24 +67,24 @@ Phase 6: ">> Ready - Monitoring active"
 
 ```javascript
 // 1. cctop実行
-// 2. Viewer即時起動（0.1秒以内）
-async function startViewer() {
+// 2. CLI即時起動（0.1秒以内）
+async function startCLI() {
   // 3. 空画面表示 + 初期化メッセージ
   displayInitialScreen();
   // FUNC-205のステータスエリアに表示
   statusDisplay.addMessage(">> Initializing cctop...", "normal", "progress");
   
-  // 4. Monitor起動チェック（非ブロッキング）
-  checkMonitorStatus().then(status => {
+  // 4. Daemon起動チェック（非ブロッキング）
+  checkDaemonStatus().then(status => {
     if (!status.running) {
-      // 5. Monitor未起動なら起動（バックグラウンド）
+      // 5. Daemon未起動なら起動（バックグラウンド）
       // FUNC-205のステータスエリアに表示
-      statusDisplay.addMessage(">> Starting background monitor...", "normal", "progress");
-      // 起動者="viewer"として記録
-      startMonitorProcess({ started_by: "viewer" });
+      statusDisplay.addMessage(">> Starting background daemon...", "normal", "progress");
+      // 起動者="cli"として記録
+      startDaemonProcess({ started_by: "cli" });
     } else {
-      // Monitor既起動の場合は起動者情報を維持
-      statusDisplay.addMessage(">> Background monitor already running", "normal", "info");
+      // Daemon既起動の場合は起動者情報を維持
+      statusDisplay.addMessage(">> Background daemon already running", "normal", "info");
     }
   });
   
@@ -105,7 +105,7 @@ async function startViewer() {
 
 #### **非ブロッキング処理**
 - Promise/async-awaitによる非同期処理
-- 各処理の並列実行（Monitor起動とDB接続を同時進行）
+- 各処理の並列実行（Daemon起動とDB接続を同時進行）
 - タイムアウト設定（各処理最大5秒）
 
 #### **段階的表示戦略**
@@ -124,7 +124,7 @@ db.on('data', (events) => {
 // データ読み込み完了
 db.on('ready', () => {
   // FUNC-205のステータスエリアに完了表示
-  statusDisplay.addMessage(">> Ready - Monitoring active", "normal", "info");
+  statusDisplay.addMessage(">> Ready - Watching active", "normal", "info");
 });
 ```
 
@@ -132,20 +132,20 @@ db.on('ready', () => {
 - DB接続失敗: 
   - 1秒間隔で最大10回リトライ
   - FUNC-205ステータスエリアに `!! Database connection failed, retrying... (attempt 3/10)` 表示
-- Monitor起動失敗: 
+- Daemon起動失敗: 
   - 読み取り専用モードで継続
-  - FUNC-205ステータスエリアに `!! Monitor start failed, running in read-only mode` 表示
+  - FUNC-205ステータスエリアに `!! Daemon start failed, running in read-only mode` 表示
 - 予期せぬエラー: 
   - エラー詳細をFUNC-205ステータスエリアに表示しつつ画面維持
 
 ## 🔗 他機能との連携
 
-### FUNC-003: Background Activity Monitor
-- Monitor起動処理を非ブロッキング化
+### FUNC-003: Background Activity Daemon
+- Daemon起動処理を非ブロッキング化
 - PIDファイルチェックを非同期実行
-- Monitor起動完了をポーリングで確認
-- **起動者記録**: Monitor未起動時の自動起動では起動者="viewer"として記録
-- **終了制御**: Viewer終了時に起動者="viewer"の場合のみMonitorも停止
+- Daemon起動完了をポーリングで確認
+- **起動者記録**: Daemon未起動時の自動起動では起動者="cli"として記録
+- **終了制御**: CLI終了時に起動者="cli"の場合のみDaemonも停止
 
 ### FUNC-202: CLI Display Integration
 - 既存の表示機能を拡張
@@ -154,7 +154,7 @@ db.on('ready', () => {
 
 ### FUNC-205: Status Display Area
 - 起動進捗メッセージの表示に活用
-  - 「>> Initializing cctop...」「>> Starting background monitor...」等をストリーム表示
+  - 「>> Initializing cctop...」「>> Starting background daemon...」等をストリーム表示
 - エラー・警告の優先表示
   - 「!! Database connection failed」等を最上行に即座表示
 - 複数行での詳細状態表示
@@ -174,18 +174,18 @@ db.on('ready', () => {
 
 ## 🧪 テスト要件
 ### **パフォーマンステスト**
-- Viewer起動時間測定（目標: 100ms以内）
+- CLI起動時間測定（目標: 100ms以内）
 - 各フェーズの遷移時間測定
 - メモリ使用量の推移確認
 
 ### **シナリオテスト**
-- Monitor未起動時の自動起動確認
+- Daemon未起動時の自動起動確認
 - Database接続失敗時のリトライ動作
 - 大量既存データのプログレッシブ表示
 - エラー発生時の画面維持確認
-- **Monitor終了制御テスト**:
-  - Monitor未起動時: Viewer終了でMonitorも停止
-  - Monitor既起動時: Viewer終了でMonitorは継続
+- **Daemon終了制御テスト**:
+  - Daemon未起動時: CLI終了でDaemonも停止
+  - Daemon既起動時: CLI終了でDaemonは継続
 
 ### **統合テスト**
 - FUNC-003との連携動作

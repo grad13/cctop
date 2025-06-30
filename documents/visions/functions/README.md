@@ -1,6 +1,6 @@
 # Functions - Active機能仕様管理
 
-**最終更新**: 2025年6月26日  
+**最終更新**: 2025年6月30日  
 **管理者**: Architect Agent  
 **目的**: cctopプロジェクトの**Active**機能仕様管理  
 
@@ -34,23 +34,26 @@ FUNC-003-configuration-management.md
 
 ## 📁 現在のファイル一覧
 
-### 0-Monitor
+### 000番台 - File Monitoring & Database Core
 | ファイル | 機能 |
 |---------|------|
 | FUNC-000-sqlite-database-foundation.md | SQLiteデータベース基盤 |
 | FUNC-001-file-lifecycle-tracking.md | ファイルライフサイクル追跡 |
 | FUNC-002-chokidar-database-integration.md | chokidar-Database統合監視 |
-| FUNC-003-background-activity-monitor.md | バックグラウンド監視モード |
+| FUNC-003-background-activity-daemon.md | バックグラウンドデーモン |
 
-### 1-Configuration & Settings
+### 100番台 - Configuration & CLI Management
 | ファイル | 機能 | ステータス |
 |---------|------|----------|
-| FUNC-101-hierarchical-config-management.md | 階層的設定管理 | Active |
+| FUNC-101-hierarchical-config-management.md | 共通設定管理 | Active |
 | FUNC-102-file-watch-limit-management.md | ファイル監視上限管理 | Active |
 | FUNC-104-cli-interface-specification.md | CLIインターフェース統合仕様 | Active |
-| **FUNC-105-local-setup-initialization.md** | **ローカル設定・初期化** | **Active** |
+| FUNC-105-local-setup-initialization.md | ローカル設定・初期化 | Active |
+| FUNC-106-daemon-configuration-management.md | Daemon設定管理 | Active |
+| FUNC-107-cli-configuration-management.md | CLI設定管理 | Active |
+| FUNC-108-color-theme-configuration.md | Color Theme Configuration | Active |
 
-### 2-View & Display
+### 200番台 - Display & Rendering System
 | ファイル | 機能 |
 |---------|------|
 | FUNC-200-east-asian-width-display.md | East Asian Width対応表示 |
@@ -60,14 +63,14 @@ FUNC-003-configuration-management.md
 | FUNC-204-responsive-directory-display.md | レスポンシブディレクトリ表示 |
 | FUNC-205-status-display-area.md | ステータス表示エリア |
 | FUNC-206-instant-view-progressive-loading.md | 即時表示・プログレッシブローディング |
-| FUNC-207-display-color-customization.md | 表示色カスタマイズ |
+| FUNC-207-color-rendering-system.md | Color Rendering System |
 
-### 3-Extension
+### 300番台 - Key Input & Extension System
 | ファイル | 機能 |
 |---------|------|
 | FUNC-300-key-input-manager.md | キー入力管理システム |
 
-### 4-Interactive
+### 400番台 - Interactive Selection & Statistics
 | ファイル | 機能 |
 |---------|------|
 | FUNC-400-interactive-selection-mode.md | インタラクティブ選択モード |
@@ -83,11 +86,11 @@ FUNC-003-configuration-management.md
 - **履歴保持**: 機能の発展履歴を記録
 
 ### カテゴリ体系
-- **Core (000番台)**: 基盤機能
-- **Configuration (100番台)**: 設定・初期化機能
-- **View (200番台)**: 表示・UI機能
-- **Extension (300番台)**: 拡張・プラグイン機能
-- **Interactive (400番台)**: インタラクティブ機能
+- **Core (000番台)**: 基盤機能 - ファイル監視・DB管理
+- **Configuration (100番台)**: 設定・初期化機能 - Daemon/CLI分離設定
+- **View (200番台)**: 表示・UI機能 - レンダリング・色管理
+- **Extension (300番台)**: 拡張・プラグイン機能 - キー入力管理
+- **Interactive (400番台)**: インタラクティブ機能 - 選択モード・統計
 
 ### Active機能管理ルール
 - **機能確定**: 実装対象として確定済みの機能のみ
@@ -151,13 +154,19 @@ FUNC-003-configuration-management.md
 - **ユーザー体験改善**: コマンド実行から0.1秒以内の画面表示実現
 - **15機能体制確立**: View & Display機能が7機能に拡張
 
+### 2025年6月30日
+- **設定管理分離**: Daemon/CLI分離に向けた100番台機能の拡充
+- **新規機能追加**: FUNC-106(Daemon設定), FUNC-107(CLI設定), FUNC-108(色テーマ)
+- **機能分割**: FUNC-207を設定管理(108)とレンダリング(207)に分離
+- **Active機能数**: 24機能体制に拡充
+
 ### 2025年6月26日
 - **構造改革**: functions/をActive機能専用に変更
 - **pilots/新設**: Draft機能の専用管理ディレクトリ作成
 - **Active機能確定**: 12機能をActive機能として管理
   - Core: FUNC-000,001,002,003
-  - Configuration: FUNC-101,102,104,105
-  - View: FUNC-200,201,202,203,204,205
+  - Configuration: FUNC-101,102,104,105,106,107,108
+  - View: FUNC-200,201,202,203,204,205,207
 - **Draft機能分離**: FUNC-900,901,903,904をpilots/に移行
 - **管理方針変更**: Active/Draft混在問題の構造的解決
 

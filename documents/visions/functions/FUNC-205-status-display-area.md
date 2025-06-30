@@ -1,7 +1,7 @@
 # FUNC-205: ステータス表示エリア機能
 
 **作成日**: 2025年6月26日 16:15  
-**更新日**: 2025年6月26日 16:15  
+**更新日**: 2025年6月30日  
 **作成者**: Architect Agent  
 **Version**: 0.2.0.0  
 **関連仕様**: FUNC-202, FUNC-206
@@ -150,7 +150,7 @@ All Activities  (4/156)
 
 # t=5s: 統計追加
 >> Initial scan: 1,234 files found (ongoing...)
->> Monitoring started: 0 events
+>> Watching started: 0 events
 
 # t=10s: 完了 + エラー発生
 !! Cannot access: /protected/dir (permission denied)
@@ -279,7 +279,7 @@ LIMIT 1;
 1. >> Initial scan: scanning files...
 2. >> Initial scan: 1,234 files found (ongoing...)
 3. >> Initial scan completed: 2,453 files in 1.2s
-4. >> Monitoring started: watching 2,453 files
+4. >> Watching started: 2,453 files
 ```
 
 ### **通常監視時**

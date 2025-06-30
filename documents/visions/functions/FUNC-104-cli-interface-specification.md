@@ -1,7 +1,7 @@
 # FUNC-104: CLIインターフェース統合仕様
 
 **作成日**: 2025年6月26日 16:10  
-**更新日**: 2025年6月26日 16:10  
+**更新日**: 2025年6月30日  
 **作成者**: Architect Agent  
 **Version**: 0.2.0.0  
 **関連仕様**: FUNC-101, FUNC-102, FUNC-003, func-105
@@ -50,7 +50,7 @@ cctop [options] [directory]
 | `--timeout <seconds>` | タイムアウト時間（秒） | FUNC-101 |
 | `--daemon --start` | 背景監視プロセス開始 | FUNC-003 |
 | `--daemon --stop` | 背景監視プロセス停止 | FUNC-003 |
-| `--view` | Monitor起動なし、既存DBから表示のみ | FUNC-003, FUNC-202 |
+| `--view` | Daemon起動なし、既存DBから表示のみ | FUNC-003, FUNC-202 |
 
 ### **出力制御関連**
 | オプション | 説明 | 参照FUNC |
@@ -72,18 +72,18 @@ cctop [options] [directory]
 
 ### **標準ヘルプ表示**
 ```
-cctop - Code Change Top (File Monitoring Tool)
+cctop - Code Change Top (File Watching Tool)
 
 Usage: cctop [options] [directory]
 
 Options:
-  Monitoring:
+  Watching:
     --timeout <sec>       Timeout in seconds
-    --daemon --start      Start background monitoring
-    --daemon --stop       Stop background monitoring
+    --daemon --start      Start background daemon
+    --daemon --stop       Stop background daemon
 
   Display:
-    --view                View existing data only (no monitoring)
+    --view                View existing data only (no daemon)
 
   Output:
     --verbose             Enable verbose output
@@ -102,9 +102,9 @@ Interactive Controls:
     f - Find  c - Create  m - Modify  d - Delete  v - Move  r - Restore
 
 Examples:
-  cctop                   # Monitor current directory
-  cctop src/              # Monitor src directory
-  cctop --daemon --start  # Start background monitoring
+  cctop                   # Watch current directory
+  cctop src/              # Watch src directory
+  cctop --daemon --start  # Start background daemon
   cctop --view            # View existing data only
   cctop --check-limits    # Check system limits
 ```

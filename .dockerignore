@@ -1,0 +1,39 @@
+# Git
+.git
+.gitignore
+
+# Node modules and build artifacts
+cctop/node_modules
+cctop/dist
+cctop/.npm
+cctop/*.log
+
+# IDE and editor files
+.vscode
+.idea
+*.swp
+*.swo
+.DS_Store
+
+# Test coverage
+cctop/coverage
+cctop/.nyc_output
+
+# Temporary files
+*.tmp
+*.temp
+.cctop/monitor.pid
+
+# Archives (to reduce size)
+archives/
+documents/archives/
+documents/records/archives/
+**/archives/
+
+# Large log files
+*.log
+logs/
+
+# Build cache
+cctop/.cache
+cctop/.parcel-cache

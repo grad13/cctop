@@ -21,6 +21,16 @@
 
 ## 現在のドラフト
 
+### DRAFT-20250630-002-parallel-agent-status-management.md
+- **作成日**: 2025年6月30日
+- **内容**: 並列Agent Status管理システム提案（container/worktree対応）
+- **状態**: 新規作成（ハイブリッド方式推奨）
+
+### DRAFT-20250629-001-readme-enhancement-proposal.md
+- **作成日**: 2025年6月29日
+- **内容**: cctop README.md充実化提案（ccusage参考）
+- **状態**: 新規作成（Phase別実装計画含む）
+
 ### DRAFT-20250627-201-intentional-code-deletion-methodology.md
 - **作成日**: 2025年6月27日
 - **内容**: Code Antifragility Engineering: Intentional Code Deletion for Quality Improvement
