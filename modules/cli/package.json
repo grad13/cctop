@@ -1,25 +1,25 @@
 {
   "name": "@cctop/cli",
   "version": "0.3.0",
-  "description": "CLI interface for cctop",
+  "description": "CCTOP CLI Module (v0.3.0)",
   "main": "dist/index.js",
-  "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc",
-    "clean": "rm -rf dist",
-    "start": "node dist/index.js",
-    "test": "echo 'No tests yet'"
+    "start": "npm run build && node dist/index.js",
+    "demo": "npm run build && node dist/index.js",
+    "test": "echo \"CLI module tests\"",
+    "dev": "tsc --watch"
   },
   "dependencies": {
-    "@cctop/shared": "^0.3.0",
-    "blessed": "^0.1.81"
+    "@cctop/shared": "file:../shared",
+    "blessed": "^0.1.81",
+    "@types/blessed": "^0.1.21",
+    "chalk": "^4.1.2",
+    "sqlite3": "^5.1.6",
+    "@types/sqlite3": "^3.1.8"
   },
   "devDependencies": {
-    "@types/blessed": "^0.1.25",
     "@types/node": "^20.14.9",
     "typescript": "^5.5.3"
-  },
-  "engines": {
-    "node": ">=18.0.0"
   }
 }
