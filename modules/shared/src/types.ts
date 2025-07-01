@@ -24,28 +24,20 @@ export interface DaemonConfig {
   monitoring: {
     watchPaths: string[];
     excludePatterns: string[];
-    debounceMs: number;
-    maxDepth: number;
     moveThresholdMs: number;
-    systemLimits: {
-      requiredLimit: number;
-      checkOnStartup: boolean;
-      warnIfInsufficient: boolean;
-    };
+    maxDepth: number;
+    ignoreInitial: boolean;
+    includeStats: boolean;
   };
   daemon: {
     pidFile: string;
     logFile: string;
-    logLevel: string;
-    heartbeatInterval: number;
-    autoStart: boolean;
+    heartbeatIntervalMs: number;
   };
   database: {
-    writeMode: string;
-    syncMode: string;
-    cacheSize: number;
-    busyTimeout: number;
     path: string;
+    maxEvents: number;
+    connectionTimeout: number;
   };
 }
 

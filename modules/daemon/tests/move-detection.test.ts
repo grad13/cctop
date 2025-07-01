@@ -2,11 +2,12 @@
  * Move Detection Tests - Proper verification of move event detection
  */
 
-import { describe, test, expect, beforeEach, afterEach } from 'vitest';
+import { describe, test, expect, beforeEach, afterEach, afterAll } from 'vitest';
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import { spawn, ChildProcess } from 'child_process';
+import { ChildProcess } from 'child_process';
 import sqlite3 from 'sqlite3';
+import { DaemonTestManager, setupDaemonTest, teardownDaemonTest } from './test-helpers';
 
 interface DbEvent {
   id: number;
@@ -25,21 +26,16 @@ describe('Move Detection', () => {
   let daemonProcess: ChildProcess | null = null;
 
   beforeEach(async () => {
-    await fs.mkdir(testDir, { recursive: true });
-    process.chdir(testDir);
+    await setupDaemonTest(testDir);
   });
 
   afterEach(async () => {
-    if (daemonProcess) {
-      daemonProcess.kill('SIGTERM');
-      daemonProcess = null;
-    }
-    await new Promise(resolve => setTimeout(resolve, 100));
-    try {
-      await fs.rm(testDir, { recursive: true, force: true });
-    } catch (error) {
-      console.warn('Failed to clean test directory:', error);
-    }
+    await teardownDaemonTest(daemonProcess, testDir);
+    daemonProcess = null;
+  });
+
+  afterAll(async () => {
+    await DaemonTestManager.globalCleanup();
   });
 
   async function getEventsFromDb(): Promise<DbEvent[]> {
@@ -64,11 +60,8 @@ describe('Move Detection', () => {
   test('should correctly detect move events with proper inode tracking', async () => {
     const daemonPath = path.resolve(__dirname, '../dist/index.js');
     
-    // Start daemon
-    daemonProcess = spawn('node', [daemonPath, '--standalone'], {
-      stdio: 'pipe',
-      cwd: testDir
-    });
+    // Start daemon using test manager
+    daemonProcess = await DaemonTestManager.startDaemon(daemonPath, testDir);
 
     // Capture daemon output for debugging
     let daemonOutput = '';
@@ -84,7 +77,8 @@ describe('Move Detection', () => {
     }
 
     // Wait for daemon startup
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    await DaemonTestManager.waitForDaemonStartup(daemonProcess);
+    await new Promise(resolve => setTimeout(resolve, 500)); // Additional stabilization
 
     // Step 1: Create file
     const originalFile = 'move-test.txt';
@@ -141,12 +135,9 @@ describe('Move Detection', () => {
   test('should handle delete correctly when not a move', async () => {
     const daemonPath = path.resolve(__dirname, '../dist/index.js');
     
-    daemonProcess = spawn('node', [daemonPath, '--standalone'], {
-      stdio: 'pipe',
-      cwd: testDir
-    });
-
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    daemonProcess = await DaemonTestManager.startDaemon(daemonPath, testDir);
+    await DaemonTestManager.waitForDaemonStartup(daemonProcess);
+    await new Promise(resolve => setTimeout(resolve, 500));
 
     // Create and delete file (not move)
     const testFile = 'delete-test.txt';
@@ -175,12 +166,9 @@ describe('Move Detection', () => {
   test('should detect multiple file operations correctly', async () => {
     const daemonPath = path.resolve(__dirname, '../dist/index.js');
     
-    daemonProcess = spawn('node', [daemonPath, '--standalone'], {
-      stdio: 'pipe',
-      cwd: testDir
-    });
-
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    daemonProcess = await DaemonTestManager.startDaemon(daemonPath, testDir);
+    await DaemonTestManager.waitForDaemonStartup(daemonProcess);
+    await new Promise(resolve => setTimeout(resolve, 500));
 
     // Complex sequence: create -> modify -> move -> delete
     const file1 = 'complex-test.txt';
@@ -225,12 +213,9 @@ describe('Move Detection', () => {
   test('should handle rapid move operations correctly', async () => {
     const daemonPath = path.resolve(__dirname, '../dist/index.js');
     
-    daemonProcess = spawn('node', [daemonPath, '--standalone'], {
-      stdio: 'pipe',
-      cwd: testDir
-    });
-
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    daemonProcess = await DaemonTestManager.startDaemon(daemonPath, testDir);
+    await DaemonTestManager.waitForDaemonStartup(daemonProcess);
+    await new Promise(resolve => setTimeout(resolve, 500));
 
     // Create file
     await fs.writeFile('rapid-test.txt', 'content');
@@ -263,12 +248,9 @@ describe('Move Detection', () => {
   test('should NOT create duplicate create events', async () => {
     const daemonPath = path.resolve(__dirname, '../dist/index.js');
     
-    daemonProcess = spawn('node', [daemonPath, '--standalone'], {
-      stdio: 'pipe',
-      cwd: testDir
-    });
-
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    daemonProcess = await DaemonTestManager.startDaemon(daemonPath, testDir);
+    await DaemonTestManager.waitForDaemonStartup(daemonProcess);
+    await new Promise(resolve => setTimeout(resolve, 500));
 
     // Create single file
     const testFile = 'single-create-test.txt';
@@ -314,12 +296,9 @@ describe('Move Detection', () => {
   test('should handle multiple separate file creations correctly', async () => {
     const daemonPath = path.resolve(__dirname, '../dist/index.js');
     
-    daemonProcess = spawn('node', [daemonPath, '--standalone'], {
-      stdio: 'pipe',
-      cwd: testDir
-    });
-
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    daemonProcess = await DaemonTestManager.startDaemon(daemonPath, testDir);
+    await DaemonTestManager.waitForDaemonStartup(daemonProcess);
+    await new Promise(resolve => setTimeout(resolve, 500));
 
     // Create multiple separate files
     const files = ['file1.txt', 'file2.txt', 'file3.txt'];

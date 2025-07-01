@@ -3,59 +3,45 @@
  * Tests for FUNC-003/106 compliance
  */
 
-import { describe, test, expect, beforeEach, afterEach } from 'vitest';
+import { describe, test, expect, beforeEach, afterEach, afterAll } from 'vitest';
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import { spawn, ChildProcess } from 'child_process';
+import { ChildProcess } from 'child_process';
+import { DaemonTestManager, setupDaemonTest, teardownDaemonTest } from './test-helpers';
 
 describe('Daemon Module', () => {
   const testDir = '/tmp/cctop-daemon-test';
   const testDbPath = path.join(testDir, '.cctop/data/activity.db');
-  const testPidPath = path.join(testDir, '.cctop/runtime/daemon.pid');
+  const testPidPath = path.join(testDir, '.cctop/daemon.pid');
   let daemonProcess: ChildProcess | null = null;
 
   beforeEach(async () => {
-    // Setup test environment
-    await fs.mkdir(testDir, { recursive: true });
-    process.chdir(testDir);
+    await setupDaemonTest(testDir);
   });
 
   afterEach(async () => {
-    // Clean up daemon process
-    if (daemonProcess) {
-      daemonProcess.kill('SIGTERM');
-      daemonProcess = null;
-    }
+    await teardownDaemonTest(daemonProcess, testDir);
+    daemonProcess = null;
+  });
 
-    // Wait for cleanup
-    await new Promise(resolve => setTimeout(resolve, 100));
-
-    // Clean up test directory
-    try {
-      await fs.rm(testDir, { recursive: true, force: true });
-    } catch (error) {
-      console.warn('Failed to clean test directory:', error);
-    }
+  afterAll(async () => {
+    await DaemonTestManager.globalCleanup();
   });
 
   test('daemon should start and create required directories', async () => {
     const daemonPath = path.resolve(__dirname, '../dist/index.js');
     
-    // Start daemon
-    daemonProcess = spawn('node', [daemonPath, '--standalone'], {
-      stdio: 'pipe',
-      cwd: testDir
-    });
+    // Start daemon using test manager
+    daemonProcess = await DaemonTestManager.startDaemon(daemonPath, testDir);
 
     // Wait for startup
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await DaemonTestManager.waitForDaemonStartup(daemonProcess);
 
     // Check required directories exist
     const dirs = [
       path.join(testDir, '.cctop'),
       path.join(testDir, '.cctop/data'),
-      path.join(testDir, '.cctop/logs'),
-      path.join(testDir, '.cctop/runtime')
+      path.join(testDir, '.cctop/logs')
     ];
 
     for (const dir of dirs) {
@@ -66,13 +52,8 @@ describe('Daemon Module', () => {
   test('daemon should create PID file with correct structure', async () => {
     const daemonPath = path.resolve(__dirname, '../dist/index.js');
     
-    daemonProcess = spawn('node', [daemonPath, '--standalone'], {
-      stdio: 'pipe',
-      cwd: testDir
-    });
-
-    // Wait for startup
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    daemonProcess = await DaemonTestManager.startDaemon(daemonPath, testDir);
+    await DaemonTestManager.waitForDaemonStartup(daemonProcess);
 
     // Check PID file exists and has correct structure
     const pidContent = await fs.readFile(testPidPath, 'utf8');
@@ -89,13 +70,11 @@ describe('Daemon Module', () => {
   test('daemon should respond to file creation events', async () => {
     const daemonPath = path.resolve(__dirname, '../dist/index.js');
     
-    daemonProcess = spawn('node', [daemonPath, '--standalone'], {
-      stdio: 'pipe',
-      cwd: testDir
-    });
-
-    // Wait for daemon startup
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    daemonProcess = await DaemonTestManager.startDaemon(daemonPath, testDir);
+    await DaemonTestManager.waitForDaemonStartup(daemonProcess);
+    
+    // Additional wait for monitoring to stabilize
+    await new Promise(resolve => setTimeout(resolve, 500));
 
     // Create a test file
     const testFile = path.join(testDir, 'test-file.txt');
@@ -111,13 +90,8 @@ describe('Daemon Module', () => {
   test('daemon should handle graceful shutdown on SIGTERM', async () => {
     const daemonPath = path.resolve(__dirname, '../dist/index.js');
     
-    daemonProcess = spawn('node', [daemonPath, '--standalone'], {
-      stdio: 'pipe',
-      cwd: testDir
-    });
-
-    // Wait for startup
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    daemonProcess = await DaemonTestManager.startDaemon(daemonPath, testDir);
+    await DaemonTestManager.waitForDaemonStartup(daemonProcess);
 
     // Verify PID file exists
     await expect(fs.access(testPidPath)).resolves.toBeUndefined();
@@ -137,13 +111,8 @@ describe('Daemon Module', () => {
   test('daemon should exclude configured patterns', async () => {
     const daemonPath = path.resolve(__dirname, '../dist/index.js');
     
-    daemonProcess = spawn('node', [daemonPath, '--standalone'], {
-      stdio: 'pipe',
-      cwd: testDir
-    });
-
-    // Wait for startup
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    daemonProcess = await DaemonTestManager.startDaemon(daemonPath, testDir);
+    await DaemonTestManager.waitForDaemonStartup(daemonProcess);
 
     // Create files that should be excluded
     await fs.mkdir(path.join(testDir, 'node_modules'), { recursive: true });
@@ -164,13 +133,11 @@ describe('Daemon Module', () => {
   test('daemon should detect move events correctly', async () => {
     const daemonPath = path.resolve(__dirname, '../dist/index.js');
     
-    daemonProcess = spawn('node', [daemonPath, '--standalone'], {
-      stdio: 'pipe',
-      cwd: testDir
-    });
-
-    // Wait for daemon startup
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    daemonProcess = await DaemonTestManager.startDaemon(daemonPath, testDir);
+    await DaemonTestManager.waitForDaemonStartup(daemonProcess);
+    
+    // Additional wait for monitoring to stabilize
+    await new Promise(resolve => setTimeout(resolve, 500));
 
     // Create a test file first
     const originalFile = path.join(testDir, 'move-test-original.txt');
@@ -198,13 +165,8 @@ describe('Daemon Module', () => {
   test('daemon should handle file modification events', async () => {
     const daemonPath = path.resolve(__dirname, '../dist/index.js');
     
-    daemonProcess = spawn('node', [daemonPath, '--standalone'], {
-      stdio: 'pipe',
-      cwd: testDir
-    });
-
-    // Wait for startup
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    daemonProcess = await DaemonTestManager.startDaemon(daemonPath, testDir);
+    await DaemonTestManager.waitForDaemonStartup(daemonProcess);
 
     // Create and modify a file
     const testFile = path.join(testDir, 'modify-test.txt');
@@ -227,13 +189,8 @@ describe('Daemon Module', () => {
   test('daemon should handle file deletion events', async () => {
     const daemonPath = path.resolve(__dirname, '../dist/index.js');
     
-    daemonProcess = spawn('node', [daemonPath, '--standalone'], {
-      stdio: 'pipe',
-      cwd: testDir
-    });
-
-    // Wait for startup
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    daemonProcess = await DaemonTestManager.startDaemon(daemonPath, testDir);
+    await DaemonTestManager.waitForDaemonStartup(daemonProcess);
 
     // Create a file to delete
     const testFile = path.join(testDir, 'delete-test.txt');

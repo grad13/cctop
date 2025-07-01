@@ -3,11 +3,12 @@
  * Tests for proper 'find' event detection during daemon startup
  */
 
-import { describe, test, expect, beforeEach, afterEach } from 'vitest';
+import { describe, test, expect, beforeEach, afterEach, afterAll } from 'vitest';
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import { spawn, ChildProcess } from 'child_process';
+import { ChildProcess } from 'child_process';
 import sqlite3 from 'sqlite3';
+import { DaemonTestManager, setupDaemonTest, teardownDaemonTest } from './test-helpers';
 
 interface DbEvent {
   id: number;
@@ -26,21 +27,16 @@ describe('Find Detection (FUNC-001)', () => {
   let daemonProcess: ChildProcess | null = null;
 
   beforeEach(async () => {
-    await fs.mkdir(testDir, { recursive: true });
-    process.chdir(testDir);
+    await setupDaemonTest(testDir);
   });
 
   afterEach(async () => {
-    if (daemonProcess) {
-      daemonProcess.kill('SIGTERM');
-      daemonProcess = null;
-    }
-    await new Promise(resolve => setTimeout(resolve, 100));
-    try {
-      await fs.rm(testDir, { recursive: true, force: true });
-    } catch (error) {
-      console.warn('Failed to clean test directory:', error);
-    }
+    await teardownDaemonTest(daemonProcess, testDir);
+    daemonProcess = null;
+  });
+
+  afterAll(async () => {
+    await DaemonTestManager.globalCleanup();
   });
 
   async function getEventsFromDb(): Promise<DbEvent[]> {
@@ -82,13 +78,11 @@ describe('Find Detection (FUNC-001)', () => {
     // GREEN PHASE: Start daemon (should perform initial scan)
     const daemonPath = path.resolve(__dirname, '../dist/index.js');
     
-    daemonProcess = spawn('node', [daemonPath, '--standalone'], {
-      stdio: 'pipe',
-      cwd: testDir
-    });
-
-    // Wait for daemon startup and initial scan completion
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    daemonProcess = await DaemonTestManager.startDaemon(daemonPath, testDir);
+    await DaemonTestManager.waitForDaemonStartup(daemonProcess);
+    
+    // Wait for initial scan completion
+    await new Promise(resolve => setTimeout(resolve, 1000));
 
     // VERIFICATION: Check database for 'find' events
     const events = await getEventsFromDb();
@@ -142,10 +136,8 @@ describe('Find Detection (FUNC-001)', () => {
     // Start daemon
     const daemonPath = path.resolve(__dirname, '../dist/index.js');
     
-    daemonProcess = spawn('node', [daemonPath, '--standalone'], {
-      stdio: 'pipe',
-      cwd: testDir
-    });
+    daemonProcess = await DaemonTestManager.startDaemon(daemonPath, testDir);
+    await DaemonTestManager.waitForDaemonStartup(daemonProcess);
 
     // Wait for daemon startup and initial scan
     await new Promise(resolve => setTimeout(resolve, 2000));
@@ -175,10 +167,8 @@ describe('Find Detection (FUNC-001)', () => {
     // Start daemon in empty directory (no existing files)
     const daemonPath = path.resolve(__dirname, '../dist/index.js');
     
-    daemonProcess = spawn('node', [daemonPath, '--standalone'], {
-      stdio: 'pipe',
-      cwd: testDir
-    });
+    daemonProcess = await DaemonTestManager.startDaemon(daemonPath, testDir);
+    await DaemonTestManager.waitForDaemonStartup(daemonProcess);
 
     // Wait for daemon startup and initial scan
     await new Promise(resolve => setTimeout(resolve, 2000));
@@ -206,12 +196,9 @@ describe('Find Detection (FUNC-001)', () => {
     // Start daemon
     const daemonPath = path.resolve(__dirname, '../dist/index.js');
     
-    daemonProcess = spawn('node', [daemonPath, '--standalone'], {
-      stdio: 'pipe',
-      cwd: testDir
-    });
-
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    daemonProcess = await DaemonTestManager.startDaemon(daemonPath, testDir);
+    await DaemonTestManager.waitForDaemonStartup(daemonProcess);
+    await new Promise(resolve => setTimeout(resolve, 1000));
 
     // Verify metadata in 'find' event
     const findEvents = await getEventsByType('find');
@@ -248,12 +235,9 @@ describe('Find Detection (FUNC-001)', () => {
     // Start daemon
     const daemonPath = path.resolve(__dirname, '../dist/index.js');
     
-    daemonProcess = spawn('node', [daemonPath, '--standalone'], {
-      stdio: 'pipe',
-      cwd: testDir
-    });
-
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    daemonProcess = await DaemonTestManager.startDaemon(daemonPath, testDir);
+    await DaemonTestManager.waitForDaemonStartup(daemonProcess);
+    await new Promise(resolve => setTimeout(resolve, 1000));
 
     // Verify all files were detected as 'find' events
     const findEvents = await getEventsByType('find');
@@ -284,12 +268,9 @@ describe('Find Detection (FUNC-001)', () => {
     // Start daemon
     const daemonPath = path.resolve(__dirname, '../dist/index.js');
     
-    daemonProcess = spawn('node', [daemonPath, '--standalone'], {
-      stdio: 'pipe',
-      cwd: testDir
-    });
-
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    daemonProcess = await DaemonTestManager.startDaemon(daemonPath, testDir);
+    await DaemonTestManager.waitForDaemonStartup(daemonProcess);
+    await new Promise(resolve => setTimeout(resolve, 1000));
 
     // Verify all files were found regardless of directory depth
     const findEvents = await getEventsByType('find');
