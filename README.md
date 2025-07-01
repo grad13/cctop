@@ -40,16 +40,16 @@ npm install -g cctop
 
 ### Start the daemon (background service)
 ```bash
-npm run start:daemon
+npm run daemon
 # or
 ./bin/cctop-daemon
 ```
 
 ### Start the CLI (user interface)
 ```bash
-npm run start:cli
+npm run cli
 # or
-./bin/cctop
+./bin/cctop-cli
 ```
 
 ### Use legacy version
@@ -63,17 +63,18 @@ npm run start:legacy
 # Build all modules
 npm run build
 
-# Build specific module
-npm run build:shared
-npm run build:daemon
-npm run build:cli
-
 # Run tests
 npm test
 
 # Type checking
 npm run typecheck
 ```
+
+## Module Documentation
+
+- **Daemon Module**: See `modules/daemon/README.md`
+- **CLI Module**: See `modules/cli/README.md`  
+- **Shared Module**: See `modules/shared/README.md`
 
 ## License
 
