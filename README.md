@@ -1,59 +1,78 @@
-# cctop - File System Monitoring Tool
+# cctop - Code Change Top
 
-A high-performance file system monitoring tool with real-time event tracking and SQLite persistence.
+Real-time file system monitoring tool with daemon-cli architecture.
+
+## Architecture (v0.3.x)
+
+cctop uses a modular daemon-cli architecture for better scalability and maintainability:
+
+### Modules
+
+- **`modules/shared/`** - Common types, database layer, and utilities
+- **`modules/daemon/`** - Background file monitoring service
+- **`modules/cli/`** - Terminal UI client
+
+### Legacy Code
+
+The original monolithic implementation (v0.2.x) is preserved in `legacy/` for reference and gradual migration.
 
 ## Features
 
-- Real-time file system event monitoring (create, modify, delete)
-- SQLite database persistence
-- Metadata tracking (file size, line count, block count, timestamps)
-- Multiple UI modes (classic terminal, Ink-based TUI)
-- File movement detection
+- Real-time file system event monitoring (create, modify, delete, move)
+- SQLite database with WAL mode for concurrent access
+- Daemon-CLI separation for independent scaling
+- Event batching and efficient processing
+- Metadata tracking (file size, line count, timestamps, inode)
+- Multiple UI modes and interactive features
 
 ## Installation
 
 ```bash
-# Install globally
-npm install -g cctop
+# Install dependencies and build
+npm install
+npm run build
 
-# Or install locally
-npm install cctop
+# Or install globally (coming soon)
+npm install -g cctop
 ```
 
 ## Usage
 
+### Start the daemon (background service)
 ```bash
-# Start monitoring current directory
-cctop
-
-# Monitor specific directory
-cctop /path/to/directory
-
-# Use specific database
-cctop --db /path/to/database.db
-
-# If installed locally
-npx cctop
+npm run start:daemon
+# or
+./bin/cctop-daemon
 ```
 
-## Architecture
+### Start the CLI (user interface)
+```bash
+npm run start:cli
+# or
+./bin/cctop
+```
 
-- **Monitors**: File system event detection using chokidar
-- **Database**: SQLite-based event persistence
-- **UI**: Multiple display modes for different use cases
-- **Config**: Flexible configuration management
+### Use legacy version
+```bash
+npm run start:legacy
+```
 
 ## Development
 
 ```bash
-# Install dependencies
-npm install
+# Build all modules
+npm run build
+
+# Build specific module
+npm run build:shared
+npm run build:daemon
+npm run build:cli
 
 # Run tests
 npm test
 
-# Start development
-npm start
+# Type checking
+npm run typecheck
 ```
 
 ## License
