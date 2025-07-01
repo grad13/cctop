@@ -139,7 +139,7 @@ export class Database {
         if (err) {
           console.error('Failed to drop existing triggers:', {
             error: err.message,
-            code: err.code || 'UNKNOWN',
+            code: (err as any).code || 'UNKNOWN',
             timestamp: new Date().toISOString()
           });
           // Continue with trigger creation even if drop fails
