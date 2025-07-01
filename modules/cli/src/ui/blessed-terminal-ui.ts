@@ -23,7 +23,7 @@ export interface UIConfig {
 }
 
 export class BlessedTerminalUI {
-  private screen: blessed.Widgets.Screen;
+  private screen!: blessed.Widgets.Screen;
   private table: any; // blessed.Widgets.ListTable;
   private statusBar: any; // blessed.Widgets.Box;
   private headerBox: any; // blessed.Widgets.Box;

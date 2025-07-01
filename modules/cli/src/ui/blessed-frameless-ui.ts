@@ -10,14 +10,15 @@ import { DatabaseAdapter } from '../database/database-adapter';
 export interface UIFramelessConfig {
   refreshInterval?: number;
   maxRows?: number;
+  displayMode?: 'all' | 'unique';  // FUNC-202: All/Uniqueモード
   columnWidths?: {
-    timestamp: number;
-    elapsed: number;
-    filename: number;
-    event: number;
-    lines: number;
-    blocks: number;
-    directory: number;
+    timestamp: number;    // FUNC-202: Event Timestamp - 19
+    elapsed: number;      // FUNC-202: Elapsed - 9  
+    filename: number;     // FUNC-202: File Name - 35
+    event: number;        // FUNC-202: Event - 8
+    lines: number;        // FUNC-202: Lines - 6
+    blocks: number;       // FUNC-202: Blocks - 8
+    directory: number;    // FUNC-202: Directory - 可変
   };
   colors?: {
     header: string;
@@ -33,10 +34,11 @@ export interface UIFramelessConfig {
 }
 
 export class BlessedFramelessUI {
-  private screen: blessed.Widgets.Screen;
+  private screen!: blessed.Widgets.Screen;
   private titleBox: any; // blessed.Widgets.Box;
   private headerPanel: any; // blessed.Widgets.Box;
   private statusBar: any; // blessed.Widgets.Box;
+  private keyGuideBar: any; // blessed.Widgets.Box;
   
   // Column panels (borderless)
   private timestampPanel: any; // blessed.Widgets.Box;
@@ -62,20 +64,22 @@ export class BlessedFramelessUI {
   private config: Required<UIFramelessConfig>;
   private selectedIndex: number = -1;
   private events: EventRow[] = [];
+  private displayMode: 'all' | 'unique' = 'all';  // FUNC-202: 表示モード
 
   constructor(db: DatabaseAdapter, config: UIFramelessConfig = {}) {
     this.db = db;
     this.config = {
       refreshInterval: config.refreshInterval || 1000,
       maxRows: config.maxRows || 25,
+      displayMode: config.displayMode || 'all',  // FUNC-202: デフォルトAllモード
       columnWidths: {
-        timestamp: config.columnWidths?.timestamp || 20,
-        elapsed: config.columnWidths?.elapsed || 10,
-        filename: config.columnWidths?.filename || 25,
-        event: config.columnWidths?.event || 10,
-        lines: config.columnWidths?.lines || 8,
-        blocks: config.columnWidths?.blocks || 8,
-        directory: config.columnWidths?.directory || 20,
+        timestamp: config.columnWidths?.timestamp || 20,    // YYYY-MM-DD HH:MM:SS = 19文字 + 1余裕
+        elapsed: config.columnWidths?.elapsed || 7,         // mm:ss = 5文字 + 2余裕  
+        filename: config.columnWidths?.filename || 35,      // FUNC-202仕様
+        event: config.columnWidths?.event || 8,             // FUNC-202仕様
+        lines: config.columnWidths?.lines || 6,             // FUNC-202仕様
+        blocks: config.columnWidths?.blocks || 8,           // FUNC-202仕様
+        directory: config.columnWidths?.directory || 20,    // FUNC-202可変（デフォルト20）
         ...config.columnWidths
       },
       colors: {
@@ -103,7 +107,9 @@ export class BlessedFramelessUI {
       title: 'CCTOP - Frameless View',
       dockBorders: true,
       fullUnicode: true,
-      autoPadding: true
+      autoPadding: true,
+      forceUnicode: false,  // Fix xterm-256color.Setulc error
+      useBCE: false         // Disable problematic background color erase
     });
   }
 
@@ -174,19 +180,30 @@ export class BlessedFramelessUI {
     this.directoryPanel = this.createFramelessPanel(leftPos, this.config.columnWidths.directory);
     this.directoryList = this.createColumnList(this.directoryPanel);
 
-    // Status bar
+    // Status bar - Split into 2 separate boxes for reliable display
     this.statusBar = blessed.box({
-      bottom: 0,
+      bottom: 1,  // Above the key guide
       left: 0,
       width: '100%',
-      height: 2,
-      content: this.buildStatusBar(),
+      height: 1,
+      content: '',
       style: {
         fg: this.config.colors.status,
         bg: 'black'
       },
-      border: {
-        type: 'line'
+      tags: true
+    });
+
+    // Key guide bar (separate from status)
+    this.keyGuideBar = blessed.box({
+      bottom: 0,
+      left: 0,
+      width: '100%',
+      height: 1,
+      content: '{cyan-fg}[a] All  [u] Unique  [↑↓] Navigate  [Enter] Select  [space] Pause  [r] Refresh  [q] Exit{/}',
+      style: {
+        fg: 'cyan',
+        bg: 'black'
       },
       tags: true
     });
@@ -202,6 +219,7 @@ export class BlessedFramelessUI {
     this.screen.append(this.blocksPanel);
     this.screen.append(this.directoryPanel);
     this.screen.append(this.statusBar);
+    this.screen.append(this.keyGuideBar);
   }
 
   private createFramelessPanel(left: number, width: number): any {
@@ -209,7 +227,7 @@ export class BlessedFramelessUI {
       top: 3,  // Below title + header panel (adjusted for 2-line header)
       left: left,
       width: width,
-      height: '100%-5',  // Adjusted for new header height
+      height: '100%-5',  // Adjusted for 2 separate status bars
       style: {
         fg: 'white',
         bg: 'black'
@@ -241,8 +259,8 @@ export class BlessedFramelessUI {
   private buildHeaderContent(): string {
     const { columnWidths } = this.config;
     
-    // Build header with column alignment and underline
-    const timestampHeader = this.padToWidth('Timestamp', columnWidths.timestamp);
+    // Build header with FUNC-202 column alignment
+    const timestampHeader = this.padToWidth('Event Timestamp', columnWidths.timestamp);     // FUNC-202準拠
     const elapsedHeader = this.padToWidth('Elapsed', columnWidths.elapsed);
     const filenameHeader = this.padToWidth('File Name', columnWidths.filename);
     const eventHeader = this.padToWidth('Event', columnWidths.event);
@@ -274,14 +292,25 @@ ${underline}`;
     const status = this.isRunning ? 'RUNNING' : 'STOPPED';
     const eventCount = this.events.length;
     const selectedInfo = this.selectedIndex >= 0 ? ` | Selected: ${this.selectedIndex + 1}` : '';
+    const modeInfo = this.displayMode === 'all' ? 'All Activities' : 'Unique Files';
     
-    return `{green-fg}● Status: ${status}{/}  Events: ${eventCount}${selectedInfo}
-{cyan-fg}[↑↓] Navigate  [Enter] Select  [space] Pause  [r] Refresh  [q] Exit{/}`;
+    return `{green-fg}● ${modeInfo} (${eventCount}){/}  Status: ${status}${selectedInfo}`;
   }
 
   private setupKeyHandlers(): void {
-    // Global key handlers
+    // Global key handlers with proper cleanup
     this.screen.key(['q', 'C-c'], () => {
+      this.stop();
+      setTimeout(() => process.exit(0), 100);
+    });
+
+    // Handle process termination signals
+    process.on('SIGINT', () => {
+      this.stop();
+      process.exit(0);
+    });
+
+    process.on('SIGTERM', () => {
       this.stop();
       process.exit(0);
     });
@@ -339,6 +368,15 @@ ${underline}`;
     // Manual refresh
     this.screen.key(['r'], () => {
       this.refreshData();
+    });
+
+    // FUNC-202: All/Unique mode switching
+    this.screen.key(['a'], () => {
+      this.switchDisplayMode('all');
+    });
+
+    this.screen.key(['u'], () => {
+      this.switchDisplayMode('unique');
     });
   }
 
@@ -427,6 +465,17 @@ ${underline}`;
     this.start();
   }
 
+  // FUNC-202: Display mode switching
+  private switchDisplayMode(mode: 'all' | 'unique'): void {
+    if (this.displayMode !== mode) {
+      this.displayMode = mode;
+      this.selectedIndex = -1;  // Reset selection
+      this.refreshData();       // Refresh data with new mode
+      this.updateStatusBar();   // Update status display
+      this.screen.render();
+    }
+  }
+
   public async start(): Promise<void> {
     this.isRunning = true;
     await this.refreshData();
@@ -442,14 +491,31 @@ ${underline}`;
     this.isRunning = false;
     if (this.refreshTimer) {
       clearInterval(this.refreshTimer);
+      this.refreshTimer = undefined;
     }
-    this.screen.destroy();
+    
+    // Properly cleanup blessed screen
+    try {
+      this.screen.destroy();
+    } catch (error) {
+      // Ignore cleanup errors
+    }
+    
+    // Reset terminal
+    if (process.stdout.isTTY) {
+      process.stdout.write('\x1b[?1049l'); // Exit alternate screen
+      process.stdout.write('\x1b[?25h');   // Show cursor
+    }
   }
 
   private async refreshData(): Promise<void> {
     try {
-      // Get latest events from database
-      this.events = await this.db.getLatestEvents(this.config.maxRows);
+      // FUNC-202: Get data based on display mode
+      if (this.displayMode === 'unique') {
+        this.events = await this.db.getUniqueFiles(this.config.maxRows);
+      } else {
+        this.events = await this.db.getLatestEvents(this.config.maxRows);
+      }
       this.updateAllColumns();
     } catch (error) {
       console.error('Failed to refresh data:', error);
@@ -459,7 +525,7 @@ ${underline}`;
   private updateAllColumns(): void {
     // Update each column with corresponding data
     const timestampItems = this.events.map(event => 
-      new Date(event.timestamp).toLocaleString().substring(11, 19)
+      this.formatTimestamp(event.timestamp)
     );
     
     const elapsedItems = this.events.map(event => 
@@ -500,6 +566,7 @@ ${underline}`;
       this.synchronizeSelection();
     }
 
+    // Force status bar update and render
     this.updateStatusBar();
     this.screen.render();
   }
@@ -508,14 +575,27 @@ ${underline}`;
     this.statusBar.setContent(this.buildStatusBar());
   }
 
+  private formatTimestamp(timestamp: string): string {
+    const date = new Date(timestamp);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    const seconds = String(date.getSeconds()).padStart(2, '0');
+    
+    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+  }
+
   private formatElapsed(timestamp: string): string {
     const now = Date.now();
     const eventTime = new Date(timestamp).getTime();
-    const diff = Math.floor((now - eventTime) / 1000);
+    const diffSeconds = Math.floor((now - eventTime) / 1000);
     
-    if (diff < 60) return `${diff}s`;
-    if (diff < 3600) return `${Math.floor(diff / 60)}m`;
-    return `${Math.floor(diff / 3600)}h`;
+    const minutes = Math.floor(diffSeconds / 60);
+    const seconds = diffSeconds % 60;
+    
+    return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
   }
 
   private colorizeEventType(eventType: string): string {

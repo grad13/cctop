@@ -24,7 +24,7 @@ export interface UIPanelConfig {
 }
 
 export class BlessedPanelUI {
-  private screen: blessed.Widgets.Screen;
+  private screen!: blessed.Widgets.Screen;
   private mainPanel: any; // blessed.Widgets.Box;
   private eventListPanel: any; // blessed.Widgets.Box;
   private statisticsPanel: any; // blessed.Widgets.Box;
@@ -324,7 +324,7 @@ export class BlessedPanelUI {
     });
 
     // Event list selection handler
-    this.eventList.on('select', (item, index) => {
+    this.eventList.on('select', (item: any, index: number) => {
       this.selectedIndex = index;
       this.isSelectionMode = true;
       this.updateDetailPanel();

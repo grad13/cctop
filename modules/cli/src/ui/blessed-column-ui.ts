@@ -33,7 +33,7 @@ export interface UIColumnConfig {
 }
 
 export class BlessedColumnUI {
-  private screen: blessed.Widgets.Screen;
+  private screen!: blessed.Widgets.Screen;
   private headerBox: any; // blessed.Widgets.Box;
   private statusBar: any; // blessed.Widgets.Box;
   

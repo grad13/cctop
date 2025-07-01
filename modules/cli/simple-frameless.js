@@ -46,17 +46,41 @@ class MockDatabaseAdapter {
   async getLatestEvents(limit = 100) {
     return this.testData.slice(0, limit);
   }
+
+  // FUNC-202: Unique Files mode support
+  async getUniqueFiles(limit = 100) {
+    const uniqueFiles = new Map();
+    
+    this.testData.forEach(event => {
+      const key = `${event.directory}/${event.filename}`;
+      if (!uniqueFiles.has(key) || 
+          new Date(event.timestamp) > new Date(uniqueFiles.get(key).timestamp)) {
+        uniqueFiles.set(key, event);
+      }
+    });
+    
+    return Array.from(uniqueFiles.values()).slice(0, limit);
+  }
 }
 
 async function runFramelessDemo() {
   console.log('Starting Frameless UI Demo...');
+  console.log('FUNC-202 Features:');
+  console.log('- [a] All Activities mode (all events)');
+  console.log('- [u] Unique Files mode (latest per file)');
+  console.log('- [q] Exit');
+  console.log('');
   
   try {
     // Create mock database adapter
     const mockDb = new MockDatabaseAdapter();
     
-    // Create UI instance with database adapter
-    const ui = new BlessedFramelessUI(mockDb);
+    // Create UI instance with database adapter and FUNC-202 config
+    const ui = new BlessedFramelessUI(mockDb, {
+      displayMode: 'all',           // FUNC-202: Default to All mode
+      refreshInterval: 1000,        // 1 second refresh
+      maxRows: 25
+    });
     
     // Start UI (it will automatically fetch data via mockDb)
     await ui.start();
