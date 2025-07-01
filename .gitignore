@@ -1,11 +1,6 @@
 # Dependencies
 .DS_Store
-cctop
-containers
+code
 releases
+GARAGEs
 VERSIONs
-worktrees
-
-# Worktree and container directories (managed separately)
-worktrees/
-containers/

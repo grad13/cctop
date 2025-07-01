@@ -16,10 +16,15 @@
 ├── .git/           # プロジェクト管理専用git
 ├── documents/      # 全プロジェクト文書
 ├── passage/        # エージェント協調システム  
+├── code/           # コード関連統合ディレクトリ
+│   ├── main/       # メインコードベース（旧cctop/）
+│   ├── worktrees/  # 並行開発環境
+│   ├── containers/ # コンテナ・デバッグ環境
+│   └── releases/   # リリースパッケージ管理
 ├── CLAUDE.md       # プロジェクト指針・ルール
 └── VERSIONs/       # プロジェクト履歴
 
-cctop/              # 子gitリポジトリ
+code/main/          # 子gitリポジトリ（旧cctop/）
 ├── .git/           # ツール開発専用git
 ├── src/            # ソースコード
 ├── test/           # テストスイート
@@ -35,17 +40,20 @@ cctop/              # 子gitリポジトリ
 #### **親git対象**
 - `documents/` 配下すべて
 - `passage/` 配下すべて
+- `code/worktrees/` 配下すべて
+- `code/containers/` 配下すべて
+- `code/releases/` 配下すべて
 - `CLAUDE.md`
 - `VERSIONs/` 配下すべて
 - `.gitignore` (親gitのみ)
 
 #### **子git対象**  
-- `cctop/src/` 配下すべて
-- `cctop/test/` 配下すべて
-- `cctop/package.json`, `cctop/package-lock.json`
-- `cctop/jest.config.js`, `cctop/vitest.config.js`
-- `cctop/scripts/` 配下すべて
-- `cctop/README.md`, `cctop/docs/`
+- `code/main/src/` 配下すべて
+- `code/main/test/` 配下すべて
+- `code/main/package.json`, `code/main/package-lock.json`
+- `code/main/jest.config.js`, `code/main/vitest.config.js`
+- `code/main/scripts/` 配下すべて
+- `code/main/README.md`, `code/main/docs/`
 
 #### **境界ケース処理**
 - **迷った場合**: ファイルの物理的配置場所で判定
@@ -88,24 +96,27 @@ cctop/              # 子gitリポジトリ
 ### 🛡️ **.gitignore強制**
 ```gitignore
 # 親git (.gitignore)
-cctop/
+code/main/
 .DS_Store
 VERSIONs
 VAULTs
 
-# 子git (cctop/.gitignore) 
-../documents/
-../passage/
-../CLAUDE.md
-../VERSIONs/
+# 子git (code/main/.gitignore) 
+../../documents/
+../../passage/
+../../CLAUDE.md
+../../VERSIONs/
+../worktrees/
+../containers/
+../releases/
 node_modules/
 *.log
 coverage/
 ```
 
 ### 🚫 **強制的境界防止**
-- **親git**: cctop/への物理的アクセス不可
-- **子git**: 親git管理領域への物理的アクセス不可
+- **親git**: code/main/への物理的アクセス不可
+- **子git**: 親git管理領域（documents/, passage/, worktrees/, containers/, releases/）への物理的アクセス不可
 - **自動保護**: .gitignoreにより意図しない追加を完全ブロック
 
 ## 例外処理
@@ -117,7 +128,10 @@ coverage/
 
 ### 🔧 **特殊ケース**
 - **VERSIONs/cctop関連**: 親gitで管理（プロジェクト履歴）
-- **cctop/README.md**: 子gitで管理（ツール説明）
+- **code/main/README.md**: 子gitで管理（ツール説明）
+- **code/worktrees/**: 親gitで管理（並行開発環境）
+- **code/containers/**: 親gitで管理（デバッグ・コンテナ環境）
+- **code/releases/**: 親gitで管理（リリースパッケージ・配布物）
 - **設定ファイル**: 影響範囲に応じた判定
 
 ## 検証・監視

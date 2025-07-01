@@ -82,33 +82,49 @@ v0.3.0.0では、致命的なバグ（terminal/ブラウザクラッシュ）の
 
 #### **コードベース構造**
 ```
-cctop/
-├── shared/               # 共通モジュール
-│   ├── src/
-│   │   ├── schema/       # DBスキーマ定義  
-│   │   ├── types/        # 共通型定義
-│   │   └── database/     # DB接続・基本操作
-│   └── tests/
-├── daemon/               # バックグラウンドプロセス
-│   ├── src/
-│   │   ├── index.ts      
-│   │   ├── file-monitor/ 
-│   │   └── event-processor/
-│   ├── tests/
-│   └── package.json
-├── cli/                  # CLIインターフェース
-│   ├── src/
-│   │   ├── index.ts      
-│   │   ├── display/      
-│   │   ├── interactive/  
-│   │   └── ui/           
-│   ├── tests/
-│   │   ├── unit/         
-│   │   ├── visual/       # スナップショットテスト
-│   │   └── interaction/  # キー入力テスト
-│   └── package.json
-└── integration/          # 統合テスト
+main/
+├── modules/              # 全モジュールの統一配置（正式実装場所）
+│   ├── shared/           # 共通モジュール
+│   │   ├── src/
+│   │   │   ├── schema/   # DBスキーマ定義  
+│   │   │   ├── types/    # 共通型定義
+│   │   │   └── database/ # DB接続・基本操作
+│   │   ├── tests/
+│   │   └── package.json
+│   ├── daemon/           # バックグラウンドプロセス
+│   │   ├── src/
+│   │   │   ├── index.ts      
+│   │   │   ├── file-monitor/ 
+│   │   │   └── event-processor/
+│   │   ├── tests/
+│   │   └── package.json
+│   ├── cli/              # CLIインターフェース
+│   │   ├── src/
+│   │   │   ├── index.ts      
+│   │   │   ├── display/      
+│   │   │   ├── interactive/  
+│   │   │   └── ui/           
+│   │   ├── tests/
+│   │   │   ├── unit/         
+│   │   │   ├── visual/   # スナップショットテスト
+│   │   │   └── interaction/ # キー入力テスト
+│   │   └── package.json
+│   └── integration/      # 統合テスト
+│       ├── src/
+│       ├── tests/
+│       └── package.json
+├── bin/                  # 実行スクリプト
+│   ├── cctop-daemon      # daemonプロセス起動
+│   └── cctop-cli         # CLIプロセス起動
+├── worktrees/            # Git worktree実験環境（開発用）
+└── package.json          # ワークスペース定義
 ```
+
+**モジュール配置方針**:
+- `modules/` が全モジュールの正式な実装配置場所
+- 各モジュールは独立したnpmパッケージとして管理
+- worktreesは実験・並列開発用の一時環境
+- npm workspacesによるモノレポ構造で依存関係を一元管理
 
 #### **ユーザーデータ構造（.cctop/）**
 ```
@@ -219,10 +235,39 @@ git worktree add ../06-cctop-cli cli-dev
 
 この並列化により、コンテキストスイッチを最小化し、各機能に集中した開発が可能。
 
+### npm workspaces設定
+モノレポ構造での統一的な依存関係管理：
+
+```json
+// cctop/package.json
+{
+  "name": "cctop",
+  "version": "0.3.0",
+  "workspaces": [
+    "modules/*"
+  ],
+  "scripts": {
+    "install:all": "npm install",
+    "build": "npm run build --workspaces",
+    "test": "npm run test --workspaces",
+    "daemon": "node bin/cctop-daemon",
+    "cli": "node bin/cctop-cli",
+    "dev": "npm run daemon & npm run cli"
+  }
+}
+```
+
+**workspaces利点**:
+- 単一の`npm install`で全モジュールの依存関係を解決
+- 共通の依存関係は自動的にルートレベルでホイスト
+- モジュール間の相互参照が`@cctop/shared`のような形で可能
+- 統一されたビルド・テストコマンドでの一括管理
+
 ## 🔗 関連ドキュメント
 
 ### 実装計画・設計
 - [PLAN-20250630-001](../../records/plans/PLAN-20250630-001-monitor-viewer-separation.md): 詳細実装計画
+- [PLAN-20250701-032](../../records/plans/PLAN-20250701-032-v030-module-integration.md): モジュール統合計画
 
 ### 機能仕様
 - [FUNC-000](../../functions/FUNC-000-sqlite-database-foundation.md): DB基盤仕様

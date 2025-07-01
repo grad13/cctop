@@ -36,6 +36,11 @@
 - **内容**: Code Antifragility Engineering: Intentional Code Deletion for Quality Improvement
 - **状態**: 新手法提案ドラフト（既存類似手法なし・学術的価値あり）
 
+### DRAFT-20250701-101-agent-status-format-standard.md
+- **作成日**: 2025年7月1日
+- **内容**: Agent Status Format Standard（統一フォーマット規格）
+- **状態**: 新規作成（Builder status実装例を基に規格化）
+
 ### DRAFT-20250623-003-claude-md-cctop-complete.md
 - **作成日**: 2025年6月23日
 - **内容**: cctopプロジェクト向けCLAUDE.md完全版

@@ -93,14 +93,14 @@
 ## Git Worktree利用方針（v0.3.0.0以降）
 
 ### 基本方針
-- **作業場所**: `06-cctop/worktrees/`配下で並行開発
+- **作業場所**: `06-cctop/code/worktrees/`配下で並行開発
 - **目的**: 大規模変更時の独立した作業環境確保
 
 ### worktree作成ルール
-1. **命名**: `worktrees/{version}-{component}/`
-   - 例: `worktrees/v030-daemon/`, `worktrees/v030-cli/`
-2. **ブランチ**: `feature/{version}-{component}`
-   - 例: `feature/v030-daemon`, `feature/v030-cli`
+1. **命名**: `worktrees/{DD-MM}-{descriotion}/`
+   - 例: `worktrees/06-30-daemon-test-improvements/`, `worktrees/06-29-implement-cli-first/`
+2. **ブランチ**: `{DD-MM}-{descriotion}/`
+   - 例: `feature/06-30-daemon-test-improvements/`, `worktrees/06-29-implement-cli-first/`
 
 ### 基本コマンド
 ```bash

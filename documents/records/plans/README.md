@@ -49,6 +49,8 @@ PLAN-YYYYMMDD-XXX-brief-description.md
 | 029 | [`PLAN-20250628-012`](PLAN-20250628-012-typescript-refactoring-revised.md) | TypeScript移行後リファクタリング現状対応版 | Builder | 計画書作成完了・実行承認待ち | 🔧 開発プロセス改善 |
 | 030 | [`PLAN-20250628-013`](PLAN-20250628-013-typescript-gradual-introduction.md) | TypeScript段階的導入計画（安全重視版） | Builder | 計画書作成完了・実行承認待ち | 🏗️ システム移行 |
 | 031 | [`PLAN-20250630-001`](PLAN-20250630-001-monitor-viewer-separation.md) | Daemon-CLI機能分離アーキテクチャ移行計画 | Architect | 計画書作成完了・実行承認待ち | 🏗️ システム移行 |
+| 032 | [`PLAN-20250701-032`](PLAN-20250701-032-v030-module-integration.md) | v0.3.0モジュール統合・実行可能環境構築計画 | Builder | 計画書作成完了・実行承認待ち | 🏗️ システム移行 |
+| 033 | [`PLAN-20250701-033`](PLAN-20250701-033-code-directory-restructure.md) | Code Directory Restructure Plan | Clerk | 計画書作成完了・実行承認待ち | 🏗️ システム移行 |
 
 ### 📝 アーカイブされた計画書
 
