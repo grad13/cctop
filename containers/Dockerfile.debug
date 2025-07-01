@@ -1,0 +1,40 @@
+# Node.js debug environment for cctop
+FROM node:24.2.0-alpine
+
+# Install basic tools for debugging
+RUN apk add --no-cache \
+    bash \
+    git \
+    vim \
+    htop \
+    strace \
+    gdb
+
+# Set working directory
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+
+# Install dependencies
+RUN npm ci
+
+# Copy source code
+COPY . .
+
+# Build the project
+RUN npm run build
+
+# Create .cctop directory (for testing with/without)
+RUN mkdir -p .cctop
+
+# Set up a non-root user for safer testing
+RUN addgroup -g 1000 cctop && \
+    adduser -D -u 1000 -G cctop cctop && \
+    chown -R cctop:cctop /app
+
+# Switch to non-root user
+USER cctop
+
+# Default command for interactive debugging
+CMD ["/bin/bash"]

@@ -1,0 +1,30 @@
+{
+  "name": "cctop-monorepo",
+  "version": "0.3.0",
+  "description": "CCTOP - Code Change Monitor (v0.3.0 Daemon-CLI Architecture)",
+  "private": true,
+  "workspaces": [
+    "shared",
+    "daemon",
+    "cli"
+  ],
+  "scripts": {
+    "build": "npm run build:shared && npm run build:daemon && npm run build:cli",
+    "build:shared": "npm run build --workspace=@cctop/shared",
+    "build:daemon": "npm run build --workspace=@cctop/daemon",
+    "build:cli": "npm run build --workspace=@cctop/cli",
+    "clean": "npm run clean --workspaces",
+    "test": "npm run test --workspaces",
+    "cli": "npm run start --workspace=@cctop/cli",
+    "daemon": "npm run start --workspace=@cctop/daemon",
+    "dev": "npm run dev --workspace=@cctop/cli",
+    "install:all": "npm install"
+  },
+  "devDependencies": {
+    "@types/node": "^20.8.0",
+    "typescript": "^5.2.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

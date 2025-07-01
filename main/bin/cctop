@@ -1,0 +1,177 @@
+#!/usr/bin/env node
+
+/**
+ * cctop v0.3.0 - Code Change Top (File Monitoring Tool)
+ * Unified CLI interface for daemon-cli architecture
+ */
+
+const { spawn } = require('child_process');
+const path = require('path');
+
+/**
+ * Show help message
+ */
+function showHelpMessage() {
+  console.log(`cctop v0.3.0 - Code Change Top (File Monitoring Tool)
+
+Usage: cctop [command] [options]
+
+Commands:
+  start              Start both daemon and CLI (default)
+  daemon             Start daemon only
+  cli                Start CLI only
+  stop               Stop daemon
+
+Options:
+  -h, --help         Show this help message
+  --version          Show version
+  --verbose          Enable verbose output
+
+Examples:
+  cctop              # Start both daemon and CLI
+  cctop start        # Same as above
+  cctop daemon       # Start daemon only (background monitoring)
+  cctop cli          # Start CLI only (requires daemon running)
+  cctop stop         # Stop daemon
+
+Interactive Controls (in CLI mode):
+  Ctrl+C             Quit CLI
+  
+Architecture:
+  - Daemon: Background file monitoring service
+  - CLI: Real-time event display interface
+  - Database: SQLite with WAL mode for concurrent access`);
+}
+
+/**
+ * Start daemon in background
+ */
+function startDaemon() {
+  return new Promise((resolve, reject) => {
+    const daemonPath = path.join(__dirname, 'cctop-daemon');
+    const daemon = spawn('node', [daemonPath], {
+      detached: true,
+      stdio: 'ignore'
+    });
+    
+    daemon.unref();
+    
+    setTimeout(() => {
+      console.log(`✅ Daemon started (PID: ${daemon.pid})`);
+      resolve(daemon.pid);
+    }, 1000);
+    
+    daemon.on('error', (error) => {
+      console.error('❌ Failed to start daemon:', error.message);
+      reject(error);
+    });
+  });
+}
+
+/**
+ * Start CLI
+ */
+function startCLI() {
+  return new Promise((resolve, reject) => {
+    const cliPath = path.join(__dirname, 'cctop-cli');
+    const cli = spawn('node', [cliPath], {
+      stdio: 'inherit'
+    });
+    
+    cli.on('exit', (code) => {
+      resolve(code);
+    });
+    
+    cli.on('error', (error) => {
+      console.error('❌ Failed to start CLI:', error.message);
+      reject(error);
+    });
+  });
+}
+
+/**
+ * Stop daemon
+ */
+function stopDaemon() {
+  return new Promise((resolve) => {
+    // Simple approach: just inform user to use Ctrl+C for now
+    console.log('💡 To stop daemon, use Ctrl+C in the daemon terminal');
+    console.log('📝 Note: Full daemon management will be added in v0.3.1');
+    resolve();
+  });
+}
+
+async function main() {
+  const args = process.argv.slice(2);
+  const command = args[0] || 'start';
+  
+  // Handle options
+  for (const arg of args) {
+    if (arg === '-h' || arg === '--help') {
+      showHelpMessage();
+      process.exit(0);
+    }
+    
+    if (arg === '--version') {
+      console.log('cctop v0.3.0');
+      process.exit(0);
+    }
+    
+    if (arg === '--verbose') {
+      process.env.CCTOP_VERBOSE = 'true';
+    }
+  }
+  
+  try {
+    switch (command) {
+      case 'start':
+        console.log('🚀 Starting cctop v0.3.0...');
+        console.log('📦 Architecture: Daemon-CLI separation');
+        console.log('');
+        
+        console.log('1️⃣ Starting daemon...');
+        await startDaemon();
+        console.log('');
+        
+        console.log('2️⃣ Starting CLI...');
+        console.log('💡 Press Ctrl+C to stop CLI');
+        console.log('');
+        await startCLI();
+        break;
+        
+      case 'daemon':
+        console.log('🔧 Starting daemon only...');
+        await startDaemon();
+        console.log('💡 Use "cctop cli" to start the display interface');
+        break;
+        
+      case 'cli':
+        console.log('📺 Starting CLI interface...');
+        console.log('💡 Make sure daemon is running with "cctop daemon"');
+        console.log('');
+        await startCLI();
+        break;
+        
+      case 'stop':
+        console.log('🛑 Stopping daemon...');
+        await stopDaemon();
+        break;
+        
+      default:
+        console.error(`❌ Unknown command: ${command}`);
+        console.error('Try "cctop --help" for usage information');
+        process.exit(1);
+    }
+  } catch (error) {
+    console.error('❌ Error:', error.message);
+    process.exit(1);
+  }
+}
+
+// Handle signals
+process.on('SIGINT', () => {
+  console.log('\n👋 Goodbye!');
+  process.exit(0);
+});
+
+main();

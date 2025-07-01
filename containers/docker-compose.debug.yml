@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  cctop-debug:
+    build:
+      context: .
+      dockerfile: Dockerfile.debug
+    container_name: cctop-debug
+    volumes:
+      # Mount source code for live editing
+      - ./src:/app/src:ro
+      - ./test:/app/test:ro
+      - ./scripts:/app/scripts:ro
+      # Separate volume for .cctop to test deletion scenarios
+      - cctop-data:/app/.cctop
+    environment:
+      - NODE_ENV=development
+      - DEBUG=*
+    stdin_open: true
+    tty: true
+    # Limit resources to prevent container from affecting host
+    mem_limit: 2g
+    cpus: 2
+
+volumes:
+  cctop-data:
+    driver: local

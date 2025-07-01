@@ -12,10 +12,6 @@ coverage/
 dist/
 build/
 
-# Module builds
-modules/*/dist/
-modules/*/node_modules/
-
 # Misc
 .DS_Store
 .env
@@ -48,3 +44,7 @@ pids
 ../documents/
 ../passage/
 ../CLAUDE.md
+../VERSIONs/
+../VAULTs/
+../VERSIONs/
+../RELEASEs/
