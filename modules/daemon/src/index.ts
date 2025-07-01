@@ -52,7 +52,7 @@ class DaemonManager {
   }
 
   private startHeartbeat(): void {
-    const interval = this.configManager.getConfig().daemon.heartbeatIntervalMs;
+    const interval = this.configManager.getConfig().daemon.heartbeatInterval;
     this.heartbeatTimer = setInterval(() => {
       this.logger.debugLog('Daemon heartbeat', { pid: process.pid, uptime: process.uptime() });
     }, interval);

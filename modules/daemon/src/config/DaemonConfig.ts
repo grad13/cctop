@@ -24,20 +24,28 @@ export class DaemonConfigManager {
           '**/.*',
           '**/.cctop/**'
         ],
-        moveThresholdMs: 100,
+        debounceMs: 100,
         maxDepth: 15,
-        ignoreInitial: false,
-        includeStats: true
+        moveThresholdMs: 100,
+        systemLimits: {
+          requiredLimit: 1024,
+          checkOnStartup: true,
+          warnIfInsufficient: true
+        }
       },
       database: {
         path: '.cctop/data/activity.db',
-        maxEvents: 50000,
-        connectionTimeout: 30000
+        writeMode: 'WAL',
+        syncMode: 'NORMAL',
+        cacheSize: 2000,
+        busyTimeout: 30000
       },
       daemon: {
         pidFile: '.cctop/daemon.pid', 
         logFile: '.cctop/logs/daemon.log',
-        heartbeatIntervalMs: 5000
+        logLevel: 'info',
+        heartbeatInterval: 5000,
+        autoStart: false
       }
     };
   }
