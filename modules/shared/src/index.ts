@@ -1,5 +1,6 @@
-// Main entry point for @cctop/shared module
+/**
+ * @cctop/shared - Common types and utilities
+ */
 
 export * from './types';
-export * from './schema';
 export * from './database';

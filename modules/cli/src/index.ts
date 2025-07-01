@@ -1,117 +1,92 @@
-#!/usr/bin/env node
+/**
+ * cctop CLI - Terminal UI for file monitoring
+ */
 
-import * as path from 'path';
-import * as fs from 'fs/promises';
-import { DatabaseReader } from './database/reader';
-import { TerminalUI } from './ui/terminal';
-import { loadConfiguration } from './config/loader';
+import blessed from 'blessed';
+import { Database, FileEvent } from '@cctop/shared';
 
-async function checkFileExists(filePath: string): Promise<boolean> {
-  try {
-    await fs.access(filePath);
-    return true;
-  } catch {
-    return false;
-  }
-}
+const DB_PATH = '.cctop/data/activity.db';
+const POLLING_INTERVAL = 100; // 100ms
 
-async function main(): Promise<void> {
-  let ui: TerminalUI | null = null;
-  let reader: DatabaseReader | null = null;
-
-  try {
-    // Check if .cctop directory exists
-    const cctopDir = '.cctop';
-    const configDir = path.join(cctopDir, 'config');
-    
-    if (!await checkFileExists(cctopDir)) {
-      console.error('Error: .cctop directory not found.');
-      console.error('Please ensure the daemon is running or run initialization first.');
-      process.exit(1);
-    }
-
-    // Load configuration
-    const config = await loadConfiguration(configDir);
-
-    // Check if database exists
-    const dbPath = config.shared.database.path;
-    if (!await checkFileExists(dbPath)) {
-      console.error(`Error: Database not found at ${dbPath}`);
-      console.error('Please ensure the daemon is running.');
-      process.exit(1);
-    }
-
-    // Initialize database reader
-    reader = new DatabaseReader(dbPath, {
-      pollingInterval: config.cli.polling.interval
-    });
-
-    await reader.connect();
-
-    // Initialize terminal UI
-    ui = new TerminalUI({
-      refreshRate: config.cli.display.refreshRate,
-      maxRows: config.cli.display.maxRows,
-      colorEnabled: config.cli.display.colorEnabled
-    });
-
-    // Connect reader events to UI
-    reader.on('events', (events) => {
-      ui!.addEvents(events);
-    });
-
-    reader.on('error', (error) => {
-      ui!.showError(`Database error: ${error.message}`);
-    });
-
-    // Load initial data
-    const recentEvents = await reader.getRecentEvents(100);
-    ui.addEvents(recentEvents);
-
-    // Load and display stats
-    const stats = await reader.getProjectStats(config.shared.project.rootPath);
-    ui.updateStats(stats);
-
-    // Start polling for new events
-    reader.startPolling();
-
-    // Initial render
-    ui.render();
-
-    // Update stats periodically
-    setInterval(async () => {
-      try {
-        const stats = await reader!.getProjectStats(config.shared.project.rootPath);
-        ui!.updateStats(stats);
-      } catch (error) {
-        // Ignore stats update errors
-      }
-    }, 5000);
-
-    // Handle process termination
-    process.on('SIGINT', async () => {
-      if (reader) {
-        await reader.disconnect();
-      }
-      if (ui) {
-        ui.destroy();
-      }
-      process.exit(0);
-    });
-
-  } catch (error: any) {
-    if (ui) {
-      ui.destroy();
-    }
-    console.error('Fatal error:', error.message);
-    process.exit(1);
-  }
-}
-
-// Run if executed directly
-if (require.main === module) {
-  main().catch(error => {
-    console.error('Unhandled error:', error);
-    process.exit(1);
+async function main() {
+  // Create blessed screen
+  const screen = blessed.screen({
+    smartCSR: true,
+    title: 'cctop - Code Change Top'
   });
+
+  // Create main box
+  const box = blessed.box({
+    top: 0,
+    left: 0,
+    width: '100%',
+    height: '100%-1',
+    content: 'cctop v0.3.0 - Starting...',
+    tags: true,
+    border: {
+      type: 'line'
+    },
+    style: {
+      fg: 'white',
+      bg: 'black',
+      border: {
+        fg: '#f0f0f0'
+      }
+    }
+  });
+
+  // Create status bar
+  const statusBar = blessed.box({
+    bottom: 0,
+    left: 0,
+    width: '100%',
+    height: 1,
+    content: 'Press q to quit',
+    style: {
+      fg: 'white',
+      bg: 'blue'
+    }
+  });
+
+  screen.append(box);
+  screen.append(statusBar);
+
+  // Quit on q key
+  screen.key(['q', 'C-c'], () => {
+    process.exit(0);
+  });
+
+  // Initialize database
+  const db = new Database(DB_PATH);
+  await db.connect();
+
+  // Update display
+  const updateDisplay = async () => {
+    const events = await db.getRecentEvents(50);
+    
+    let content = '{bold}cctop v0.3.0{/bold} - File Activity Monitor\\n\\n';
+    content += 'Recent Events:\\n';
+    
+    if (events.length === 0) {
+      content += '\\nNo events yet...';
+    } else {
+      events.forEach(event => {
+        content += `\\n${event.eventType}: ${event.filename}`;
+      });
+    }
+    
+    box.setContent(content);
+    screen.render();
+  };
+
+  // Start polling
+  setInterval(updateDisplay, POLLING_INTERVAL);
+  
+  // Initial update
+  await updateDisplay();
+
+  // Render the screen
+  screen.render();
 }
+
+main().catch(console.error);
