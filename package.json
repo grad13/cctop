@@ -1,15 +1,23 @@
 {
   "name": "cctop",
-  "version": "0.2.0",
-  "description": "File system monitoring tool with real-time event tracking",
+  "version": "0.3.0",
+  "description": "File system monitoring tool with daemon-cli architecture",
   "main": "dist/index.js",
   "bin": {
-    "cctop": "./bin/cctop"
+    "cctop": "./bin/cctop",
+    "cctop-daemon": "./bin/cctop-daemon"
   },
   "scripts": {
-    "start": "node bin/cctop",
-    "build": "tsc",
-    "build:watch": "tsc --watch",
+    "start": "echo 'Please use npm run start:cli or npm run start:daemon'",
+    "start:cli": "node modules/cli/dist/index.js",
+    "start:daemon": "node modules/daemon/dist/index.js",
+    "start:legacy": "node bin/cctop",
+    "build": "npm run build:modules",
+    "build:modules": "npm run build:shared && npm run build:daemon && npm run build:cli",
+    "build:shared": "cd modules/shared && npm run build",
+    "build:daemon": "cd modules/daemon && npm run build",
+    "build:cli": "cd modules/cli && npm run build",
+    "build:legacy": "tsc",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:sequential": "node test/test-sequential.js",
