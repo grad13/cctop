@@ -40,7 +40,7 @@ export class DaemonConfigManager {
     return {
       version: '0.3.0.0',
       monitoring: {
-        watchPaths: ['./test-data'],
+        watchPaths: ['.'],
         excludePatterns: [
           '**/node_modules/**',
           '**/.git/**',
@@ -157,6 +157,12 @@ export class DaemonConfigManager {
 
   async ensureDirectories(): Promise<void> {
     const directories = [
+      '.cctop/config',
+      '.cctop/themes',
+      '.cctop/data',
+      '.cctop/logs',
+      '.cctop/runtime',
+      '.cctop/temp',
       path.dirname(this.config.database.path!),
       path.dirname(this.config.daemon.pidFile),
       path.dirname(this.config.daemon.logFile)
@@ -168,6 +174,115 @@ export class DaemonConfigManager {
       } catch (error) {
         // Directory might already exist
       }
+    }
+
+    // Initialize default config files if they don't exist
+    await this.initializeDefaultConfigs();
+  }
+
+  private async initializeDefaultConfigs(): Promise<void> {
+    // Check if config directory exists and has no config files
+    const configDir = '.cctop/config';
+    const sharedConfigPath = path.join(configDir, 'shared-config.json');
+    const daemonConfigPath = path.join(configDir, 'daemon-config.json');
+
+    // Create shared-config.json if not exists
+    try {
+      await fs.access(sharedConfigPath);
+    } catch {
+      const sharedConfig = {
+        version: '0.3.0.0',
+        project: {
+          name: 'cctop',
+          description: 'Real-time file monitoring and code structure analysis tool'
+        },
+        database: {
+          path: '.cctop/data/activity.db',
+          maxSize: 104857600
+        },
+        directories: {
+          config: '.cctop/config',
+          logs: '.cctop/logs',
+          temp: '.cctop/temp',
+          runtime: '.cctop/runtime',
+          data: '.cctop/data',
+          themes: '.cctop/themes'
+        },
+        logging: {
+          maxFileSize: 10485760,
+          maxFiles: 5,
+          datePattern: 'YYYY-MM-DD',
+          level: 'info'
+        }
+      };
+      await fs.writeFile(sharedConfigPath, JSON.stringify(sharedConfig, null, 2));
+      console.log('Created shared-config.json with default settings');
+    }
+
+    // Create daemon-config.json if not exists
+    try {
+      await fs.access(daemonConfigPath);
+    } catch {
+      const daemonConfig = {
+        monitoring: {
+          watchPaths: ['.'],
+          excludePatterns: [
+            '**/node_modules/**',
+            '**/.git/**',
+            '**/.*',
+            '**/.cctop/**',
+            '**/dist/**',
+            '**/coverage/**',
+            '**/build/**',
+            '**/*.log',
+            '**/.DS_Store'
+          ],
+          debounceMs: 100,
+          maxDepth: 10,
+          moveThresholdMs: 100,
+          systemLimits: {
+            requiredLimit: 524288,
+            checkOnStartup: true,
+            warnIfInsufficient: true
+          }
+        },
+        daemon: {
+          pidFile: '.cctop/runtime/daemon.pid',
+          logFile: '.cctop/logs/daemon.log',
+          logLevel: 'info',
+          heartbeatInterval: 30000,
+          autoStart: true,
+          maxRestarts: 3,
+          restartDelay: 5000
+        },
+        database: {
+          writeMode: 'WAL',
+          syncMode: 'NORMAL',
+          cacheSize: 65536,
+          busyTimeout: 5000,
+          checkpointInterval: 300000
+        }
+      };
+      await fs.writeFile(daemonConfigPath, JSON.stringify(daemonConfig, null, 2));
+      console.log('Created daemon-config.json with default settings');
+    }
+
+    // Create .gitignore if not exists
+    const gitignorePath = '.cctop/.gitignore';
+    try {
+      await fs.access(gitignorePath);
+    } catch {
+      const gitignoreContent = `# cctop monitoring data
+data/
+logs/
+runtime/
+temp/
+
+# User customizations
+themes/custom/
+`;
+      await fs.writeFile(gitignorePath, gitignoreContent);
+      console.log('Created .cctop/.gitignore');
     }
   }
 }
