@@ -8,8 +8,9 @@
     "build": "tsc",
     "clean": "rm -rf dist",
     "start": "node dist/index.js",
-    "test": "vitest run --reporter=verbose",
-    "test:fast": "vitest run --reporter=verbose tests/production-*.test.ts tests/npm-run-bug.test.ts",
+    "test": "vitest run --reporter=default",
+    "test:verbose": "vitest run --reporter=verbose",
+    "test:fast": "vitest run --reporter=default tests/production-*.test.ts tests/npm-run-bug.test.ts",
     "test:minimal": "vitest run --config vitest.config.minimal.ts",
     "test:watch": "vitest"
   },
