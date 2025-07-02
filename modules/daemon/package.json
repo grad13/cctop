@@ -8,7 +8,9 @@
     "build": "tsc",
     "clean": "rm -rf dist",
     "start": "node dist/index.js",
-    "test": "vitest run",
+    "test": "vitest run --reporter=verbose --run",
+    "test:fast": "vitest run --reporter=verbose --run tests/production-*.test.ts tests/npm-run-bug.test.ts",
+    "test:minimal": "vitest run --config vitest.config.minimal.ts",
     "test:watch": "vitest"
   },
   "dependencies": {

@@ -88,9 +88,10 @@ export class DaemonTestManager {
     this.activeDaemons.clear();
     this.processTracker.clear();
 
-    // Then, kill any remaining daemon processes by pattern matching
+    // Only check for specific daemon processes, not all node processes
     try {
-      const result = execSync('pgrep -f "node.*daemon.*standalone"', { 
+      // More specific pattern to avoid checking all node processes
+      const result = execSync('pgrep -f "node.*daemon/dist/index.js.*--standalone" || true', { 
         encoding: 'utf8', 
         stdio: 'pipe' 
       });
@@ -105,40 +106,11 @@ export class DaemonTestManager {
           }
         }
         
-        // Wait for cleanup
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        // Reduced wait time
+        await new Promise(resolve => setTimeout(resolve, 100));
       }
     } catch (e) {
-      // No processes found or pgrep failed - this is expected when no daemons are running
-    }
-
-    // Final cleanup: check for any node processes that might be daemon-related
-    try {
-      const allNodeProcesses = execSync('pgrep -f "node"', { 
-        encoding: 'utf8', 
-        stdio: 'pipe' 
-      });
-      
-      if (allNodeProcesses.trim()) {
-        const pids = allNodeProcesses.trim().split('\n').filter(pid => pid.trim());
-        for (const pid of pids) {
-          try {
-            // Check if this is a daemon process
-            const cmdline = execSync(`ps -p ${pid} -o args=`, { 
-              encoding: 'utf8', 
-              stdio: 'pipe' 
-            });
-            
-            if (cmdline.includes('daemon') && cmdline.includes('standalone')) {
-              process.kill(parseInt(pid), 'SIGKILL');
-            }
-          } catch (e) {
-            // Process might already be dead or not accessible
-          }
-        }
-      }
-    } catch (e) {
-      // No node processes found - this is fine
+      // No processes found or pgrep failed - this is expected
     }
   }
 
@@ -152,7 +124,7 @@ export class DaemonTestManager {
   /**
    * Wait for daemon startup with timeout
    */
-  static async waitForDaemonStartup(daemon: ChildProcess, timeout: number = 2000): Promise<void> {
+  static async waitForDaemonStartup(daemon: ChildProcess, timeout: number = 1000): Promise<void> {
     return new Promise((resolve, reject) => {
       const timer = setTimeout(() => {
         reject(new Error(`Daemon startup timeout after ${timeout}ms`));
@@ -194,25 +166,8 @@ export class DaemonTestManager {
   static async globalCleanup(): Promise<void> {
     await this.killAllDaemons();
     
-    // Additional cleanup: remove any leftover PID files
-    try {
-      const result = execSync('find /tmp -name "daemon.pid" -type f 2>/dev/null || true', { 
-        encoding: 'utf8' 
-      });
-      
-      if (result.trim()) {
-        const pidFiles = result.trim().split('\n').filter(file => file.trim());
-        for (const file of pidFiles) {
-          try {
-            await fs.unlink(file);
-          } catch (e) {
-            // File might already be removed
-          }
-        }
-      }
-    } catch (e) {
-      // Find command failed - not critical
-    }
+    // Skip the expensive find operation - PID files should be cleaned by the daemon itself
+    // or by the test teardown. This was causing unnecessary overhead.
   }
 }
 
@@ -221,6 +176,86 @@ export class DaemonTestManager {
  */
 export async function setupDaemonTest(testDir: string): Promise<void> {
   await fs.mkdir(testDir, { recursive: true });
+  
+  // Create .cctop directory structure
+  await fs.mkdir(path.join(testDir, '.cctop/config'), { recursive: true });
+  await fs.mkdir(path.join(testDir, '.cctop/data'), { recursive: true });
+  await fs.mkdir(path.join(testDir, '.cctop/logs'), { recursive: true });
+  await fs.mkdir(path.join(testDir, '.cctop/runtime'), { recursive: true });
+  await fs.mkdir(path.join(testDir, '.cctop/temp'), { recursive: true });
+  
+  // Create shared-config.json
+  const sharedConfig = {
+    version: "0.3.0.0",
+    project: {
+      name: "cctop",
+      description: "Real-time file monitoring and code structure analysis tool"
+    },
+    database: {
+      path: ".cctop/data/activity.db",
+      maxSize: 104857600
+    },
+    directories: {
+      config: ".cctop/config",
+      logs: ".cctop/logs",
+      temp: ".cctop/temp",
+      runtime: ".cctop/runtime",
+      data: ".cctop/data"
+    },
+    logging: {
+      maxFileSize: 10485760,
+      maxFiles: 5,
+      datePattern: "YYYY-MM-DD",
+      level: "info"
+    }
+  };
+  
+  // Create daemon-config.json
+  const daemonConfig = {
+    monitoring: {
+      watchPaths: ["."],
+      excludePatterns: [
+        "**/node_modules/**",
+        "**/.git/**",
+        "**/.*",
+        "**/.cctop/**",
+        "**/dist/**",
+        "**/coverage/**"
+      ],
+      debounceMs: 100,
+      maxDepth: 10,
+      moveThresholdMs: 100,
+      systemLimits: {
+        requiredLimit: 524288,
+        checkOnStartup: true,
+        warnIfInsufficient: true
+      }
+    },
+    daemon: {
+      pidFile: ".cctop/runtime/daemon.pid",
+      logFile: ".cctop/logs/daemon.log",
+      logLevel: "info",
+      heartbeatInterval: 5000,  // Reduced for tests
+      autoStart: true
+    },
+    database: {
+      writeMode: "WAL",
+      syncMode: "NORMAL",
+      cacheSize: 65536,
+      busyTimeout: 5000
+    }
+  };
+  
+  await fs.writeFile(
+    path.join(testDir, '.cctop/config/shared-config.json'),
+    JSON.stringify(sharedConfig, null, 2)
+  );
+  
+  await fs.writeFile(
+    path.join(testDir, '.cctop/config/daemon-config.json'),
+    JSON.stringify(daemonConfig, null, 2)
+  );
+  
   process.chdir(testDir);
 }
 
@@ -229,11 +264,8 @@ export async function teardownDaemonTest(daemon: ChildProcess | null, testDir: s
     await DaemonTestManager.stopDaemon(daemon);
   }
   
-  // Additional safety cleanup
-  await DaemonTestManager.killAllDaemons();
-  
-  // Wait for cleanup
-  await new Promise(resolve => setTimeout(resolve, 300));
+  // Reduced wait time
+  await new Promise(resolve => setTimeout(resolve, 50));
   
   // Clean up test directory
   await DaemonTestManager.cleanupTestDirectory(testDir);
