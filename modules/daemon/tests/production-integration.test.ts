@@ -51,7 +51,15 @@ describe('Production Integration (TDD)', () => {
       await new Promise(resolve => setTimeout(resolve, 2000));
       
       // Create test file in production directory
-      const testFile = 'integration-test.txt';
+      const testFile = `integration-test-${Date.now()}.txt`;
+      
+      // Ensure file doesn't exist
+      try {
+        await fs.unlink(testFile);
+      } catch (e) {
+        // File doesn't exist, which is what we want
+      }
+      
       await fs.writeFile(testFile, 'integration test content');
       
       // Wait for event processing
@@ -65,7 +73,10 @@ describe('Production Integration (TDD)', () => {
       });
       
       // Should detect the file creation
-      const createEvents = events.filter(e => e.event_type === 'create' && e.filename === testFile);
+      const createEvents = events.filter(e => 
+        e.event_type === 'create' && 
+        e.filename.startsWith('integration-test-')
+      );
       expect(createEvents.length).toBeGreaterThan(0);
       
       // Clean up

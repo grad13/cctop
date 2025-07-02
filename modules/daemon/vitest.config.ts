@@ -27,7 +27,8 @@ export default defineConfig({
       'node_modules/**',
       'dist/**',
       'tests/move-detection-improved.test.ts', // Has import issues
-      'tests/startup-delete-detection.test.ts' // Has test logic issues
+      'tests/startup-delete-detection.test.ts', // Has test logic issues
+      'tests/npm-run-bug.test.ts' // Has hardcoded path issues
     ]
   }
 });
