@@ -1,10 +1,33 @@
 /**
- * Daemon Configuration Management
+ * Daemon Configuration Management - FUNC-101/106 Compliant
+ * 3-Layer Configuration Architecture Implementation
  */
 
-import { DaemonConfig } from '@cctop/shared';
+import { DaemonConfig } from '../../../shared/dist/types';
 import * as path from 'path';
 import * as fs from 'fs/promises';
+
+interface SharedConfig {
+  version: string;
+  project: {
+    name: string;
+    description: string;
+  };
+  database: {
+    path: string;
+    maxSize: number;
+  };
+  directories: {
+    config: string;
+    logs: string;
+    temp: string;
+  };
+  logging: {
+    maxFileSize: number;
+    maxFiles: number;
+    datePattern: string;
+  };
+}
 
 export class DaemonConfigManager {
   private config: DaemonConfig;
@@ -17,18 +40,20 @@ export class DaemonConfigManager {
     return {
       version: '0.3.0.0',
       monitoring: {
-        watchPaths: [process.cwd()],
+        watchPaths: ['./test-data'],
         excludePatterns: [
           '**/node_modules/**',
           '**/.git/**',
           '**/.*',
-          '**/.cctop/**'
+          '**/.cctop/**',
+          '**/dist/**',
+          '**/coverage/**'
         ],
         debounceMs: 100,
-        maxDepth: 15,
+        maxDepth: 10,
         moveThresholdMs: 100,
         systemLimits: {
-          requiredLimit: 1024,
+          requiredLimit: 524288,
           checkOnStartup: true,
           warnIfInsufficient: true
         }
@@ -37,32 +62,81 @@ export class DaemonConfigManager {
         path: '.cctop/data/activity.db',
         writeMode: 'WAL',
         syncMode: 'NORMAL',
-        cacheSize: 2000,
-        busyTimeout: 30000
+        cacheSize: 65536,
+        busyTimeout: 5000
       },
       daemon: {
-        pidFile: '.cctop/daemon.pid', 
+        pidFile: '.cctop/runtime/daemon.pid',
         logFile: '.cctop/logs/daemon.log',
         logLevel: 'info',
-        heartbeatInterval: 5000,
-        autoStart: false
+        heartbeatInterval: 30000,
+        autoStart: true
       }
     };
   }
 
-  async loadConfig(configPath?: string): Promise<void> {
-    const targetPath = configPath || '.cctop/daemon-config.json';
+  async loadConfig(): Promise<void> {
+    // FUNC-101/106: 3-Layer Configuration Loading
+    // 1. Load shared config (FUNC-101)
+    const sharedConfig = await this.loadSharedConfig();
     
+    // 2. Load daemon-specific config (FUNC-106)
+    const daemonConfig = await this.loadDaemonConfig();
+    
+    // 3. Merge configurations (shared settings take precedence for database path)
+    this.config = this.mergeConfigs(this.getDefaultConfig(), sharedConfig, daemonConfig);
+  }
+
+  private async loadSharedConfig(): Promise<Partial<SharedConfig>> {
     try {
-      const configContent = await fs.readFile(targetPath, 'utf8');
-      const userConfig = JSON.parse(configContent);
+      const configPath = '.cctop/config/shared-config.json';
+      const configContent = await fs.readFile(configPath, 'utf8');
+      return JSON.parse(configContent);
+    } catch (error) {
+      console.warn('Shared config not found, using defaults');
+      return {};
+    }
+  }
+
+  private async loadDaemonConfig(): Promise<Partial<DaemonConfig>> {
+    try {
+      const configPath = '.cctop/config/daemon-config.json';
+      const configContent = await fs.readFile(configPath, 'utf8');
+      const daemonConfig = JSON.parse(configContent);
       
-      if (this.validateConfig(userConfig)) {
-        this.config = { ...this.config, ...userConfig };
+      if (this.validateConfig(daemonConfig)) {
+        return daemonConfig;
       }
     } catch (error) {
-      // Use default config if file doesn't exist or is invalid
+      console.warn('Daemon config not found, using defaults');
     }
+    return {};
+  }
+
+  private mergeConfigs(defaultConfig: DaemonConfig, sharedConfig: Partial<SharedConfig>, daemonConfig: Partial<DaemonConfig>): DaemonConfig {
+    const merged = { ...defaultConfig };
+    
+    // Apply shared config (database path from shared-config.json)
+    if (sharedConfig.database?.path) {
+      merged.database.path = sharedConfig.database.path;
+    }
+    
+    // Apply daemon-specific config
+    if (daemonConfig.monitoring) {
+      merged.monitoring = { ...merged.monitoring, ...daemonConfig.monitoring };
+    }
+    if (daemonConfig.daemon) {
+      merged.daemon = { ...merged.daemon, ...daemonConfig.daemon };
+    }
+    if (daemonConfig.database) {
+      merged.database = { ...merged.database, ...daemonConfig.database };
+      // Restore shared database path if it exists
+      if (sharedConfig.database?.path) {
+        merged.database.path = sharedConfig.database.path;
+      }
+    }
+    
+    return merged;
   }
 
   private validateConfig(config: any): boolean {

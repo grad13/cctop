@@ -2,7 +2,7 @@
  * PID File Management
  */
 
-import { DaemonState } from '@cctop/shared';
+import { DaemonState } from '../../../shared/dist/types';
 import * as path from 'path';
 import * as fs from 'fs/promises';
 import { LogManager } from '../logging/LogManager';

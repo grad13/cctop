@@ -2,7 +2,7 @@
  * File Event Processing
  */
 
-import { Database, FileEvent } from '@cctop/shared';
+import { Database, FileEvent } from '../../../shared/dist/index';
 import * as path from 'path';
 import * as fs from 'fs/promises';
 import { LogManager } from '../logging/LogManager';
@@ -143,7 +143,7 @@ export class FileEventHandler {
       // Check for restore condition
       const restoreTimeLimit = 5 * 60 * 1000;
       const recentEvents = await this.db.getRecentEvents(10, filePath);
-      const recentDeleteEvent = recentEvents.find(e => 
+      const recentDeleteEvent = recentEvents.find((e: any) => 
         e.eventType === 'delete' && 
         e.filePath === filePath &&
         (Date.now() - e.timestamp.getTime()) <= restoreTimeLimit
@@ -172,13 +172,13 @@ export class FileEventHandler {
       }
       
       // Check for move by same inode
-      const recentSameInodeEvents = recentEvents.filter(e => 
+      const recentSameInodeEvents = recentEvents.filter((e: any) => 
         e.inodeNumber === inode && 
         (Date.now() - e.timestamp.getTime()) <= this.moveThresholdMs
       );
       
       if (recentSameInodeEvents.length > 0) {
-        const createEvent = recentSameInodeEvents.find(e => e.eventType === 'create');
+        const createEvent = recentSameInodeEvents.find((e: any) => e.eventType === 'create');
         
         if (createEvent && createEvent.filePath !== filePath) {
           const moveEvent: FileEvent = {

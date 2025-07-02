@@ -3,10 +3,11 @@
  * Tests for proper log file creation and writing
  */
 
-import { describe, test, expect, beforeEach, afterEach } from 'vitest';
+import { describe, test, expect, beforeEach, afterEach, afterAll } from 'vitest';
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import { spawn, ChildProcess } from 'child_process';
+import { ChildProcess } from 'child_process';
+import { setupDaemonTest, teardownDaemonTest, DaemonTestManager } from './test-helpers';
 
 describe('Log File Writing (TDD)', () => {
   const testDir = '/tmp/cctop-log-file-test';
@@ -14,31 +15,25 @@ describe('Log File Writing (TDD)', () => {
   let daemonProcess: ChildProcess | null = null;
 
   beforeEach(async () => {
-    await fs.mkdir(testDir, { recursive: true });
-    process.chdir(testDir);
+    await setupDaemonTest(testDir);
   });
 
   afterEach(async () => {
     if (daemonProcess) {
-      daemonProcess.kill('SIGTERM');
+      await DaemonTestManager.stopDaemon(daemonProcess);
       daemonProcess = null;
     }
-    await new Promise(resolve => setTimeout(resolve, 100));
-    try {
-      await fs.rm(testDir, { recursive: true, force: true });
-    } catch (error) {
-      console.warn('Failed to clean test directory:', error);
-    }
+    await teardownDaemonTest(null, testDir);
+  });
+
+  afterAll(async () => {
+    await DaemonTestManager.killAllDaemons();
   });
 
   async function startDaemon(): Promise<ChildProcess> {
     const daemonPath = path.resolve(__dirname, '../dist/index.js');
+    const process = await DaemonTestManager.startDaemon(daemonPath, testDir);
     
-    const process = spawn('node', [daemonPath, '--standalone'], {
-      stdio: 'pipe',
-      cwd: testDir
-    });
-
     // Wait for daemon startup
     await new Promise(resolve => setTimeout(resolve, 2000));
     

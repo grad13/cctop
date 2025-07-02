@@ -4,7 +4,7 @@
  */
 
 import chokidar from 'chokidar';
-import { Database } from '@cctop/shared';
+import { Database } from '../../shared/dist/index';
 import { DaemonConfigManager } from './config/DaemonConfig';
 import { LogManager } from './logging/LogManager';
 import { FileEventHandler } from './events/FileEventHandler';
@@ -36,19 +36,8 @@ class DaemonManager {
     
     this.signalHandler = new SignalHandler(
       this.logger,
-      this.shutdown.bind(this),
-      this.handleSighup.bind(this)
+      this.shutdown.bind(this)
     );
-  }
-
-  private async handleSighup(): Promise<void> {
-    this.logger.log('info', 'Reloading configuration...');
-    try {
-      await this.configManager.loadConfig();
-      this.logger.log('info', 'Configuration reloaded successfully');
-    } catch (error) {
-      this.logger.log('error', `Failed to reload configuration: ${error}`);
-    }
   }
 
   private startHeartbeat(): void {
@@ -70,25 +59,25 @@ class DaemonManager {
       this.logger.log('info', 'Performing startup delete detection...');
       
       const recentEvents = await this.db.getRecentEvents(1000);
-      const recentFiles = new Set(recentEvents.map(e => e.filePath));
+      const recentFiles = new Set(recentEvents.map((e: any) => e.filePath));
       
       let deletedCount = 0;
       for (const filePath of recentFiles) {
         try {
           const fs = require('fs');
           if (!fs.existsSync(filePath)) {
-            await this.fileEventHandler.handleFileEvent('delete', filePath);
+            await this.fileEventHandler.handleFileEvent('delete', filePath, undefined);
             deletedCount++;
           }
-        } catch (error) {
+        } catch (error: unknown) {
           // File access error, treat as deleted
-          await this.fileEventHandler.handleFileEvent('delete', filePath);
+          await this.fileEventHandler.handleFileEvent('delete', filePath, undefined);
           deletedCount++;
         }
       }
       
       this.logger.log('info', `Startup delete detection completed. Detected ${deletedCount} deleted files.`);
-    } catch (error) {
+    } catch (error: unknown) {
       this.logger.log('error', `Startup delete detection failed: ${error}`);
     }
   }

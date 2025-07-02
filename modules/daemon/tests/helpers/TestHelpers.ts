@@ -53,15 +53,12 @@ export class TestEnvironment {
   }
 
   async setup(): Promise<void> {
-    this.testDir = path.join(__dirname, '../../test-data/aggregates-test');
+    this.testDir = '/tmp/cctop-aggregates-test';
     this.testDbPath = path.join(this.testDir, '.cctop/data/activity.db');
 
-    await fs.rm(this.testDir, { recursive: true, force: true });
-    await fs.mkdir(this.testDir, { recursive: true });
-    await fs.mkdir(path.join(this.testDir, '.cctop/data'), { recursive: true });
-    await fs.mkdir(path.join(this.testDir, '.cctop/logs'), { recursive: true });
-
-    process.chdir(this.testDir);
+    // Use the standard setupDaemonTest function
+    const { setupDaemonTest } = await import('../test-helpers');
+    await setupDaemonTest(this.testDir);
   }
 
   async cleanup(): Promise<void> {
@@ -74,6 +71,11 @@ export class TestEnvironment {
 
   async createTestFile(name: string, content: string): Promise<void> {
     const filePath = path.join(this.testDir, name);
+    
+    // Ensure parent directory exists
+    const fileDir = path.dirname(filePath);
+    await fs.mkdir(fileDir, { recursive: true });
+    
     await fs.writeFile(filePath, content);
   }
 

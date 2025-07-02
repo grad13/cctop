@@ -1,0 +1,25 @@
+{
+  "version": "0.3.0.0",
+  "project": {
+    "name": "cctop",
+    "description": "Real-time file monitoring and code structure analysis tool"
+  },
+  "database": {
+    "path": ".cctop/data/activity.db",
+    "maxSize": 104857600
+  },
+  "directories": {
+    "config": ".cctop/config",
+    "logs": ".cctop/logs",
+    "temp": ".cctop/temp",
+    "runtime": ".cctop/runtime",
+    "data": ".cctop/data",
+    "themes": ".cctop/themes"
+  },
+  "logging": {
+    "maxFileSize": 10485760,
+    "maxFiles": 5,
+    "datePattern": "YYYY-MM-DD",
+    "level": "info"
+  }
+}

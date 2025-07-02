@@ -12,7 +12,7 @@ import { DaemonTestManager, setupDaemonTest, teardownDaemonTest } from './test-h
 describe('Daemon Module', () => {
   const testDir = '/tmp/cctop-daemon-test';
   const testDbPath = path.join(testDir, '.cctop/data/activity.db');
-  const testPidPath = path.join(testDir, '.cctop/daemon.pid');
+  const testPidPath = path.join(testDir, '.cctop/runtime/daemon.pid');
   let daemonProcess: ChildProcess | null = null;
 
   beforeEach(async () => {

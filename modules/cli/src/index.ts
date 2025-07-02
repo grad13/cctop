@@ -2,7 +2,7 @@
  * cctop CLI - Terminal UI for file monitoring (v0.3.0 Console Version)
  */
 
-import { Database, FileEvent } from '@cctop/shared';
+import { Database, FileEvent } from '../../shared/dist/index';
 
 const DB_PATH = '.cctop/data/activity.db';
 const POLLING_INTERVAL = 1000; // 1 second for console version
