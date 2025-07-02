@@ -8,7 +8,7 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 import { ChildProcess } from 'child_process';
 import sqlite3 from 'sqlite3';
-import { DaemonTestManager, setupDaemonTest, teardownDaemonTest } from './test-helpers';
+import { DaemonTestManager, setupDaemonTest, teardownDaemonTest } from '../helpers';
 
 interface DbEvent {
   id: number;
@@ -65,7 +65,7 @@ describe('Restore Detection (FUNC-001)', () => {
 
   test('should detect "restore" when deleted file reappears within time limit', async () => {
     // Start daemon
-    const daemonPath = path.resolve(__dirname, '../dist/index.js');
+    const daemonPath = path.resolve(__dirname, '../../dist/index.js');
     
     daemonProcess = await DaemonTestManager.startDaemon(daemonPath, testDir);
     await DaemonTestManager.waitForDaemonStartup(daemonProcess);
@@ -138,7 +138,7 @@ describe('Restore Detection (FUNC-001)', () => {
     // For a realistic test, we'd need to modify the restore time limit configuration
     
     // Start daemon
-    const daemonPath = path.resolve(__dirname, '../dist/index.js');
+    const daemonPath = path.resolve(__dirname, '../../dist/index.js');
     
     daemonProcess = await DaemonTestManager.startDaemon(daemonPath, testDir);
     await DaemonTestManager.waitForDaemonStartup(daemonProcess);
@@ -189,7 +189,7 @@ describe('Restore Detection (FUNC-001)', () => {
 
   test('should handle multiple delete-restore cycles', async () => {
     // Start daemon
-    const daemonPath = path.resolve(__dirname, '../dist/index.js');
+    const daemonPath = path.resolve(__dirname, '../../dist/index.js');
     
     daemonProcess = await DaemonTestManager.startDaemon(daemonPath, testDir);
     await DaemonTestManager.waitForDaemonStartup(daemonProcess);
@@ -239,7 +239,7 @@ describe('Restore Detection (FUNC-001)', () => {
 
   test('should distinguish restore from regular create events', async () => {
     // Start daemon
-    const daemonPath = path.resolve(__dirname, '../dist/index.js');
+    const daemonPath = path.resolve(__dirname, '../../dist/index.js');
     
     daemonProcess = await DaemonTestManager.startDaemon(daemonPath, testDir);
     await DaemonTestManager.waitForDaemonStartup(daemonProcess);
@@ -278,7 +278,7 @@ describe('Restore Detection (FUNC-001)', () => {
 
   test('should handle restore with different file content', async () => {
     // Start daemon
-    const daemonPath = path.resolve(__dirname, '../dist/index.js');
+    const daemonPath = path.resolve(__dirname, '../../dist/index.js');
     
     daemonProcess = await DaemonTestManager.startDaemon(daemonPath, testDir);
     await DaemonTestManager.waitForDaemonStartup(daemonProcess);
@@ -313,7 +313,7 @@ describe('Restore Detection (FUNC-001)', () => {
 
   test('should handle rapid delete-restore operations', async () => {
     // Start daemon
-    const daemonPath = path.resolve(__dirname, '../dist/index.js');
+    const daemonPath = path.resolve(__dirname, '../../dist/index.js');
     
     daemonProcess = await DaemonTestManager.startDaemon(daemonPath, testDir);
     await DaemonTestManager.waitForDaemonStartup(daemonProcess);

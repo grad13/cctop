@@ -10,7 +10,7 @@ import { spawn, ChildProcess } from 'child_process';
 import sqlite3 from 'sqlite3';
 
 describe('NPM Run Bug (TDD)', () => {
-  const productionDir = '/Users/takuo-h/Workspace/Code/06-cctop/code/worktrees/07-01-daemon-production-ready';
+  const productionDir = path.resolve(__dirname, '../../..');
   const dbPath = path.join(productionDir, '.cctop/data/activity.db');
   let daemonProcess: ChildProcess | null = null;
   
@@ -60,8 +60,6 @@ describe('NPM Run Bug (TDD)', () => {
     const originalCwd = process.cwd();
     
     try {
-      process.chdir(productionDir);
-      
       // RED: Start daemon exactly like user does - npm run daemon
       daemonProcess = spawn('npm', ['run', 'daemon'], {
         stdio: 'pipe',
@@ -89,7 +87,7 @@ describe('NPM Run Bug (TDD)', () => {
       console.log('PID file exists:', pidFileExists);
       
       // Create test file in production directory (user's action)
-      const testFile = 'user-test-file.txt';
+      const testFile = path.join(productionDir, 'user-test-file.txt');
       await fs.writeFile(testFile, 'user test content');
       console.log('Created test file:', testFile);
       
@@ -105,7 +103,7 @@ describe('NPM Run Bug (TDD)', () => {
       });
       
       // BUG: This should detect the file creation but doesn't
-      const createEvents = events.filter(e => e.event_type === 'create' && e.filename === testFile);
+      const createEvents = events.filter(e => e.event_type === 'create' && e.filename === 'user-test-file.txt');
       console.log('Create events for test file:', createEvents.length);
       
       // Clean up test file
@@ -119,7 +117,7 @@ describe('NPM Run Bug (TDD)', () => {
       expect(createEvents.length).toBeGreaterThan(0);
       
     } finally {
-      process.chdir(originalCwd);
+      // No need to change directory back since we didn't change it
     }
   }, 30000);
 });

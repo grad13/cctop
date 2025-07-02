@@ -3,9 +3,7 @@
  */
 
 import { describe, test, expect, beforeEach, afterEach } from 'vitest';
-import { TestEnvironment, TestFileOperations } from '../helpers/TestHelpers';
-import { DatabaseQueries } from '../helpers/DatabaseQueries';
-import { TestDaemonManager } from '../helpers/DaemonManager';
+import { TestEnvironment, TestFileOperations, DatabaseQueries, TestDaemonManager } from '../helpers';
 
 describe('Basic Aggregates Functionality', () => {
   let testEnv: TestEnvironment;
@@ -15,7 +13,6 @@ describe('Basic Aggregates Functionality', () => {
   beforeEach(async () => {
     testEnv = new TestEnvironment();
     await testEnv.setup();
-    dbQueries = new DatabaseQueries(testEnv.testDbPath);
     daemonManager = new TestDaemonManager(testEnv.testDir);
   });
 
@@ -26,7 +23,12 @@ describe('Basic Aggregates Functionality', () => {
 
   test('should create aggregates records automatically via triggers', async () => {
     const daemon = await daemonManager.startDaemon();
-    await dbQueries.recreateTriggersForTest();
+    
+    // Wait for daemon to initialize database
+    await testEnv.wait(2000);
+    
+    // Initialize DatabaseQueries after daemon has created the database
+    dbQueries = new DatabaseQueries(testEnv.testDbPath);
 
     const testFiles = [
       { name: 'test1.txt', content: 'Small file content' },
@@ -37,7 +39,7 @@ describe('Basic Aggregates Functionality', () => {
     await TestFileOperations.createFiles(testFiles, testEnv.testDir);
     await testEnv.wait(1000);
 
-    const aggregates = await dbQueries.queryAggregatesTable();
+    const aggregates = dbQueries.queryAggregatesTable();
     expect(aggregates.length).toBe(testFiles.length);
 
     for (let i = 0; i < testFiles.length; i++) {
@@ -50,7 +52,12 @@ describe('Basic Aggregates Functionality', () => {
 
   test('should track event counts correctly', async () => {
     const daemon = await daemonManager.startDaemon();
-    await dbQueries.recreateTriggersForTest();
+    
+    // Wait for daemon to initialize database
+    await testEnv.wait(2000);
+    
+    // Initialize DatabaseQueries after daemon has created the database
+    dbQueries = new DatabaseQueries(testEnv.testDbPath);
 
     const testFile = 'event-count-test.txt';
     await testEnv.createTestFile(testFile, 'Initial content');
@@ -64,7 +71,7 @@ describe('Basic Aggregates Functionality', () => {
 
     await testEnv.wait(1000);
 
-    const aggregates = await dbQueries.queryAggregatesTable();
+    const aggregates = dbQueries.queryAggregatesTable();
     expect(aggregates.length).toBe(1);
 
     const aggregate = aggregates[0];
@@ -76,7 +83,12 @@ describe('Basic Aggregates Functionality', () => {
 
   test('should handle multiple files with complex lifecycles', async () => {
     const daemon = await daemonManager.startDaemon();
-    await dbQueries.recreateTriggersForTest();
+    
+    // Wait for daemon to initialize database
+    await testEnv.wait(2000);
+    
+    // Initialize DatabaseQueries after daemon has created the database
+    dbQueries = new DatabaseQueries(testEnv.testDbPath);
 
     const files = [
       { file: 'file1.txt', operations: ['create', 'modify'] },
@@ -87,7 +99,7 @@ describe('Basic Aggregates Functionality', () => {
     await TestFileOperations.performFileOperations(files, testEnv.testDir);
     await testEnv.wait(1000);
 
-    const aggregates = await dbQueries.queryAggregatesTable();
+    const aggregates = dbQueries.queryAggregatesTable();
     expect(aggregates.length).toBe(files.length);
 
     files.forEach((file, index) => {

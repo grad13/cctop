@@ -17,7 +17,7 @@ export default defineConfig({
     retry: 0,
     maxConcurrency: 1,
     slowTestThreshold: 5000,
-    bail: 1,  // Stop after first test failure
+    bail: 0,  // Don't stop after first test failure
     // Disable coverage to save resources
     coverage: {
       enabled: false
@@ -25,10 +25,7 @@ export default defineConfig({
     // Only exclude tests with actual issues
     exclude: [
       'node_modules/**',
-      'dist/**',
-      'tests/move-detection-improved.test.ts', // Has import issues
-      'tests/startup-delete-detection.test.ts', // Has test logic issues
-      'tests/npm-run-bug.test.ts' // Has hardcoded path issues
+      'dist/**'
     ]
   }
 });

@@ -1,11 +1,10 @@
 /**
- * Test Helper Functions for Daemon Process Management
- * Provides comprehensive daemon lifecycle management for tests
+ * Daemon Process Management for Tests
+ * Provides comprehensive daemon lifecycle management
  */
 
 import { spawn, ChildProcess, execSync } from 'child_process';
 import * as fs from 'fs/promises';
-import * as path from 'path';
 
 export class DaemonTestManager {
   private static activeDaemons: Set<ChildProcess> = new Set();
@@ -169,104 +168,4 @@ export class DaemonTestManager {
     // Skip the expensive find operation - PID files should be cleaned by the daemon itself
     // or by the test teardown. This was causing unnecessary overhead.
   }
-}
-
-/**
- * Setup and teardown helpers for individual tests
- */
-export async function setupDaemonTest(testDir: string): Promise<void> {
-  await fs.mkdir(testDir, { recursive: true });
-  
-  // Create .cctop directory structure
-  await fs.mkdir(path.join(testDir, '.cctop/config'), { recursive: true });
-  await fs.mkdir(path.join(testDir, '.cctop/data'), { recursive: true });
-  await fs.mkdir(path.join(testDir, '.cctop/logs'), { recursive: true });
-  await fs.mkdir(path.join(testDir, '.cctop/runtime'), { recursive: true });
-  await fs.mkdir(path.join(testDir, '.cctop/temp'), { recursive: true });
-  
-  // Create shared-config.json
-  const sharedConfig = {
-    version: "0.3.0.0",
-    project: {
-      name: "cctop",
-      description: "Real-time file monitoring and code structure analysis tool"
-    },
-    database: {
-      path: ".cctop/data/activity.db",
-      maxSize: 104857600
-    },
-    directories: {
-      config: ".cctop/config",
-      logs: ".cctop/logs",
-      temp: ".cctop/temp",
-      runtime: ".cctop/runtime",
-      data: ".cctop/data"
-    },
-    logging: {
-      maxFileSize: 10485760,
-      maxFiles: 5,
-      datePattern: "YYYY-MM-DD",
-      level: "info"
-    }
-  };
-  
-  // Create daemon-config.json
-  const daemonConfig = {
-    monitoring: {
-      watchPaths: ["."],
-      excludePatterns: [
-        "**/node_modules/**",
-        "**/.git/**",
-        "**/.*",
-        "**/.cctop/**",
-        "**/dist/**",
-        "**/coverage/**"
-      ],
-      debounceMs: 100,
-      maxDepth: 10,
-      moveThresholdMs: 100,
-      systemLimits: {
-        requiredLimit: 524288,
-        checkOnStartup: true,
-        warnIfInsufficient: true
-      }
-    },
-    daemon: {
-      pidFile: ".cctop/runtime/daemon.pid",
-      logFile: ".cctop/logs/daemon.log",
-      logLevel: "info",
-      heartbeatInterval: 5000,  // Reduced for tests
-      autoStart: true
-    },
-    database: {
-      writeMode: "WAL",
-      syncMode: "NORMAL",
-      cacheSize: 65536,
-      busyTimeout: 5000
-    }
-  };
-  
-  await fs.writeFile(
-    path.join(testDir, '.cctop/config/shared-config.json'),
-    JSON.stringify(sharedConfig, null, 2)
-  );
-  
-  await fs.writeFile(
-    path.join(testDir, '.cctop/config/daemon-config.json'),
-    JSON.stringify(daemonConfig, null, 2)
-  );
-  
-  process.chdir(testDir);
-}
-
-export async function teardownDaemonTest(daemon: ChildProcess | null, testDir: string): Promise<void> {
-  if (daemon) {
-    await DaemonTestManager.stopDaemon(daemon);
-  }
-  
-  // Reduced wait time
-  await new Promise(resolve => setTimeout(resolve, 50));
-  
-  // Clean up test directory
-  await DaemonTestManager.cleanupTestDirectory(testDir);
 }

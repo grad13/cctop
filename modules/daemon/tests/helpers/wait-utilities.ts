@@ -1,6 +1,6 @@
 /**
- * Test Utilities for Efficient Event-based Testing
- * Replaces inefficient setTimeout with proper event waiting
+ * Wait Utilities for Event-based Testing
+ * Provides efficient waiting mechanisms for async operations
  */
 
 import { ChildProcess } from 'child_process';
@@ -112,47 +112,4 @@ export async function waitForDaemonOutput(
       }
     });
   });
-}
-
-/**
- * Create a file and wait for it to be detected
- */
-export async function createFileAndWaitForEvent(
-  testDir: string,
-  db: Database,
-  filename: string,
-  content: string = 'test content',
-  eventType: string = 'create'
-): Promise<void> {
-  const filePath = path.join(testDir, filename);
-  await fs.writeFile(filePath, content);
-  await waitForFileEvent(db, filename, eventType);
-}
-
-/**
- * Delete a file and wait for the delete event
- */
-export async function deleteFileAndWaitForEvent(
-  testDir: string,
-  db: Database,
-  filename: string
-): Promise<void> {
-  const filePath = path.join(testDir, filename);
-  await fs.unlink(filePath);
-  await waitForFileEvent(db, filename, 'delete');
-}
-
-/**
- * Move a file and wait for the move event
- */
-export async function moveFileAndWaitForEvent(
-  testDir: string,
-  db: Database,
-  oldName: string,
-  newName: string
-): Promise<void> {
-  const oldPath = path.join(testDir, oldName);
-  const newPath = path.join(testDir, newName);
-  await fs.rename(oldPath, newPath);
-  await waitForFileEvent(db, newName, 'move');
 }

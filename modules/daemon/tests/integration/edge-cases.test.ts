@@ -4,9 +4,7 @@
 
 import { describe, test, expect, beforeEach, afterEach } from 'vitest';
 import * as fs from 'fs/promises';
-import { TestEnvironment } from '../helpers/TestHelpers';
-import { DatabaseQueries } from '../helpers/DatabaseQueries';
-import { TestDaemonManager } from '../helpers/DaemonManager';
+import { TestEnvironment, DatabaseQueries, TestDaemonManager } from '../helpers';
 
 describe('Edge Cases and Error Handling', () => {
   let testEnv: TestEnvironment;
@@ -16,7 +14,6 @@ describe('Edge Cases and Error Handling', () => {
   beforeEach(async () => {
     testEnv = new TestEnvironment();
     await testEnv.setup();
-    dbQueries = new DatabaseQueries(testEnv.testDbPath);
     daemonManager = new TestDaemonManager(testEnv.testDir);
   });
 
@@ -27,7 +24,12 @@ describe('Edge Cases and Error Handling', () => {
 
   test('should handle edge cases and NULL values gracefully', async () => {
     const daemon = await daemonManager.startDaemon();
-    await dbQueries.recreateTriggersForTest();
+    
+    // Wait for daemon to initialize database
+    await testEnv.wait(2000);
+    
+    // Initialize DatabaseQueries after daemon has created the database
+    dbQueries = new DatabaseQueries(testEnv.testDbPath);
 
     // Create file with zero size
     const emptyFile = 'empty-test.txt';
@@ -41,7 +43,7 @@ describe('Edge Cases and Error Handling', () => {
     await fs.unlink(deleteFile);
     await testEnv.wait(600);
 
-    const aggregates = await dbQueries.queryAggregatesTable();
+    const aggregates = dbQueries.queryAggregatesTable();
     
     console.log('=== DEBUG: Edge cases ===');
     aggregates.forEach((agg, index) => {
@@ -68,7 +70,12 @@ describe('Edge Cases and Error Handling', () => {
 
   test('should handle file with special characters in path', async () => {
     const daemon = await daemonManager.startDaemon();
-    await dbQueries.recreateTriggersForTest();
+    
+    // Wait for daemon to initialize database
+    await testEnv.wait(2000);
+    
+    // Initialize DatabaseQueries after daemon has created the database
+    dbQueries = new DatabaseQueries(testEnv.testDbPath);
 
     const specialFiles = [
       'file with spaces.txt',
@@ -83,7 +90,7 @@ describe('Edge Cases and Error Handling', () => {
 
     await testEnv.wait(1000);
 
-    const aggregates = await dbQueries.queryAggregatesTable();
+    const aggregates = dbQueries.queryAggregatesTable();
     expect(aggregates.length).toBe(specialFiles.length);
 
     specialFiles.forEach(fileName => {
@@ -95,7 +102,12 @@ describe('Edge Cases and Error Handling', () => {
 
   test('should handle rapid file creation and deletion', async () => {
     const daemon = await daemonManager.startDaemon();
-    await dbQueries.recreateTriggersForTest();
+    
+    // Wait for daemon to initialize database
+    await testEnv.wait(2000);
+    
+    // Initialize DatabaseQueries after daemon has created the database
+    dbQueries = new DatabaseQueries(testEnv.testDbPath);
 
     const testFile = 'rapid-ops.txt';
 
@@ -113,7 +125,7 @@ describe('Edge Cases and Error Handling', () => {
 
     await testEnv.wait(1000);
 
-    const aggregates = await dbQueries.queryAggregatesTable();
+    const aggregates = dbQueries.queryAggregatesTable();
     
     console.log('=== DEBUG: Rapid operations ===');
     aggregates.forEach((agg, index) => {

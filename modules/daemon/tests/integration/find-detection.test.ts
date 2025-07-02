@@ -8,7 +8,7 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 import { ChildProcess } from 'child_process';
 import sqlite3 from 'sqlite3';
-import { DaemonTestManager, setupDaemonTest, teardownDaemonTest } from './test-helpers';
+import { DaemonTestManager, setupDaemonTest, teardownDaemonTest } from '../helpers';
 
 interface DbEvent {
   id: number;
@@ -76,7 +76,7 @@ describe('Find Detection (FUNC-001)', () => {
     }
 
     // GREEN PHASE: Start daemon (should perform initial scan)
-    const daemonPath = path.resolve(__dirname, '../dist/index.js');
+    const daemonPath = path.resolve(__dirname, '../../dist/index.js');
     
     daemonProcess = await DaemonTestManager.startDaemon(daemonPath, testDir);
     await DaemonTestManager.waitForDaemonStartup(daemonProcess);
@@ -134,7 +134,7 @@ describe('Find Detection (FUNC-001)', () => {
     await fs.writeFile('pre-existing.txt', 'existed before daemon');
     
     // Start daemon
-    const daemonPath = path.resolve(__dirname, '../dist/index.js');
+    const daemonPath = path.resolve(__dirname, '../../dist/index.js');
     
     daemonProcess = await DaemonTestManager.startDaemon(daemonPath, testDir);
     await DaemonTestManager.waitForDaemonStartup(daemonProcess);
@@ -165,7 +165,7 @@ describe('Find Detection (FUNC-001)', () => {
 
   test('should handle empty directory correctly during initial scan', async () => {
     // Start daemon in empty directory (no existing files)
-    const daemonPath = path.resolve(__dirname, '../dist/index.js');
+    const daemonPath = path.resolve(__dirname, '../../dist/index.js');
     
     daemonProcess = await DaemonTestManager.startDaemon(daemonPath, testDir);
     await DaemonTestManager.waitForDaemonStartup(daemonProcess);
@@ -194,7 +194,7 @@ describe('Find Detection (FUNC-001)', () => {
     const expectedInode = stats.ino;
 
     // Start daemon
-    const daemonPath = path.resolve(__dirname, '../dist/index.js');
+    const daemonPath = path.resolve(__dirname, '../../dist/index.js');
     
     daemonProcess = await DaemonTestManager.startDaemon(daemonPath, testDir);
     await DaemonTestManager.waitForDaemonStartup(daemonProcess);
@@ -233,7 +233,7 @@ describe('Find Detection (FUNC-001)', () => {
     }
 
     // Start daemon
-    const daemonPath = path.resolve(__dirname, '../dist/index.js');
+    const daemonPath = path.resolve(__dirname, '../../dist/index.js');
     
     daemonProcess = await DaemonTestManager.startDaemon(daemonPath, testDir);
     await DaemonTestManager.waitForDaemonStartup(daemonProcess);
@@ -266,7 +266,7 @@ describe('Find Detection (FUNC-001)', () => {
     await fs.writeFile('subdir2/nested/deep-file.txt', 'File in nested directory');
 
     // Start daemon
-    const daemonPath = path.resolve(__dirname, '../dist/index.js');
+    const daemonPath = path.resolve(__dirname, '../../dist/index.js');
     
     daemonProcess = await DaemonTestManager.startDaemon(daemonPath, testDir);
     await DaemonTestManager.waitForDaemonStartup(daemonProcess);

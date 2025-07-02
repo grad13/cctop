@@ -3,9 +3,7 @@
  */
 
 import { describe, test, expect, beforeEach, afterEach } from 'vitest';
-import { TestEnvironment } from '../helpers/TestHelpers';
-import { DatabaseQueries } from '../helpers/DatabaseQueries';
-import { TestDaemonManager } from '../helpers/DaemonManager';
+import { TestEnvironment, DatabaseQueries, TestDaemonManager } from '../helpers';
 
 describe('Performance Tests', () => {
   let testEnv: TestEnvironment;
@@ -15,7 +13,6 @@ describe('Performance Tests', () => {
   beforeEach(async () => {
     testEnv = new TestEnvironment();
     await testEnv.setup();
-    dbQueries = new DatabaseQueries(testEnv.testDbPath);
     daemonManager = new TestDaemonManager(testEnv.testDir);
   });
 
@@ -26,7 +23,12 @@ describe('Performance Tests', () => {
 
   test('should handle performance requirements (multiple modifications)', async () => {
     const daemon = await daemonManager.startDaemon();
-    await dbQueries.recreateTriggersForTest();
+    
+    // Wait for daemon to initialize database
+    await testEnv.wait(2000);
+    
+    // Initialize DatabaseQueries after daemon has created the database
+    dbQueries = new DatabaseQueries(testEnv.testDbPath);
 
     const startTime = Date.now();
     const testFile = 'performance-test.txt';
@@ -48,25 +50,33 @@ describe('Performance Tests', () => {
 
     const totalTime = Date.now() - startTime;
 
+    expect(queryTime).toBeLessThan(100);
+    expect(aggregates.length).toBeGreaterThanOrEqual(1);
+    
+    // Note: May include additional events from startup delete detection
+    const performanceAggregate = aggregates.find(a => a.file_path.includes('performance-test.txt'));
+    expect(performanceAggregate).toBeDefined();
+
     console.log('=== DEBUG: Performance metrics ===');
     console.log({
       total_operations: numModifications + 1,
       total_time_ms: totalTime,
       query_time_ms: queryTime,
-      events_in_aggregate: aggregates[0].total_events
+      events_in_aggregate: performanceAggregate?.total_events || 0
     });
-
-    expect(queryTime).toBeLessThan(100);
-    expect(aggregates.length).toBe(1);
-    // Note: May include additional events from startup delete detection
-    expect(aggregates[0].total_events).toBeGreaterThanOrEqual(numModifications + 1);
-    expect(aggregates[0].total_creates).toBeGreaterThanOrEqual(1);
-    expect(aggregates[0].total_modifies).toBeGreaterThanOrEqual(numModifications);
+    expect(performanceAggregate!.total_events).toBeGreaterThanOrEqual(numModifications + 1);
+    expect(performanceAggregate!.total_creates).toBeGreaterThanOrEqual(1);
+    expect(performanceAggregate!.total_modifies).toBeGreaterThanOrEqual(numModifications);
   });
 
   test('should handle concurrent file operations efficiently', async () => {
     const daemon = await daemonManager.startDaemon();
-    await dbQueries.recreateTriggersForTest();
+    
+    // Wait for daemon to initialize database
+    await testEnv.wait(2000);
+    
+    // Initialize DatabaseQueries after daemon has created the database
+    dbQueries = new DatabaseQueries(testEnv.testDbPath);
 
     const startTime = Date.now();
     const numFiles = 10;

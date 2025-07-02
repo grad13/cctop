@@ -59,10 +59,24 @@ class DaemonManager {
       this.logger.log('info', 'Performing startup delete detection...');
       
       const recentEvents = await this.db.getRecentEvents(1000);
-      const recentFiles = new Set(recentEvents.map((e: any) => e.filePath));
+      
+      // Group events by file path and find the last event for each file
+      // Since recentEvents is ordered by timestamp DESC, we need to reverse it
+      // to ensure we get the chronologically last event for each file
+      const fileLastEvent = new Map<string, any>();
+      for (const event of recentEvents.reverse()) {
+        fileLastEvent.set(event.filePath, event);
+      }
       
       let deletedCount = 0;
-      for (const filePath of recentFiles) {
+      for (const [filePath, lastEvent] of fileLastEvent) {
+        // Skip if the last event for this file was already a delete
+        this.logger.debugLog(`Checking file ${filePath}, last event: ${lastEvent.eventType}`);
+        if (lastEvent.eventType === 'delete') {
+          this.logger.debugLog(`Skipping ${filePath} - already has delete event`);
+          continue;
+        }
+        
         try {
           const fs = require('fs');
           if (!fs.existsSync(filePath)) {

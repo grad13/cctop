@@ -7,7 +7,7 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 import { ChildProcess } from 'child_process';
 import sqlite3 from 'sqlite3';
-import { DaemonTestManager } from './test-helpers';
+import { DaemonTestManager } from '../helpers';
 
 describe('Production Integration (TDD)', () => {
   const productionDir = '/Users/takuo-h/Workspace/Code/06-cctop/code/worktrees/07-01-daemon-production-ready';
@@ -41,17 +41,15 @@ describe('Production Integration (TDD)', () => {
     const originalCwd = process.cwd();
     
     try {
-      process.chdir(productionDir);
-      
       // Start daemon with production config
-      const daemonPath = path.resolve('modules/daemon/dist/index.js');
+      const daemonPath = path.join(productionDir, 'modules/daemon/dist/index.js');
       daemonProcess = await DaemonTestManager.startDaemon(daemonPath, productionDir);
       
       // Wait for daemon startup
       await new Promise(resolve => setTimeout(resolve, 2000));
       
       // Create test file in production directory
-      const testFile = `integration-test-${Date.now()}.txt`;
+      const testFile = path.join(productionDir, `integration-test-${Date.now()}.txt`);
       
       // Ensure file doesn't exist
       try {
@@ -83,7 +81,7 @@ describe('Production Integration (TDD)', () => {
       await fs.unlink(testFile);
       
     } finally {
-      process.chdir(originalCwd);
+      // No need to change directory back since we didn't change it
     }
   }, 30000);
 });

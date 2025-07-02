@@ -7,7 +7,7 @@ import { describe, test, expect, beforeEach, afterEach, afterAll } from 'vitest'
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { ChildProcess } from 'child_process';
-import { DaemonTestManager, setupDaemonTest, teardownDaemonTest } from './test-helpers';
+import { DaemonTestManager, setupDaemonTest, teardownDaemonTest } from '../helpers';
 
 describe('Daemon Module', () => {
   const testDir = '/tmp/cctop-daemon-test';
@@ -29,7 +29,7 @@ describe('Daemon Module', () => {
   });
 
   test('daemon should start and create required directories', async () => {
-    const daemonPath = path.resolve(__dirname, '../dist/index.js');
+    const daemonPath = path.resolve(__dirname, '../../dist/index.js');
     
     // Start daemon using test manager
     daemonProcess = await DaemonTestManager.startDaemon(daemonPath, testDir);
@@ -50,7 +50,7 @@ describe('Daemon Module', () => {
   });
 
   test('daemon should create PID file with correct structure', async () => {
-    const daemonPath = path.resolve(__dirname, '../dist/index.js');
+    const daemonPath = path.resolve(__dirname, '../../dist/index.js');
     
     daemonProcess = await DaemonTestManager.startDaemon(daemonPath, testDir);
     await DaemonTestManager.waitForDaemonStartup(daemonProcess);
@@ -68,7 +68,7 @@ describe('Daemon Module', () => {
   });
 
   test('daemon should respond to file creation events', async () => {
-    const daemonPath = path.resolve(__dirname, '../dist/index.js');
+    const daemonPath = path.resolve(__dirname, '../../dist/index.js');
     
     daemonProcess = await DaemonTestManager.startDaemon(daemonPath, testDir);
     await DaemonTestManager.waitForDaemonStartup(daemonProcess);
@@ -88,7 +88,7 @@ describe('Daemon Module', () => {
   });
 
   test('daemon should handle graceful shutdown on SIGTERM', async () => {
-    const daemonPath = path.resolve(__dirname, '../dist/index.js');
+    const daemonPath = path.resolve(__dirname, '../../dist/index.js');
     
     daemonProcess = await DaemonTestManager.startDaemon(daemonPath, testDir);
     await DaemonTestManager.waitForDaemonStartup(daemonProcess);
@@ -109,7 +109,7 @@ describe('Daemon Module', () => {
   });
 
   test('daemon should exclude configured patterns', async () => {
-    const daemonPath = path.resolve(__dirname, '../dist/index.js');
+    const daemonPath = path.resolve(__dirname, '../../dist/index.js');
     
     daemonProcess = await DaemonTestManager.startDaemon(daemonPath, testDir);
     await DaemonTestManager.waitForDaemonStartup(daemonProcess);
@@ -131,7 +131,7 @@ describe('Daemon Module', () => {
   });
 
   test('daemon should detect move events correctly', async () => {
-    const daemonPath = path.resolve(__dirname, '../dist/index.js');
+    const daemonPath = path.resolve(__dirname, '../../dist/index.js');
     
     daemonProcess = await DaemonTestManager.startDaemon(daemonPath, testDir);
     await DaemonTestManager.waitForDaemonStartup(daemonProcess);
@@ -163,7 +163,7 @@ describe('Daemon Module', () => {
   });
 
   test('daemon should handle file modification events', async () => {
-    const daemonPath = path.resolve(__dirname, '../dist/index.js');
+    const daemonPath = path.resolve(__dirname, '../../dist/index.js');
     
     daemonProcess = await DaemonTestManager.startDaemon(daemonPath, testDir);
     await DaemonTestManager.waitForDaemonStartup(daemonProcess);
@@ -187,7 +187,7 @@ describe('Daemon Module', () => {
   });
 
   test('daemon should handle file deletion events', async () => {
-    const daemonPath = path.resolve(__dirname, '../dist/index.js');
+    const daemonPath = path.resolve(__dirname, '../../dist/index.js');
     
     daemonProcess = await DaemonTestManager.startDaemon(daemonPath, testDir);
     await DaemonTestManager.waitForDaemonStartup(daemonProcess);

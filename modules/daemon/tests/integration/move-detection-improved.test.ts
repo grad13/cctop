@@ -7,13 +7,15 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 import { ChildProcess } from 'child_process';
 import Database from 'better-sqlite3';
-import { DaemonTestManager, setupDaemonTest, teardownDaemonTest } from './test-helpers';
 import { 
+  DaemonTestManager, 
+  setupDaemonTest, 
+  teardownDaemonTest,
   waitForDaemonReady, 
   waitForFileEvent, 
   createFileAndWaitForEvent,
   moveFileAndWaitForEvent 
-} from './test-utils';
+} from '../helpers';
 
 describe('Move Detection (Improved)', () => {
   const testDir = '/tmp/cctop-move-test-improved';
@@ -42,13 +44,14 @@ describe('Move Detection (Improved)', () => {
   });
 
   test('should correctly detect move events with proper inode tracking', async () => {
-    const daemonPath = path.resolve(__dirname, '../dist/index.js');
+    const daemonPath = path.resolve(__dirname, '../../dist/index.js');
     
     // Start daemon using test manager
     daemonProcess = await DaemonTestManager.startDaemon(daemonPath, testDir);
     
     // Wait for daemon to be ready
     await waitForDaemonReady(testDir);
+    await new Promise(resolve => setTimeout(resolve, 500)); // Wait for database initialization
     
     // Open database connection
     db = new Database(testDbPath);
@@ -87,11 +90,12 @@ describe('Move Detection (Improved)', () => {
   });
 
   test('should handle delete correctly when not a move', async () => {
-    const daemonPath = path.resolve(__dirname, '../dist/index.js');
+    const daemonPath = path.resolve(__dirname, '../../dist/index.js');
     
     // Start daemon
     daemonProcess = await DaemonTestManager.startDaemon(daemonPath, testDir);
     await waitForDaemonReady(testDir);
+    await new Promise(resolve => setTimeout(resolve, 500)); // Wait for database initialization
     
     db = new Database(testDbPath);
     
@@ -113,11 +117,12 @@ describe('Move Detection (Improved)', () => {
   });
 
   test('should detect multiple file operations correctly', async () => {
-    const daemonPath = path.resolve(__dirname, '../dist/index.js');
+    const daemonPath = path.resolve(__dirname, '../../dist/index.js');
     
     // Start daemon
     daemonProcess = await DaemonTestManager.startDaemon(daemonPath, testDir);
     await waitForDaemonReady(testDir);
+    await new Promise(resolve => setTimeout(resolve, 500)); // Wait for database initialization
     
     db = new Database(testDbPath);
     

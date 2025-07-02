@@ -7,15 +7,96 @@ import { describe, test, expect, beforeEach, afterEach, afterAll } from 'vitest'
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { ChildProcess } from 'child_process';
-import { setupDaemonTest, teardownDaemonTest, DaemonTestManager } from './test-helpers';
+import { setupDaemonTest, teardownDaemonTest, DaemonTestManager } from '../helpers';
 
 describe('Log File Writing (TDD)', () => {
   const testDir = '/tmp/cctop-log-file-test';
   const logFilePath = path.join(testDir, '.cctop/logs/daemon.log');
   let daemonProcess: ChildProcess | null = null;
+  let originalCwd: string;
 
   beforeEach(async () => {
-    await setupDaemonTest(testDir);
+    // Store original cwd and manually setup test environment without chdir
+    originalCwd = process.cwd();
+    
+    // Setup test directory structure
+    await fs.mkdir(testDir, { recursive: true });
+    await fs.mkdir(path.join(testDir, '.cctop/config'), { recursive: true });
+    await fs.mkdir(path.join(testDir, '.cctop/data'), { recursive: true });
+    await fs.mkdir(path.join(testDir, '.cctop/logs'), { recursive: true });
+    await fs.mkdir(path.join(testDir, '.cctop/runtime'), { recursive: true });
+    await fs.mkdir(path.join(testDir, '.cctop/temp'), { recursive: true });
+    
+    // Create config files
+    const sharedConfig = {
+      version: "0.3.0.0",
+      project: {
+        name: "cctop",
+        description: "Real-time file monitoring and code structure analysis tool"
+      },
+      database: {
+        path: ".cctop/data/activity.db",
+        maxSize: 104857600
+      },
+      directories: {
+        config: ".cctop/config",
+        logs: ".cctop/logs",
+        temp: ".cctop/temp",
+        runtime: ".cctop/runtime",
+        data: ".cctop/data"
+      },
+      logging: {
+        maxFileSize: 10485760,
+        maxFiles: 5,
+        datePattern: "YYYY-MM-DD",
+        level: "info"
+      }
+    };
+    
+    const daemonConfig = {
+      monitoring: {
+        watchPaths: ["."],
+        excludePatterns: [
+          "**/node_modules/**",
+          "**/.git/**",
+          "**/.*",
+          "**/.cctop/**",
+          "**/dist/**",
+          "**/coverage/**"
+        ],
+        debounceMs: 100,
+        maxDepth: 10,
+        moveThresholdMs: 100,
+        systemLimits: {
+          requiredLimit: 524288,
+          checkOnStartup: true,
+          warnIfInsufficient: true
+        }
+      },
+      daemon: {
+        pidFile: ".cctop/runtime/daemon.pid",
+        logFile: ".cctop/logs/daemon.log",
+        logLevel: "info",
+        heartbeatInterval: 5000,
+        autoStart: true
+      },
+      database: {
+        writeMode: "WAL",
+        syncMode: "NORMAL",
+        cacheSize: 65536,
+        busyTimeout: 5000
+      }
+    };
+    
+    await fs.writeFile(
+      path.join(testDir, '.cctop/config/shared-config.json'),
+      JSON.stringify(sharedConfig, null, 2)
+    );
+    
+    await fs.writeFile(
+      path.join(testDir, '.cctop/config/daemon-config.json'),
+      JSON.stringify(daemonConfig, null, 2)
+    );
   });
 
   afterEach(async () => {
@@ -23,7 +104,12 @@ describe('Log File Writing (TDD)', () => {
       await DaemonTestManager.stopDaemon(daemonProcess);
       daemonProcess = null;
     }
-    await teardownDaemonTest(null, testDir);
+    // Clean up test directory
+    try {
+      await fs.rm(testDir, { recursive: true, force: true });
+    } catch (error) {
+      console.warn('Cleanup warning:', error);
+    }
   });
 
   afterAll(async () => {
@@ -31,7 +117,7 @@ describe('Log File Writing (TDD)', () => {
   });
 
   async function startDaemon(): Promise<ChildProcess> {
-    const daemonPath = path.resolve(__dirname, '../dist/index.js');
+    const daemonPath = path.resolve(__dirname, '../../dist/index.js');
     const process = await DaemonTestManager.startDaemon(daemonPath, testDir);
     
     // Wait for daemon startup
@@ -113,7 +199,7 @@ describe('Log File Writing (TDD)', () => {
     
     expect(secondLogLines).toBeGreaterThan(firstLogLines);
     expect(secondLogContent).toContain(firstLogContent.trim());
-  });
+  }, 10000);
 
   test('should handle log file write errors gracefully', async () => {
     // Red Phase: This should fail because error handling is not implemented
@@ -130,5 +216,5 @@ describe('Log File Writing (TDD)', () => {
     
     // Restore permissions for cleanup
     await fs.chmod(path.dirname(logFilePath), 0o755);
-  });
+  }, 10000);
 });

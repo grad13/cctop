@@ -31,8 +31,10 @@ interface SharedConfig {
 
 export class DaemonConfigManager {
   private config: DaemonConfig;
+  private basePath: string;
 
-  constructor() {
+  constructor(basePath?: string) {
+    this.basePath = basePath || process.cwd();
     this.config = this.getDefaultConfig();
   }
 
@@ -89,7 +91,7 @@ export class DaemonConfigManager {
 
   private async loadSharedConfig(): Promise<Partial<SharedConfig>> {
     try {
-      const configPath = '.cctop/config/shared-config.json';
+      const configPath = path.join(this.basePath, '.cctop/config/shared-config.json');
       const configContent = await fs.readFile(configPath, 'utf8');
       return JSON.parse(configContent);
     } catch (error) {
@@ -100,7 +102,7 @@ export class DaemonConfigManager {
 
   private async loadDaemonConfig(): Promise<Partial<DaemonConfig>> {
     try {
-      const configPath = '.cctop/config/daemon-config.json';
+      const configPath = path.join(this.basePath, '.cctop/config/daemon-config.json');
       const configContent = await fs.readFile(configPath, 'utf8');
       const daemonConfig = JSON.parse(configContent);
       
@@ -157,15 +159,15 @@ export class DaemonConfigManager {
 
   async ensureDirectories(): Promise<void> {
     const directories = [
-      '.cctop/config',
-      '.cctop/themes',
-      '.cctop/data',
-      '.cctop/logs',
-      '.cctop/runtime',
-      '.cctop/temp',
-      path.dirname(this.config.database.path!),
-      path.dirname(this.config.daemon.pidFile),
-      path.dirname(this.config.daemon.logFile)
+      path.join(this.basePath, '.cctop/config'),
+      path.join(this.basePath, '.cctop/themes'),
+      path.join(this.basePath, '.cctop/data'),
+      path.join(this.basePath, '.cctop/logs'),
+      path.join(this.basePath, '.cctop/runtime'),
+      path.join(this.basePath, '.cctop/temp'),
+      path.join(this.basePath, path.dirname(this.config.database.path!)),
+      path.join(this.basePath, path.dirname(this.config.daemon.pidFile)),
+      path.join(this.basePath, path.dirname(this.config.daemon.logFile))
     ];
 
     for (const dir of directories) {
@@ -182,7 +184,7 @@ export class DaemonConfigManager {
 
   private async initializeDefaultConfigs(): Promise<void> {
     // Check if config directory exists and has no config files
-    const configDir = '.cctop/config';
+    const configDir = path.join(this.basePath, '.cctop/config');
     const sharedConfigPath = path.join(configDir, 'shared-config.json');
     const daemonConfigPath = path.join(configDir, 'daemon-config.json');
 
@@ -268,7 +270,7 @@ export class DaemonConfigManager {
     }
 
     // Create .gitignore if not exists
-    const gitignorePath = '.cctop/.gitignore';
+    const gitignorePath = path.join(this.basePath, '.cctop/.gitignore');
     try {
       await fs.access(gitignorePath);
     } catch {
