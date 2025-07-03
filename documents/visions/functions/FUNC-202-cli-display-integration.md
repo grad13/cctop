@@ -52,12 +52,13 @@ FUNC-000のデータベースから取得したファイルイベントを、リ
 Event Timestamp      Elapsed  File Name                           Event    Lines  Blocks  Directory
 ────────────────────────────────────────────────────
 2025-06-25 19:07:51    00:04  FUNC-112-cli-display-inte...       modify     197      16  documents/visions/functions
-2025-06-25 19:07:33    00:22  FUNC-001-file-lifecycle-t...       modify     207      16  documents/visions/functions
+2025-06-25 19:07:33    00:22  FUNC-001-file-lifecycle-t...       modify     207      16  ...ments/visions/blueprints
 2025-06-25 19:07:13    00:42  FUNC-112-cli-display-inte...       modify     233      24  documents/visions/functions
 2025-06-25 19:06:49    01:07  FUNC-112-cli-display-inte...       modify     235      16  documents/visions/functions
 ────────────────────────────────────────────────────
 All Activities  (4/156)
-[a] All  [u] Unique  [q] Exit
+[q] Exit [space] Pause  [r] Refresh [a] All  [u] Unique  
+[f] Find [c] Create [m] Modify [d] Delete [v] Move [r] Restore
 ```
 
 ### **表示モード仕様**
