@@ -1,6 +1,6 @@
 # Roles - エージェント役割定義
 
-このディレクトリには、5エージェント体制における各エージェントの役割定義を格納しています。
+このディレクトリには、6エージェント体制における各エージェントの役割定義を格納しています。
 
 ## 概要
 
@@ -19,6 +19,7 @@
 - [architect.md](./architect.md) - Architect Agent役割定義（システム設計・技術仕様策定・ロードマップ管理）
 - [clerk.md](./clerk.md) - Clerk Agent役割定義（ドキュメント管理・プロトコル策定・CLAUDE.md編集）
 - [inspector.md](./inspector.md) - Inspector Agent役割定義（統計監視・データ分析・システム運用監視）
+- [runner.md](./runner.md) - Runner Agent役割定義（worktree/container環境での横断的実装）
 
 ## 参照
 
