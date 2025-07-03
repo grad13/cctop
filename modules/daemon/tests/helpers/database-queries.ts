@@ -4,7 +4,7 @@
  */
 
 import { Database } from '../../../shared/dist/index';
-import type { AggregateData, GlobalStatistics } from './types';
+import type { DbEvent, AggregateData, GlobalStatistics } from './types';
 import sqlite3 from 'sqlite3';
 import { promisify } from 'util';
 
@@ -96,6 +96,30 @@ export class DatabaseQueries {
         else resolve(row);
       });
     });
+  }
+
+  async getEventsFromDb(): Promise<DbEvent[]> {
+    if (!this.db) throw new Error('Database not connected');
+    
+    return new Promise((resolve, reject) => {
+      this.db!.all(
+        'SELECT * FROM events ORDER BY id ASC',
+        (err, rows: any[]) => {
+          if (err) reject(err);
+          else resolve(rows as DbEvent[]);
+        }
+      );
+    });
+  }
+
+  async getEventsByType(eventType: string): Promise<DbEvent[]> {
+    const events = await this.getEventsFromDb();
+    return events.filter(e => e.event_type === eventType);
+  }
+
+  async getEventsByFilename(filename: string): Promise<DbEvent[]> {
+    const events = await this.getEventsFromDb();
+    return events.filter(e => e.filename === filename);
   }
 
   async close(): Promise<void> {

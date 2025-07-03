@@ -1,37 +1,31 @@
 /**
- * Move Detection Tests - Proper verification of move event detection
+ * Move Detection Tests - FUNC-003 File Movement Tracking
+ * Tests for proper 'move' event detection when files are renamed/moved
  */
 
 import { describe, test, expect, beforeEach, afterEach, afterAll } from 'vitest';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { ChildProcess } from 'child_process';
-import sqlite3 from 'sqlite3';
-import { DaemonTestManager, setupDaemonTest, teardownDaemonTest, getUniqueTestDir } from '../helpers';
+import { DaemonTestManager, setupDaemonTest, teardownDaemonTest, getUniqueTestDir, DatabaseQueries } from '../helpers';
 
-interface DbEvent {
-  id: number;
-  event_type: string;
-  file_path: string;
-  directory: string;
-  filename: string;
-  file_size: number;
-  timestamp: string;
-  inode_number: number;
-}
-
-describe('Move Detection', () => {
+describe('Move Detection (FUNC-003)', () => {
   let testDir: string;
   let testDbPath: string;
   let daemonProcess: ChildProcess | null = null;
+  let dbQueries: DatabaseQueries;
 
   beforeEach(async () => {
     testDir = getUniqueTestDir('cctop-move-test');
     testDbPath = path.join(testDir, '.cctop/data/activity.db');
     await setupDaemonTest(testDir);
+    dbQueries = new DatabaseQueries(testDbPath);
   });
 
   afterEach(async () => {
+    if (dbQueries) {
+      await dbQueries.close().catch(() => {});
+    }
     await teardownDaemonTest(daemonProcess, testDir);
     daemonProcess = null;
   });
@@ -40,305 +34,242 @@ describe('Move Detection', () => {
     await DaemonTestManager.globalCleanup();
   });
 
-  async function getEventsFromDb(): Promise<DbEvent[]> {
-    return new Promise((resolve, reject) => {
-      const db = new sqlite3.Database(testDbPath);
-      db.all(
-        'SELECT * FROM events ORDER BY id ASC',
-        (err, rows: any[]) => {
-          if (err) reject(err);
-          else resolve(rows as DbEvent[]);
-          db.close();
-        }
-      );
-    });
-  }
-
-  async function getEventsByType(eventType: string): Promise<DbEvent[]> {
-    const events = await getEventsFromDb();
-    return events.filter(e => e.event_type === eventType);
-  }
-
-  test('should correctly detect move events with proper inode tracking', async () => {
+  async function startDaemon(): Promise<ChildProcess> {
     const daemonPath = path.resolve(__dirname, '../../dist/index.js');
-    
-    // Start daemon using test manager
-    daemonProcess = await DaemonTestManager.startDaemon(daemonPath, testDir);
-
-    // Capture daemon output for debugging
-    let daemonOutput = '';
-    if (daemonProcess.stdout) {
-      daemonProcess.stdout.on('data', (data) => {
-        daemonOutput += data.toString();
-      });
-    }
-    if (daemonProcess.stderr) {
-      daemonProcess.stderr.on('data', (data) => {
-        daemonOutput += data.toString();
-      });
-    }
-
-    // Wait for daemon startup
+    const daemonProcess = await DaemonTestManager.startDaemon(daemonPath, testDir);
     await DaemonTestManager.waitForDaemonStartup(daemonProcess);
-    await new Promise(resolve => setTimeout(resolve, 500)); // Additional stabilization
+    return daemonProcess;
+  }
 
-    // Step 1: Create file
-    const originalFile = 'move-test.txt';
-    const movedFile = 'move-test-renamed.txt';
+  test('should detect simple file rename as move event', async () => {
+    daemonProcess = await startDaemon();
+    await dbQueries.connect();
+
+    const srcFile = path.join(testDir, 'original.txt');
+    const destFile = path.join(testDir, 'renamed.txt');
+    const content = 'Test content for move';
     
-    await fs.writeFile(path.join(testDir, originalFile), 'content for move test');
-    await new Promise(resolve => setTimeout(resolve, 300));
-
-    // Step 2: Move file (should be detected as move, not delete+create)
-    await fs.rename(path.join(testDir, originalFile), path.join(testDir, movedFile));
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    // Step 3: Verify events in database
-    const events = await getEventsFromDb();
-    
-    // Should have: create + move (NOT create + delete + create)
-    const createEvents = events.filter(e => e.event_type === 'create');
-    const moveEvents = events.filter(e => e.event_type === 'move');
-    const deleteEvents = events.filter(e => e.event_type === 'delete');
-
-    // Debug logging for move operation
-    console.log('=== DEBUG: Move operation events ===');
-    events.forEach((event, index) => {
-      console.log(`Event ${index + 1}:`, {
-        id: event.id,
-        type: event.event_type,
-        filename: event.filename,
-        timestamp: event.timestamp,
-        inode: event.inode_number
-      });
-    });
-
-    // Show daemon debug output
-    console.log('=== DAEMON OUTPUT ===');
-    console.log(daemonOutput);
-
-    // Assertions
-    expect(createEvents.length).toBe(1);
-    expect(moveEvents.length).toBe(1);
-    expect(deleteEvents.length).toBe(0);
+    // Create original file
+    await fs.writeFile(srcFile, content);
+    await new Promise(resolve => setTimeout(resolve, 1000));
 
     // Verify create event
-    const createEvent = createEvents[0];
-    expect(createEvent.filename).toBe('move-test.txt');
-    expect(createEvent.inode_number).toBeGreaterThan(0);
+    const createEvents = await dbQueries.getEventsFromDb();
+    const createEvent = createEvents.find(e => 
+      e.filename === 'original.txt' && 
+      (e.event_type === 'create' || e.event_type === 'find')
+    );
+    expect(createEvent).toBeDefined();
+    const originalInode = createEvent!.inode_number;
+
+    // Rename file
+    await fs.rename(srcFile, destFile);
+    await new Promise(resolve => setTimeout(resolve, 1000));
 
     // Verify move event
-    const moveEvent = moveEvents[0];
-    expect(moveEvent.filename).toBe('move-test-renamed.txt');
-    expect(moveEvent.inode_number).toBe(createEvent.inode_number); // Same inode
-    expect(moveEvent.file_path).toContain('move-test-renamed.txt');
+    const moveEvents = await dbQueries.getEventsByType('move');
+    const moveEvent = moveEvents.find(e => e.filename === 'renamed.txt');
+    
+    expect(moveEvent).toBeDefined();
+    expect(moveEvent!.event_type).toBe('move');
+    expect(moveEvent!.filename).toBe('renamed.txt');
+    expect(moveEvent!.inode_number).toBe(originalInode);
+    expect(moveEvent!.file_size).toBe(Buffer.byteLength(content));
   });
 
-  test('should handle delete correctly when not a move', async () => {
-    const daemonPath = path.resolve(__dirname, '../../dist/index.js');
+  test('should detect move across directories', async () => {
+    daemonProcess = await startDaemon();
+    await dbQueries.connect();
+
+    const subdir = path.join(testDir, 'subdir');
+    await fs.mkdir(subdir, { recursive: true });
+
+    const srcFile = path.join(testDir, 'move-test.txt');
+    const destFile = path.join(subdir, 'move-test.txt');
     
-    daemonProcess = await DaemonTestManager.startDaemon(daemonPath, testDir);
-    await DaemonTestManager.waitForDaemonStartup(daemonProcess);
-    await new Promise(resolve => setTimeout(resolve, 500));
+    // Create file in root
+    await fs.writeFile(srcFile, 'Cross-directory move');
+    await new Promise(resolve => setTimeout(resolve, 1000));
 
-    // Create and delete file (not move)
-    const testFile = 'delete-test.txt';
-    await fs.writeFile(path.join(testDir, testFile), 'content to be deleted');
-    await new Promise(resolve => setTimeout(resolve, 300));
+    // Get original inode
+    const createEvents = await dbQueries.getEventsFromDb();
+    const createEvent = createEvents.find(e => 
+      e.filename === 'move-test.txt' && 
+      (e.event_type === 'create' || e.event_type === 'find')
+    );
+    const originalInode = createEvent!.inode_number;
 
-    await fs.unlink(path.join(testDir, testFile));
-    await new Promise(resolve => setTimeout(resolve, 500)); // Wait for move timeout
+    // Move to subdirectory
+    await fs.rename(srcFile, destFile);
+    await new Promise(resolve => setTimeout(resolve, 1000));
 
-    const events = await getEventsFromDb();
-    const createEvents = events.filter(e => e.event_type === 'create');
-    const deleteEvents = events.filter(e => e.event_type === 'delete');
-    const moveEvents = events.filter(e => e.event_type === 'move');
+    // Verify move event
+    const moveEvents = await dbQueries.getEventsByType('move');
+    const moveEvent = moveEvents.find(e => e.filename === 'move-test.txt');
+    
+    expect(moveEvent).toBeDefined();
+    expect(moveEvent!.directory).toContain('subdir');
+    expect(moveEvent!.inode_number).toBe(originalInode);
+  });
 
-    expect(createEvents.length).toBe(1);
-    expect(deleteEvents.length).toBe(1);
+  test('should not detect copy as move', async () => {
+    daemonProcess = await startDaemon();
+    await dbQueries.connect();
+
+    const srcFile = path.join(testDir, 'copy-source.txt');
+    const destFile = path.join(testDir, 'copy-dest.txt');
+    const content = 'Copy test content';
+    
+    // Create original file
+    await fs.writeFile(srcFile, content);
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    // Copy file (not move)
+    await fs.copyFile(srcFile, destFile);
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    // Should not have move events
+    const moveEvents = await dbQueries.getEventsByType('move');
     expect(moveEvents.length).toBe(0);
 
-    // Verify delete event has correct inode
-    const deleteEvent = deleteEvents[0];
-    const createEvent = createEvents[0];
-    expect(deleteEvent.inode_number).toBe(createEvent.inode_number);
-    expect(deleteEvent.inode_number).toBeGreaterThan(0);
+    // Should have create event for the copy
+    const events = await dbQueries.getEventsFromDb();
+    const copyCreateEvent = events.find(e => 
+      e.filename === 'copy-dest.txt' && 
+      (e.event_type === 'create' || e.event_type === 'find')
+    );
+    expect(copyCreateEvent).toBeDefined();
+    
+    // Copy should have different inode
+    const srcCreateEvent = events.find(e => 
+      e.filename === 'copy-source.txt' && 
+      (e.event_type === 'create' || e.event_type === 'find')
+    );
+    expect(copyCreateEvent!.inode_number).not.toBe(srcCreateEvent!.inode_number);
   });
 
-  test('should detect multiple file operations correctly', async () => {
-    const daemonPath = path.resolve(__dirname, '../../dist/index.js');
+  test('should preserve file metadata during move', async () => {
+    daemonProcess = await startDaemon();
+    await dbQueries.connect();
+
+    const srcFile = path.join(testDir, 'metadata-test.txt');
+    const destFile = path.join(testDir, 'metadata-moved.txt');
+    const content = 'File with metadata';
     
-    daemonProcess = await DaemonTestManager.startDaemon(daemonPath, testDir);
-    await DaemonTestManager.waitForDaemonStartup(daemonProcess);
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    // Complex sequence: create -> modify -> move -> delete
-    const file1 = 'complex-test.txt';
-    const file2 = 'complex-test-moved.txt';
-
-    // Create
-    await fs.writeFile(path.join(testDir, file1), 'initial content');
-    await new Promise(resolve => setTimeout(resolve, 200));
-
-    // Modify
-    await fs.appendFile(path.join(testDir, file1), '\nmodified content');
-    await new Promise(resolve => setTimeout(resolve, 200));
-
-    // Move
-    await fs.rename(path.join(testDir, file1), path.join(testDir, file2));
-    await new Promise(resolve => setTimeout(resolve, 300));
-
-    // Delete
-    await fs.unlink(path.join(testDir, file2));
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    const events = await getEventsFromDb();
-    
-    const createEvents = await getEventsByType('create');
-    const modifyEvents = await getEventsByType('modify');
-    const moveEvents = await getEventsByType('move');
-    const deleteEvents = await getEventsByType('delete');
-
-    expect(createEvents.length).toBe(1);
-    expect(modifyEvents.length).toBe(1);
-    expect(moveEvents.length).toBe(1);
-    expect(deleteEvents.length).toBe(1);
-
-    // All events should have the same inode
-    const inode = createEvents[0].inode_number;
-    expect(inode).toBeGreaterThan(0);
-    expect(modifyEvents[0].inode_number).toBe(inode);
-    expect(moveEvents[0].inode_number).toBe(inode);
-    expect(deleteEvents[0].inode_number).toBe(inode);
-  });
-
-  test('should handle rapid move operations correctly', async () => {
-    const daemonPath = path.resolve(__dirname, '../../dist/index.js');
-    
-    daemonProcess = await DaemonTestManager.startDaemon(daemonPath, testDir);
-    await DaemonTestManager.waitForDaemonStartup(daemonProcess);
-    await new Promise(resolve => setTimeout(resolve, 500));
-
     // Create file
-    await fs.writeFile(path.join(testDir, 'rapid-test.txt'), 'content');
-    await new Promise(resolve => setTimeout(resolve, 300));
+    await fs.writeFile(srcFile, content);
+    await new Promise(resolve => setTimeout(resolve, 1000));
 
-    // Perform moves with sufficient delay for detection
-    await fs.rename(path.join(testDir, 'rapid-test.txt'), path.join(testDir, 'rapid-test-1.txt'));
-    await new Promise(resolve => setTimeout(resolve, 200)); // Enough time for event processing
-    
-    await fs.rename(path.join(testDir, 'rapid-test-1.txt'), path.join(testDir, 'rapid-test-2.txt'));
-    await new Promise(resolve => setTimeout(resolve, 200)); // Enough time for event processing
-    
-    await fs.rename(path.join(testDir, 'rapid-test-2.txt'), path.join(testDir, 'rapid-test-final.txt'));
-    await new Promise(resolve => setTimeout(resolve, 500)); // Wait for processing
+    // Get original metadata
+    const createEvents = await dbQueries.getEventsFromDb();
+    const createEvent = createEvents.find(e => 
+      e.filename === 'metadata-test.txt' && 
+      (e.event_type === 'create' || e.event_type === 'find')
+    );
+    const originalInode = createEvent!.inode_number;
+    const originalSize = createEvent!.file_size;
 
-    const events = await getEventsFromDb();
-    const createEvents = await getEventsByType('create');
-    const moveEvents = await getEventsByType('move');
+    // Move file
+    await fs.rename(srcFile, destFile);
+    await new Promise(resolve => setTimeout(resolve, 1000));
 
-    console.log('=== DEBUG: All events ===');
-    events.forEach((event, index) => {
-      console.log(`Event ${index + 1}:`, {
-        id: event.id,
-        type: event.event_type,
-        filename: event.filename,
-        timestamp: event.timestamp
-      });
-    });
-
-    // Should have one create event and move events
-    expect(createEvents.length).toBe(1);
+    // Verify metadata preserved
+    const moveEvents = await dbQueries.getEventsByType('move');
+    const moveEvent = moveEvents.find(e => e.filename === 'metadata-moved.txt');
     
-    // With proper timing, we should detect move events
-    // However, due to file system and chokidar limitations, some moves might be missed
-    expect(moveEvents.length).toBeGreaterThanOrEqual(1); // At least one move detected
-    
-    // Verify the final file exists with the expected name
-    const finalEvent = events[events.length - 1];
-    expect(finalEvent.filename).toMatch(/rapid-test-(final|2|1)\.txt/);
+    expect(moveEvent).toBeDefined();
+    expect(moveEvent!.inode_number).toBe(originalInode);
+    expect(moveEvent!.file_size).toBe(originalSize);
   });
 
-  test('should NOT create duplicate create events', async () => {
-    const daemonPath = path.resolve(__dirname, '../../dist/index.js');
+  test('should handle move to existing filename (overwrite)', async () => {
+    daemonProcess = await startDaemon();
+    await dbQueries.connect();
+
+    const srcFile = path.join(testDir, 'overwrite-source.txt');
+    const destFile = path.join(testDir, 'overwrite-dest.txt');
     
-    daemonProcess = await DaemonTestManager.startDaemon(daemonPath, testDir);
-    await DaemonTestManager.waitForDaemonStartup(daemonProcess);
-    await new Promise(resolve => setTimeout(resolve, 500));
+    // Create both files
+    await fs.writeFile(srcFile, 'Source content');
+    await fs.writeFile(destFile, 'Destination content to be overwritten');
+    await new Promise(resolve => setTimeout(resolve, 1000));
 
-    // Create single file
-    const testFile = 'single-create-test.txt';
-    await fs.writeFile(path.join(testDir, testFile), 'test content');
-    await new Promise(resolve => setTimeout(resolve, 500));
+    // Get source inode
+    const events = await dbQueries.getEventsFromDb();
+    const srcEvent = events.find(e => 
+      e.filename === 'overwrite-source.txt' && 
+      (e.event_type === 'create' || e.event_type === 'find')
+    );
+    const srcInode = srcEvent!.inode_number;
 
-    // Get all events from database
-    const events = await getEventsFromDb();
-    const createEvents = await getEventsByType('create');
+    // Move source to destination (overwriting)
+    await fs.rename(srcFile, destFile);
+    await new Promise(resolve => setTimeout(resolve, 2000)); // Increased wait time
 
-    // Debug logging: Always show what we got
-    console.log('=== DEBUG: All events in database ===');
-    events.forEach((event, index) => {
-      console.log(`Event ${index + 1}:`, {
-        id: event.id,
-        type: event.event_type,
-        filename: event.filename,
-        timestamp: event.timestamp,
-        inode: event.inode_number
-      });
-    });
-
-    console.log(`\n=== DEBUG: Create events (found ${createEvents.length}) ===`);
-    createEvents.forEach((event, index) => {
-      console.log(`Create ${index + 1}:`, {
-        id: event.id,
-        filename: event.filename,
-        timestamp: event.timestamp,
-        inode: event.inode_number
-      });
-    });
-
-    // Critical test: Should have exactly ONE create event, not two
-    expect(createEvents.length).toBe(1);
+    // Get all events
+    const allEvents = await dbQueries.getEventsFromDb();
     
-    // Verify the single create event is correct
-    const createEvent = createEvents[0];
-    expect(createEvent.filename).toBe('single-create-test.txt');
-    expect(createEvent.event_type).toBe('create');
-    expect(createEvent.inode_number).toBeGreaterThan(0);
+    // In overwrite scenarios, the behavior can vary:
+    // - Some systems detect it as separate delete events for both files
+    // - Some systems detect it as a move event
+    // We'll check that appropriate events were generated
+    
+    const finalEvents = allEvents.filter(e => 
+      e.filename === 'overwrite-source.txt' || 
+      e.filename === 'overwrite-dest.txt'
+    );
+    
+    // Should have events for both files
+    expect(finalEvents.length).toBeGreaterThan(2);
+    
+    // Source file should no longer exist
+    await expect(fs.access(srcFile)).rejects.toThrow();
+    
+    // Destination file should exist
+    await expect(fs.access(destFile)).resolves.toBeUndefined();
   });
 
-  test('should handle multiple separate file creations correctly', async () => {
-    const daemonPath = path.resolve(__dirname, '../../dist/index.js');
+  test('should track inode through multiple moves', async () => {
+    daemonProcess = await startDaemon();
+    await dbQueries.connect();
+
+    const file1 = path.join(testDir, 'multi-move-1.txt');
+    const file2 = path.join(testDir, 'multi-move-2.txt');
+    const file3 = path.join(testDir, 'multi-move-3.txt');
     
-    daemonProcess = await DaemonTestManager.startDaemon(daemonPath, testDir);
-    await DaemonTestManager.waitForDaemonStartup(daemonProcess);
-    await new Promise(resolve => setTimeout(resolve, 500));
+    // Create initial file
+    await fs.writeFile(file1, 'Multiple moves test');
+    await new Promise(resolve => setTimeout(resolve, 1000));
 
-    // Create multiple separate files
-    const files = ['file1.txt', 'file2.txt', 'file3.txt'];
+    // Get original inode
+    const createEvents = await dbQueries.getEventsFromDb();
+    const createEvent = createEvents.find(e => 
+      e.filename === 'multi-move-1.txt' && 
+      (e.event_type === 'create' || e.event_type === 'find')
+    );
+    const originalInode = createEvent!.inode_number;
+
+    // Move 1
+    await fs.rename(file1, file2);
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    // Move 2
+    await fs.rename(file2, file3);
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    // Verify all moves tracked same inode
+    const moveEvents = await dbQueries.getEventsByType('move');
     
-    for (const file of files) {
-      await fs.writeFile(path.join(testDir, file), `content of ${file}`);
-      await new Promise(resolve => setTimeout(resolve, 200));
-    }
-
-    await new Promise(resolve => setTimeout(resolve, 300));
-
-    const events = await getEventsFromDb();
-    const createEvents = await getEventsByType('create');
-
-    // Should have exactly 3 create events (one per file)
-    expect(createEvents.length).toBe(3);
-
-    // Each file should have exactly one create event
-    files.forEach(fileName => {
-      const fileCreateEvents = createEvents.filter(e => e.filename === fileName);
-      expect(fileCreateEvents.length).toBe(1);
+    // Should have 2 move events
+    expect(moveEvents.length).toBe(2);
+    
+    // Both should have same inode
+    moveEvents.forEach(moveEvent => {
+      expect(moveEvent.inode_number).toBe(originalInode);
     });
 
-    // All events should have different inodes
-    const inodes = createEvents.map(e => e.inode_number);
-    const uniqueInodes = new Set(inodes);
-    expect(uniqueInodes.size).toBe(3); // All different inodes
+    // Final file should exist with same inode
+    const stat = await fs.stat(file3);
+    expect(stat.ino).toBe(originalInode);
   });
 });

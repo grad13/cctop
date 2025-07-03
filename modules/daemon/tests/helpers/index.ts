@@ -5,6 +5,7 @@
 
 // Type definitions
 export type {
+  DbEvent,
   AggregateData,
   GlobalStatistics
 } from './types';

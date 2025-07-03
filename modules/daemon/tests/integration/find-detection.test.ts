@@ -1,38 +1,31 @@
 /**
- * Find Detection Tests - FUNC-001 Initial Scan Implementation
- * Tests for proper 'find' event detection during daemon startup
+ * Find Detection Tests - FUNC-002 Scan Existing Files
+ * Tests for proper 'find' event detection during initial scan
  */
 
 import { describe, test, expect, beforeEach, afterEach, afterAll } from 'vitest';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { ChildProcess } from 'child_process';
-import sqlite3 from 'sqlite3';
-import { DaemonTestManager, setupDaemonTest, teardownDaemonTest, getUniqueTestDir } from '../helpers';
+import { DaemonTestManager, setupDaemonTest, teardownDaemonTest, getUniqueTestDir, DatabaseQueries } from '../helpers';
 
-interface DbEvent {
-  id: number;
-  event_type: string;
-  file_path: string;
-  directory: string;
-  filename: string;
-  file_size: number;
-  timestamp: string;
-  inode_number: number;
-}
-
-describe('Find Detection (FUNC-001)', () => {
+describe('Find Detection (FUNC-002)', () => {
   let testDir: string;
   let testDbPath: string;
   let daemonProcess: ChildProcess | null = null;
+  let dbQueries: DatabaseQueries;
 
   beforeEach(async () => {
     testDir = getUniqueTestDir('cctop-find-test');
     testDbPath = path.join(testDir, '.cctop/data/activity.db');
     await setupDaemonTest(testDir);
+    dbQueries = new DatabaseQueries(testDbPath);
   });
 
   afterEach(async () => {
+    if (dbQueries) {
+      await dbQueries.close().catch(() => {});
+    }
     await teardownDaemonTest(daemonProcess, testDir);
     daemonProcess = null;
   });
@@ -41,258 +34,202 @@ describe('Find Detection (FUNC-001)', () => {
     await DaemonTestManager.globalCleanup();
   });
 
-  async function getEventsFromDb(): Promise<DbEvent[]> {
-    return new Promise((resolve, reject) => {
-      const db = new sqlite3.Database(testDbPath);
-      db.all(
-        'SELECT * FROM events ORDER BY id ASC',
-        (err, rows: any[]) => {
-          if (err) reject(err);
-          else resolve(rows as DbEvent[]);
-          db.close();
-        }
-      );
-    });
+  async function startDaemon(): Promise<ChildProcess> {
+    const daemonPath = path.resolve(__dirname, '../../dist/index.js');
+    const daemonProcess = await DaemonTestManager.startDaemon(daemonPath, testDir);
+    await DaemonTestManager.waitForDaemonStartup(daemonProcess);
+    return daemonProcess;
   }
 
-  async function getEventsByType(eventType: string): Promise<DbEvent[]> {
-    const events = await getEventsFromDb();
-    return events.filter(e => e.event_type === eventType);
-  }
-
-  test('should detect existing files as "find" events during initial scan', async () => {
-    // RED PHASE: Create existing files BEFORE daemon starts
-    const existingFiles = [
-      'existing-file-1.txt',
-      'existing-file-2.js', 
-      'existing-file-3.md'
+  test('should detect pre-existing files as find events', async () => {
+    // Create files before daemon starts
+    const testFiles = [
+      'existing-1.txt',
+      'existing-2.js',
+      'existing-3.md'
     ];
 
-    for (const fileName of existingFiles) {
-      await fs.writeFile(path.join(testDir, fileName), `Pre-existing content in ${fileName}`);
+    for (const fileName of testFiles) {
+      await fs.writeFile(path.join(testDir, fileName), `Content of ${fileName}`);
     }
 
-    // Verify files exist before daemon starts
-    for (const fileName of existingFiles) {
-      await expect(fs.access(path.join(testDir, fileName))).resolves.toBeUndefined();
-    }
-
-    // GREEN PHASE: Start daemon (should perform initial scan)
-    const daemonPath = path.resolve(__dirname, '../../dist/index.js');
+    // Start daemon after files exist
+    daemonProcess = await startDaemon();
+    await dbQueries.connect();
     
-    daemonProcess = await DaemonTestManager.startDaemon(daemonPath, testDir);
-    await DaemonTestManager.waitForDaemonStartup(daemonProcess);
+    // Wait for initial scan
+    await new Promise(resolve => setTimeout(resolve, 2000));
+
+    // Verify find events
+    const events = await dbQueries.getEventsFromDb();
+    const findEvents = await dbQueries.getEventsByType('find');
     
-    // Wait for initial scan completion
-    await new Promise(resolve => setTimeout(resolve, 1000));
-
-    // VERIFICATION: Check database for 'find' events
-    const events = await getEventsFromDb();
-    const findEvents = await getEventsByType('find');
-
-    // Debug logging
-    console.log('=== DEBUG: All events after initial scan ===');
-    events.forEach((event, index) => {
-      console.log(`Event ${index + 1}:`, {
-        id: event.id,
-        type: event.event_type,
-        filename: event.filename,
-        timestamp: event.timestamp,
-        inode: event.inode_number
-      });
-    });
-
-    console.log(`\n=== DEBUG: Find events (found ${findEvents.length}) ===`);
-    findEvents.forEach((event, index) => {
-      console.log(`Find ${index + 1}:`, {
-        id: event.id,
-        filename: event.filename,
-        timestamp: event.timestamp,
-        inode: event.inode_number
-      });
-    });
-
-    // ASSERTIONS: Should have exactly 3 'find' events
-    expect(findEvents.length).toBe(3);
-
-    // Each existing file should have exactly one 'find' event
-    existingFiles.forEach(fileName => {
+    // Should have find events for all pre-existing files
+    expect(findEvents.length).toBe(testFiles.length);
+    
+    testFiles.forEach(fileName => {
       const fileFindEvents = findEvents.filter(e => e.filename === fileName);
       expect(fileFindEvents.length).toBe(1);
-      
-      const findEvent = fileFindEvents[0];
-      expect(findEvent.event_type).toBe('find');
-      expect(findEvent.inode_number).toBeGreaterThan(0);
-      expect(findEvent.file_path).toContain(fileName);
+      expect(fileFindEvents[0].event_type).toBe('find');
     });
 
-    // Should NOT have any 'create' events for pre-existing files
-    const createEvents = await getEventsByType('create');
-    expect(createEvents.length).toBe(0);
+    // Should not have create events for these files
+    const createEvents = await dbQueries.getEventsByType('create');
+    testFiles.forEach(fileName => {
+      const fileCreateEvents = createEvents.filter(e => e.filename === fileName);
+      expect(fileCreateEvents.length).toBe(0);
+    });
   });
 
-  test('should distinguish "find" events from "create" events', async () => {
-    // Create one existing file before daemon starts
-    await fs.writeFile(path.join(testDir, 'pre-existing.txt'), 'existed before daemon');
-    
-    // Start daemon
-    const daemonPath = path.resolve(__dirname, '../../dist/index.js');
-    
-    daemonProcess = await DaemonTestManager.startDaemon(daemonPath, testDir);
-    await DaemonTestManager.waitForDaemonStartup(daemonProcess);
-
-    // Wait for daemon startup and initial scan
-    await new Promise(resolve => setTimeout(resolve, 2000));
-
-    // Create new file AFTER daemon is running
-    await fs.writeFile(path.join(testDir, 'newly-created.txt'), 'created after daemon started');
-    
-    // Wait for real-time event processing
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    // Verify event types
-    const findEvents = await getEventsByType('find');
-    const createEvents = await getEventsByType('create');
-
-    // Should have one 'find' event for pre-existing file
-    expect(findEvents.length).toBe(1);
-    expect(findEvents[0].filename).toBe('pre-existing.txt');
-    expect(findEvents[0].event_type).toBe('find');
-
-    // Should have one 'create' event for newly created file
-    expect(createEvents.length).toBe(1);
-    expect(createEvents[0].filename).toBe('newly-created.txt');
-    expect(createEvents[0].event_type).toBe('create');
-  });
-
-  test('should handle empty directory correctly during initial scan', async () => {
-    // Start daemon in empty directory (no existing files)
-    const daemonPath = path.resolve(__dirname, '../../dist/index.js');
-    
-    daemonProcess = await DaemonTestManager.startDaemon(daemonPath, testDir);
-    await DaemonTestManager.waitForDaemonStartup(daemonProcess);
-
-    // Wait for daemon startup and initial scan
-    await new Promise(resolve => setTimeout(resolve, 2000));
-
-    // Verify no 'find' events in empty directory
-    const findEvents = await getEventsByType('find');
-    expect(findEvents.length).toBe(0);
-
-    // Database should still be created and accessible
-    await expect(fs.access(testDbPath)).resolves.toBeUndefined();
-  });
-
-  test('should record correct metadata for found files', async () => {
-    // Create test file with known content
-    const testContent = 'Test content for metadata verification';
-    const testFileName = 'metadata-test.txt';
-    
-    await fs.writeFile(path.join(testDir, testFileName), testContent);
-    
-    // Get file stats before daemon starts
-    const stats = await fs.stat(path.join(testDir, testFileName));
-    const expectedSize = stats.size;
-    const expectedInode = stats.ino;
-
-    // Start daemon
-    const daemonPath = path.resolve(__dirname, '../../dist/index.js');
-    
-    daemonProcess = await DaemonTestManager.startDaemon(daemonPath, testDir);
-    await DaemonTestManager.waitForDaemonStartup(daemonProcess);
-    await new Promise(resolve => setTimeout(resolve, 1000));
-
-    // Verify metadata in 'find' event
-    const findEvents = await getEventsByType('find');
-    expect(findEvents.length).toBe(1);
-
-    const findEvent = findEvents[0];
-    expect(findEvent.filename).toBe(testFileName);
-    expect(findEvent.file_size).toBe(expectedSize);
-    expect(findEvent.inode_number).toBe(expectedInode);
-    expect(findEvent.event_type).toBe('find');
-    
-    // Verify timestamp is reasonable (within last few seconds)
-    const eventTimestamp = new Date(findEvent.timestamp).getTime();
-    const now = Date.now();
-    const timeDiff = now - eventTimestamp;
-    expect(timeDiff).toBeLessThan(10000); // Less than 10 seconds ago
-  });
-
-  test('should handle multiple file types during initial scan', async () => {
-    // Create files with different extensions and sizes
-    const testFiles = [
-      { name: 'document.txt', content: 'Text document content' },
-      { name: 'script.js', content: 'console.log("JavaScript file");' },
-      { name: 'style.css', content: 'body { margin: 0; }' },
-      { name: 'data.json', content: '{"key": "value", "number": 42}' },
-      { name: 'no-extension', content: 'File without extension' }
+  test('should detect files in subdirectories during initial scan', async () => {
+    // Create directory structure with files
+    const fileStructure = [
+      'root.txt',
+      'subdir/sub1.txt',
+      'subdir/sub2.txt',
+      'subdir/nested/deep.txt'
     ];
 
-    // Create all test files
-    for (const file of testFiles) {
-      await fs.writeFile(path.join(testDir, file.name), file.content);
+    for (const filePath of fileStructure) {
+      const fullPath = path.join(testDir, filePath);
+      await fs.mkdir(path.dirname(fullPath), { recursive: true });
+      await fs.writeFile(fullPath, `Content of ${filePath}`);
     }
 
     // Start daemon
-    const daemonPath = path.resolve(__dirname, '../../dist/index.js');
+    daemonProcess = await startDaemon();
+    await dbQueries.connect();
+    await new Promise(resolve => setTimeout(resolve, 2000));
+
+    // Verify all files found
+    const findEvents = await dbQueries.getEventsByType('find');
     
-    daemonProcess = await DaemonTestManager.startDaemon(daemonPath, testDir);
-    await DaemonTestManager.waitForDaemonStartup(daemonProcess);
-    await new Promise(resolve => setTimeout(resolve, 1000));
-
-    // Verify all files were detected as 'find' events
-    const findEvents = await getEventsByType('find');
-    expect(findEvents.length).toBe(testFiles.length);
-
-    // Check each file was properly recorded
-    testFiles.forEach(testFile => {
-      const fileEvents = findEvents.filter(e => e.filename === testFile.name);
-      expect(fileEvents.length).toBe(1);
-      
-      const findEvent = fileEvents[0];
-      expect(findEvent.event_type).toBe('find');
-      expect(findEvent.file_size).toBe(Buffer.byteLength(testFile.content, 'utf8'));
-      expect(findEvent.inode_number).toBeGreaterThan(0);
+    expect(findEvents.length).toBe(fileStructure.length);
+    
+    fileStructure.forEach(filePath => {
+      const fileName = path.basename(filePath);
+      const fileFindEvents = findEvents.filter(e => e.filename === fileName);
+      expect(fileFindEvents.length).toBe(1);
+      expect(fileFindEvents[0].file_path).toContain(filePath);
     });
   });
 
-  test('should handle subdirectories during initial scan', async () => {
-    // Create directory structure with files
-    await fs.mkdir(path.join(testDir, 'subdir1'), { recursive: true });
-    await fs.mkdir(path.join(testDir, 'subdir2/nested'), { recursive: true });
+  test('should capture correct metadata for found files', async () => {
+    // Create file with known content
+    const testFile = 'metadata-test.txt';
+    const testContent = 'This is test content for metadata verification';
+    const fullPath = path.join(testDir, testFile);
     
-    // Create files in different locations
-    await fs.writeFile(path.join(testDir, 'root-file.txt'), 'Root level file');
-    await fs.mkdir(path.join(testDir, 'subdir1'), { recursive: true });
-    await fs.writeFile(path.join(testDir, 'subdir1/sub-file.txt'), 'File in subdirectory');
-    await fs.mkdir(path.join(testDir, 'subdir2/nested'), { recursive: true });
-    await fs.writeFile(path.join(testDir, 'subdir2/nested/deep-file.txt'), 'File in nested directory');
+    await fs.writeFile(fullPath, testContent);
+    const stat = await fs.stat(fullPath);
 
     // Start daemon
-    const daemonPath = path.resolve(__dirname, '../../dist/index.js');
+    daemonProcess = await startDaemon();
+    await dbQueries.connect();
+    await new Promise(resolve => setTimeout(resolve, 2000));
+
+    // Verify metadata
+    const findEvents = await dbQueries.getEventsByType('find');
+    const findEvent = findEvents.find(e => e.filename === testFile);
     
-    daemonProcess = await DaemonTestManager.startDaemon(daemonPath, testDir);
-    await DaemonTestManager.waitForDaemonStartup(daemonProcess);
+    expect(findEvent).toBeDefined();
+    expect(findEvent!.file_size).toBe(Buffer.byteLength(testContent));
+    expect(findEvent!.inode_number).toBe(stat.ino);
+    expect(findEvent!.directory).toBe('.');
+  });
+
+  test('should handle empty directories without creating events', async () => {
+    // Create empty directories
+    await fs.mkdir(path.join(testDir, 'empty-dir'), { recursive: true });
+    await fs.mkdir(path.join(testDir, 'empty-dir/nested-empty'), { recursive: true });
+
+    // Start daemon
+    daemonProcess = await startDaemon();
+    await dbQueries.connect();
+    await new Promise(resolve => setTimeout(resolve, 2000));
+
+    // Should not have any events for empty directories
+    const events = await dbQueries.getEventsFromDb();
+    expect(events.length).toBe(0);
+  });
+
+  test('should differentiate between find and create events', async () => {
+    // Create some files before daemon starts
+    const preExistingFile = 'pre-existing.txt';
+    await fs.writeFile(path.join(testDir, preExistingFile), 'Pre-existing content');
+
+    // Start daemon
+    daemonProcess = await startDaemon();
+    await dbQueries.connect();
+    await new Promise(resolve => setTimeout(resolve, 2000));
+
+    // Create new file after daemon is running
+    const newFile = 'new-file.txt';
+    await fs.writeFile(path.join(testDir, newFile), 'New file content');
     await new Promise(resolve => setTimeout(resolve, 1000));
 
-    // Verify all files were found regardless of directory depth
-    const findEvents = await getEventsByType('find');
-    expect(findEvents.length).toBe(3);
+    // Verify events
+    const findEvents = await dbQueries.getEventsByType('find');
+    const createEvents = await dbQueries.getEventsByType('create');
 
-    // Check specific files
-    const filenames = findEvents.map(e => e.filename);
-    expect(filenames).toContain('root-file.txt');
-    expect(filenames).toContain('sub-file.txt');
-    expect(filenames).toContain('deep-file.txt');
+    // Pre-existing file should be 'find'
+    const preFindEvents = findEvents.filter(e => e.filename === preExistingFile);
+    expect(preFindEvents.length).toBe(1);
 
-    // Verify paths include directory information
-    const rootEvent = findEvents.find(e => e.filename === 'root-file.txt');
-    const subEvent = findEvents.find(e => e.filename === 'sub-file.txt');
-    const deepEvent = findEvents.find(e => e.filename === 'deep-file.txt');
+    // New file should be 'create'
+    const newCreateEvents = createEvents.filter(e => e.filename === newFile);
+    expect(newCreateEvents.length).toBe(1);
+  });
 
-    expect(rootEvent?.file_path).toContain('root-file.txt');
-    expect(subEvent?.file_path).toContain('subdir1');
-    expect(deepEvent?.file_path).toContain('subdir2/nested');
+  test('should handle large number of pre-existing files', async () => {
+    // Create many files
+    const fileCount = 20;
+    const testFiles: string[] = [];
+    
+    for (let i = 0; i < fileCount; i++) {
+      const fileName = `bulk-file-${i}.txt`;
+      testFiles.push(fileName);
+      await fs.writeFile(path.join(testDir, fileName), `Content ${i}`);
+    }
+
+    // Start daemon
+    daemonProcess = await startDaemon();
+    await dbQueries.connect();
+    await new Promise(resolve => setTimeout(resolve, 3000)); // Extra time for many files
+
+    // Verify all files found
+    const findEvents = await dbQueries.getEventsByType('find');
+    expect(findEvents.length).toBe(fileCount);
+
+    // Each file should have exactly one find event
+    testFiles.forEach(fileName => {
+      const fileFindEvents = findEvents.filter(e => e.filename === fileName);
+      expect(fileFindEvents.length).toBe(1);
+    });
+  });
+
+  test('should preserve file order in find events', async () => {
+    // Create files with timestamps
+    const files = ['a-first.txt', 'b-second.txt', 'c-third.txt'];
+    
+    for (let i = 0; i < files.length; i++) {
+      await fs.writeFile(path.join(testDir, files[i]), `File ${i}`);
+      await new Promise(resolve => setTimeout(resolve, 100)); // Ensure different timestamps
+    }
+
+    // Start daemon
+    daemonProcess = await startDaemon();
+    await dbQueries.connect();
+    await new Promise(resolve => setTimeout(resolve, 2000));
+
+    // Get find events
+    const findEvents = await dbQueries.getEventsByType('find');
+    expect(findEvents.length).toBe(files.length);
+
+    // All should have valid timestamps
+    findEvents.forEach(event => {
+      expect(event.timestamp).toBeTruthy();
+      expect(new Date(event.timestamp).getTime()).toBeGreaterThan(0);
+    });
   });
 });

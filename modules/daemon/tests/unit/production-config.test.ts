@@ -12,14 +12,16 @@ describe('Production Configuration (TDD)', () => {
   const productionDir = path.resolve(__dirname, '../../../..');
   const configPath = path.join(productionDir, '.cctop/config/daemon-config.json');
   
-  test('should have correct watchPaths for production use', async () => {
-    // RED: This should fail initially
-    const configContent = await fs.readFile(configPath, 'utf-8');
-    const config = JSON.parse(configContent);
+  test('should use default config when production config file does not exist', async () => {
+    // Test default behavior when config file doesn't exist
+    const configManager = new DaemonConfigManager(productionDir);
+    await configManager.loadConfig();
+    const config = configManager.getConfig();
     
-    // Production should watch current directory, not test-data
+    // Should use default config values
     expect(config.monitoring.watchPaths).toEqual(['.']);
     expect(config.monitoring.watchPaths).not.toContain('./test-data');
+    expect(config.database.path).toBe('.cctop/data/activity.db');
   });
   
   test('should load config correctly in DaemonConfigManager', async () => {

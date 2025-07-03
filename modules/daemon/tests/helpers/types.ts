@@ -2,6 +2,17 @@
  * Type definitions for test helpers
  */
 
+export interface DbEvent {
+  id: number;
+  event_type: string;
+  file_path: string;
+  directory: string;
+  filename: string;
+  file_size: number;
+  timestamp: string;
+  inode_number: number;
+}
+
 export interface AggregateData {
   id: number;
   file_id: number;
