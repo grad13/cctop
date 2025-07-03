@@ -64,14 +64,11 @@ cctop
 ### 直接実行
 
 ```bash
-# スタンドアロンモードでデーモンを起動
+# デーモンを起動
 npm run daemon
 
 # または Node.js で直接実行
-node dist/index.js --standalone
-
-# 親プロセス（例：CLI）から起動
-node dist/index.js  # --standalone フラグなし
+node dist/index.js
 ```
 
 ### プログラムからの使用
@@ -101,7 +98,7 @@ cat .cctop/runtime/daemon.pid
 kill $(cat .cctop/runtime/daemon.pid)
 
 # すべてのデーモンプロセスを強制停止
-pkill -f "node.*daemon.*standalone"
+pkill -f "node.*daemon"
 ```
 
 ## 設定
@@ -519,7 +516,6 @@ ls -lh .cctop/data/activity.db*
 
 ### コマンドライン引数
 
-- `--standalone`: 独立したバックグラウンドプロセスとして実行
 - `--config <path>`: カスタム設定ファイルパス
 - `--debug`: デバッグログを有効化
 - `--version`: バージョン情報を表示
