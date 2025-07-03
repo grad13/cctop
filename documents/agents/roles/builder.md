@@ -93,6 +93,23 @@
 - **メイン**: 子git（cctop/内での作業）
 - **サブ**: 親git（ドキュメント更新時のみ）
 
+### 🚨 作業開始時の強制プロトコル（P045遵守・5回反復違反対策）
+
+#### **コード関連作業の場合（daemon改修・UI作成・機能実装等）**
+**必須実行順序**:
+1. `cd /Users/takuo-h/Workspace/Code/06-cctop/code/main` - 子gitに移動
+2. `pwd && git rev-parse --show-toplevel` - 位置確認
+3. `~/go/bin/gwq list` - worktree一覧確認（親gitでない場所で実行）
+4. 作業開始
+
+#### **ドキュメント関連作業の場合（documents/, passage/, CLAUDE.md編集）**
+**必須実行順序**:
+1. `cd /Users/takuo-h/Workspace/Code/06-cctop` - 親gitに移動
+2. `pwd && git rev-parse --show-toplevel` - 位置確認
+3. 作業開始
+
+**違反時**: 即座に作業停止・正しいgitに移動・手順再実行
+
 ## Git Worktree利用方針（v0.3.0.0以降）
 
 ### 基本方針
@@ -100,22 +117,27 @@
 - **目的**: 大規模変更時の独立した作業環境確保
 
 ### worktree作成ルール
-1. **命名**: `worktrees/{DD-MM}-{descriotion}/`
+1. **命名**: `worktrees/{MM-DD}-{descriotion}/`
    - 例: `worktrees/06-30-daemon-test-improvements/`, `worktrees/06-29-implement-cli-first/`
-2. **ブランチ**: `{DD-MM}-{descriotion}/`
+2. **ブランチ**: `{MM-DD}-{descriotion}/`
    - 例: `feature/06-30-daemon-test-improvements/`, `worktrees/06-29-implement-cli-first/`
 
-### 基本コマンド
+### 基本コマンド（gwq使用必須）
 ```bash
-# 作成
-git worktree add worktrees/v030-daemon -b feature/v030-daemon
+# 作成（gwq使用）
+gwq add -b feature/07-01-ui-creation
 
-# 移動
-cd worktrees/v030-daemon/
+# 一覧確認
+gwq list
+
+# 切り替え
+gwq switch
 
 # 削除（マージ後）
-git worktree remove worktrees/v030-daemon
+gwq remove
 ```
+
+**手動worktree作成禁止**: `git worktree add`の直接使用は禁止、gwq経由のみ
 
 ### 注意事項
 - 各worktreeは独立したgit管理

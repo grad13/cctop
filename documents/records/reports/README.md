@@ -43,6 +43,11 @@ REP-XXXX-title.md
 | REP-0166-parallel-agent-handoff-integration-analysis.md | 2025-06-30 | 並列Agent運用におけるHandoff統合分析 | 活動中 |
 | REP-20250701-101-builder-july-01-implementations.md | 2025-07-01 | Builder July 01 完了実装記録（7つの重要実装・TDD実践） | 完了 |
 | REP-20250701-102-builder-v030-development-archive.md | 2025-07-01 | Builder v0.3.0 開発アーカイブ（アーキテクチャ・Worktree・リファクタリング） | 完了 |
+| REP-20250702-101-builder-july-01-implementations.md | 2025-07-02 | Builder July 01 Implementations（FUNC-400実装、リファクタリング、DaemonTestManager） | 完了 |
+| REP-20250702-102-builder-july-01-pkt-analysis.md | 2025-07-02 | Builder July 01 Problem & Keep & Try Analysis | 完了 |
+| REP-20250702-103-ui-implementation-failure.md | 2025-07-02 | UI Implementation Failure Analysis（blessed.js失敗分析） | 完了 |
+| REP-20250703-104-builder-july-02-03-implementations.md | 2025-07-03 | Builder July 02-03 Implementations（daemon/tests整理、UI実装、テスト環境整備） | 完了 |
+| REP-20250703-105-builder-july-02-03-pkt-analysis.md | 2025-07-03 | Builder July 02-03 Problem & Keep & Try Analysis | 完了 |
 | REP-0100-architect-status-l1-l2-migration-20250627.md | 2025-06-27 | Architect Status L1→L2移行記録 | 活動中 |
 | REP-0101-builder-status-l1-l2-migration-20250627.md | 2025-06-27 | Builder Status L1→L2移行記録 | 活動中 |
 | REP-0102-typescript-migration-phase3-database.md | 2025-06-28 | TypeScript移行Phase 3完了報告 | 完了 |
@@ -173,8 +178,8 @@ REP-XXXX-title.md
 ### 番号体系について
 - **正常動作**: REP番号に欠番が存在するのは正常（アーカイブ移行により発生）
 - **採番ルール**: 新規レポートは欠番を埋めず、常に最新番号+1を使用
-- **現在番号**: REP-20250701-102（最新）
-- **次回番号**: REP-20250701-103-（次回新規レポート用）
+- **現在番号**: REP-20250703-105（最新）
+- **次回番号**: REP-20250703-106（次回新規レポート用）
 
 ### 検索・参照方法
 - **現在のレポート**: このディレクトリ内のファイル

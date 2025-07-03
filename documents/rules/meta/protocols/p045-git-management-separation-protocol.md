@@ -40,20 +40,12 @@ code/main/          # 子gitリポジトリ（旧cctop/）
 #### **親git対象**
 - `documents/` 配下すべて
 - `passage/` 配下すべて
-- `code/worktrees/` 配下すべて
-- `code/containers/` 配下すべて
-- `code/releases/` 配下すべて
 - `CLAUDE.md`
-- `VERSIONs/` 配下すべて
 - `.gitignore` (親gitのみ)
 
 #### **子git対象**  
-- `code/main/src/` 配下すべて
-- `code/main/test/` 配下すべて
-- `code/main/package.json`, `code/main/package-lock.json`
-- `code/main/jest.config.js`, `code/main/vitest.config.js`
-- `code/main/scripts/` 配下すべて
-- `code/main/README.md`, `code/main/docs/`
+- `code/main` 配下すべて
+- `code/worktrees/` 配下すべて
 
 #### **境界ケース処理**
 - **迷った場合**: ファイルの物理的配置場所で判定
@@ -93,27 +85,6 @@ code/main/          # 子gitリポジトリ（旧cctop/）
 
 ## 物理的保護
 
-### 🛡️ **.gitignore強制**
-```gitignore
-# 親git (.gitignore)
-code/main/
-.DS_Store
-VERSIONs
-VAULTs
-
-# 子git (code/main/.gitignore) 
-../../documents/
-../../passage/
-../../CLAUDE.md
-../../VERSIONs/
-../worktrees/
-../containers/
-../releases/
-node_modules/
-*.log
-coverage/
-```
-
 ### 🚫 **強制的境界防止**
 - **親git**: code/main/への物理的アクセス不可
 - **子git**: 親git管理領域（documents/, passage/, worktrees/, containers/, releases/）への物理的アクセス不可
@@ -129,9 +100,7 @@ coverage/
 ### 🔧 **特殊ケース**
 - **VERSIONs/cctop関連**: 親gitで管理（プロジェクト履歴）
 - **code/main/README.md**: 子gitで管理（ツール説明）
-- **code/worktrees/**: 親gitで管理（並行開発環境）
-- **code/containers/**: 親gitで管理（デバッグ・コンテナ環境）
-- **code/releases/**: 親gitで管理（リリースパッケージ・配布物）
+- **code/worktrees/**: 子gitで管理（並行開発環境）
 - **設定ファイル**: 影響範囲に応じた判定
 
 ## 検証・監視
