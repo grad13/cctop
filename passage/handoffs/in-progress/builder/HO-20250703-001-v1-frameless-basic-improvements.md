@@ -34,16 +34,22 @@ v1 Frameless UIの基本的な実用性向上
 
 ## 🔧 改善タスク
 
-### Phase 1: UI整理（0.5日）
-1. **キーガイドの簡素化**
-   ```
-   現在: [a] All  [u] Unique  [↑↓] Navigate  [Enter] Select  [space] Pause  [r] Refresh  [c] Config  [q] Exit
-   改善案: [a/u] Mode  [space] Pause  [q] Exit
-   ```
+### Phase 1: UI整理（0.5日）✅ 完了
+1. **FUNC-202準拠4エリア構成への変更** ✅
+   - Header Area: システム状態表示（cctop v1.0.0.0 Daemon: ●RUNNING）
+   - Event Rows Area: 既存のpanel並列実装を活用
+   - Command Keys Area: 2行固定の操作ガイド
+   - Dynamic Control Area: 状態に応じて変化する3行目
 
-2. **不要な機能の削除**
-   - Config表示機能（[c]キー）の削除検討
-   - Select機能（[Enter]キー）の一時削除（詳細表示未実装のため）
+2. **キーガイドの体系的整理** ✅
+   - FUNC-202仕様に従った階層化表示
+   - Pause/Resume状態の動的切り替え
+   - Filter/Search機能の適切な配置
+
+**実装内容**:
+- 4エリア構成の完全実装
+- 22個のテスト全合格（FUNC-202専用テスト3個追加）
+- レイアウト空白問題の修正
 
 ### Phase 2: 日本語対応（0.5日）✅ 完了
 1. **テストデータ作成** ✅
@@ -116,7 +122,7 @@ v1 Frameless UIの基本的な実用性向上
 **High** - v1.0リリースの基本品質確保のため
 
 ## 進捗状況
-- Phase 1: UI整理 - 未着手（Architectと相談予定）
+- Phase 1: UI整理 - ✅ 完了（FUNC-202準拠4エリア構成に変更）
 - Phase 2: 日本語対応 - ✅ 完了
 - Phase 3: 動的レイアウト - ✅ 完了
 - Phase 4: コア機能テスト - ✅ 完了

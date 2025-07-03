@@ -51,13 +51,14 @@ PLAN-YYYYMMDD-XXX-brief-description.md
 | 031 | [`PLAN-20250630-001`](PLAN-20250630-001-monitor-viewer-separation.md) | Daemon-CLI機能分離アーキテクチャ移行計画 | Architect | 計画書作成完了・実行承認待ち | 🏗️ システム移行 |
 | 032 | [`PLAN-20250701-032`](PLAN-20250701-032-v030-module-integration.md) | v0.3.0モジュール統合・実行可能環境構築計画 | Builder | 計画書作成完了・実行承認待ち | 🏗️ システム移行 |
 | 033 | [`PLAN-20250701-033`](PLAN-20250701-033-code-directory-restructure.md) | Code Directory Restructure Plan | Clerk | 計画書作成完了・実行承認待ち | 🏗️ システム移行 |
+| 034 | [`PLAN-20250703-034`](PLAN-20250703-034-runner-role-introduction.md) | Runner Role導入計画 | Clerk | 計画書作成完了・実行承認待ち | 🏗️ システム移行 |
 
 ### 📝 アーカイブされた計画書
 
 2025-06-29のL2→L3移行により、以下の計画書がアーカイブされました：
 - PLAN-20250622-001 〜 PLAN-20250626-003（計18ファイル）
 - 検索は `patterns "計画書名" archives/2025/0623-0629/` で可能です
-- 番号は欠番となりますが、新規計画書は連番を継続します（次は031から）
+- 番号は欠番となりますが、新規計画書は連番を継続します（次は035から）
 
 ## 🔄 計画書のライフサイクル
 
