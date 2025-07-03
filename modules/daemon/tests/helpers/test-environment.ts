@@ -9,6 +9,15 @@ import * as path from 'path';
 import { DaemonTestManager } from './daemon-manager';
 
 /**
+ * Generate unique test directory path
+ */
+export function getUniqueTestDir(baseName: string): string {
+  const timestamp = Date.now();
+  const random = Math.floor(Math.random() * 10000);
+  return `/tmp/${baseName}-${timestamp}-${random}`;
+}
+
+/**
  * Setup test directory with required .cctop structure
  */
 export async function setupDaemonTest(testDir: string): Promise<void> {
@@ -20,32 +29,6 @@ export async function setupDaemonTest(testDir: string): Promise<void> {
   await fs.mkdir(path.join(testDir, '.cctop/logs'), { recursive: true });
   await fs.mkdir(path.join(testDir, '.cctop/runtime'), { recursive: true });
   await fs.mkdir(path.join(testDir, '.cctop/temp'), { recursive: true });
-  
-  // Create shared-config.json
-  const sharedConfig = {
-    version: "0.3.0.0",
-    project: {
-      name: "cctop",
-      description: "Real-time file monitoring and code structure analysis tool"
-    },
-    database: {
-      path: ".cctop/data/activity.db",
-      maxSize: 104857600
-    },
-    directories: {
-      config: ".cctop/config",
-      logs: ".cctop/logs",
-      temp: ".cctop/temp",
-      runtime: ".cctop/runtime",
-      data: ".cctop/data"
-    },
-    logging: {
-      maxFileSize: 10485760,
-      maxFiles: 5,
-      datePattern: "YYYY-MM-DD",
-      level: "info"
-    }
-  };
   
   // Create daemon-config.json
   const daemonConfig = {
@@ -84,16 +67,9 @@ export async function setupDaemonTest(testDir: string): Promise<void> {
   };
   
   await fs.writeFile(
-    path.join(testDir, '.cctop/config/shared-config.json'),
-    JSON.stringify(sharedConfig, null, 2)
-  );
-  
-  await fs.writeFile(
     path.join(testDir, '.cctop/config/daemon-config.json'),
     JSON.stringify(daemonConfig, null, 2)
   );
-  
-  process.chdir(testDir);
 }
 
 /**
@@ -124,7 +100,7 @@ export class TestEnvironment {
   }
 
   async setup(): Promise<void> {
-    this.testDir = '/tmp/cctop-aggregates-test';
+    this.testDir = getUniqueTestDir('cctop-aggregates-test');
     this.testDbPath = path.join(this.testDir, '.cctop/data/activity.db');
 
     // Use the standard setupDaemonTest function

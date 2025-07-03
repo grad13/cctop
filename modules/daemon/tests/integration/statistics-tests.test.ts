@@ -18,6 +18,9 @@ describe('Statistics and Size Tracking', () => {
   });
 
   afterEach(async () => {
+    if (dbQueries) {
+      await dbQueries.close();
+    }
     await daemonManager.stopDaemon();
     await testEnv.cleanup();
   });
@@ -54,6 +57,7 @@ describe('Statistics and Size Tracking', () => {
     
     // Initialize DatabaseQueries after daemon has created the database
     dbQueries = new DatabaseQueries(testEnv.testDbPath);
+    await dbQueries.connect();
     
     // Skip recreateTriggersForTest as it seems to be causing issues
     // The daemon should have already created the necessary triggers
@@ -79,7 +83,7 @@ describe('Statistics and Size Tracking', () => {
 
     await testEnv.wait(1000);
 
-    const aggregates = dbQueries.queryAggregatesTable();
+    const aggregates = await dbQueries.queryAggregatesTable();
     expect(aggregates.length).toBe(1);
 
     const aggregate = aggregates[0];
@@ -112,6 +116,7 @@ describe('Statistics and Size Tracking', () => {
     
     // Initialize DatabaseQueries after daemon has created the database
     dbQueries = new DatabaseQueries(testEnv.testDbPath);
+    await dbQueries.connect();
 
     const operations = [
       { file: 'global1.txt', operations: ['create', 'modify'] },
@@ -122,7 +127,7 @@ describe('Statistics and Size Tracking', () => {
     await TestFileOperations.performFileOperations(operations, testEnv.testDir);
     await testEnv.wait(1000);
 
-    const aggregates = dbQueries.queryAggregatesTable();
+    const aggregates = await dbQueries.queryAggregatesTable();
 
     // Calculate global statistics from aggregates
     const globalStats = {
@@ -155,6 +160,7 @@ describe('Statistics and Size Tracking', () => {
     
     // Initialize DatabaseQueries after daemon has created the database
     dbQueries = new DatabaseQueries(testEnv.testDbPath);
+    await dbQueries.connect();
 
     const testFile = 'timestamp-test.txt';
     const startTime = Date.now();
@@ -162,7 +168,7 @@ describe('Statistics and Size Tracking', () => {
     await testEnv.createTestFile(testFile, 'Initial content');
     await testEnv.wait(500);
 
-    let aggregates = dbQueries.queryAggregatesTable();
+    let aggregates = await dbQueries.queryAggregatesTable();
     expect(aggregates.length).toBeGreaterThanOrEqual(1);
     const timestampAggregate = aggregates.find(a => a.file_path.includes('timestamp-test.txt'));
     expect(timestampAggregate).toBeDefined();
@@ -172,7 +178,7 @@ describe('Statistics and Size Tracking', () => {
     await testEnv.createTestFile(testFile, 'Modified content');
     await testEnv.wait(500);
 
-    aggregates = dbQueries.queryAggregatesTable();
+    aggregates = await dbQueries.queryAggregatesTable();
     const updatedAggregate = aggregates.find(a => a.file_path.includes('timestamp-test.txt'));
     expect(updatedAggregate).toBeDefined();
     const lastTimestamp = updatedAggregate!.last_event_timestamp;

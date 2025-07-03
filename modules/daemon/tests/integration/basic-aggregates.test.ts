@@ -17,6 +17,9 @@ describe('Basic Aggregates Functionality', () => {
   });
 
   afterEach(async () => {
+    if (dbQueries) {
+      await dbQueries.close();
+    }
     await daemonManager.stopDaemon();
     await testEnv.cleanup();
   });
@@ -29,6 +32,7 @@ describe('Basic Aggregates Functionality', () => {
     
     // Initialize DatabaseQueries after daemon has created the database
     dbQueries = new DatabaseQueries(testEnv.testDbPath);
+    await dbQueries.connect();
 
     const testFiles = [
       { name: 'test1.txt', content: 'Small file content' },
@@ -39,7 +43,7 @@ describe('Basic Aggregates Functionality', () => {
     await TestFileOperations.createFiles(testFiles, testEnv.testDir);
     await testEnv.wait(1000);
 
-    const aggregates = dbQueries.queryAggregatesTable();
+    const aggregates = await dbQueries.queryAggregatesTable();
     expect(aggregates.length).toBe(testFiles.length);
 
     for (let i = 0; i < testFiles.length; i++) {
@@ -58,6 +62,7 @@ describe('Basic Aggregates Functionality', () => {
     
     // Initialize DatabaseQueries after daemon has created the database
     dbQueries = new DatabaseQueries(testEnv.testDbPath);
+    await dbQueries.connect();
 
     const testFile = 'event-count-test.txt';
     await testEnv.createTestFile(testFile, 'Initial content');
@@ -71,7 +76,7 @@ describe('Basic Aggregates Functionality', () => {
 
     await testEnv.wait(1000);
 
-    const aggregates = dbQueries.queryAggregatesTable();
+    const aggregates = await dbQueries.queryAggregatesTable();
     expect(aggregates.length).toBe(1);
 
     const aggregate = aggregates[0];
@@ -89,6 +94,7 @@ describe('Basic Aggregates Functionality', () => {
     
     // Initialize DatabaseQueries after daemon has created the database
     dbQueries = new DatabaseQueries(testEnv.testDbPath);
+    await dbQueries.connect();
 
     const files = [
       { file: 'file1.txt', operations: ['create', 'modify'] },
@@ -99,7 +105,7 @@ describe('Basic Aggregates Functionality', () => {
     await TestFileOperations.performFileOperations(files, testEnv.testDir);
     await testEnv.wait(1000);
 
-    const aggregates = dbQueries.queryAggregatesTable();
+    const aggregates = await dbQueries.queryAggregatesTable();
     expect(aggregates.length).toBe(files.length);
 
     files.forEach((file, index) => {

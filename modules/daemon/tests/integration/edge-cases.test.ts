@@ -4,6 +4,7 @@
 
 import { describe, test, expect, beforeEach, afterEach } from 'vitest';
 import * as fs from 'fs/promises';
+import * as path from 'path';
 import { TestEnvironment, DatabaseQueries, TestDaemonManager } from '../helpers';
 
 describe('Edge Cases and Error Handling', () => {
@@ -18,6 +19,9 @@ describe('Edge Cases and Error Handling', () => {
   });
 
   afterEach(async () => {
+    if (dbQueries) {
+      await dbQueries.close();
+    }
     await daemonManager.stopDaemon();
     await testEnv.cleanup();
   });
@@ -30,6 +34,7 @@ describe('Edge Cases and Error Handling', () => {
     
     // Initialize DatabaseQueries after daemon has created the database
     dbQueries = new DatabaseQueries(testEnv.testDbPath);
+    await dbQueries.connect();
 
     // Create file with zero size
     const emptyFile = 'empty-test.txt';
@@ -40,10 +45,10 @@ describe('Edge Cases and Error Handling', () => {
     const deleteFile = 'immediate-delete.txt';
     await testEnv.createTestFile(deleteFile, 'Will be deleted');
     await testEnv.wait(200);
-    await fs.unlink(deleteFile);
+    await fs.unlink(path.join(testEnv.testDir, deleteFile));
     await testEnv.wait(600);
 
-    const aggregates = dbQueries.queryAggregatesTable();
+    const aggregates = await dbQueries.queryAggregatesTable();
     
     console.log('=== DEBUG: Edge cases ===');
     aggregates.forEach((agg, index) => {
@@ -76,6 +81,7 @@ describe('Edge Cases and Error Handling', () => {
     
     // Initialize DatabaseQueries after daemon has created the database
     dbQueries = new DatabaseQueries(testEnv.testDbPath);
+    await dbQueries.connect();
 
     const specialFiles = [
       'file with spaces.txt',
@@ -90,7 +96,7 @@ describe('Edge Cases and Error Handling', () => {
 
     await testEnv.wait(1000);
 
-    const aggregates = dbQueries.queryAggregatesTable();
+    const aggregates = await dbQueries.queryAggregatesTable();
     expect(aggregates.length).toBe(specialFiles.length);
 
     specialFiles.forEach(fileName => {
@@ -108,6 +114,7 @@ describe('Edge Cases and Error Handling', () => {
     
     // Initialize DatabaseQueries after daemon has created the database
     dbQueries = new DatabaseQueries(testEnv.testDbPath);
+    await dbQueries.connect();
 
     const testFile = 'rapid-ops.txt';
 
@@ -125,7 +132,7 @@ describe('Edge Cases and Error Handling', () => {
 
     await testEnv.wait(1000);
 
-    const aggregates = dbQueries.queryAggregatesTable();
+    const aggregates = await dbQueries.queryAggregatesTable();
     
     console.log('=== DEBUG: Rapid operations ===');
     aggregates.forEach((agg, index) => {

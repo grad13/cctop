@@ -1,6 +1,8 @@
 {
   "monitoring": {
-    "watchPaths": ["."],
+    "watchPaths": [
+      "."
+    ],
     "excludePatterns": [
       "**/node_modules/**",
       "**/.git/**",

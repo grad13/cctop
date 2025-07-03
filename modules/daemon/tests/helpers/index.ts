@@ -32,7 +32,8 @@ export {
 export {
   setupDaemonTest,
   teardownDaemonTest,
-  TestEnvironment
+  TestEnvironment,
+  getUniqueTestDir
 } from './test-environment';
 
 // Database utilities

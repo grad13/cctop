@@ -8,10 +8,15 @@
     "build": "tsc",
     "clean": "rm -rf dist",
     "start": "node dist/index.js",
-    "test": "vitest run --reporter=default",
+    "test": "echo '⚠️  Direct test execution is disabled due to timeout issues. Please use: npm run test:unit, test:integration:1/2/3, or test:e2e' && exit 1",
+    "test:unit": "vitest run --reporter=default tests/unit",
+    "test:integration": "echo '⚠️  Direct integration test execution is disabled due to timeout issues. Please use: npm run test:integration:1, test:integration:2, or test:integration:3' && exit 1",
+    "test:integration:1": "vitest run --reporter=default tests/integration/basic-aggregates.test.ts tests/integration/daemon.test.ts tests/integration/edge-cases.test.ts",
+    "test:integration:2": "vitest run --reporter=default tests/integration/find-detection.test.ts tests/integration/move-detection-improved.test.ts tests/integration/move-detection.test.ts",
+    "test:integration:3": "vitest run --reporter=default tests/integration/restore-detection.test.ts tests/integration/startup-delete-detection.test.ts tests/integration/statistics-tests.test.ts",
+    "test:e2e": "vitest run --reporter=default tests/e2e",
+    "test:quick": "vitest run --reporter=default tests/unit tests/integration/move-detection-improved.test.ts",
     "test:verbose": "vitest run --reporter=verbose",
-    "test:fast": "vitest run --reporter=default tests/production-*.test.ts tests/npm-run-bug.test.ts",
-    "test:minimal": "vitest run --config vitest.config.minimal.ts",
     "test:watch": "vitest"
   },
   "dependencies": {
@@ -21,6 +26,7 @@
   "devDependencies": {
     "@types/node": "^20.14.9",
     "better-sqlite3": "^12.2.0",
+    "sqlite3": "^5.1.6",
     "typescript": "^5.5.3",
     "vitest": "^1.6.0"
   },

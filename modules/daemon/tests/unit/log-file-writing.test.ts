@@ -7,17 +7,20 @@ import { describe, test, expect, beforeEach, afterEach, afterAll } from 'vitest'
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { ChildProcess } from 'child_process';
-import { setupDaemonTest, teardownDaemonTest, DaemonTestManager } from '../helpers';
+import { setupDaemonTest, teardownDaemonTest, DaemonTestManager, getUniqueTestDir } from '../helpers';
 
 describe('Log File Writing (TDD)', () => {
-  const testDir = '/tmp/cctop-log-file-test';
-  const logFilePath = path.join(testDir, '.cctop/logs/daemon.log');
+  let testDir: string;
+  let logFilePath: string;
   let daemonProcess: ChildProcess | null = null;
   let originalCwd: string;
 
   beforeEach(async () => {
     // Store original cwd and manually setup test environment without chdir
     originalCwd = process.cwd();
+    
+    testDir = getUniqueTestDir('cctop-log-file-test');
+    logFilePath = path.join(testDir, '.cctop/logs/daemon.log');
     
     // Setup test directory structure
     await fs.mkdir(testDir, { recursive: true });
@@ -28,31 +31,6 @@ describe('Log File Writing (TDD)', () => {
     await fs.mkdir(path.join(testDir, '.cctop/temp'), { recursive: true });
     
     // Create config files
-    const sharedConfig = {
-      version: "0.3.0.0",
-      project: {
-        name: "cctop",
-        description: "Real-time file monitoring and code structure analysis tool"
-      },
-      database: {
-        path: ".cctop/data/activity.db",
-        maxSize: 104857600
-      },
-      directories: {
-        config: ".cctop/config",
-        logs: ".cctop/logs",
-        temp: ".cctop/temp",
-        runtime: ".cctop/runtime",
-        data: ".cctop/data"
-      },
-      logging: {
-        maxFileSize: 10485760,
-        maxFiles: 5,
-        datePattern: "YYYY-MM-DD",
-        level: "info"
-      }
-    };
-    
     const daemonConfig = {
       monitoring: {
         watchPaths: ["."],
@@ -87,11 +65,6 @@ describe('Log File Writing (TDD)', () => {
         busyTimeout: 5000
       }
     };
-    
-    await fs.writeFile(
-      path.join(testDir, '.cctop/config/shared-config.json'),
-      JSON.stringify(sharedConfig, null, 2)
-    );
     
     await fs.writeFile(
       path.join(testDir, '.cctop/config/daemon-config.json'),
@@ -151,7 +124,7 @@ describe('Log File Writing (TDD)', () => {
     daemonProcess = await startDaemon();
     
     // Create a test file to trigger event
-    await fs.writeFile('test-event.txt', 'test content');
+    await fs.writeFile(path.join(testDir, 'test-event.txt'), 'test content');
     await new Promise(resolve => setTimeout(resolve, 500));
     
     const logContent = await fs.readFile(logFilePath, 'utf-8');

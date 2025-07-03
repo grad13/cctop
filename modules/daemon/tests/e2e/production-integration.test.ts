@@ -7,14 +7,18 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 import { ChildProcess } from 'child_process';
 import sqlite3 from 'sqlite3';
-import { DaemonTestManager } from '../helpers';
+import { DaemonTestManager, getUniqueTestDir } from '../helpers';
 
 describe('Production Integration (TDD)', () => {
   const productionDir = '/Users/takuo-h/Workspace/Code/06-cctop/code/worktrees/07-01-daemon-production-ready';
-  const dbPath = path.join(productionDir, '.cctop/data/activity.db');
+  let testDir: string;
   let daemonProcess: ChildProcess | null = null;
   
   beforeEach(async () => {
+    // Create unique test directory in /tmp
+    testDir = getUniqueTestDir('cctop-production-integration-test');
+    await fs.mkdir(testDir, { recursive: true });
+    
     // Clean up any existing daemon
     await DaemonTestManager.killAllDaemons();
   });
@@ -24,10 +28,18 @@ describe('Production Integration (TDD)', () => {
       await DaemonTestManager.stopDaemon(daemonProcess);
     }
     await DaemonTestManager.killAllDaemons();
+    
+    // Clean up test directory
+    try {
+      await fs.rm(testDir, { recursive: true, force: true });
+    } catch (error) {
+      console.warn('Failed to clean test directory:', error);
+    }
   });
   
   async function getEventsFromProductionDb(): Promise<any[]> {
     return new Promise((resolve, reject) => {
+      const dbPath = path.join(testDir, '.cctop/data/activity.db');
       const db = new sqlite3.Database(dbPath);
       db.all('SELECT * FROM events ORDER BY id DESC LIMIT 10', (err, rows: any[]) => {
         if (err) reject(err);
@@ -37,26 +49,19 @@ describe('Production Integration (TDD)', () => {
     });
   }
   
-  test('should detect file creation in production directory', async () => {
-    const originalCwd = process.cwd();
+  test('should detect file creation in test directory', async () => {
+    let testFile: string | undefined;
     
     try {
-      // Start daemon with production config
+      // Start daemon in test directory
       const daemonPath = path.join(productionDir, 'modules/daemon/dist/index.js');
-      daemonProcess = await DaemonTestManager.startDaemon(daemonPath, productionDir);
+      daemonProcess = await DaemonTestManager.startDaemon(daemonPath, testDir);
       
       // Wait for daemon startup
       await new Promise(resolve => setTimeout(resolve, 2000));
       
-      // Create test file in production directory
-      const testFile = path.join(productionDir, `integration-test-${Date.now()}.txt`);
-      
-      // Ensure file doesn't exist
-      try {
-        await fs.unlink(testFile);
-      } catch (e) {
-        // File doesn't exist, which is what we want
-      }
+      // Create test file in test directory
+      testFile = path.join(testDir, `integration-test-${Date.now()}.txt`);
       
       await fs.writeFile(testFile, 'integration test content');
       
@@ -77,11 +82,15 @@ describe('Production Integration (TDD)', () => {
       );
       expect(createEvents.length).toBeGreaterThan(0);
       
-      // Clean up
-      await fs.unlink(testFile);
-      
     } finally {
-      // No need to change directory back since we didn't change it
+      // Clean up test file
+      if (testFile) {
+        try {
+          await fs.unlink(testFile);
+        } catch (e) {
+          // Ignore cleanup errors
+        }
+      }
     }
   }, 30000);
 });

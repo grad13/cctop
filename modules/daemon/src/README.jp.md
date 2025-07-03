@@ -36,6 +36,31 @@ npm run build
 
 ## 使用方法
 
+### コマンドラインインターフェース（推奨）
+
+```bash
+# 現在のディレクトリでデーモンを起動
+cctop daemon start
+
+# 実行中のデーモンを停止
+cctop daemon stop
+
+# デーモンの状態を確認
+cctop daemon status
+
+# UIを起動（デーモンが実行中である必要があります）
+cctop ui
+# または単に
+cctop
+```
+
+### 機能
+
+- **重複防止**: ディレクトリごとに1つのデーモンインスタンスのみ
+- **自動クリーンアップ**: 古いPIDファイルは自動的にクリーンアップされます
+- **正常なシャットダウン**: SIGKILLの前に10秒のタイムアウト付きSIGTERM
+- **ステータス監視**: 詳細情報付きでデーモンが実行中かチェック
+
 ### 直接実行
 
 ```bash
@@ -72,7 +97,7 @@ daemon.stdout.on('data', (data) => {
 # デーモンが実行中か確認
 cat .cctop/runtime/daemon.pid
 
-# デーモンを正常に停止
+# デーモンを正常に停止（代わりに cctop daemon stop を使用してください）
 kill $(cat .cctop/runtime/daemon.pid)
 
 # すべてのデーモンプロセスを強制停止
@@ -81,14 +106,13 @@ pkill -f "node.*daemon.*standalone"
 
 ## 設定
 
-デーモンは3層設定システム（FUNC-101/106）に従います：
+デーモンは設定システム（FUNC-106）を使用します：
 
 ### ディレクトリ構造
 
 ```
 .cctop/
 ├── config/
-│   ├── shared-config.json    # 共有設定（FUNC-101）
 │   └── daemon-config.json    # デーモン専用設定（FUNC-106）
 ├── data/
 │   └── activity.db          # WALモード付きSQLiteデータベース
@@ -100,34 +124,6 @@ pkill -f "node.*daemon.*standalone"
 ```
 
 ### 設定ファイル
-
-#### shared-config.json (FUNC-101)
-```json
-{
-  "version": "0.3.0.0",
-  "project": {
-    "name": "cctop",
-    "description": "リアルタイムファイル監視とコード構造解析ツール"
-  },
-  "database": {
-    "path": ".cctop/data/activity.db",
-    "maxSize": 104857600
-  },
-  "directories": {
-    "config": ".cctop/config",
-    "logs": ".cctop/logs",
-    "temp": ".cctop/temp",
-    "runtime": ".cctop/runtime",
-    "data": ".cctop/data"
-  },
-  "logging": {
-    "maxFileSize": 10485760,
-    "maxFiles": 5,
-    "datePattern": "YYYY-MM-DD",
-    "level": "info"
-  }
-}
-```
 
 #### daemon-config.json (FUNC-106)
 ```json
@@ -176,9 +172,8 @@ pkill -f "node.*daemon.*standalone"
 ### 設定読み込み順序
 
 1. デフォルト設定（組み込み）
-2. shared-config.json（存在する場合）
-3. daemon-config.json（存在する場合）
-4. コマンドライン引数（最優先）
+2. daemon-config.json（存在する場合）
+3. コマンドライン引数（最優先）
 
 ## データベーススキーマ
 
@@ -258,17 +253,24 @@ DaemonManager
 ### テストの実行
 
 ```bash
-# すべてのテストを実行
-npm test
+# ユニットテストのみ実行（高速）
+npm run test:unit
 
-# 最小限のテストスイート（高速）
-npm run test:minimal
+# 統合テストを分割実行（タイムアウト回避）
+npm run test:integration:1  # basic、daemon、edge-cases
+npm run test:integration:2  # find、move detection
+npm run test:integration:3  # restore、startup-delete、statistics
+
+# E2Eテスト実行
+npm run test:e2e
 
 # 特定のテストファイルを実行
-npm test tests/daemon.test.ts
+npm test tests/unit/duplicate-prevention.test.ts
 
 # 開発用ウォッチモード
 npm run test:watch
+
+# 注意: npm test と npm run test:integration はタイムアウト問題のため無効化されています
 ```
 
 ### テストアーキテクチャ
@@ -338,6 +340,7 @@ modules/daemon/
 - **高速起動**: 1秒未満の初期化時間
 - **並行アクセス**: SQLite WALモードによる並列読み書き
 - **スケーラブル**: 数千のファイルと高頻度の変更でテスト済み
+- **単一インスタンス**: ディレクトリごとの自動重複デーモン防止
 
 ### リソース使用量
 
@@ -373,10 +376,13 @@ modules/daemon/
 1. **デーモンが起動しない**
    ```bash
    # 既存のデーモンを確認
-   cat .cctop/runtime/daemon.pid
-   ps aux | grep cctop-daemon
+   cctop daemon status
    
-   # 必要に応じて古いPIDファイルを削除
+   # デーモンが実行されていないのに起動が失敗する場合：
+   cctop daemon stop  # 古いPIDファイルをクリーンアップ
+   cctop daemon start
+   
+   # 手動でクリーンアップが必要な場合
    rm .cctop/runtime/daemon.pid
    ```
 

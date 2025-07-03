@@ -6,6 +6,9 @@
   "workspaces": [
     "modules/*"
   ],
+  "bin": {
+    "cctop": "bin/cctop"
+  },
   "scripts": {
     "install:all": "npm install",
     "build": "npm run build --workspaces",

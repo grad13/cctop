@@ -8,7 +8,7 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 import { ChildProcess } from 'child_process';
 import sqlite3 from 'sqlite3';
-import { DaemonTestManager, setupDaemonTest, teardownDaemonTest } from '../helpers';
+import { DaemonTestManager, setupDaemonTest, teardownDaemonTest, getUniqueTestDir } from '../helpers';
 
 interface DbEvent {
   id: number;
@@ -22,11 +22,13 @@ interface DbEvent {
 }
 
 describe('Find Detection (FUNC-001)', () => {
-  const testDir = '/tmp/cctop-find-test';
-  const testDbPath = path.join(testDir, '.cctop/data/activity.db');
+  let testDir: string;
+  let testDbPath: string;
   let daemonProcess: ChildProcess | null = null;
 
   beforeEach(async () => {
+    testDir = getUniqueTestDir('cctop-find-test');
+    testDbPath = path.join(testDir, '.cctop/data/activity.db');
     await setupDaemonTest(testDir);
   });
 
@@ -67,12 +69,12 @@ describe('Find Detection (FUNC-001)', () => {
     ];
 
     for (const fileName of existingFiles) {
-      await fs.writeFile(fileName, `Pre-existing content in ${fileName}`);
+      await fs.writeFile(path.join(testDir, fileName), `Pre-existing content in ${fileName}`);
     }
 
     // Verify files exist before daemon starts
     for (const fileName of existingFiles) {
-      await expect(fs.access(fileName)).resolves.toBeUndefined();
+      await expect(fs.access(path.join(testDir, fileName))).resolves.toBeUndefined();
     }
 
     // GREEN PHASE: Start daemon (should perform initial scan)
@@ -131,7 +133,7 @@ describe('Find Detection (FUNC-001)', () => {
 
   test('should distinguish "find" events from "create" events', async () => {
     // Create one existing file before daemon starts
-    await fs.writeFile('pre-existing.txt', 'existed before daemon');
+    await fs.writeFile(path.join(testDir, 'pre-existing.txt'), 'existed before daemon');
     
     // Start daemon
     const daemonPath = path.resolve(__dirname, '../../dist/index.js');
@@ -143,7 +145,7 @@ describe('Find Detection (FUNC-001)', () => {
     await new Promise(resolve => setTimeout(resolve, 2000));
 
     // Create new file AFTER daemon is running
-    await fs.writeFile('newly-created.txt', 'created after daemon started');
+    await fs.writeFile(path.join(testDir, 'newly-created.txt'), 'created after daemon started');
     
     // Wait for real-time event processing
     await new Promise(resolve => setTimeout(resolve, 500));
@@ -186,10 +188,10 @@ describe('Find Detection (FUNC-001)', () => {
     const testContent = 'Test content for metadata verification';
     const testFileName = 'metadata-test.txt';
     
-    await fs.writeFile(testFileName, testContent);
+    await fs.writeFile(path.join(testDir, testFileName), testContent);
     
     // Get file stats before daemon starts
-    const stats = await fs.stat(testFileName);
+    const stats = await fs.stat(path.join(testDir, testFileName));
     const expectedSize = stats.size;
     const expectedInode = stats.ino;
 
@@ -229,7 +231,7 @@ describe('Find Detection (FUNC-001)', () => {
 
     // Create all test files
     for (const file of testFiles) {
-      await fs.writeFile(file.name, file.content);
+      await fs.writeFile(path.join(testDir, file.name), file.content);
     }
 
     // Start daemon
@@ -257,13 +259,15 @@ describe('Find Detection (FUNC-001)', () => {
 
   test('should handle subdirectories during initial scan', async () => {
     // Create directory structure with files
-    await fs.mkdir('subdir1', { recursive: true });
-    await fs.mkdir('subdir2/nested', { recursive: true });
+    await fs.mkdir(path.join(testDir, 'subdir1'), { recursive: true });
+    await fs.mkdir(path.join(testDir, 'subdir2/nested'), { recursive: true });
     
     // Create files in different locations
-    await fs.writeFile('root-file.txt', 'Root level file');
-    await fs.writeFile('subdir1/sub-file.txt', 'File in subdirectory');
-    await fs.writeFile('subdir2/nested/deep-file.txt', 'File in nested directory');
+    await fs.writeFile(path.join(testDir, 'root-file.txt'), 'Root level file');
+    await fs.mkdir(path.join(testDir, 'subdir1'), { recursive: true });
+    await fs.writeFile(path.join(testDir, 'subdir1/sub-file.txt'), 'File in subdirectory');
+    await fs.mkdir(path.join(testDir, 'subdir2/nested'), { recursive: true });
+    await fs.writeFile(path.join(testDir, 'subdir2/nested/deep-file.txt'), 'File in nested directory');
 
     // Start daemon
     const daemonPath = path.resolve(__dirname, '../../dist/index.js');

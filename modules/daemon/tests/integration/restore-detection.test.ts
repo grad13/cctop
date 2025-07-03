@@ -8,7 +8,7 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 import { ChildProcess } from 'child_process';
 import sqlite3 from 'sqlite3';
-import { DaemonTestManager, setupDaemonTest, teardownDaemonTest } from '../helpers';
+import { DaemonTestManager, setupDaemonTest, teardownDaemonTest, getUniqueTestDir } from '../helpers';
 
 interface DbEvent {
   id: number;
@@ -22,11 +22,13 @@ interface DbEvent {
 }
 
 describe('Restore Detection (FUNC-001)', () => {
-  const testDir = '/tmp/cctop-restore-test';
-  const testDbPath = path.join(testDir, '.cctop/data/activity.db');
+  let testDir: string;
+  let testDbPath: string;
   let daemonProcess: ChildProcess | null = null;
 
   beforeEach(async () => {
+    testDir = getUniqueTestDir('cctop-restore-test');
+    testDbPath = path.join(testDir, '.cctop/data/activity.db');
     await setupDaemonTest(testDir);
   });
 
@@ -78,15 +80,15 @@ describe('Restore Detection (FUNC-001)', () => {
     const testContent = 'Content for restore testing';
     
     // 1. Create file (should be 'create' event)
-    await fs.writeFile(testFile, testContent);
+    await fs.writeFile(path.join(testDir, testFile), testContent);
     await new Promise(resolve => setTimeout(resolve, 500));
 
     // 2. Delete file (should be 'delete' event after move timeout)
-    await fs.unlink(testFile);
+    await fs.unlink(path.join(testDir, testFile));
     await new Promise(resolve => setTimeout(resolve, 600)); // Wait for delete to be confirmed
 
     // 3. Recreate file within restore time limit (should be 'restore' event)
-    await fs.writeFile(testFile, testContent);
+    await fs.writeFile(path.join(testDir, testFile), testContent);
     await new Promise(resolve => setTimeout(resolve, 500));
 
     // GREEN PHASE: Verify events
@@ -152,16 +154,16 @@ describe('Restore Detection (FUNC-001)', () => {
     // In practice, the 5-minute limit would need actual time passage or config override
     
     // 1. Create file
-    await fs.writeFile(testFile, testContent);
+    await fs.writeFile(path.join(testDir, testFile), testContent);
     await new Promise(resolve => setTimeout(resolve, 500));
 
     // 2. Delete file
-    await fs.unlink(testFile);
+    await fs.unlink(path.join(testDir, testFile));
     await new Promise(resolve => setTimeout(resolve, 600));
 
     // 3. Since we can't wait 5 minutes in a test, we verify that 
     //    within the time limit, it's still treated as restore
-    await fs.writeFile(testFile, testContent);
+    await fs.writeFile(path.join(testDir, testFile), testContent);
     await new Promise(resolve => setTimeout(resolve, 500));
 
     // Verify events - should actually be restore within time limit
@@ -200,19 +202,19 @@ describe('Restore Detection (FUNC-001)', () => {
     const testContent = 'Content for cycle testing';
     
     // Initial create
-    await fs.writeFile(testFile, testContent);
+    await fs.writeFile(path.join(testDir, testFile), testContent);
     await new Promise(resolve => setTimeout(resolve, 500));
 
     // First cycle: delete → restore
-    await fs.unlink(testFile);
+    await fs.unlink(path.join(testDir, testFile));
     await new Promise(resolve => setTimeout(resolve, 600));
-    await fs.writeFile(testFile, testContent);
+    await fs.writeFile(path.join(testDir, testFile), testContent);
     await new Promise(resolve => setTimeout(resolve, 500));
 
     // Second cycle: delete → restore
-    await fs.unlink(testFile);
+    await fs.unlink(path.join(testDir, testFile));
     await new Promise(resolve => setTimeout(resolve, 600));
-    await fs.writeFile(testFile, testContent);
+    await fs.writeFile(path.join(testDir, testFile), testContent);
     await new Promise(resolve => setTimeout(resolve, 500));
 
     // Verify event sequence
@@ -248,16 +250,16 @@ describe('Restore Detection (FUNC-001)', () => {
 
     // File 1: Delete-restore cycle
     const restoreFile = 'restore-file.txt';
-    await fs.writeFile(restoreFile, 'restore content');
+    await fs.writeFile(path.join(testDir, restoreFile), 'restore content');
     await new Promise(resolve => setTimeout(resolve, 500));
-    await fs.unlink(restoreFile);
+    await fs.unlink(path.join(testDir, restoreFile));
     await new Promise(resolve => setTimeout(resolve, 600));
-    await fs.writeFile(restoreFile, 'restore content');
+    await fs.writeFile(path.join(testDir, restoreFile), 'restore content');
     await new Promise(resolve => setTimeout(resolve, 500));
 
     // File 2: New file (never deleted)
     const newFile = 'new-file.txt';
-    await fs.writeFile(newFile, 'new content');
+    await fs.writeFile(path.join(testDir, newFile), 'new content');
     await new Promise(resolve => setTimeout(resolve, 500));
 
     // Verify event types
@@ -290,15 +292,15 @@ describe('Restore Detection (FUNC-001)', () => {
     const newContent = 'Modified content after restore';
     
     // Create with original content
-    await fs.writeFile(testFile, originalContent);
+    await fs.writeFile(path.join(testDir, testFile), originalContent);
     await new Promise(resolve => setTimeout(resolve, 500));
 
     // Delete
-    await fs.unlink(testFile);
+    await fs.unlink(path.join(testDir, testFile));
     await new Promise(resolve => setTimeout(resolve, 600));
 
     // Restore with different content
-    await fs.writeFile(testFile, newContent);
+    await fs.writeFile(path.join(testDir, testFile), newContent);
     await new Promise(resolve => setTimeout(resolve, 500));
 
     // Verify restore event records new file size
@@ -324,15 +326,15 @@ describe('Restore Detection (FUNC-001)', () => {
     const testContent = 'Rapid test content';
     
     // Create file
-    await fs.writeFile(testFile, testContent);
+    await fs.writeFile(path.join(testDir, testFile), testContent);
     await new Promise(resolve => setTimeout(resolve, 300));
 
     // Delete with sufficient delay to avoid move detection conflicts
-    await fs.unlink(testFile);
+    await fs.unlink(path.join(testDir, testFile));
     await new Promise(resolve => setTimeout(resolve, 200)); // Longer than move threshold
     
     // Restore after move detection timeout
-    await fs.writeFile(testFile, testContent);
+    await fs.writeFile(path.join(testDir, testFile), testContent);
     await new Promise(resolve => setTimeout(resolve, 800)); // Wait for processing
 
     const events = await getEventsFromDb();

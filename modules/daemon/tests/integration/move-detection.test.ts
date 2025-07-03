@@ -7,7 +7,7 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 import { ChildProcess } from 'child_process';
 import sqlite3 from 'sqlite3';
-import { DaemonTestManager, setupDaemonTest, teardownDaemonTest } from '../helpers';
+import { DaemonTestManager, setupDaemonTest, teardownDaemonTest, getUniqueTestDir } from '../helpers';
 
 interface DbEvent {
   id: number;
@@ -21,11 +21,13 @@ interface DbEvent {
 }
 
 describe('Move Detection', () => {
-  const testDir = '/tmp/cctop-move-test';
-  const testDbPath = path.join(testDir, '.cctop/data/activity.db');
+  let testDir: string;
+  let testDbPath: string;
   let daemonProcess: ChildProcess | null = null;
 
   beforeEach(async () => {
+    testDir = getUniqueTestDir('cctop-move-test');
+    testDbPath = path.join(testDir, '.cctop/data/activity.db');
     await setupDaemonTest(testDir);
   });
 
@@ -84,11 +86,11 @@ describe('Move Detection', () => {
     const originalFile = 'move-test.txt';
     const movedFile = 'move-test-renamed.txt';
     
-    await fs.writeFile(originalFile, 'content for move test');
+    await fs.writeFile(path.join(testDir, originalFile), 'content for move test');
     await new Promise(resolve => setTimeout(resolve, 300));
 
     // Step 2: Move file (should be detected as move, not delete+create)
-    await fs.rename(originalFile, movedFile);
+    await fs.rename(path.join(testDir, originalFile), path.join(testDir, movedFile));
     await new Promise(resolve => setTimeout(resolve, 500));
 
     // Step 3: Verify events in database
@@ -141,10 +143,10 @@ describe('Move Detection', () => {
 
     // Create and delete file (not move)
     const testFile = 'delete-test.txt';
-    await fs.writeFile(testFile, 'content to be deleted');
+    await fs.writeFile(path.join(testDir, testFile), 'content to be deleted');
     await new Promise(resolve => setTimeout(resolve, 300));
 
-    await fs.unlink(testFile);
+    await fs.unlink(path.join(testDir, testFile));
     await new Promise(resolve => setTimeout(resolve, 500)); // Wait for move timeout
 
     const events = await getEventsFromDb();
@@ -175,19 +177,19 @@ describe('Move Detection', () => {
     const file2 = 'complex-test-moved.txt';
 
     // Create
-    await fs.writeFile(file1, 'initial content');
+    await fs.writeFile(path.join(testDir, file1), 'initial content');
     await new Promise(resolve => setTimeout(resolve, 200));
 
     // Modify
-    await fs.appendFile(file1, '\nmodified content');
+    await fs.appendFile(path.join(testDir, file1), '\nmodified content');
     await new Promise(resolve => setTimeout(resolve, 200));
 
     // Move
-    await fs.rename(file1, file2);
+    await fs.rename(path.join(testDir, file1), path.join(testDir, file2));
     await new Promise(resolve => setTimeout(resolve, 300));
 
     // Delete
-    await fs.unlink(file2);
+    await fs.unlink(path.join(testDir, file2));
     await new Promise(resolve => setTimeout(resolve, 500));
 
     const events = await getEventsFromDb();
@@ -218,17 +220,17 @@ describe('Move Detection', () => {
     await new Promise(resolve => setTimeout(resolve, 500));
 
     // Create file
-    await fs.writeFile('rapid-test.txt', 'content');
+    await fs.writeFile(path.join(testDir, 'rapid-test.txt'), 'content');
     await new Promise(resolve => setTimeout(resolve, 300));
 
     // Perform moves with sufficient delay for detection
-    await fs.rename('rapid-test.txt', 'rapid-test-1.txt');
+    await fs.rename(path.join(testDir, 'rapid-test.txt'), path.join(testDir, 'rapid-test-1.txt'));
     await new Promise(resolve => setTimeout(resolve, 200)); // Enough time for event processing
     
-    await fs.rename('rapid-test-1.txt', 'rapid-test-2.txt');
+    await fs.rename(path.join(testDir, 'rapid-test-1.txt'), path.join(testDir, 'rapid-test-2.txt'));
     await new Promise(resolve => setTimeout(resolve, 200)); // Enough time for event processing
     
-    await fs.rename('rapid-test-2.txt', 'rapid-test-final.txt');
+    await fs.rename(path.join(testDir, 'rapid-test-2.txt'), path.join(testDir, 'rapid-test-final.txt'));
     await new Promise(resolve => setTimeout(resolve, 500)); // Wait for processing
 
     const events = await getEventsFromDb();
@@ -266,7 +268,7 @@ describe('Move Detection', () => {
 
     // Create single file
     const testFile = 'single-create-test.txt';
-    await fs.writeFile(testFile, 'test content');
+    await fs.writeFile(path.join(testDir, testFile), 'test content');
     await new Promise(resolve => setTimeout(resolve, 500));
 
     // Get all events from database
@@ -316,7 +318,7 @@ describe('Move Detection', () => {
     const files = ['file1.txt', 'file2.txt', 'file3.txt'];
     
     for (const file of files) {
-      await fs.writeFile(file, `content of ${file}`);
+      await fs.writeFile(path.join(testDir, file), `content of ${file}`);
       await new Promise(resolve => setTimeout(resolve, 200));
     }
 

@@ -17,6 +17,9 @@ describe('Performance Tests', () => {
   });
 
   afterEach(async () => {
+    if (dbQueries) {
+      await dbQueries.close();
+    }
     await daemonManager.stopDaemon();
     await testEnv.cleanup();
   });
@@ -29,20 +32,21 @@ describe('Performance Tests', () => {
     
     // Initialize DatabaseQueries after daemon has created the database
     dbQueries = new DatabaseQueries(testEnv.testDbPath);
+    await dbQueries.connect();
 
     const startTime = Date.now();
     const testFile = 'performance-test.txt';
 
     await testEnv.createTestFile(testFile, 'Initial content');
-    await testEnv.wait(500);
+    await testEnv.wait(800); // Increased wait time to ensure initial create is recorded
 
     const numModifications = 20;
     for (let i = 1; i <= numModifications; i++) {
       await testEnv.createTestFile(testFile, `Content modification ${i}`);
-      await testEnv.wait(100);
+      await testEnv.wait(150); // Increased wait time between modifications
     }
 
-    await testEnv.wait(1000);
+    await testEnv.wait(1500); // Increased final wait to ensure all events are processed
 
     const queryStart = Date.now();
     const aggregates = await dbQueries.queryAggregatesTable();
@@ -77,6 +81,7 @@ describe('Performance Tests', () => {
     
     // Initialize DatabaseQueries after daemon has created the database
     dbQueries = new DatabaseQueries(testEnv.testDbPath);
+    await dbQueries.connect();
 
     const startTime = Date.now();
     const numFiles = 10;

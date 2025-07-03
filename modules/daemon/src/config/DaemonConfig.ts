@@ -7,28 +7,6 @@ import { DaemonConfig } from '../../../shared/dist/types';
 import * as path from 'path';
 import * as fs from 'fs/promises';
 
-interface SharedConfig {
-  version: string;
-  project: {
-    name: string;
-    description: string;
-  };
-  database: {
-    path: string;
-    maxSize: number;
-  };
-  directories: {
-    config: string;
-    logs: string;
-    temp: string;
-  };
-  logging: {
-    maxFileSize: number;
-    maxFiles: number;
-    datePattern: string;
-  };
-}
-
 export class DaemonConfigManager {
   private config: DaemonConfig;
   private basePath: string;
@@ -78,26 +56,11 @@ export class DaemonConfigManager {
   }
 
   async loadConfig(): Promise<void> {
-    // FUNC-101/106: 3-Layer Configuration Loading
-    // 1. Load shared config (FUNC-101)
-    const sharedConfig = await this.loadSharedConfig();
-    
-    // 2. Load daemon-specific config (FUNC-106)
+    // FUNC-106: Daemon-specific configuration loading
     const daemonConfig = await this.loadDaemonConfig();
     
-    // 3. Merge configurations (shared settings take precedence for database path)
-    this.config = this.mergeConfigs(this.getDefaultConfig(), sharedConfig, daemonConfig);
-  }
-
-  private async loadSharedConfig(): Promise<Partial<SharedConfig>> {
-    try {
-      const configPath = path.join(this.basePath, '.cctop/config/shared-config.json');
-      const configContent = await fs.readFile(configPath, 'utf8');
-      return JSON.parse(configContent);
-    } catch (error) {
-      console.warn('Shared config not found, using defaults');
-      return {};
-    }
+    // Merge with defaults
+    this.config = this.mergeConfigs(this.getDefaultConfig(), daemonConfig);
   }
 
   private async loadDaemonConfig(): Promise<Partial<DaemonConfig>> {
@@ -115,13 +78,8 @@ export class DaemonConfigManager {
     return {};
   }
 
-  private mergeConfigs(defaultConfig: DaemonConfig, sharedConfig: Partial<SharedConfig>, daemonConfig: Partial<DaemonConfig>): DaemonConfig {
+  private mergeConfigs(defaultConfig: DaemonConfig, daemonConfig: Partial<DaemonConfig>): DaemonConfig {
     const merged = { ...defaultConfig };
-    
-    // Apply shared config (database path from shared-config.json)
-    if (sharedConfig.database?.path) {
-      merged.database.path = sharedConfig.database.path;
-    }
     
     // Apply daemon-specific config
     if (daemonConfig.monitoring) {
@@ -132,10 +90,6 @@ export class DaemonConfigManager {
     }
     if (daemonConfig.database) {
       merged.database = { ...merged.database, ...daemonConfig.database };
-      // Restore shared database path if it exists
-      if (sharedConfig.database?.path) {
-        merged.database.path = sharedConfig.database.path;
-      }
     }
     
     return merged;
@@ -185,41 +139,7 @@ export class DaemonConfigManager {
   private async initializeDefaultConfigs(): Promise<void> {
     // Check if config directory exists and has no config files
     const configDir = path.join(this.basePath, '.cctop/config');
-    const sharedConfigPath = path.join(configDir, 'shared-config.json');
     const daemonConfigPath = path.join(configDir, 'daemon-config.json');
-
-    // Create shared-config.json if not exists
-    try {
-      await fs.access(sharedConfigPath);
-    } catch {
-      const sharedConfig = {
-        version: '0.3.0.0',
-        project: {
-          name: 'cctop',
-          description: 'Real-time file monitoring and code structure analysis tool'
-        },
-        database: {
-          path: '.cctop/data/activity.db',
-          maxSize: 104857600
-        },
-        directories: {
-          config: '.cctop/config',
-          logs: '.cctop/logs',
-          temp: '.cctop/temp',
-          runtime: '.cctop/runtime',
-          data: '.cctop/data',
-          themes: '.cctop/themes'
-        },
-        logging: {
-          maxFileSize: 10485760,
-          maxFiles: 5,
-          datePattern: 'YYYY-MM-DD',
-          level: 'info'
-        }
-      };
-      await fs.writeFile(sharedConfigPath, JSON.stringify(sharedConfig, null, 2));
-      console.log('Created shared-config.json with default settings');
-    }
 
     // Create daemon-config.json if not exists
     try {

@@ -51,7 +51,8 @@ export interface DaemonConfig {
 
 export interface DaemonState {
   pid: number;
-  started_by: 'cli' | 'standalone';
   started_at: number;
+  working_directory: string;
+  watch_paths: string[];
   config_path: string;
 }

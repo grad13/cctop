@@ -8,6 +8,7 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 import { spawn, ChildProcess } from 'child_process';
 import sqlite3 from 'sqlite3';
+import { getUniqueTestDir } from '../helpers';
 
 interface DbEvent {
   id: number;
@@ -21,13 +22,44 @@ interface DbEvent {
 }
 
 describe('Startup Delete Detection (FUNC-001)', () => {
-  const testDir = '/tmp/cctop-startup-delete-test';
-  const testDbPath = path.join(testDir, '.cctop/data/activity.db');
+  let testDir: string;
+  let testDbPath: string;
   let daemonProcess: ChildProcess | null = null;
 
   beforeEach(async () => {
+    testDir = getUniqueTestDir('cctop-startup-delete-test');
+    testDbPath = path.join(testDir, '.cctop/data/activity.db');
     await fs.mkdir(testDir, { recursive: true });
-    process.chdir(testDir);
+    // Create .cctop directory structure for daemon
+    await fs.mkdir(path.join(testDir, '.cctop/config'), { recursive: true });
+    await fs.mkdir(path.join(testDir, '.cctop/data'), { recursive: true });
+    await fs.mkdir(path.join(testDir, '.cctop/logs'), { recursive: true });
+    await fs.mkdir(path.join(testDir, '.cctop/runtime'), { recursive: true });
+    
+    // Create daemon config to watch testDir
+    const daemonConfig = {
+      monitoring: {
+        watchPaths: ['.'],
+        excludePatterns: [
+          '**/node_modules/**',
+          '**/.git/**',
+          '**/.*',
+          '**/.cctop/**'
+        ]
+      },
+      daemon: {
+        pidFile: '.cctop/runtime/daemon.pid',
+        logFile: '.cctop/logs/daemon.log'
+      },
+      database: {
+        path: '.cctop/data/activity.db'
+      }
+    };
+    
+    await fs.writeFile(
+      path.join(testDir, '.cctop/config/daemon-config.json'),
+      JSON.stringify(daemonConfig, null, 2)
+    );
   });
 
   afterEach(async () => {
@@ -93,7 +125,7 @@ describe('Startup Delete Detection (FUNC-001)', () => {
 
     // Create files while daemon is running
     for (const fileName of testFiles) {
-      await fs.writeFile(fileName, `Content of ${fileName}`);
+      await fs.writeFile(path.join(testDir, fileName), `Content of ${fileName}`);
       await new Promise(resolve => setTimeout(resolve, 300));
     }
 
@@ -122,7 +154,7 @@ describe('Startup Delete Detection (FUNC-001)', () => {
     // Delete some files while daemon is stopped
     const deletedFiles = testFiles.slice(0, 2); // Delete first 2 files
     for (const fileName of deletedFiles) {
-      await fs.unlink(fileName);
+      await fs.unlink(path.join(testDir, fileName));
     }
 
     // Phase 3: Restart daemon - should detect missing files
@@ -168,11 +200,11 @@ describe('Startup Delete Detection (FUNC-001)', () => {
     daemonProcess = await startDaemon();
 
     const testFile = 'duplicate-delete-test.txt';
-    await fs.writeFile(testFile, 'test content');
+    await fs.writeFile(path.join(testDir, testFile), 'test content');
     await new Promise(resolve => setTimeout(resolve, 500));
 
     // Delete file while daemon is running (should create delete event)
-    await fs.unlink(testFile);
+    await fs.unlink(path.join(testDir, testFile));
     await new Promise(resolve => setTimeout(resolve, 800));
 
     // Verify delete event was created
@@ -233,7 +265,7 @@ describe('Startup Delete Detection (FUNC-001)', () => {
     ];
 
     for (const fileName of allFiles) {
-      await fs.writeFile(fileName, `Content of ${fileName}`);
+      await fs.writeFile(path.join(testDir, fileName), `Content of ${fileName}`);
       await new Promise(resolve => setTimeout(resolve, 200));
     }
 
@@ -245,7 +277,7 @@ describe('Startup Delete Detection (FUNC-001)', () => {
     const remainingFiles = ['mixed-test-remain.txt', 'mixed-test-remain-2.txt'];
     
     for (const fileName of deletedFiles) {
-      await fs.unlink(fileName);
+      await fs.unlink(path.join(testDir, fileName));
     }
 
     // Phase 3: Restart and verify
@@ -298,7 +330,7 @@ describe('Startup Delete Detection (FUNC-001)', () => {
     daemonProcess = await startDaemon();
 
     const testFile = 'inode-test.txt';
-    await fs.writeFile(testFile, 'test content');
+    await fs.writeFile(path.join(testDir, testFile), 'test content');
     await new Promise(resolve => setTimeout(resolve, 500));
 
     // Get the initial create/find event to capture inode
@@ -312,7 +344,7 @@ describe('Startup Delete Detection (FUNC-001)', () => {
 
     // Phase 2: Stop daemon and delete file
     await stopDaemon(daemonProcess);
-    await fs.unlink(testFile);
+    await fs.unlink(path.join(testDir, testFile));
 
     // Phase 3: Restart and verify delete event has correct inode
     daemonProcess = await startDaemon();
@@ -338,8 +370,8 @@ describe('Startup Delete Detection (FUNC-001)', () => {
     // Phase 1: Create files in subdirectories
     daemonProcess = await startDaemon();
 
-    await fs.mkdir('subdir', { recursive: true });
-    await fs.mkdir('subdir/nested', { recursive: true });
+    await fs.mkdir(path.join(testDir, 'subdir'), { recursive: true });
+    await fs.mkdir(path.join(testDir, 'subdir/nested'), { recursive: true });
     
     const files = [
       'root-file.txt',
@@ -348,7 +380,10 @@ describe('Startup Delete Detection (FUNC-001)', () => {
     ];
 
     for (const filePath of files) {
-      await fs.writeFile(filePath, `Content of ${filePath}`);
+      const fullPath = path.join(testDir, filePath);
+      // Ensure parent directory exists
+      await fs.mkdir(path.dirname(fullPath), { recursive: true });
+      await fs.writeFile(fullPath, `Content of ${filePath}`);
       await new Promise(resolve => setTimeout(resolve, 300));
     }
 
@@ -357,7 +392,7 @@ describe('Startup Delete Detection (FUNC-001)', () => {
     
     const deletedFiles = ['subdir/sub-file.txt', 'subdir/nested/deep-file.txt'];
     for (const filePath of deletedFiles) {
-      await fs.unlink(filePath);
+      await fs.unlink(path.join(testDir, filePath));
     }
 
     // Phase 3: Restart and verify

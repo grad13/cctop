@@ -7,15 +7,18 @@ import { describe, test, expect, beforeEach, afterEach, afterAll } from 'vitest'
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { ChildProcess } from 'child_process';
-import { DaemonTestManager, setupDaemonTest, teardownDaemonTest } from '../helpers';
+import { DaemonTestManager, setupDaemonTest, teardownDaemonTest, getUniqueTestDir } from '../helpers';
 
 describe('Daemon Module', () => {
-  const testDir = '/tmp/cctop-daemon-test';
-  const testDbPath = path.join(testDir, '.cctop/data/activity.db');
-  const testPidPath = path.join(testDir, '.cctop/runtime/daemon.pid');
+  let testDir: string;
+  let testDbPath: string;
+  let testPidPath: string;
   let daemonProcess: ChildProcess | null = null;
 
   beforeEach(async () => {
+    testDir = getUniqueTestDir('cctop-daemon-test');
+    testDbPath = path.join(testDir, '.cctop/data/activity.db');
+    testPidPath = path.join(testDir, '.cctop/runtime/daemon.pid');
     await setupDaemonTest(testDir);
   });
 
@@ -60,11 +63,14 @@ describe('Daemon Module', () => {
     const pidData = JSON.parse(pidContent);
 
     expect(pidData).toHaveProperty('pid');
-    expect(pidData).toHaveProperty('started_by', 'standalone');
     expect(pidData).toHaveProperty('started_at');
+    expect(pidData).toHaveProperty('working_directory');
+    expect(pidData).toHaveProperty('watch_paths');
     expect(pidData).toHaveProperty('config_path');
     expect(typeof pidData.pid).toBe('number');
     expect(typeof pidData.started_at).toBe('number');
+    expect(typeof pidData.working_directory).toBe('string');
+    expect(Array.isArray(pidData.watch_paths)).toBe(true);
   });
 
   test('daemon should respond to file creation events', async () => {
@@ -219,7 +225,7 @@ describe('Daemon Configuration', () => {
   });
 
   test('should handle missing directories gracefully', async () => {
-    const testDir = '/tmp/cctop-daemon-config-test';
+    const testDir = getUniqueTestDir('cctop-daemon-config-test');
     await fs.mkdir(testDir, { recursive: true });
     
     try {

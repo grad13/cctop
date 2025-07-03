@@ -21,15 +21,12 @@ class DaemonManager {
   private pidManager: PidManager;
   private heartbeatTimer: NodeJS.Timeout | null = null;
   private isShuttingDown = false;
-  private startedBy: 'cli' | 'standalone' = 'standalone';
-
-  constructor(startedBy: 'cli' | 'standalone' = 'standalone') {
-    this.startedBy = startedBy;
+  constructor() {
     this.configManager = new DaemonConfigManager();
     
     const config = this.configManager.getConfig();
     this.logger = new LogManager(config.daemon.logFile);
-    this.pidManager = new PidManager(config.daemon.pidFile, this.logger, startedBy);
+    this.pidManager = new PidManager(config.daemon.pidFile, this.logger, this.configManager);
     
     this.db = new Database(config.database.path || '.cctop/data/activity.db');
     this.fileEventHandler = new FileEventHandler(this.db, this.logger, config.monitoring.moveThresholdMs);
@@ -131,6 +128,13 @@ class DaemonManager {
       await this.configManager.loadConfig();
       const config = this.configManager.getConfig();
       
+      // Check for existing daemon
+      const existingDaemon = await this.pidManager.checkExistingDaemon();
+      if (existingDaemon.exists) {
+        this.logger.log('error', existingDaemon.message!);
+        throw new Error(existingDaemon.message);
+      }
+      
       // Setup environment
       await this.configManager.ensureDirectories();
       await this.pidManager.writePidFile();
@@ -180,7 +184,7 @@ class DaemonManager {
       // Start heartbeat
       this.startHeartbeat();
 
-      this.logger.log('info', `Daemon started successfully (PID: ${process.pid}, started by: ${this.startedBy})`);
+      this.logger.log('info', `Daemon started successfully (PID: ${process.pid})`);
       
     } catch (error) {
       this.logger.log('error', `Failed to start daemon: ${error}`);
@@ -191,8 +195,7 @@ class DaemonManager {
 
 // Main execution
 async function main() {
-  const startedBy = process.argv.includes('--standalone') ? 'standalone' : 'cli';
-  const daemon = new DaemonManager(startedBy);
+  const daemon = new DaemonManager();
   
   try {
     await daemon.start();

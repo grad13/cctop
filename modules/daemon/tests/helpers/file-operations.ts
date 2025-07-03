@@ -3,24 +3,24 @@
  * Provides helper functions for file-based test scenarios
  */
 
-import { Database } from 'better-sqlite3';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { waitForFileEvent } from './wait-utilities';
+import { DatabaseQueries } from './database-queries';
 
 /**
  * Create a file and wait for it to be detected
  */
 export async function createFileAndWaitForEvent(
   testDir: string,
-  db: Database,
+  dbQueries: DatabaseQueries,
   filename: string,
   content: string = 'test content',
   eventType: string = 'create'
 ): Promise<void> {
   const filePath = path.join(testDir, filename);
   await fs.writeFile(filePath, content);
-  await waitForFileEvent(db, filename, eventType);
+  await waitForFileEvent(dbQueries, filename, eventType);
 }
 
 /**
@@ -28,12 +28,12 @@ export async function createFileAndWaitForEvent(
  */
 export async function deleteFileAndWaitForEvent(
   testDir: string,
-  db: Database,
+  dbQueries: DatabaseQueries,
   filename: string
 ): Promise<void> {
   const filePath = path.join(testDir, filename);
   await fs.unlink(filePath);
-  await waitForFileEvent(db, filename, 'delete');
+  await waitForFileEvent(dbQueries, filename, 'delete');
 }
 
 /**
@@ -41,14 +41,14 @@ export async function deleteFileAndWaitForEvent(
  */
 export async function moveFileAndWaitForEvent(
   testDir: string,
-  db: Database,
+  dbQueries: DatabaseQueries,
   oldName: string,
   newName: string
 ): Promise<void> {
   const oldPath = path.join(testDir, oldName);
   const newPath = path.join(testDir, newName);
   await fs.rename(oldPath, newPath);
-  await waitForFileEvent(db, newName, 'move');
+  await waitForFileEvent(dbQueries, newName, 'move');
 }
 
 /**

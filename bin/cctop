@@ -7,6 +7,7 @@
 
 const { spawn } = require('child_process');
 const path = require('path');
+const fs = require('fs');
 
 /**
  * Show help message
@@ -14,13 +15,13 @@ const path = require('path');
 function showHelpMessage() {
   console.log(`cctop v0.3.0 - Code Change Top (File Monitoring Tool)
 
-Usage: cctop [command] [options]
+Usage: cctop [command] [subcommand] [options]
 
 Commands:
-  start              Start both daemon and CLI (default)
-  daemon             Start daemon only
-  cli                Start CLI only
-  stop               Stop daemon
+  daemon start       Start the daemon
+  daemon stop        Stop the daemon
+  daemon status      Show daemon status
+  ui                 Start the UI (default)
 
 Options:
   -h, --help         Show this help message
@@ -28,18 +29,18 @@ Options:
   --verbose          Enable verbose output
 
 Examples:
-  cctop              # Start both daemon and CLI
-  cctop start        # Same as above
-  cctop daemon       # Start daemon only (background monitoring)
-  cctop cli          # Start CLI only (requires daemon running)
-  cctop stop         # Stop daemon
+  cctop              # Start the UI
+  cctop ui           # Same as above
+  cctop daemon start # Start daemon in background
+  cctop daemon stop  # Stop running daemon
+  cctop daemon status # Check if daemon is running
 
-Interactive Controls (in CLI mode):
-  Ctrl+C             Quit CLI
+Interactive Controls (in UI mode):
+  Ctrl+C             Quit UI
   
 Architecture:
   - Daemon: Background file monitoring service
-  - CLI: Real-time event display interface
+  - UI: Real-time event display interface
   - Database: SQLite with WAL mode for concurrent access`);
 }
 
@@ -94,16 +95,89 @@ function startCLI() {
  */
 function stopDaemon() {
   return new Promise((resolve) => {
-    // Simple approach: just inform user to use Ctrl+C for now
-    console.log('💡 To stop daemon, use Ctrl+C in the daemon terminal');
-    console.log('📝 Note: Full daemon management will be added in v0.3.1');
-    resolve();
+    const fs = require('fs');
+    const pidFilePath = path.join(process.cwd(), '.cctop/runtime/daemon.pid');
+    
+    try {
+      const pidData = JSON.parse(fs.readFileSync(pidFilePath, 'utf8'));
+      const pid = pidData.pid;
+      
+      // Check if process exists
+      try {
+        process.kill(pid, 0);
+        // Process exists, send SIGTERM
+        process.kill(pid, 'SIGTERM');
+        console.log(`✅ Stopping daemon with PID ${pid}...`);
+        
+        // Wait for process to exit
+        let attempts = 0;
+        const checkInterval = setInterval(() => {
+          attempts++;
+          try {
+            process.kill(pid, 0);
+            // Process still exists
+            if (attempts > 20) { // Increased from 10 to 20 (10 seconds total)
+              console.log('⚠️  Daemon did not stop gracefully, sending SIGKILL...');
+              process.kill(pid, 'SIGKILL');
+              clearInterval(checkInterval);
+              resolve();
+            }
+          } catch (e) {
+            // Process no longer exists
+            console.log('✅ Daemon stopped successfully');
+            clearInterval(checkInterval);
+            resolve();
+          }
+        }, 500);
+      } catch (e) {
+        console.log('⚠️  Daemon is not running (PID file exists but process not found)');
+        // Clean up stale PID file
+        try {
+          fs.unlinkSync(pidFilePath);
+          console.log('🧹 Cleaned up stale PID file');
+        } catch (err) {
+          // Ignore error
+        }
+        resolve();
+      }
+    } catch (error) {
+      console.log('ℹ️  No daemon is currently running (PID file not found)');
+      resolve();
+    }
   });
+}
+
+/**
+ * Check daemon status
+ */
+function checkDaemonStatus() {
+  const fs = require('fs');
+  const pidFilePath = path.join(process.cwd(), '.cctop/runtime/daemon.pid');
+  
+  try {
+    const pidData = JSON.parse(fs.readFileSync(pidFilePath, 'utf8'));
+    const pid = pidData.pid;
+    
+    // Check if process exists
+    try {
+      process.kill(pid, 0);
+      console.log(`✅ Daemon is running (PID: ${pid})`);
+      console.log(`   Working directory: ${pidData.working_directory}`);
+      console.log(`   Monitoring: ${pidData.watch_paths.join(', ')}`);
+      console.log(`   Started at: ${new Date(pidData.started_at).toLocaleString()}`);
+    } catch (e) {
+      console.log('⚠️  Daemon is not running (PID file exists but process not found)');
+      console.log('   You may want to run "cctop daemon stop" to clean up');
+    }
+  } catch (error) {
+    console.log('ℹ️  No daemon is currently running');
+  }
 }
 
 async function main() {
   const args = process.argv.slice(2);
-  const command = args[0] || 'start';
+  const command = args[0] || 'ui';
+  const subcommand = args[1];
   
   // Handle options
   for (const arg of args) {
@@ -124,37 +198,46 @@ async function main() {
   
   try {
     switch (command) {
-      case 'start':
-        console.log('🚀 Starting cctop v0.3.0...');
-        console.log('📦 Architecture: Daemon-CLI separation');
-        console.log('');
-        
-        console.log('1️⃣ Starting daemon...');
-        await startDaemon();
-        console.log('');
-        
-        console.log('2️⃣ Starting CLI...');
-        console.log('💡 Press Ctrl+C to stop CLI');
-        console.log('');
-        await startCLI();
-        break;
-        
       case 'daemon':
-        console.log('🔧 Starting daemon only...');
-        await startDaemon();
-        console.log('💡 Use "cctop cli" to start the display interface');
+        if (subcommand === 'start') {
+          console.log('🚀 Starting daemon...');
+          // Start daemon
+          const daemonPath = path.join(__dirname, '../modules/daemon/dist/index.js');
+          const daemon = spawn('node', [daemonPath], {
+            stdio: 'ignore',
+            detached: true,
+            cwd: process.cwd()
+          });
+          
+          daemon.on('error', (error) => {
+            console.error('❌ Failed to start daemon:', error.message);
+            process.exit(1);
+          });
+          
+          // Let daemon run in background
+          daemon.unref();
+          
+          // Wait a bit to ensure daemon starts successfully
+          setTimeout(() => {
+            checkDaemonStatus();
+          }, 1000);
+        } else if (subcommand === 'stop') {
+          console.log('🛑 Stopping daemon...');
+          await stopDaemon();
+        } else if (subcommand === 'status') {
+          checkDaemonStatus();
+        } else {
+          console.error('❌ Usage: cctop daemon [start|stop|status]');
+          process.exit(1);
+        }
         break;
         
-      case 'cli':
-        console.log('📺 Starting CLI interface...');
-        console.log('💡 Make sure daemon is running with "cctop daemon"');
+      case 'ui':
+      case undefined:
+        console.log('📺 Starting UI...');
+        console.log('💡 Make sure daemon is running with "cctop daemon start"');
         console.log('');
         await startCLI();
-        break;
-        
-      case 'stop':
-        console.log('🛑 Stopping daemon...');
-        await stopDaemon();
         break;
         
       default:

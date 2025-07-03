@@ -3,99 +3,106 @@
  * Provides direct database access for test verification
  */
 
-import BetterSqlite3 from 'better-sqlite3';
+import { Database } from '../../../shared/dist/index';
 import type { AggregateData, GlobalStatistics } from './types';
+import sqlite3 from 'sqlite3';
+import { promisify } from 'util';
 
 export class DatabaseQueries {
-  private db: BetterSqlite3.Database;
+  private database: Database;
+  private db: sqlite3.Database | null = null;
+  private dbPath: string;
 
   constructor(dbPath: string) {
-    this.db = new BetterSqlite3(dbPath);
+    this.dbPath = dbPath;
+    this.database = new Database(dbPath);
   }
 
-  queryAggregatesTable(): AggregateData[] {
-    return this.db.prepare(`
-      SELECT 
-        a.*,
-        f.file_path,
-        f.inode_number,
-        f.is_active
-      FROM aggregates a
-      JOIN files f ON a.file_id = f.id
-      ORDER BY a.id
-    `).all() as AggregateData[];
+  async connect(): Promise<void> {
+    await this.database.connect();
+    // Get direct sqlite3 database instance for raw queries
+    this.db = new sqlite3.Database(this.dbPath);
   }
 
-  queryGlobalStatistics(): GlobalStatistics | null {
-    return this.db.prepare('SELECT * FROM global_statistics LIMIT 1').get() as GlobalStatistics | null;
-  }
-
-  recreateTriggersForTest(): void {
-    // Check if events table exists
-    const tableExists = this.db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='events'").get();
-    if (!tableExists) {
-      console.warn('Warning: events table does not exist, skipping trigger creation');
-      return;
-    }
+  async queryAggregatesTable(): Promise<AggregateData[]> {
+    if (!this.db) throw new Error('Database not connected');
     
-    // Drop existing triggers
-    this.db.exec(`
-      DROP TRIGGER IF EXISTS update_aggregates_on_insert;
-      DROP TRIGGER IF EXISTS update_global_statistics_on_aggregates_insert;
-      DROP TRIGGER IF EXISTS update_global_statistics_on_aggregates_update;
-    `);
-
-    // Recreate triggers for testing
-    this.db.exec(`
-      CREATE TRIGGER IF NOT EXISTS update_aggregates_on_insert
-      AFTER INSERT ON events
-      BEGIN
-        INSERT INTO aggregates (
-          file_id,
-          total_events,
-          total_finds,
-          total_creates,
-          total_modifies,
-          total_deletes,
-          total_moves,
-          total_restores,
-          first_size,
-          max_size,
-          last_size,
-          first_event_timestamp,
-          last_event_timestamp
-        )
-        VALUES (
-          NEW.file_id,
-          1,
-          CASE WHEN NEW.event_type = 'find' THEN 1 ELSE 0 END,
-          CASE WHEN NEW.event_type = 'create' THEN 1 ELSE 0 END,
-          CASE WHEN NEW.event_type = 'modify' THEN 1 ELSE 0 END,
-          CASE WHEN NEW.event_type = 'delete' THEN 1 ELSE 0 END,
-          CASE WHEN NEW.event_type = 'move' THEN 1 ELSE 0 END,
-          CASE WHEN NEW.event_type = 'restore' THEN 1 ELSE 0 END,
-          NEW.size,
-          NEW.size,
-          NEW.size,
-          NEW.timestamp,
-          NEW.timestamp
-        )
-        ON CONFLICT(file_id) DO UPDATE SET
-          total_events = total_events + 1,
-          total_finds = total_finds + CASE WHEN NEW.event_type = 'find' THEN 1 ELSE 0 END,
-          total_creates = total_creates + CASE WHEN NEW.event_type = 'create' THEN 1 ELSE 0 END,
-          total_modifies = total_modifies + CASE WHEN NEW.event_type = 'modify' THEN 1 ELSE 0 END,
-          total_deletes = total_deletes + CASE WHEN NEW.event_type = 'delete' THEN 1 ELSE 0 END,
-          total_moves = total_moves + CASE WHEN NEW.event_type = 'move' THEN 1 ELSE 0 END,
-          total_restores = total_restores + CASE WHEN NEW.event_type = 'restore' THEN 1 ELSE 0 END,
-          max_size = MAX(max_size, NEW.size),
-          last_size = NEW.size,
-          last_event_timestamp = NEW.timestamp;
-      END;
-    `);
+    return new Promise((resolve, reject) => {
+      this.db!.all(`
+        SELECT 
+          a.*,
+          f.file_path,
+          f.inode_number,
+          f.is_active
+        FROM aggregates a
+        JOIN files f ON a.file_id = f.id
+        ORDER BY a.id
+      `, (err, rows) => {
+        if (err) reject(err);
+        else resolve(rows as AggregateData[]);
+      });
+    });
   }
 
-  close(): void {
-    this.db.close();
+  async queryGlobalStatistics(): Promise<GlobalStatistics | null> {
+    if (!this.db) throw new Error('Database not connected');
+    
+    // Since global_statistics table doesn't exist, we'll compute from aggregates
+    return new Promise((resolve, reject) => {
+      this.db!.get(`
+        SELECT 
+          COUNT(DISTINCT file_id) as total_files,
+          SUM(total_events) as total_events,
+          SUM(total_finds) as total_finds,
+          SUM(total_creates) as total_creates,
+          SUM(total_modifies) as total_modifies,
+          SUM(total_deletes) as total_deletes,
+          SUM(total_moves) as total_moves,
+          SUM(total_restores) as total_restores,
+          MAX(last_event_timestamp) as last_event_timestamp,
+          MIN(first_event_timestamp) as first_event_timestamp
+        FROM aggregates
+      `, (err, row) => {
+        if (err) reject(err);
+        else resolve(row as GlobalStatistics | null);
+      });
+    });
+  }
+
+  async recreateTriggersForTest(): Promise<void> {
+    if (!this.db) throw new Error('Database not connected');
+    
+    // Use the database's trigger recreation method
+    await this.database.recreateTriggers();
+  }
+
+  async queryEvents(query: string, ...params: any[]): Promise<any[]> {
+    if (!this.db) throw new Error('Database not connected');
+    
+    return new Promise((resolve, reject) => {
+      this.db!.all(query, params, (err, rows) => {
+        if (err) reject(err);
+        else resolve(rows);
+      });
+    });
+  }
+
+  async queryEvent(query: string, ...params: any[]): Promise<any> {
+    if (!this.db) throw new Error('Database not connected');
+    
+    return new Promise((resolve, reject) => {
+      this.db!.get(query, params, (err, row) => {
+        if (err) reject(err);
+        else resolve(row);
+      });
+    });
+  }
+
+  async close(): Promise<void> {
+    if (this.db) {
+      await promisify(this.db.close.bind(this.db))();
+      this.db = null;
+    }
+    await this.database.close();
   }
 }

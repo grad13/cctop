@@ -36,6 +36,31 @@ npm run build
 
 ## Usage
 
+### Command Line Interface (Recommended)
+
+```bash
+# Start daemon in the current directory
+cctop daemon start
+
+# Stop running daemon
+cctop daemon stop
+
+# Check daemon status
+cctop daemon status
+
+# Start UI (requires daemon running)
+cctop ui
+# or just
+cctop
+```
+
+### Features
+
+- **Duplicate Prevention**: Only one daemon instance per directory
+- **Automatic Cleanup**: Stale PID files are cleaned automatically
+- **Graceful Shutdown**: SIGTERM with 10-second timeout before SIGKILL
+- **Status Monitoring**: Check if daemon is running with detailed info
+
 ### Direct Execution
 
 ```bash
@@ -72,7 +97,7 @@ daemon.stdout.on('data', (data) => {
 # Check if daemon is running
 cat .cctop/runtime/daemon.pid
 
-# Stop daemon gracefully
+# Stop daemon gracefully (use cctop daemon stop instead)
 kill $(cat .cctop/runtime/daemon.pid)
 
 # Force stop all daemon processes
@@ -81,14 +106,13 @@ pkill -f "node.*daemon.*standalone"
 
 ## Configuration
 
-The daemon follows a 3-layer configuration system (FUNC-101/106):
+The daemon uses a configuration system (FUNC-106):
 
 ### Directory Structure
 
 ```
 .cctop/
 ├── config/
-│   ├── shared-config.json    # Shared configuration (FUNC-101)
 │   └── daemon-config.json    # Daemon-specific settings (FUNC-106)
 ├── data/
 │   └── activity.db          # SQLite database with WAL mode
@@ -99,35 +123,7 @@ The daemon follows a 3-layer configuration system (FUNC-101/106):
 └── temp/                   # Temporary files
 ```
 
-### Configuration Files
-
-#### shared-config.json (FUNC-101)
-```json
-{
-  "version": "0.3.0.0",
-  "project": {
-    "name": "cctop",
-    "description": "Real-time file monitoring and code structure analysis tool"
-  },
-  "database": {
-    "path": ".cctop/data/activity.db",
-    "maxSize": 104857600
-  },
-  "directories": {
-    "config": ".cctop/config",
-    "logs": ".cctop/logs",
-    "temp": ".cctop/temp",
-    "runtime": ".cctop/runtime",
-    "data": ".cctop/data"
-  },
-  "logging": {
-    "maxFileSize": 10485760,
-    "maxFiles": 5,
-    "datePattern": "YYYY-MM-DD",
-    "level": "info"
-  }
-}
-```
+### Configuration File
 
 #### daemon-config.json (FUNC-106)
 ```json
@@ -176,9 +172,8 @@ The daemon follows a 3-layer configuration system (FUNC-101/106):
 ### Configuration Loading Order
 
 1. Default configuration (built-in)
-2. shared-config.json (if exists)
-3. daemon-config.json (if exists)
-4. Command-line arguments (highest priority)
+2. daemon-config.json (if exists)
+3. Command-line arguments (highest priority)
 
 ## Database Schema
 
@@ -258,17 +253,24 @@ DaemonManager
 ### Running Tests
 
 ```bash
-# Run all tests
-npm test
+# Run unit tests only (fast)
+npm run test:unit
 
-# Run minimal test suite (fast)
-npm run test:minimal
+# Run integration tests in parts (to avoid timeout)
+npm run test:integration:1  # basic, daemon, edge-cases
+npm run test:integration:2  # find, move detection
+npm run test:integration:3  # restore, startup-delete, statistics
+
+# Run E2E tests
+npm run test:e2e
 
 # Run specific test file
-npm test tests/daemon.test.ts
+npm test tests/unit/duplicate-prevention.test.ts
 
 # Watch mode for development
 npm run test:watch
+
+# Note: npm test and npm run test:integration are disabled due to timeout issues
 ```
 
 ### Test Architecture
@@ -338,6 +340,7 @@ modules/daemon/
 - **Fast Startup**: < 1 second initialization time
 - **Concurrent Access**: SQLite WAL mode enables parallel read/write
 - **Scalable**: Tested with thousands of files and high-frequency changes
+- **Single Instance**: Automatic duplicate daemon prevention per directory
 
 ### Resource Usage
 
@@ -373,10 +376,13 @@ modules/daemon/
 1. **Daemon won't start**
    ```bash
    # Check for existing daemon
-   cat .cctop/runtime/daemon.pid
-   ps aux | grep cctop-daemon
+   cctop daemon status
    
-   # Remove stale PID file if needed
+   # If daemon shows as not running but start fails:
+   cctop daemon stop  # This will clean up stale PID files
+   cctop daemon start
+   
+   # Manual cleanup if needed
    rm .cctop/runtime/daemon.pid
    ```
 

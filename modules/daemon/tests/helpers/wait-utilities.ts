@@ -4,9 +4,9 @@
  */
 
 import { ChildProcess } from 'child_process';
-import { Database } from 'better-sqlite3';
 import * as fs from 'fs/promises';
 import * as path from 'path';
+import { DatabaseQueries } from './database-queries';
 
 /**
  * Wait for daemon to be ready by checking PID file
@@ -33,7 +33,7 @@ export async function waitForDaemonReady(testDir: string, maxWait: number = 5000
  * Wait for database events to be recorded
  */
 export async function waitForEvents(
-  db: Database, 
+  dbQueries: DatabaseQueries, 
   expectedCount: number, 
   eventType?: string,
   maxWait: number = 5000
@@ -41,11 +41,9 @@ export async function waitForEvents(
   const startTime = Date.now();
   
   while (Date.now() - startTime < maxWait) {
-    const query = eventType 
-      ? db.prepare('SELECT COUNT(*) as count FROM events WHERE event_type = ?')
-      : db.prepare('SELECT COUNT(*) as count FROM events');
-    
-    const result = eventType ? query.get(eventType) : query.get();
+    const result = eventType 
+      ? await dbQueries.queryEvent('SELECT COUNT(*) as count FROM events WHERE event_type = ?', eventType)
+      : await dbQueries.queryEvent('SELECT COUNT(*) as count FROM events');
     
     if (result.count >= expectedCount) {
       return;
@@ -56,8 +54,8 @@ export async function waitForEvents(
   }
   
   const actualCount = eventType
-    ? db.prepare('SELECT COUNT(*) as count FROM events WHERE event_type = ?').get(eventType).count
-    : db.prepare('SELECT COUNT(*) as count FROM events').get().count;
+    ? (await dbQueries.queryEvent('SELECT COUNT(*) as count FROM events WHERE event_type = ?', eventType)).count
+    : (await dbQueries.queryEvent('SELECT COUNT(*) as count FROM events')).count;
     
   throw new Error(`Expected ${expectedCount} events${eventType ? ` of type ${eventType}` : ''}, but found ${actualCount} after ${maxWait}ms`);
 }
@@ -66,7 +64,7 @@ export async function waitForEvents(
  * Wait for a specific file event to be recorded
  */
 export async function waitForFileEvent(
-  db: Database,
+  dbQueries: DatabaseQueries,
   filename: string,
   eventType: string,
   maxWait: number = 5000
@@ -74,11 +72,10 @@ export async function waitForFileEvent(
   const startTime = Date.now();
   
   while (Date.now() - startTime < maxWait) {
-    const query = db.prepare(
-      'SELECT * FROM events WHERE filename = ? AND event_type = ? ORDER BY id DESC LIMIT 1'
+    const result = await dbQueries.queryEvent(
+      'SELECT * FROM events WHERE filename = ? AND event_type = ? ORDER BY id DESC LIMIT 1',
+      filename, eventType
     );
-    
-    const result = query.get(filename, eventType);
     
     if (result) {
       return;

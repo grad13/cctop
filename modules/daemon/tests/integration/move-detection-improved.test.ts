@@ -6,7 +6,6 @@ import { describe, test, expect, beforeEach, afterEach, afterAll } from 'vitest'
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { ChildProcess } from 'child_process';
-import Database from 'better-sqlite3';
 import { 
   DaemonTestManager, 
   setupDaemonTest, 
@@ -14,23 +13,27 @@ import {
   waitForDaemonReady, 
   waitForFileEvent, 
   createFileAndWaitForEvent,
-  moveFileAndWaitForEvent 
+  moveFileAndWaitForEvent,
+  DatabaseQueries,
+  getUniqueTestDir
 } from '../helpers';
 
 describe('Move Detection (Improved)', () => {
-  const testDir = '/tmp/cctop-move-test-improved';
-  const testDbPath = path.join(testDir, '.cctop/data/activity.db');
+  let testDir: string;
+  let testDbPath: string;
   let daemonProcess: ChildProcess | null = null;
-  let db: Database.Database | null = null;
+  let dbQueries: DatabaseQueries | null = null;
 
   beforeEach(async () => {
+    testDir = getUniqueTestDir('cctop-move-test-improved');
+    testDbPath = path.join(testDir, '.cctop/data/activity.db');
     await setupDaemonTest(testDir);
   });
 
   afterEach(async () => {
-    if (db) {
-      db.close();
-      db = null;
+    if (dbQueries) {
+      await dbQueries.close();
+      dbQueries = null;
     }
     if (daemonProcess) {
       await DaemonTestManager.stopDaemon(daemonProcess);
@@ -54,25 +57,27 @@ describe('Move Detection (Improved)', () => {
     await new Promise(resolve => setTimeout(resolve, 500)); // Wait for database initialization
     
     // Open database connection
-    db = new Database(testDbPath);
+    dbQueries = new DatabaseQueries(testDbPath);
+    await dbQueries.connect();
     
     // Step 1: Create file and wait for event
     const originalFile = 'move-test.txt';
     const movedFile = 'move-test-renamed.txt';
     
-    await createFileAndWaitForEvent(testDir, db, originalFile, 'content for move test');
+    await createFileAndWaitForEvent(testDir, dbQueries, originalFile, 'content for move test');
     
     // Get inode of original file
-    const createEvent = db.prepare(
-      'SELECT inode_number FROM events WHERE filename = ? AND event_type = ?'
-    ).get(originalFile, 'create');
+    const createEvent = await dbQueries.queryEvent(
+      'SELECT inode_number FROM events WHERE filename = ? AND event_type = ?',
+      originalFile, 'create'
+    );
     const originalInode = createEvent.inode_number;
     
     // Step 2: Move file and wait for event
-    await moveFileAndWaitForEvent(testDir, db, originalFile, movedFile);
+    await moveFileAndWaitForEvent(testDir, dbQueries, originalFile, movedFile);
     
     // Step 3: Verify events
-    const events = db.prepare('SELECT * FROM events ORDER BY id ASC').all();
+    const events = await dbQueries.queryEvents('SELECT * FROM events ORDER BY id ASC');
     
     // Should have: create + move (NOT create + delete + create)
     const createEvents = events.filter(e => e.event_type === 'create');
@@ -97,18 +102,19 @@ describe('Move Detection (Improved)', () => {
     await waitForDaemonReady(testDir);
     await new Promise(resolve => setTimeout(resolve, 500)); // Wait for database initialization
     
-    db = new Database(testDbPath);
+    dbQueries = new DatabaseQueries(testDbPath);
+    await dbQueries.connect();
     
     // Create and delete file
     const filename = 'delete-test.txt';
-    await createFileAndWaitForEvent(testDir, db, filename, 'delete test content');
+    await createFileAndWaitForEvent(testDir, dbQueries, filename, 'delete test content');
     
     // Delete file
     await fs.unlink(path.join(testDir, filename));
-    await waitForFileEvent(db, filename, 'delete');
+    await waitForFileEvent(dbQueries, filename, 'delete');
     
     // Verify events
-    const events = db.prepare('SELECT * FROM events WHERE filename = ?').all(filename);
+    const events = await dbQueries.queryEvents('SELECT * FROM events WHERE filename = ?', filename);
     
     expect(events).toHaveLength(2);
     expect(events[0].event_type).toBe('create');
@@ -124,23 +130,24 @@ describe('Move Detection (Improved)', () => {
     await waitForDaemonReady(testDir);
     await new Promise(resolve => setTimeout(resolve, 500)); // Wait for database initialization
     
-    db = new Database(testDbPath);
+    dbQueries = new DatabaseQueries(testDbPath);
+    await dbQueries.connect();
     
     // Create multiple files
-    await createFileAndWaitForEvent(testDir, db, 'file1.txt', 'content 1');
-    await createFileAndWaitForEvent(testDir, db, 'file2.txt', 'content 2');
-    await createFileAndWaitForEvent(testDir, db, 'file3.txt', 'content 3');
+    await createFileAndWaitForEvent(testDir, dbQueries, 'file1.txt', 'content 1');
+    await createFileAndWaitForEvent(testDir, dbQueries, 'file2.txt', 'content 2');
+    await createFileAndWaitForEvent(testDir, dbQueries, 'file3.txt', 'content 3');
     
     // Move file1
-    await moveFileAndWaitForEvent(testDir, db, 'file1.txt', 'file1-moved.txt');
+    await moveFileAndWaitForEvent(testDir, dbQueries, 'file1.txt', 'file1-moved.txt');
     
     // Delete file2
     await fs.unlink(path.join(testDir, 'file2.txt'));
-    await waitForFileEvent(db, 'file2.txt', 'delete');
+    await waitForFileEvent(dbQueries, 'file2.txt', 'delete');
     
     // Verify final state
-    const moveEvents = db.prepare('SELECT * FROM events WHERE event_type = ?').all('move');
-    const deleteEvents = db.prepare('SELECT * FROM events WHERE event_type = ?').all('delete');
+    const moveEvents = await dbQueries.queryEvents('SELECT * FROM events WHERE event_type = ?', 'move');
+    const deleteEvents = await dbQueries.queryEvents('SELECT * FROM events WHERE event_type = ?', 'delete');
     
     expect(moveEvents).toHaveLength(1);
     expect(moveEvents[0].filename).toBe('file1-moved.txt');

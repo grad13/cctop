@@ -8,13 +8,17 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 import { spawn, ChildProcess } from 'child_process';
 import sqlite3 from 'sqlite3';
+import { getUniqueTestDir } from '../helpers';
 
 describe('NPM Run Bug (TDD)', () => {
-  const productionDir = path.resolve(__dirname, '../../..');
-  const dbPath = path.join(productionDir, '.cctop/data/activity.db');
+  let testDir: string;
+  let dbPath: string;
   let daemonProcess: ChildProcess | null = null;
   
   beforeEach(async () => {
+    testDir = getUniqueTestDir('cctop-npm-run-bug-test');
+    dbPath = path.join(testDir, '.cctop/data/activity.db');
+    
     // Kill any existing daemons
     try {
       await new Promise<void>((resolve) => {
@@ -26,18 +30,51 @@ describe('NPM Run Bug (TDD)', () => {
       // Ignore if no process to kill
     }
     
-    // Clean database
+    // Clean and setup test directory
     try {
-      await fs.unlink(dbPath);
+      await fs.rm(testDir, { recursive: true, force: true });
     } catch (e) {
-      // Ignore if file doesn't exist
+      // Ignore if doesn't exist
     }
+    
+    // Setup test directory with .cctop structure
+    await fs.mkdir(path.join(testDir, '.cctop/config'), { recursive: true });
+    await fs.mkdir(path.join(testDir, '.cctop/data'), { recursive: true });
+    await fs.mkdir(path.join(testDir, '.cctop/logs'), { recursive: true });
+    await fs.mkdir(path.join(testDir, '.cctop/runtime'), { recursive: true });
+    
+    // Create config files
+    const daemonConfig = {
+      monitoring: {
+        watchPaths: ['.'],
+        excludePatterns: ['**/node_modules/**', '**/.git/**', '**/.*', '**/.cctop/**']
+      },
+      daemon: {
+        pidFile: '.cctop/runtime/daemon.pid',
+        logFile: '.cctop/logs/daemon.log'
+      },
+      database: {
+        path: '.cctop/data/activity.db'
+      }
+    };
+    
+    await fs.writeFile(
+      path.join(testDir, '.cctop/config/daemon-config.json'),
+      JSON.stringify(daemonConfig, null, 2)
+    );
   });
   
   afterEach(async () => {
     if (daemonProcess) {
       daemonProcess.kill('SIGTERM');
       await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+    
+    // Clean up test directory
+    try {
+      await fs.rm(testDir, { recursive: true, force: true });
+    } catch (e) {
+      // Ignore cleanup errors
     }
   });
 
@@ -60,10 +97,11 @@ describe('NPM Run Bug (TDD)', () => {
     const originalCwd = process.cwd();
     
     try {
-      // RED: Start daemon exactly like user does - npm run daemon
-      daemonProcess = spawn('npm', ['run', 'daemon'], {
+      // Start daemon using node directly in test directory
+      const daemonPath = path.resolve(__dirname, '../../dist/index.js');
+      daemonProcess = spawn('node', [daemonPath, '--standalone'], {
         stdio: 'pipe',
-        cwd: productionDir,
+        cwd: testDir,
         detached: false
       });
       
@@ -83,11 +121,11 @@ describe('NPM Run Bug (TDD)', () => {
       console.log(daemonOutput);
       
       // Check if daemon is actually running
-      const pidFileExists = await fs.access(path.join(productionDir, '.cctop/runtime/daemon.pid')).then(() => true).catch(() => false);
+      const pidFileExists = await fs.access(path.join(testDir, '.cctop/runtime/daemon.pid')).then(() => true).catch(() => false);
       console.log('PID file exists:', pidFileExists);
       
-      // Create test file in production directory (user's action)
-      const testFile = path.join(productionDir, 'user-test-file.txt');
+      // Create test file in test directory
+      const testFile = path.join(testDir, 'user-test-file.txt');
       await fs.writeFile(testFile, 'user test content');
       console.log('Created test file:', testFile);
       
