@@ -1,3 +1,0 @@
-#!/usr/bin/env node
-
-require('../modules/daemon/dist/index.js');
