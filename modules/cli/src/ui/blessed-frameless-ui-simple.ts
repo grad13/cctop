@@ -169,15 +169,15 @@ export class BlessedFramelessUISimple {
     });
 
     // FUNC-202: Dynamic Control Area (Bottom)
-    this.dynamicControlBar = blessed.box({
+    this.dynamicControlBar = blessed.text({
       bottom: 0,
       left: 0,
       width: '100%',
       height: 1,
       content: this.buildDynamicControlContent(),
       style: {
-        fg: 'yellow',
-        bg: 'black'
+        bg: 'black',
+        fg: 'white'
       },
       tags: true
     });
@@ -193,15 +193,6 @@ export class BlessedFramelessUISimple {
   private buildHeaderContent(): string {
     // FUNC-202: Header Area format with filter/search status
     let header = `{bold}cctop v1.0.0.0 {green-fg}Daemon: ●RUNNING{/green-fg}`;
-    
-    // Add filter status if filters are active
-    const activeFilters = 6 - this.eventFilters.size;
-    if (activeFilters > 0) {
-      const filterTypes = ['find', 'create', 'modify', 'delete', 'move', 'restore']
-        .filter(type => !this.eventFilters.has(type))
-        .join(',');
-      header += ` │ Filter: ${filterTypes}`;
-    }
     
     // Add search status if search is active
     if (this.searchText) {
@@ -221,7 +212,28 @@ export class BlessedFramelessUISimple {
     // FUNC-202: Dynamic Control Area - changes based on state
     switch (this.displayState) {
       case 'filter':
-        return '[f] Find [c] Create [m] Modify [d] Delete [v] Move [r] Restore [ESC] Back';
+        // Show filter state with dimmed colors for disabled types
+        const filterItems = [
+          { key: 'f', label: 'Find', type: 'find' },
+          { key: 'c', label: 'Create', type: 'create' },
+          { key: 'm', label: 'Modify', type: 'modify' },
+          { key: 'd', label: 'Delete', type: 'delete' },
+          { key: 'v', label: 'Move', type: 'move' },
+          { key: 'r', label: 'Restore', type: 'restore' }
+        ];
+        
+        const filterDisplay = filterItems.map(item => {
+          const isEnabled = this.eventFilters.has(item.type);
+          // Use simpler approach without tags
+          if (isEnabled) {
+            return `[${item.key}] ${item.label}`;
+          } else {
+            // Use ANSI codes directly
+            return `\x1b[90m[${item.key}] ${item.label}\x1b[0m`;
+          }
+        }).join(' ');
+        
+        return filterDisplay + ' [ESC] Back';
       
       case 'search':
         return `Search: [${this.searchText}_________________________________] [Enter] Apply [ESC] Cancel`;
@@ -373,6 +385,7 @@ export class BlessedFramelessUISimple {
     } else {
       this.eventFilters.add(eventType);
     }
+    this.updateDynamicControl();
     this.refreshData();
   }
 
@@ -398,7 +411,10 @@ export class BlessedFramelessUISimple {
   }
 
   private updateDynamicControl(): void {
-    this.dynamicControlBar.setContent(this.buildDynamicControlContent());
+    const content = this.buildDynamicControlContent();
+    // Use parseTags to ensure tags are processed
+    this.dynamicControlBar.setContent((blessed as any).parseTags(content));
+    this.screen.render();
   }
 
   private updateStatusBar(): void {
