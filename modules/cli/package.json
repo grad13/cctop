@@ -11,7 +11,7 @@
     "demo:column": "node simple-column.js",
     "demo:panel": "node simple-panel.js",
     "demo:terminal": "node simple-terminal.js",
-    "test": "node test-all-ui.js",
+    "test": "jest",
     "test:frameless": "node tests/test-frameless-simple.js",
     "test:column": "node tests/test-column-simple.js",
     "dev": "tsc --watch"
@@ -26,7 +26,10 @@
     "string-width": "^5.1.2"
   },
   "devDependencies": {
+    "@types/jest": "^30.0.0",
     "@types/node": "^20.14.9",
+    "jest": "^30.0.4",
+    "ts-jest": "^29.4.0",
     "typescript": "^5.5.3"
   }
 }
