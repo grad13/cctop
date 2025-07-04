@@ -20,9 +20,26 @@ export class DemoDataGenerator {
   ];
   
   private directories = [
+    // Short paths
     'src/', 'test/', 'docs/', 'lib/', 'config/', 'assets/',
     'src/components/', 'src/utils/', 'test/unit/', 'docs/api/',
-    'ドキュメント/', '設計書/', 'テスト/', 'ソース/'
+    'ドキュメント/', '設計書/', 'テスト/', 'ソース/',
+    
+    // Long paths to test FUNC-204
+    '/Users/takuo-h/Workspace/Code/06-cctop/modules/cli/src/ui/components/',
+    '/very/long/path/to/deeply/nested/project/structure/src/database/models/',
+    '/home/user/Development/projects/enterprise/application/backend/services/api/v2/',
+    '/var/www/html/applications/production/releases/2025-07-04/dist/assets/images/',
+    '/opt/kubernetes/clusters/production/namespaces/default/deployments/backend/',
+    
+    // Japanese long paths
+    '/プロジェクト/開発環境/ソースコード/フロントエンド/コンポーネント/共通部品/',
+    '/ドキュメント/設計書/詳細設計/画面設計/管理画面/ユーザー管理/',
+    '/システム/本番環境/アプリケーション/バックエンド/サービス/認証/',
+    
+    // Mixed language paths
+    '/Users/開発者/Projects/新機能開発/frontend/src/components/管理画面/',
+    '/home/developer/ワークスペース/project-xyz/backend/api/v2/endpoints/'
   ];
   
   private eventId = 1;

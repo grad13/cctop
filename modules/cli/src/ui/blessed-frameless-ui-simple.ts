@@ -32,6 +32,9 @@ export class BlessedFramelessUISimple {
   private eventArea: any;
   private eventList: any;
   
+  // FUNC-204: Dynamic width config
+  private directoryWidth: number = 20;
+  
   // State management
   private displayState: DisplayState = 'normal';
   private isPaused: boolean = false;
@@ -405,6 +408,9 @@ export class BlessedFramelessUISimple {
   }
 
   private formatEventList(): string[] {
+    // FUNC-204: Calculate dynamic directory width
+    this.calculateDynamicWidth();
+    
     return this.events.map((event, index) => {
       const timestamp = this.formatTimestamp(event.timestamp);
       const elapsed = this.formatElapsed(event.timestamp);
@@ -412,13 +418,52 @@ export class BlessedFramelessUISimple {
       const eventType = this.colorizeEventType(event.event_type);
       const lines = this.padLeft(event.lines?.toString() || '', 6);
       const blocks = this.padLeft(event.blocks?.toString() || '', 7);
-      const directory = event.directory || '';
+      const directory = this.truncateDirectoryPath(event.directory || '', this.directoryWidth);
 
       const isSelected = index === this.selectedIndex;
       const marker = isSelected ? '>' : ' ';
       
       return `${marker}${timestamp} ${elapsed} ${filename} ${eventType} ${lines} ${blocks} ${directory}`;
     });
+  }
+  
+  private calculateDynamicWidth(): void {
+    // FUNC-204: Dynamic width calculation
+    const terminalWidth = process.stdout.columns || 80;
+    // Fixed columns: Timestamp(19) + Elapsed(7) + FileName(35) + Event(8) + Lines(6) + Blocks(7) + spaces(6) + marker(1) = 89
+    const fixedWidth = 89;
+    this.directoryWidth = Math.max(10, terminalWidth - fixedWidth);
+  }
+  
+  private truncateDirectoryPath(path: string, maxWidth: number): string {
+    // FUNC-204: Tail-first truncation for directories
+    const width = stringWidth(path);
+    
+    if (width <= maxWidth) {
+      return path;
+    }
+    
+    const ellipsis = '...';
+    const ellipsisWidth = 3;
+    const targetWidth = maxWidth - ellipsisWidth;
+    
+    // Take characters from the end
+    let result = '';
+    let currentWidth = 0;
+    
+    // Iterate from the end of the string
+    for (let i = path.length - 1; i >= 0 && currentWidth < targetWidth; i--) {
+      const char = path[i];
+      const charWidth = stringWidth(char);
+      if (currentWidth + charWidth <= targetWidth) {
+        result = char + result;
+        currentWidth += charWidth;
+      } else {
+        break;
+      }
+    }
+    
+    return ellipsis + result;
   }
 
   private formatTimestamp(timestamp: string): string {
@@ -549,6 +594,12 @@ export class BlessedFramelessUISimple {
     this.initializeScreen();
     this.setupFramelessLayout();
     this.setupKeyHandlers();
+    
+    // FUNC-204: Handle terminal resize
+    process.stdout.on('resize', () => {
+      this.calculateDynamicWidth();
+      this.updateDisplay();
+    });
     
     // Start refreshing
     await this.refreshData();
