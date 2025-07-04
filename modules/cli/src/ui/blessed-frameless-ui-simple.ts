@@ -256,6 +256,15 @@ export class BlessedFramelessUISimple {
       }
     });
 
+    // Filter mode toggle
+    this.screen.key(['f'], () => {
+      if (this.displayState === 'normal' || this.displayState === 'paused') {
+        this.enterFilterMode();
+      } else if (this.displayState === 'filter') {
+        this.toggleEventFilter('find');
+      }
+    });
+
     this.screen.key(['escape'], () => {
       this.exitSpecialMode();
     });
