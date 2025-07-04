@@ -133,15 +133,21 @@ describe('Display Mode Selector', () => {
   });
 
   describe('Header Display', () => {
-    it('should show "All Events" in header for all mode', () => {
+    it('should not show mode in header', () => {
       const header = (ui as any).buildHeaderContent();
-      expect(header).toContain('Mode: All Events');
+      expect(header).not.toContain('Mode:');
     });
 
-    it('should show "Unique Files" in header for unique mode', () => {
+    it('should keep header consistent regardless of mode', () => {
+      const headerAll = (ui as any).buildHeaderContent();
       (ui as any).displayMode = 'unique';
-      const header = (ui as any).buildHeaderContent();
-      expect(header).toContain('Mode: Unique Files');
+      const headerUnique = (ui as any).buildHeaderContent();
+      
+      // Remove dynamic parts (filters, search) for comparison
+      const staticPartAll = headerAll.split('│')[0];
+      const staticPartUnique = headerUnique.split('│')[0];
+      
+      expect(staticPartAll).toBe(staticPartUnique);
     });
   });
 });

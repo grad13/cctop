@@ -194,10 +194,6 @@ export class BlessedFramelessUISimple {
     // FUNC-202: Header Area format with filter/search status
     let header = `{bold}cctop v1.0.0.0 {green-fg}Daemon: ●RUNNING{/green-fg}`;
     
-    // Add display mode status
-    const modeText = this.displayMode === 'all' ? 'All Events' : 'Unique Files';
-    header += ` │ Mode: ${modeText}`;
-    
     // Add filter status if filters are active
     const activeFilters = 6 - this.eventFilters.size;
     if (activeFilters > 0) {
