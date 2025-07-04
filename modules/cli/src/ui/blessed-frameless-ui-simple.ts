@@ -194,6 +194,10 @@ export class BlessedFramelessUISimple {
     // FUNC-202: Header Area format with filter/search status
     let header = `{bold}cctop v1.0.0.0 {green-fg}Daemon: ●RUNNING{/green-fg}`;
     
+    // Add display mode status
+    const modeText = this.displayMode === 'all' ? 'All Events' : 'Unique Files';
+    header += ` │ Mode: ${modeText}`;
+    
     // Add filter status if filters are active
     const activeFilters = 6 - this.eventFilters.size;
     if (activeFilters > 0) {
@@ -569,11 +573,8 @@ export class BlessedFramelessUISimple {
 
   private async refreshData(): Promise<void> {
     try {
-      if (this.displayMode === 'unique') {
-        this.events = await this.db.getUniqueFiles(100);
-      } else {
-        this.events = await this.db.getLatestEvents(100);
-      }
+      // Use the enhanced getLatestEvents with mode parameter
+      this.events = await this.db.getLatestEvents(100, this.displayMode);
       
       // Apply filters
       if (this.eventFilters.size < 6) {

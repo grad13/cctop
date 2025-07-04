@@ -52,10 +52,25 @@ export class DatabaseAdapter {
     });
   }
 
-  async getLatestEvents(limit: number = 25): Promise<EventRow[]> {
+  async getLatestEvents(limit: number = 25, mode: 'all' | 'unique' = 'all'): Promise<EventRow[]> {
     if (this.useRandomData) {
       // Generate random events
-      return this.dataGenerator.generateEvents(limit);
+      const events = this.dataGenerator.generateEvents(limit * (mode === 'unique' ? 3 : 1));
+      
+      if (mode === 'unique') {
+        // In-memory unique filtering for demo mode
+        const uniqueFiles = new Map<string, EventRow>();
+        events.forEach(event => {
+          const key = `${event.directory}/${event.filename}`;
+          if (!uniqueFiles.has(key) || 
+              new Date(event.timestamp) > new Date(uniqueFiles.get(key)!.timestamp)) {
+            uniqueFiles.set(key, event);
+          }
+        });
+        return Array.from(uniqueFiles.values()).slice(0, limit);
+      }
+      
+      return events;
     }
 
     return new Promise((resolve, reject) => {
@@ -64,9 +79,31 @@ export class DatabaseAdapter {
         return;
       }
 
-      // Try different table schemas
+      // Try different table schemas with mode support
       const queries = [
         // v0.3.0 schema
+        mode === 'unique' ? 
+        `SELECT 
+          e.id,
+          e.timestamp,
+          e.filename,
+          e.directory,
+          e.event_type,
+          e.size,
+          e.lines,
+          e.blocks,
+          e.inode,
+          e.elapsed_ms
+        FROM events e
+        INNER JOIN (
+          SELECT filename, directory, MAX(timestamp) as max_timestamp
+          FROM events
+          GROUP BY filename, directory
+        ) latest ON e.filename = latest.filename 
+                 AND e.directory = latest.directory 
+                 AND e.timestamp = latest.max_timestamp
+        ORDER BY e.timestamp DESC 
+        LIMIT ?` :
         `SELECT 
           id,
           timestamp,
@@ -83,6 +120,28 @@ export class DatabaseAdapter {
         LIMIT ?`,
         
         // v0.2.x schema 
+        mode === 'unique' ?
+        `SELECT 
+          e.id,
+          e.created_at as timestamp,
+          e.filename,
+          e.directory,
+          e.event_type,
+          e.file_size as size,
+          e.line_count as lines,
+          e.block_count as blocks,
+          e.inode_number as inode,
+          0 as elapsed_ms
+        FROM file_events e
+        INNER JOIN (
+          SELECT filename, directory, MAX(created_at) as max_timestamp
+          FROM file_events
+          GROUP BY filename, directory
+        ) latest ON e.filename = latest.filename 
+                 AND e.directory = latest.directory 
+                 AND e.created_at = latest.max_timestamp
+        ORDER BY e.created_at DESC 
+        LIMIT ?` :
         `SELECT 
           id,
           created_at as timestamp,
