@@ -15,7 +15,12 @@
     "test": "npm run test --workspaces",
     "daemon": "node bin/cctop-daemon",
     "cli": "node bin/cctop-cli",
-    "dev": "npm run daemon & npm run cli"
+    "dev": "npm run daemon & npm run cli",
+    "demo": "node demo-ui.js",
+    "simple": "node simple-demo.js"
+  },
+  "dependencies": {
+    "blessed": "^0.1.81"
   },
   "devDependencies": {
     "@types/node": "^20.19.2",

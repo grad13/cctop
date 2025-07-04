@@ -1,89 +1,115 @@
 /**
- * cctop CLI - Terminal UI for file monitoring (v0.3.0 Console Version)
+ * CCTOP CLI Main Entry Point
+ * Blessed.js Terminal UI Implementation
  */
 
-import { Database, FileEvent } from '../../shared/dist/index';
+import { BlessedFramelessUISimple } from './ui/blessed-frameless-ui-simple';
+import { DatabaseAdapter } from './database/database-adapter';
+import * as path from 'path';
+import * as fs from 'fs';
 
-const DB_PATH = '.cctop/data/activity.db';
-const POLLING_INTERVAL = 1000; // 1 second for console version
+interface CLIConfig {
+  databasePath?: string;
+  refreshInterval?: number;
+  maxRows?: number;
+}
 
-async function main() {
-  console.log('=== cctop v0.3.0 - File Activity Monitor ===\n');
-  console.log('Console version - Press Ctrl+C to exit\n');
+class CCTOPCli {
+  private ui?: BlessedFramelessUISimple;
+  private db?: DatabaseAdapter;
+  private config: CLIConfig;
 
-  // Initialize database
-  const db = new Database(DB_PATH);
-  try {
-    await db.connect();
-    console.log('✅ Database connected successfully\n');
-  } catch (error) {
-    console.error('❌ Database connection failed:', error);
-    process.exit(1);
+  constructor(config: CLIConfig = {}) {
+    this.config = {
+      databasePath: config.databasePath || this.findDatabasePath(),
+      refreshInterval: config.refreshInterval || 1000,
+      maxRows: config.maxRows || 25
+    };
   }
 
-  // Update display function
-  const updateDisplay = async () => {
-    try {
-      const events = await db.getRecentEvents(20);
-      
-      // Clear screen and show header
-      console.clear();
-      console.log('=== cctop v0.3.0 - File Activity Monitor ===\n');
-      console.log(`📊 Recent Events (${events.length})\n`);
-      
-      if (events.length === 0) {
-        console.log('⏳ No events yet...\n');
-      } else {
-        events.forEach((event, i) => {
-          const time = event.timestamp.toLocaleTimeString();
-          const icon = getEventIcon(event.eventType);
-          console.log(`${String(i + 1).padStart(2)}. [${time}] ${icon} ${event.eventType}: ${event.filename}`);
-        });
-        console.log('');
+  private findDatabasePath(): string {
+    // Default paths to search for database
+    const possiblePaths = [
+      './.cctop/data/activity.db',
+      path.join(process.cwd(), '.cctop', 'data', 'activity.db'),
+      path.join(process.env.HOME || '', '.cctop', 'data', 'activity.db')
+    ];
+
+    for (const dbPath of possiblePaths) {
+      if (fs.existsSync(dbPath)) {
+        return dbPath;
       }
-      
-      console.log('💡 Press Ctrl+C to exit');
-      
-    } catch (error) {
-      console.error('❌ Error updating display:', error);
     }
-  };
 
-  // Helper function for event icons
-  function getEventIcon(eventType: string): string {
-    switch (eventType) {
-      case 'create': return '✅';
-      case 'modify': return '✏️';
-      case 'delete': return '🗑️';
-      case 'move': return '📁';
-      default: return '📄';
+    // Default fallback
+    return './.cctop/data/activity.db';
+  }
+
+  public async start(): Promise<void> {
+    try {
+      // Initialize database adapter
+      this.db = new DatabaseAdapter(this.config.databasePath!);
+      await this.db.connect();
+
+      // Initialize UI
+      this.ui = new BlessedFramelessUISimple(this.db, {
+        refreshInterval: this.config.refreshInterval,
+        maxRows: this.config.maxRows,
+        displayMode: 'all'
+      });
+
+      // Start UI
+      await this.ui.start();
+    } catch (error) {
+      console.error('Failed to start CCTOP CLI:', error);
+      process.exit(1);
     }
   }
 
-  // Initial display
-  await updateDisplay();
-  
-  // Start polling
-  const interval = setInterval(updateDisplay, POLLING_INTERVAL);
+  public stop(): void {
+    if (this.ui) {
+      this.ui.stop();
+    }
+    if (this.db) {
+      this.db.disconnect();
+    }
+  }
+}
 
-  // Graceful shutdown
-  process.on('SIGINT', async () => {
-    console.log('\n\n👋 Shutting down cctop CLI...');
-    clearInterval(interval);
-    await db.close();
-    console.log('✅ Database closed');
-    process.exit(0);
-  });
+// Handle graceful shutdown
+process.on('SIGINT', () => {
+  console.log('\nGracefully shutting down...');
+  process.exit(0);
+});
 
-  // Handle other termination signals
-  process.on('SIGTERM', async () => {
-    clearInterval(interval);
-    await db.close();
-    process.exit(0);
+process.on('SIGTERM', () => {
+  console.log('\nGracefully shutting down...');
+  process.exit(0);
+});
+
+// Suppress terminal errors globally from the very beginning
+const originalStderr = process.stderr.write.bind(process.stderr);
+(process.stderr as any).write = function(chunk: any, encoding?: any, callback?: any): boolean {
+  const str = chunk.toString();
+  // Suppress all terminal-related errors
+  if (str.includes('Error on xterm') || 
+      str.includes('Setulc') || 
+      str.includes('\\u001b[58') ||
+      str.includes('var v,') ||
+      str.includes('stack = []') ||
+      str.includes('out = [')) {
+    return true;
+  }
+  return originalStderr(chunk, encoding, callback);
+};
+
+// Start CLI if this file is run directly
+if (require.main === module) {
+  const cli = new CCTOPCli();
+  cli.start().catch((error) => {
+    console.error('Failed to start CLI:', error);
+    process.exit(1);
   });
 }
 
-main().catch((error) => {
-  console.error('💥 CLI Error:', error);
-  process.exit(1);
-});
+export { CCTOPCli };

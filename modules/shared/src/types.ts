@@ -56,3 +56,16 @@ export interface DaemonState {
   watch_paths: string[];
   config_path: string;
 }
+
+export interface EventRow {
+  id: number;
+  timestamp: string;
+  filename: string;
+  directory: string;
+  event_type: string;
+  size: number;
+  lines?: number;
+  blocks?: number;
+  inode: number;
+  elapsed_ms: number;
+}
