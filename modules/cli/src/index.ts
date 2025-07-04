@@ -3,7 +3,7 @@
  * Blessed.js Terminal UI Implementation
  */
 
-import { BlessedTerminalUI } from './ui/blessed-terminal-ui';
+import { BlessedFramelessUISimple } from './ui/blessed-frameless-ui-simple';
 import { DatabaseAdapter } from './database/database-adapter';
 import * as path from 'path';
 import * as fs from 'fs';
@@ -15,7 +15,7 @@ interface CLIConfig {
 }
 
 class CCTOPCli {
-  private ui?: BlessedTerminalUI;
+  private ui?: BlessedFramelessUISimple;
   private db?: DatabaseAdapter;
   private config: CLIConfig;
 
@@ -47,33 +47,19 @@ class CCTOPCli {
 
   public async start(): Promise<void> {
     try {
-      console.log('Starting CCTOP CLI...');
-      console.log(`Database path: ${this.config.databasePath}`);
-
       // Initialize database adapter
       this.db = new DatabaseAdapter(this.config.databasePath!);
       await this.db.connect();
 
       // Initialize UI
-      this.ui = new BlessedTerminalUI(this.db, {
+      this.ui = new BlessedFramelessUISimple(this.db, {
         refreshInterval: this.config.refreshInterval,
         maxRows: this.config.maxRows,
-        colors: {
-          header: 'white',
-          status: 'green',
-          find: 'cyan',
-          create: 'green',
-          modify: 'yellow',
-          delete: 'red',
-          move: 'magenta',
-          restore: 'blue'
-        }
+        displayMode: 'all'
       });
 
       // Start UI
       await this.ui.start();
-
-      console.log('CCTOP CLI started successfully');
     } catch (error) {
       console.error('Failed to start CCTOP CLI:', error);
       process.exit(1);
@@ -100,6 +86,22 @@ process.on('SIGTERM', () => {
   console.log('\nGracefully shutting down...');
   process.exit(0);
 });
+
+// Suppress terminal errors globally from the very beginning
+const originalStderr = process.stderr.write.bind(process.stderr);
+(process.stderr as any).write = function(chunk: any, encoding?: any, callback?: any): boolean {
+  const str = chunk.toString();
+  // Suppress all terminal-related errors
+  if (str.includes('Error on xterm') || 
+      str.includes('Setulc') || 
+      str.includes('\\u001b[58') ||
+      str.includes('var v,') ||
+      str.includes('stack = []') ||
+      str.includes('out = [')) {
+    return true;
+  }
+  return originalStderr(chunk, encoding, callback);
+};
 
 // Start CLI if this file is run directly
 if (require.main === module) {

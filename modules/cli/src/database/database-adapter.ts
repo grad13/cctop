@@ -5,28 +5,27 @@
 
 import sqlite3 from 'sqlite3';
 import { EventRow } from '../types/event-row';
-import { RandomDataGenerator } from '../data/random-data-generator';
+import { DemoDataGenerator } from '../data/demo-data-generator';
 
 export class DatabaseAdapter {
   private db: sqlite3.Database | null = null;
-  private dataGenerator: RandomDataGenerator;
+  private dataGenerator: DemoDataGenerator;
   private useRandomData: boolean = true; // For demo mode
 
   constructor(private dbPath: string) {
-    this.dataGenerator = new RandomDataGenerator();
+    this.dataGenerator = new DemoDataGenerator();
   }
 
   async connect(): Promise<void> {
     if (this.useRandomData) {
-      // Skip database connection for demo mode
-      console.log('Using random data generator (demo mode)');
+      // Skip database connection for demo mode (silent)
       return Promise.resolve();
     }
     
     return new Promise((resolve, reject) => {
       this.db = new sqlite3.Database(this.dbPath, sqlite3.OPEN_READONLY, (err) => {
         if (err) {
-          console.log('Database not found, switching to demo mode with random data');
+          // Silent switch to demo mode
           this.useRandomData = true;
           resolve();
         } else {
@@ -55,14 +54,8 @@ export class DatabaseAdapter {
 
   async getLatestEvents(limit: number = 25): Promise<EventRow[]> {
     if (this.useRandomData) {
-      // Generate random events with some new ones each time
-      const baseEvents = this.dataGenerator.generateEvents(limit - 3);
-      const newEvents = [
-        this.dataGenerator.generateNewEvent(),
-        this.dataGenerator.generateNewEvent(),
-        this.dataGenerator.generateNewEvent()
-      ];
-      return [...newEvents, ...baseEvents];
+      // Generate random events
+      return this.dataGenerator.generateEvents(limit);
     }
 
     return new Promise((resolve, reject) => {

@@ -10,7 +10,7 @@
     "demo:frameless": "node simple-frameless.js",
     "demo:column": "node simple-column.js",
     "demo:panel": "node simple-panel.js",
-    "demo:terminal": "node simple-terminal.js", 
+    "demo:terminal": "node simple-terminal.js",
     "test": "node test-all-ui.js",
     "test:frameless": "node tests/test-frameless-simple.js",
     "test:column": "node tests/test-column-simple.js",
@@ -18,11 +18,12 @@
   },
   "dependencies": {
     "@cctop/shared": "file:../shared",
-    "blessed": "^0.1.81",
     "@types/blessed": "^0.1.21",
+    "@types/sqlite3": "^3.1.8",
+    "blessed": "^0.1.81",
     "chalk": "^4.1.2",
     "sqlite3": "^5.1.6",
-    "@types/sqlite3": "^3.1.8"
+    "string-width": "^5.1.2"
   },
   "devDependencies": {
     "@types/node": "^20.14.9",
