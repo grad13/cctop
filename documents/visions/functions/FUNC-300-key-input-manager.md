@@ -1,9 +1,9 @@
 # FUNC-300: Key Input Manager
 
 **作成日**: 2025年6月27日 23:00  
-**更新日**: 2025年6月27日 23:00  
+**更新日**: 2025年7月3日  
 **作成者**: Architect Agent  
-**対象バージョン**: v0.2.3.0  
+**対象バージョン**: v0.3.0.0  
 **関連仕様**: FUNC-202, FUNC-203, FUNC-400, FUNC-401  
 
 ## 📊 機能概要
@@ -59,9 +59,15 @@
 ### 状態管理システム（State Machine）
 ```javascript
 InputState {
-  currentMode: 'waiting' | 'selecting' | 'detail',
+  currentMode: 'waiting' | 'filtering' | 'searching' | 'selecting' | 'paused' | 'detail',
   stateMaps: Map<string, Map<string, KeyHandler>>,
-  modeHistory: Array<string>
+  modeHistory: Array<string>,
+  displayState: {
+    mode: 'normal' | 'filter' | 'search' | 'paused' | 'detail',
+    streamActive: boolean,
+    filterConditions: Object,
+    searchQuery: string
+  }
 }
 ```
 
@@ -129,11 +135,18 @@ handleKeyInput(key) {
 }
 ```
 
-#### 状態遷移制御
-- **waiting → selecting**: FUNC-400の上下キー入力時
-- **selecting → detail**: FUNC-400のEnterキー入力時
-- **detail → waiting**: FUNC-401のEscキー入力時
-- **selecting → waiting**: FUNC-400のEscキー入力時
+#### 状態遷移制御（統合版）
+- **waiting → filtering**: fキー入力時（フィルタモード開始）
+- **waiting → searching**: /キー入力時（検索モード開始）
+- **waiting → selecting**: ↑↓キー入力時（選択モード開始）
+- **waiting → paused**: spaceキー入力時（一時停止モード）
+- **filtering → waiting**: Escキー入力時（フィルタモード終了）
+- **searching → waiting**: Escキー入力時（検索モード終了）
+- **selecting → waiting**: Escキー入力時（選択モード終了）
+- **selecting → detail**: Enterキー入力時（詳細モード開始）
+- **paused → waiting**: spaceキー入力時（一時停止解除）
+- **detail → waiting**: Escキー入力時（詳細モード終了）
+- **any → waiting**: qキー入力時（アプリケーション終了）
 
 ### ハンドラー登録仕様（State Machine方式）
 

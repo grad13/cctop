@@ -3,7 +3,7 @@
 **作成日**: 2025年6月24日 10:00  
 **更新日**: 2025年7月3日  
 **作成者**: Architect Agent  
-**Version**: 0.3.0.0  
+**Version**: 0.3.1.0  
 **関連仕様**: FUNC-000, FUNC-200, FUNC-201, FUNC-203, FUNC-204, FUNC-205, FUNC-300  
 
 ## 📊 機能概要
@@ -110,11 +110,6 @@ Event Timestamp      Elapsed  File Name                           Event    Lines
 ```
 注：Daemon状態は変わらず、Stream表示のみ一時停止
 
-##### **5. フィルタ適用時のヘッダー表示**
-```
-cctop v1.0.0.0 Daemon: ●RUNNING │ Filter: modify,create │ Search: "*.ts"
-```
-
 ### **表示モード仕様**
 
 #### **Allモード**
@@ -135,73 +130,113 @@ cctop v1.0.0.0 Daemon: ●RUNNING │ Filter: modify,create │ Search: "*.ts"
 
 ### **FUNC-300連携によるキー処理**
 
-**基本方針**: キーボード入力はFUNC-300が一元管理し、状態に応じてFUNC-202が処理を受け取る
+**基本方針**: キーボード入力くFUNC-300が一元管理し、状態に応じてFUNC-202が表示処理を実行
 
-#### **状態管理（State Machine）**
-FUNC-202は以下の内部状態を管理：
-- `normal`: 通常表示モード（Stream動作中）
-- `filter`: イベントフィルタ選択モード
-- `search`: クイックサーチ入力モード
-- `stream-paused`: Stream一時停止（Daemonは動作継続）
+#### **状態管理（FUNC-300統合版）**
+FUNC-202の表示状態はFUNC-300の入力状態と連動：
 
-#### **キーバインド定義**
+| FUNC-300入力状態 | FUNC-202表示状態 | 説明 |
+|-------------------|-------------------|------|
+| `waiting` | `normal` | 通常表示モード（Stream動作中） |
+| `filtering` | `filter` | イベントフィルタ選択モード |
+| `searching` | `search` | クイックサーチ入力モード |
+| `selecting` | `normal` | 選択モード（通常表示維持） |
+| `paused` | `paused` | Stream一時停止（Daemonは動作継続） |
+| `detail` | `detail` | 詳細情報表示モード |
 
-##### **Normal Mode**
-| キー | 機能 | 説明 |
-|------|------|------|
-| `q` | Exit | アプリケーション終了 |
-| `space` | Pause/Resume | Stream表示の一時停止/再開 |
-| `x` | Refresh | 手動リフレッシュ |
-| `a` | All Mode | 全イベント表示 |
-| `u` | Unique Mode | ユニークファイル表示 |
-| `f` | Filter Menu | イベントフィルタモードへ |
-| `/` | Quick Search | 検索モードへ |
-| `ESC` | Clear | フィルタ・検索をクリア |
-| `↑/↓` | Select | イベント選択開始 |
+#### **キーバインド定義（FUNC-300統合版）**
 
-##### **Filter Mode（fキー押下後）**
-| キー | 機能 | 説明 |
-|------|------|------|
-| `f` | Toggle Find | Findイベントの表示切替 |
-| `c` | Toggle Create | Createイベントの表示切替 |
-| `m` | Toggle Modify | Modifyイベントの表示切替 |
-| `d` | Toggle Delete | Deleteイベントの表示切替 |
-| `v` | Toggle Move | Moveイベントの表示切替 |
-| `r` | Toggle Restore | Restoreイベントの表示切替 |
-| `ESC` | Back to Normal | 通常モードに戻る |
+**重要**: 全てのキー入力はFUNC-300が一元管理。FUNC-202は表示更新のみ実行。
 
-##### **Search Mode（/キー押下後）**
-| キー | 機能 | 説明 |
-|------|------|------|
-| `[text]` | Input | 検索文字列入力 |
-| `Enter` | Apply | 検索実行 |
-| `ESC` | Cancel | 検索キャンセル |
+##### **Waiting Mode（通常状態）**
+| キー | FUNC-300処理 | FUNC-202処理 |
+|------|-------------|-------------|
+| `q` | アプリケーション終了 | - |
+| `space` | `paused`状態へ遷移 | 表示更新停止 |
+| `x` | - | 手動リフレッシュ |
+| `a` | - | All Mode表示 |
+| `u` | - | Unique Mode表示 |
+| `f` | `filtering`状態へ遷移 | Dynamic Area更新 |
+| `/` | `searching`状態へ遷移 | Dynamic Area更新 |
+| `ESC` | - | フィルタ・検索クリア |
+| `↑/↓` | `selecting`状態へ遷移 | 選択表示開始 |
 
-#### **FUNC-300登録例**:
+##### **Filtering Mode（fキー押下後）**
+| キー | FUNC-300処理 | FUNC-202処理 |
+|------|-------------|-------------|
+| `f` | FUNC-203呼び出し | フィルタ表示更新 |
+| `c` | FUNC-203呼び出し | フィルタ表示更新 |
+| `m` | FUNC-203呼び出し | フィルタ表示更新 |
+| `d` | FUNC-203呼び出し | フィルタ表示更新 |
+| `v` | FUNC-203呼び出し | フィルタ表示更新 |
+| `r` | FUNC-203呼び出し | フィルタ表示更新 |
+| `ESC` | `waiting`状態へ遷移 | Dynamic Area更新 |
+
+##### **Searching Mode（/キー押下後）**
+| キー | FUNC-300処理 | FUNC-202処理 |
+|------|-------------|-------------|
+| `[text]` | 文字入力バッファ管理 | 検索欄表示更新 |
+| `Enter` | 検索実行 | 検索結果表示 |
+| `ESC` | `waiting`状態へ遷移 | Dynamic Area更新 |
+
+##### **Paused Mode（spaceキー押下後）**
+| キー | FUNC-300処理 | FUNC-202処理 |
+|------|-------------|-------------|
+| `space` | `waiting`状態へ遷移 | 表示更新再開 |
+| 他のキー | 通常通り処理 | 通常通り処理 |
+
+#### **FUNC-300連携実装例**:
 ```javascript
-// Normal Mode keys
-KeyInputManager.registerToState('normal', 'q', FUNC202.exit);
-KeyInputManager.registerToState('normal', 'space', FUNC202.togglePause);
-KeyInputManager.registerToState('normal', 'x', FUNC202.refresh);
-KeyInputManager.registerToState('normal', 'a', FUNC202.setAllMode);
-KeyInputManager.registerToState('normal', 'u', FUNC202.setUniqueMode);
-KeyInputManager.registerToState('normal', 'f', () => {
-  FUNC202.setState('filter');
-  FUNC202.updateDynamicArea('filter');
-});
-KeyInputManager.registerToState('normal', '/', () => {
-  FUNC202.setState('search');
-  FUNC202.updateDynamicArea('search');
-});
+// FUNC-300の状態遷移ハンドラー登録
+KeyInputManager.initializeStateMaps() {
+  // Waiting Modeのキー登録
+  this.registerToState('waiting', 'q', FUNC202.exit);
+  this.registerToState('waiting', 'a', FUNC202.setAllMode);
+  this.registerToState('waiting', 'u', FUNC202.setUniqueMode);
+  this.registerToState('waiting', 'x', FUNC202.refresh);
+  
+  // 状態遷移キー（FUNC-300が管理）
+  this.registerToState('waiting', 'space', () => {
+    this.setState('paused');
+    FUNC202.updateDisplayState({ mode: 'paused', streamActive: false });
+  });
+  this.registerToState('waiting', 'f', () => {
+    this.setState('filtering');
+    FUNC202.updateDisplayState({ mode: 'filter' });
+  });
+  this.registerToState('waiting', '/', () => {
+    this.setState('searching');
+    FUNC202.updateDisplayState({ mode: 'search' });
+  });
+  
+  // Filtering Modeのキー登録
+  this.registerToState('filtering', 'f', () => {
+    FUNC203.toggleFind();
+    FUNC202.updateFilterDisplay();
+  });
+  this.registerToState('filtering', 'Escape', () => {
+    this.setState('waiting');
+    FUNC202.updateDisplayState({ mode: 'normal' });
+  });
+  
+  // Searching Modeのキー登録
+  this.registerToState('searching', 'Enter', () => {
+    FUNC202.applySearch(this.getInputBuffer());
+  });
+  this.registerToState('searching', 'Escape', () => {
+    this.setState('waiting');
+    FUNC202.updateDisplayState({ mode: 'normal' });
+  });
+}
 
-// Filter Mode keys
-KeyInputManager.registerToState('filter', 'f', FUNC203.toggleFind);
-KeyInputManager.registerToState('filter', 'c', FUNC203.toggleCreate);
-// ... other filter keys
-KeyInputManager.registerToState('filter', 'Escape', () => {
-  FUNC202.setState('normal');
-  FUNC202.updateDynamicArea('normal');
-});
+// FUNC-202側の表示状態更新ハンドラー
+FUNC202.updateDisplayState = function(displayState) {
+  this.currentDisplayState = displayState;
+  this.updateDynamicArea(displayState.mode);
+  if (displayState.streamActive !== undefined) {
+    this.setStreamActive(displayState.streamActive);
+  }
+};
 ```
 
 ### **色分け仕様**
@@ -366,6 +401,12 @@ cctop ./logs
    - エラー時の適切なフォールバック
 
 ## 📝 変更履歴
+
+### v0.3.1.0 (2025-07-03)
+- **状態管理統合**: FUNC-202の状態管理をFUNC-300に統合
+- **キー処理統一**: 全てのキー入力をFUNC-300が一元管理
+- **表示状態連動**: FUNC-300の入力状態とFUNC-202の表示状態を連動
+- **整合性向上**: キーバインドと状態遷移の一貫性を実現
 
 ### v0.3.0.0 (2025-07-03)
 - 4エリア構造の導入（Header/Event Rows/Command Keys/Dynamic Control）

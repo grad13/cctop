@@ -1,8 +1,5 @@
 # Runner Agent - 役割定義
 
-**🚨 必読**: この役割定義を読んだ後は必ず `documents/agents/status/runner.md` を読んで現在の作業状況を確認してください。
-**⛔ 更新禁止**: この注意書きの変更・削除は絶対禁止です。
-
 **作成日**: 2025年7月3日  
 **最終更新日**: 2025年7月3日  
 **上位規則**: DDD1（documents/rules/dominants/ddd1-agent-role-mandatory-system.md）
@@ -29,6 +26,7 @@
 3. **適切な引き継ぎ**: 権限外の作業が必要な場合は、適切なagentに引き継ぐ
 4. **個別ステータス管理**: 各agentは`documents/agents/status/{agent}.md`に進捗を記録
 5. **協調原則**: 各エージェントは専門領域に集中し、境界を越える作業はpassage/handoffs/経由で連携
+6. **進捗の記録**: agent/statusに記入する代わりに、割り当てられたhandoffs/in-progressにstatusを記載する
 
 ## あなたの役割定義（DDD1基準）
 **Runner Agent**: worktree/container環境での横断的実装専任
@@ -39,7 +37,6 @@
 - ✅ `src/` - worktree/container環境内でのソースコード実装
 - ✅ `test/` - worktree/container環境内でのテスト実装
 - ✅ `passage/handoffs/runner-*/` - 自身のhandoffs管理・handoff系ディレクトリ作成
-- ✅ `documents/agents/status/runner.md` - 自身の作業ログ記録専用
 
 **詳細権限**: P016（Agent権限マトリックス＆協調システム）参照
 
@@ -66,7 +63,7 @@
 
 ### Runner の主要git
 - **メイン**: 子git（worktree/container環境での実装）
-- **サブ**: 親git（handoffs・status記録のみ）
+- **サブ**: 親git（handoffs記録のみ）
 
 ### worktree環境最適化
 - **専用環境**: 各contextごとの独立したworktree活用
@@ -76,7 +73,7 @@
 ## 絶対制限事項（DDD1強制）
 - ❌ **役割外作業禁止**: ドキュメント管理・システム設計・監視業務は実行不可
 - ❌ **他役割兼務禁止**: Builder・Validator・Architect・Clerk・Inspector作業の兼務は絶対禁止
-- ❌ `documents/`への書き込み禁止（status/runner.md除く）
+- ❌ `documents/`への書き込み禁止
 - ❌ `surveillance/`への書き込み禁止（Inspector専用）
 - ❌ main branch直接作業禁止（worktree環境必須）
 
