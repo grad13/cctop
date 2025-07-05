@@ -42,7 +42,12 @@ export async function waitForEvents(
   
   while (Date.now() - startTime < maxWait) {
     const result = eventType 
-      ? await dbQueries.queryEvent('SELECT COUNT(*) as count FROM events WHERE event_type = ?', eventType)
+      ? await dbQueries.queryEvent(`
+          SELECT COUNT(*) as count 
+          FROM events e 
+          JOIN event_types et ON e.event_type_id = et.id 
+          WHERE et.code = ?
+        `, eventType)
       : await dbQueries.queryEvent('SELECT COUNT(*) as count FROM events');
     
     if (result.count >= expectedCount) {
@@ -54,7 +59,12 @@ export async function waitForEvents(
   }
   
   const actualCount = eventType
-    ? (await dbQueries.queryEvent('SELECT COUNT(*) as count FROM events WHERE event_type = ?', eventType)).count
+    ? (await dbQueries.queryEvent(`
+        SELECT COUNT(*) as count 
+        FROM events e 
+        JOIN event_types et ON e.event_type_id = et.id 
+        WHERE et.code = ?
+      `, eventType)).count
     : (await dbQueries.queryEvent('SELECT COUNT(*) as count FROM events')).count;
     
   throw new Error(`Expected ${expectedCount} events${eventType ? ` of type ${eventType}` : ''}, but found ${actualCount} after ${maxWait}ms`);
@@ -73,7 +83,11 @@ export async function waitForFileEvent(
   
   while (Date.now() - startTime < maxWait) {
     const result = await dbQueries.queryEvent(
-      'SELECT * FROM events WHERE filename = ? AND event_type = ? ORDER BY id DESC LIMIT 1',
+      `SELECT e.* 
+       FROM events e 
+       JOIN event_types et ON e.event_type_id = et.id 
+       WHERE e.file_name = ? AND et.code = ? 
+       ORDER BY e.id DESC LIMIT 1`,
       filename, eventType
     );
     

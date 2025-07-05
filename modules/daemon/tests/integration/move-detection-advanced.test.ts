@@ -78,6 +78,8 @@ describe('Move Detection Advanced (FUNC-003)', () => {
     // All moves should preserve the same inode
     moveEvents.forEach(moveEvent => {
       expect(moveEvent.inode_number).toBe(originalInode);
+      // FUNC-000: move events don't have measurements
+      expect(moveEvent.file_size).toBeNull();
     });
 
     // Final file should have same inode
@@ -181,7 +183,8 @@ describe('Move Detection Advanced (FUNC-003)', () => {
     const moveEvent = moveEvents.find(e => e.filename === 'size-move-dest.txt');
     
     expect(moveEvent).toBeDefined();
-    expect(moveEvent!.file_size).toBe(initialSize);
+    // FUNC-000: move events don't have measurements
+    expect(moveEvent!.file_size).toBeNull();
 
     // Modify after move
     const newContent = 'This is much longer content after the move';

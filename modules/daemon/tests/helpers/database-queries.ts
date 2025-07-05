@@ -31,9 +31,9 @@ export class DatabaseQueries {
       this.db!.all(`
         SELECT 
           a.*,
-          f.file_path,
-          f.inode_number,
-          f.is_active
+          f.inode,
+          f.is_active,
+          (SELECT file_path FROM events WHERE file_id = a.file_id ORDER BY timestamp DESC LIMIT 1) as file_path
         FROM aggregates a
         JOIN files f ON a.file_id = f.id
         ORDER BY a.id
@@ -53,7 +53,7 @@ export class DatabaseQueries {
         SELECT 
           COUNT(DISTINCT file_id) as total_files,
           SUM(total_events) as total_events,
-          SUM(total_finds) as total_finds,
+          0 as total_finds,  -- finds are not tracked separately in FUNC-000
           SUM(total_creates) as total_creates,
           SUM(total_modifies) as total_modifies,
           SUM(total_deletes) as total_deletes,
@@ -103,7 +103,19 @@ export class DatabaseQueries {
     
     return new Promise((resolve, reject) => {
       this.db!.all(
-        'SELECT * FROM events ORDER BY id ASC',
+        `SELECT 
+          e.*,
+          et.code as event_type,
+          e.file_name as filename,
+          COALESCE(m.inode, f.inode) as inode_number,
+          m.file_size as file_size,
+          m.line_count,
+          m.block_count
+        FROM events e
+        JOIN event_types et ON e.event_type_id = et.id
+        JOIN files f ON e.file_id = f.id
+        LEFT JOIN measurements m ON e.id = m.event_id
+        ORDER BY e.id ASC`,
         (err, rows: any[]) => {
           if (err) reject(err);
           else resolve(rows as DbEvent[]);
