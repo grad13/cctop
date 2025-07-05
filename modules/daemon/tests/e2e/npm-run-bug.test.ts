@@ -99,7 +99,7 @@ describe('NPM Run Bug (TDD)', () => {
     try {
       // Start daemon using node directly in test directory
       const daemonPath = path.resolve(__dirname, '../../dist/index.js');
-      daemonProcess = spawn('node', [daemonPath], {
+      daemonProcess = spawn('node', [daemonPath, '--standalone'], {
         stdio: 'pipe',
         cwd: testDir,
         detached: false

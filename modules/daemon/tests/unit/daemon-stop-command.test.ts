@@ -41,7 +41,7 @@ describe('Daemon Stop Command', () => {
 
   test('should stop running daemon with cctop daemon stop', async () => {
     // Start daemon directly
-    daemon = spawn('node', [daemonPath], {
+    daemon = spawn('node', [daemonPath, '--standalone'], {
       stdio: 'pipe',
       cwd: testDir
     });
@@ -136,7 +136,7 @@ describe('Daemon Stop Command', () => {
 
   test('should check daemon status', async () => {
     // Start daemon
-    daemon = spawn('node', [daemonPath], {
+    daemon = spawn('node', [daemonPath, '--standalone'], {
       stdio: 'pipe',
       cwd: testDir
     });

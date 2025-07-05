@@ -64,11 +64,14 @@ cctop
 ### Direct Execution
 
 ```bash
-# Start daemon
+# Start daemon in standalone mode
 npm run daemon
 
 # Or directly with Node.js
-node dist/index.js
+node dist/index.js --standalone
+
+# Start from parent process (e.g., CLI)
+node dist/index.js  # without --standalone flag
 ```
 
 ### Programmatic Usage
@@ -98,7 +101,7 @@ cat .cctop/runtime/daemon.pid
 kill $(cat .cctop/runtime/daemon.pid)
 
 # Force stop all daemon processes
-pkill -f "node.*daemon"
+pkill -f "node.*daemon.*standalone"
 ```
 
 ## Configuration
@@ -413,6 +416,7 @@ tail -f .cctop/logs/daemon.log | jq '.'
 
 ### Command Line Arguments
 
+- `--standalone`: Run as independent background process
 - `--config <path>`: Custom configuration file path
 - `--debug`: Enable debug logging
 - `--version`: Show version information

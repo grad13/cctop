@@ -13,7 +13,7 @@ export class DaemonTestManager {
   /**
    * Start a daemon process with automatic tracking
    */
-  static async startDaemon(daemonPath: string, cwd: string, args: string[] = []): Promise<ChildProcess> {
+  static async startDaemon(daemonPath: string, cwd: string, args: string[] = ['--standalone']): Promise<ChildProcess> {
     // Kill any existing daemon processes first
     await this.killAllDaemons();
 
@@ -90,7 +90,7 @@ export class DaemonTestManager {
     // Only check for specific daemon processes, not all node processes
     try {
       // More specific pattern to avoid checking all node processes
-      const result = execSync('pgrep -f "node.*daemon/dist/index.js" || true', { 
+      const result = execSync('pgrep -f "node.*daemon/dist/index.js.*--standalone" || true', { 
         encoding: 'utf8', 
         stdio: 'pipe' 
       });

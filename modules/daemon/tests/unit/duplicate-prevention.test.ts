@@ -43,7 +43,7 @@ describe('Duplicate Daemon Prevention', () => {
 
   test('should prevent duplicate daemon on same directory', async () => {
     // Start first daemon
-    firstDaemon = spawn('node', [daemonPath, ''], {
+    firstDaemon = spawn('node', [daemonPath, '--standalone'], {
       stdio: 'pipe',
       cwd: testDir
     });
@@ -62,7 +62,7 @@ describe('Duplicate Daemon Prevention', () => {
     await expect(fs.access(pidFilePath)).resolves.toBeUndefined();
 
     // Try to start second daemon
-    secondDaemon = spawn('node', [daemonPath, ''], {
+    secondDaemon = spawn('node', [daemonPath, '--standalone'], {
       stdio: 'pipe',
       cwd: testDir
     });
@@ -106,7 +106,7 @@ describe('Duplicate Daemon Prevention', () => {
     await fs.writeFile(pidFilePath, JSON.stringify(stalePidData, null, 2));
 
     // Start daemon - should succeed after cleaning stale PID
-    firstDaemon = spawn('node', [daemonPath, ''], {
+    firstDaemon = spawn('node', [daemonPath, '--standalone'], {
       stdio: 'pipe',
       cwd: testDir
     });
@@ -137,7 +137,7 @@ describe('Duplicate Daemon Prevention', () => {
     await fs.writeFile(pidFilePath, 'invalid json content');
 
     // Start daemon - should succeed
-    firstDaemon = spawn('node', [daemonPath, ''], {
+    firstDaemon = spawn('node', [daemonPath, '--standalone'], {
       stdio: 'pipe',
       cwd: testDir
     });

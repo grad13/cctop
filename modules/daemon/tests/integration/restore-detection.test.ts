@@ -43,20 +43,26 @@ describe('Restore Detection (FUNC-001)', () => {
 
   test('should detect restore event when deleted file reappears', async () => {
     daemonProcess = await startDaemon();
+    console.log('=== DEBUG: Daemon started, PID:', daemonProcess?.pid);
     await dbQueries.connect();
+    console.log('=== DEBUG: Database connected');
 
     const testFile = path.join(testDir, 'restore-test.txt');
     
     // Create file
     await fs.writeFile(testFile, 'Original content');
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await new Promise(resolve => setTimeout(resolve, 2000)); // Increase wait time
 
     // Verify create event
     let events = await dbQueries.getEventsFromDb();
+    console.log('=== DEBUG: All events after file creation ===');
+    events.forEach(e => console.log(`${e.event_type}: ${e.filename} (${new Date(e.timestamp).toISOString()})`));
+    
     const createEvents = events.filter(e => 
       e.filename === 'restore-test.txt' && 
       (e.event_type === 'create' || e.event_type === 'find')
     );
+    console.log('=== DEBUG: Create events found ===', createEvents.length);
     expect(createEvents.length).toBeGreaterThan(0);
 
     // Delete file

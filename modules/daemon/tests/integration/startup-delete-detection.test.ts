@@ -72,7 +72,7 @@ describe('Startup Delete Detection (FUNC-001)', () => {
   async function startDaemon(): Promise<ChildProcess> {
     const daemonPath = path.resolve(__dirname, '../../dist/index.js');
     
-    const process = spawn('node', [daemonPath], {
+    const process = spawn('node', [daemonPath, '--standalone'], {
       stdio: 'pipe',
       cwd: testDir
     });
