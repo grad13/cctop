@@ -77,6 +77,7 @@ FUNC-003-configuration-management.md
 | FUNC-401-detailed-inspection-mode.md | 詳細検査モード |
 | FUNC-402-aggregate-display-module.md | 集約表示モジュール |
 | FUNC-403-history-display-module.md | 履歴表示モジュール |
+| FUNC-404-dual-pane-detail-view.md | デュアルペイン詳細表示 |
 
 ## 📊 管理方針
 

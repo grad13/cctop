@@ -61,12 +61,12 @@ FUNC-000のデータベースから取得したファイルイベントを、リ
 ##### **1. 初期状態（Normal Mode）**
 ```
 cctop v1.0.0.0 Daemon: ●RUNNING
-Event Timestamp      Elapsed  File Name                           Event    Lines  Blocks  Directory
+Event Timestamp      Elapsed  File Name                           Event  Lines Blocks  Directory
 ────────────────────────────────────────────────────
-2025-06-25 19:07:51    00:04  FUNC-112-cli-display-inte...       modify     197      16  documents/visions/functions
-2025-06-25 19:07:33    00:22  FUNC-001-file-lifecycle-t...       modify     207      16  ...ments/visions/blueprints
-2025-06-25 19:07:13    00:42  FUNC-112-cli-display-inte...       modify     233      24  documents/visions/functions
-2025-06-25 19:06:49    01:07  FUNC-112-cli-display-inte...       modify     235      16  documents/visions/functions
+2025-06-25 19:07:51    00:04  FUNC-112-cli-display-inte...       modify    197     16  documents/visions/functions
+2025-06-25 19:07:33    00:22  FUNC-001-file-lifecycle-t...       modify    207     16  ...ments/visions/blueprints
+2025-06-25 19:07:13    00:42  FUNC-112-cli-display-inte...       modify    233     24  documents/visions/functions
+2025-06-25 19:06:49    01:07  FUNC-112-cli-display-inte...       modify    235     16  documents/visions/functions
 ────────────────────────────────────────────────────
 [q] Exit [space] Pause  [x] Refresh [a] All  [u] Unique  
 [↑↓] Select an event　[Enter] Show Details

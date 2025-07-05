@@ -87,6 +87,74 @@
 - **Validator経験**: テスト手法・品質保証プロセス
 - **統合アプローチ**: src+test同時開発によるTDD実践
 
+## Git Worktree利用方針（v0.3.0.0以降）
+
+### 基本方針
+- **作業場所**: `06-cctop/code/worktrees/`配下で並行開発
+- **目的**: 大規模変更時の独立した作業環境確保
+
+### worktree作成ルール
+1. **命名**: `worktrees/{MM-DD}-{descriotion}/`
+   - 例: `worktrees/06-30-daemon-test-improvements/`, `worktrees/06-29-implement-cli-first/`
+2. **ブランチ**: `{MM-DD}-{descriotion}/`
+   - 例: `feature/06-30-daemon-test-improvements/`, `worktrees/06-29-implement-cli-first/`
+
+### 基本コマンド（gwq使用必須）
+```bash
+# 新規worktree作成（今日の日付で）
+gwq add -b feature/07-04-new-feature
+
+# 既存ブランチからworktree作成
+gwq add existing-branch-name
+
+# 現在のworktree一覧
+gwq list
+
+# 詳細情報（コミット・日時付き）
+gwq list -v
+
+# 全worktreeの状態確認
+gwq status
+
+# worktree削除（ブランチは保持）
+gwq remove
+
+# worktree+ブランチ削除
+gwq remove -b
+```
+
+### よく使うパターン
+```bash
+# 今日の新機能開発開始
+gwq add -b feature/07-04-search-improvement
+
+# 現在の作業状況確認
+gwq status
+
+# 作業完了後の削除
+gwq remove feature/07-04-search-improvement
+```
+
+**手動worktree作成禁止**: `git worktree add`の直接使用は禁止、かならずgwq経由で作成してください
+
+### Runner専用運用ルール
+
+1. 命名規則: feature/MM-DD-description形式必須
+2. 作成時handoff連動: worktree作成と同時にhandoff系ディレクトリ準備
+3. 削除制限: ユーザー指示なしでの削除禁止
+4. 状態管理: gwq statusで並行作業状況の定期確認
+
+禁止事項
+
+- ❌ git worktree add直接使用禁止（必ずgwq経由）
+- ❌ Runner独断でのworktree削除禁止
+- ❌ 命名規則違反のworktree作成禁止
+
+**理由**:
+1. 既存のworktree基本コマンドを補完
+2. Runner特有の運用ルール（handoff連動、削除制限）を明確化
+3. 禁止事項を明示して権限逸脱防止
+
 ## Worktree-Handoff連動規約
 
 ### 1:1対応原則
@@ -121,3 +189,9 @@ mkdir -p passage/handoffs/completed/$(date +%Y-%m-%d)/runner-daemon-separation
 - **作業開始前**: 対応するhandoff系の存在確認必須
 - **worktree作成権限**: Runnerはworktree作成とhandoff系準備の両方を実行
 - **整合性維持**: worktreeとhandoff系の状態を常に同期
+
+
+## 🚨 絶対禁止事項（追加）
+- ❌ **Git merge操作の完全禁止**: いかなる場合でもgit merge実行不可
+- ❌ **mainブランチへのマージ禁止**: ユーザー明示的許可なしでのマージ一切禁止
+- ❌ **ブランチ統合権限なし**: feature branchの統合はユーザー専用権限

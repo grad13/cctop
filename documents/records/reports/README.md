@@ -95,17 +95,29 @@ REP-XXXX-title.md
 | REP-0146-validator-status-l1-to-l2-migration-20250627.md | 2025-06-27 | Validator Status L1→L2移行記録 | 活動中 |
 | REP-0148-clerk-status-l1-l2-migration-20250627.md | 2025-06-27 | Clerk Status L1→L2移行記録 | 活動中 |
 | REP-0149-inspector-status-l1-l2-migration-20250627.md | 2025-06-27 | Inspector Status L1→L2移行記録 | 活動中 |
-| REP-0150-clerk-status-l1-l2-migration-20250628.md | 2025-06-28 | Clerk Status L1→L2移行記録 | 完了 |
-| REP-0151-architect-status-l1-l2-migration-20250628.md | 2025-06-28 | Architect Status L1→L2移行記録 | 完了 |
-| REP-0152-builder-status-l1-l2-migration-20250628.md | 2025-06-28 | Builder Status L1→L2移行記録 | 完了 |
-| REP-0153-validator-status-l1-l2-migration-20250628.md | 2025-06-28 | Validator Status L1→L2移行記録 | 完了 |
 | REP-0154-architect-status-l1-l2-migration-20250628.md | 2025-06-28 | Architect Status L1→L2移行記録（第2回） | 完了 |
 | REP-0155-inspector-status-l1-l2-migration-20250628.md | 2025-06-28 | Inspector Status L1→L2移行記録 | 完了 |
 | REP-0156-agents-status-l1-l2-migration-summary-20250628.md | 2025-06-28 | 全エージェントStatus L1→L2移行総括 | 完了 |
 | REP-0157-typescript-migration-issues-investigation.md | 2025-06-28 | TypeScript移行問題調査 | 活動中 |
-| REP-0158-l2-l3-migration-20250629.md | 2025-06-29 | L2→L3移行実施記録 | 完了 |
+
+## レポート一覧
+
+| ID | タイトル | 作成日 | 種別 | 概要 |
+|----|---------|--------|------|------|
+| REP-0171 | runner-daemon-v1001-restore-completion | 2025-07-05 | 完了作業 | daemon v1.0.0.1のFUNC-000準拠実装完了（52ユニット/12統合テスト成功） |
+| REP-0170 | runner-v2-panel-ui-critical-errors | 2025-07-01 | インシデント | CLIのcritical undefined/NaN/parse errorを発見・修正 |
+| REP-0169 | v2-panel-ui-completion | 2025-07-01 | 実装完了 | CLI v2 パネルUI実装の完了報告（src/cli/display/v2） |
+| REP-0168 | runner-worktree-issue-resolution | 2025-07-01 | 問題解決 | worktree並列開発での型エラー解決とContainer/Coordinator実装 |
+| REP-0167 | runner-shared-module-development | 2025-07-01 | 実装記録 | shared/types v2分離と新規モジュール開発（Container追加） |
+| REP-0166 | runner-status-l1-l2-migration | 2025-07-01 | ドキュメント | Runner用statusファイルのL1→L2移行記録（初期開発分） |
 
 ## 📁 アーカイブされたレポート（archives/）
+
+### 2025年7月5日 P043実行（3日経過ルール）
+- **移行完了**: REP-0158, REP-0150, REP-0151, REP-0152, REP-0153の5ファイルをarchives/2025/0630-0706/へ移行完了
+- **移行理由**: 3日経過による機械的判定（P043基準）
+- **検索方法**: `patterns "キーワード" archives/2025/0630-0706/` で検索可能
+- **キーワード付与**: 各ファイルにL1→L2移行、DDD2、アーカイブ管理等8-10個の検索キーワードを追加
 
 ### 2025年6月29日 P043実行（3日経過ルール）
 - **移行完了**: REP-0090, REP-0092～REP-0097, REP-0099, REP-0144の計9ファイルをarchives/2025/0623-0629/へ移行完了
