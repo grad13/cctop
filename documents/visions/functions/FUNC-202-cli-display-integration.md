@@ -1,9 +1,9 @@
 # FUNC-202: CLI表示統合機能
 
 **作成日**: 2025年6月24日 10:00  
-**更新日**: 2025年7月3日  
+**更新日**: 2025年7月6日  
 **作成者**: Architect Agent  
-**Version**: 0.3.1.0  
+**Version**: 0.3.2.0  
 **関連仕様**: FUNC-000, FUNC-200, FUNC-201, FUNC-203, FUNC-204, FUNC-205, FUNC-300  
 
 ## 📊 機能概要
@@ -54,19 +54,36 @@ FUNC-000のデータベースから取得したファイルイベントを、リ
 | Event | 8 | 左寄せ | イベントタイプ |
 | Lines | 6 | 右寄せ | 行数 |
 | Blocks | 8 | 右寄せ | ブロック数 |
+| Size | 7 | 右寄せ | ファイルサイズ（動的単位） |
 | Directory | 可変 | 左寄せ | ディレクトリパス |
+
+#### **サイズ表示仕様**
+
+##### **動的単位切替ルール**
+| ファイルサイズ | 表示単位 | 表示例 | 説明 |
+|---------------|----------|--------|------|
+| 0〜1023 bytes | B | 768B | バイト単位 |
+| 1KB〜1023KB | K | 15.2K | キロバイト単位（小数点1桁） |
+| 1MB〜1023MB | M | 1.3M | メガバイト単位（小数点1桁） |
+| 1GB以上 | G | 2.1G | ギガバイト単位（小数点1桁） |
+
+**フォーマット仕様**:
+- 幅: 7文字固定（右寄せ）
+- 形式: 数値（最大4文字）+ 単位（1文字）
+- 小数点: KB以上では小数点第1位まで表示
+- パディング: 左側をスペースで埋める
 
 #### **画面状態と表示**
 
 ##### **1. 初期状態（Normal Mode）**
 ```
 cctop v1.0.0.0 Daemon: ●RUNNING
-Event Timestamp      Elapsed  File Name                           Event  Lines Blocks  Directory
+Event Timestamp      Elapsed  File Name                     Event   Lines  Blocks    Size Directory
 ────────────────────────────────────────────────────
-2025-06-25 19:07:51    00:04  FUNC-112-cli-display-inte...       modify    197     16  documents/visions/functions
-2025-06-25 19:07:33    00:22  FUNC-001-file-lifecycle-t...       modify    207     16  ...ments/visions/blueprints
-2025-06-25 19:07:13    00:42  FUNC-112-cli-display-inte...       modify    233     24  documents/visions/functions
-2025-06-25 19:06:49    01:07  FUNC-112-cli-display-inte...       modify    235     16  documents/visions/functions
+2025-06-25 19:07:51    00:04  FUNC-112-cli-display-inte...  modify    197     16   15.2K documents/visions/functions
+2025-06-25 19:07:33    00:22  FUNC-001-file-lifecycle-t...  modify    207     16    1.3M ...ments/visions/blueprints
+2025-06-25 19:07:13    00:42  FUNC-112-cli-display-inte...  modify    233     24   18.7K documents/visions/functions
+2025-06-25 19:06:49    01:07  FUNC-112-cli-display-inte...  modify    235     16   19.2K documents/visions/functions
 ────────────────────────────────────────────────────
 [q] Exit [space] Pause  [x] Refresh [a] All  [u] Unique  
 [↑↓] Select an event　[Enter] Show Details
@@ -76,7 +93,7 @@ Event Timestamp      Elapsed  File Name                           Event  Lines B
 ##### **2. イベントフィルタモード（fキー押下後）**
 ```
 cctop v1.0.0.0 Daemon: ●RUNNING
-Event Timestamp      Elapsed  File Name                           Event    Lines  Blocks  Directory
+Event Timestamp      Elapsed  File Name                           Event    Lines  Blocks    Size  Directory
 ────────────────────────────────────────────────────
 [Event rows with filters applied]
 ────────────────────────────────────────────────────
@@ -88,7 +105,7 @@ Event Timestamp      Elapsed  File Name                           Event    Lines
 ##### **3. クイックサーチモード（/キー押下後）**
 ```
 cctop v1.0.0.0 Daemon: ●RUNNING
-Event Timestamp      Elapsed  File Name                           Event    Lines  Blocks  Directory
+Event Timestamp      Elapsed  File Name                           Event    Lines  Blocks    Size  Directory
 ────────────────────────────────────────────────────
 [Filtered event rows based on search]
 ────────────────────────────────────────────────────
@@ -100,7 +117,7 @@ Search: [_________________________________] [Enter] Apply [ESC] Cancel
 ##### **4. Stream一時停止状態（spaceキー押下後）**
 ```
 cctop v1.0.0.0 Daemon: ●RUNNING
-Event Timestamp      Elapsed  File Name                           Event    Lines  Blocks  Directory
+Event Timestamp      Elapsed  File Name                           Event    Lines  Blocks    Size  Directory
 ────────────────────────────────────────────────────
 [Frozen event rows - stream display paused]
 ────────────────────────────────────────────────────
@@ -256,6 +273,7 @@ FUNC202.updateDisplayState = function(displayState) {
 2. **Formatter クラス**
    - カラム幅計算（FUNC-200対応）
    - 時刻・サイズのフォーマット
+   - ファイルサイズの動的単位変換（B/K/M/G）
    - パス名の省略表示
    - 検索キーワードのハイライト
 
@@ -401,6 +419,11 @@ cctop ./logs
    - エラー時の適切なフォールバック
 
 ## 📝 変更履歴
+
+### v0.3.2.0 (2025-07-06)
+- **Size表示追加**: ファイルサイズを動的単位（B/K/M/G）で表示する機能を追加
+- **カラム構成更新**: Lines, Blocksの後にSizeカラム（7文字幅）を追加
+- **フォーマット仕様**: Unix系コマンド（ls -lh）と同様の表記を採用
 
 ### v0.3.1.0 (2025-07-03)
 - **状態管理統合**: FUNC-202の状態管理をFUNC-300に統合
