@@ -3,7 +3,7 @@
 **作成日**: 2025年6月24日 10:00  
 **更新日**: 2025年7月6日  
 **作成者**: Architect Agent  
-**Version**: 0.3.2.0  
+**Version**: 0.3.4.0  
 **関連仕様**: FUNC-000, FUNC-200, FUNC-201, FUNC-203, FUNC-204, FUNC-205, FUNC-300  
 
 ## 📊 機能概要
@@ -57,6 +57,21 @@ FUNC-000のデータベースから取得したファイルイベントを、リ
 | Size | 7 | 右寄せ | ファイルサイズ（動的単位） |
 | Directory | 可変 | 左寄せ | ディレクトリパス |
 
+#### **Elapsed時間表示仕様**
+
+##### **段階的表示ルール**
+| 経過時間 | 表示形式 | 表示例 | 説明 |
+|----------|----------|--------|------|
+| 0〜60分 | mm:ss | 00:04 | 分:秒形式（最大59:59） |
+| 60分〜72時間 | hh:mm:ss | 01:00:04 | 時:分:秒形式（最大71:59:59） |
+| 72時間〜90日 | n days | 3 days | 日数表示（最大89 days） |
+| 90日以上 | n months | 3 months | 月数表示（30日=1ヶ月で計算） |
+
+**フォーマット仕様**:
+- 幅: 9文字固定（右寄せ）
+- パディング: 左側をスペースで埋める
+- 日数/月数は整数表示（小数点なし）
+
 #### **サイズ表示仕様**
 
 ##### **動的単位切替ルール**
@@ -75,15 +90,22 @@ FUNC-000のデータベースから取得したファイルイベントを、リ
 
 #### **画面状態と表示**
 
+##### **区切り線仕様**
+画面表示では、ヘッダー行（cctop v1.0.0.0...）の下とカラムヘッダー行の下に区切り線を表示する：
+- **文字**: `─`（U+2500 Box Drawings Light Horizontal）
+- **長さ**: ターミナル幅全体またはコンテンツ幅に合わせて動的調整
+- **配置**: ヘッダー行直下およびカラムヘッダー行直下
+
 ##### **1. 初期状態（Normal Mode）**
 ```
-cctop v1.0.0.0 Daemon: ●RUNNING
+cctop v1.0.0.0 Daemon: ●RUNNING (PID: 43262)
+
 Event Timestamp      Elapsed  File Name                     Event   Lines  Blocks    Size Directory
 ────────────────────────────────────────────────────
-2025-06-25 19:07:51    00:04  FUNC-112-cli-display-inte...  modify    197     16   15.2K documents/visions/functions
-2025-06-25 19:07:33    00:22  FUNC-001-file-lifecycle-t...  modify    207     16    1.3M ...ments/visions/blueprints
-2025-06-25 19:07:13    00:42  FUNC-112-cli-display-inte...  modify    233     24   18.7K documents/visions/functions
-2025-06-25 19:06:49    01:07  FUNC-112-cli-display-inte...  modify    235     16   19.2K documents/visions/functions
+2025-06-25 19:07:51     00:04  FUNC-112-cli-display-inte...  modify    197     16   15.2K documents/visions/functions
+2025-06-25 19:07:33     00:22  FUNC-001-file-lifecycle-t...  modify    207     16    1.3M ...ments/visions/blueprints
+2025-06-25 19:07:13     00:42  FUNC-112-cli-display-inte...  modify    233     24   18.7K documents/visions/functions
+2025-06-25 19:06:49  01:01:07  FUNC-112-cli-display-inte...  modify    235     16   19.2K documents/visions/functions
 ────────────────────────────────────────────────────
 [q] Exit [space] Pause  [x] Refresh [a] All  [u] Unique  
 [↑↓] Select an event　[Enter] Show Details
@@ -111,7 +133,7 @@ Event Timestamp      Elapsed  File Name                           Event    Lines
 ────────────────────────────────────────────────────
 [q] Exit [space] Pause  [x] Refresh [a] All  [u] Unique  
 [↑↓] Select an event　[Enter] Show Details
-Search: [_________________________________] [Enter] Apply [ESC] Cancel
+Search: [_________________________________] [Enter] Search DB [ESC] Cancel
 ```
 
 ##### **4. Stream一時停止状態（spaceキー押下後）**
@@ -192,8 +214,8 @@ FUNC-202の表示状態はFUNC-300の入力状態と連動：
 ##### **Searching Mode（/キー押下後）**
 | キー | FUNC-300処理 | FUNC-202処理 |
 |------|-------------|-------------|
-| `[text]` | 文字入力バッファ管理 | 検索欄表示更新 |
-| `Enter` | 検索実行 | 検索結果表示 |
+| `[text]` | 文字入力バッファ管理 | リアルタイム検索（ローカル） |
+| `Enter` | DB検索実行 | データベース検索結果表示 |
 | `ESC` | `waiting`状態へ遷移 | Dynamic Area更新 |
 
 ##### **Paused Mode（spaceキー押下後）**
@@ -254,6 +276,118 @@ FUNC202.updateDisplayState = function(displayState) {
     this.setStreamActive(displayState.streamActive);
   }
 };
+```
+
+### **キーワード検索仕様（2段階検索）**
+
+#### **検索の2段階処理**
+
+##### **第1段階: ローカル検索（リアルタイム）**
+- **処理**: 文字入力ごとに現在表示中のイベントからJavaScriptで即座に検索
+- **対象**: 画面に表示されているイベント（メモリ上のデータ）
+- **フィードバック**: 即座に該当行をハイライト表示
+- **検索対象フィールド**: ファイル名、ディレクトリパス
+
+##### **第2段階: データベース検索（Enterキー）**
+- **処理**: SQLiteデータベースから包括的に検索
+- **トリガー**: Enterキー押下時
+- **取得戦略**: フィルタを考慮した段階的取得
+
+#### **検索データのライフサイクル管理**
+
+##### **データ保持戦略**
+- **検索結果キャッシュ**: 検索キーワードごとに結果を一時保持
+- **キャッシュ容量**: 最大3つの検索結果を保持（LRU方式）
+- **破棄タイミング**:
+  - 新しい検索実行時（キーワード変更）
+  - モード切替時（All↔Unique）
+  - ESCキーでの検索モード終了時
+  - メモリ使用量が閾値を超えた時
+
+##### **メモリ管理実装例**
+```javascript
+class SearchResultCache {
+  constructor(maxEntries = 3) {
+    this.cache = new Map();
+    this.maxEntries = maxEntries;
+  }
+  
+  set(keyword, results) {
+    // LRU: 最古のエントリを削除
+    if (this.cache.size >= this.maxEntries) {
+      const firstKey = this.cache.keys().next().value;
+      this.cache.delete(firstKey);
+    }
+    this.cache.set(keyword, {
+      data: results,
+      timestamp: Date.now(),
+      memorySize: this.estimateSize(results)
+    });
+  }
+  
+  clear() {
+    this.cache.clear();
+  }
+  
+  // モード切替・ESC・メモリ逼迫時に呼び出し
+  invalidate() {
+    this.clear();
+  }
+}
+```
+
+#### **フィルタ連携の段階的取得アルゴリズム**
+
+```javascript
+// 段階的取得戦略
+async function searchWithFilterConsideration(keyword, activeFilters) {
+  const INITIAL_FETCH = 100;    // 初回取得数
+  const MAX_FETCH = 1000;       // 最大取得数
+  const TARGET_DISPLAY = 50;    // 表示目標数
+  
+  let offset = 0;
+  let displayableEvents = [];
+  
+  while (displayableEvents.length < TARGET_DISPLAY && offset < MAX_FETCH) {
+    // フィルタをSQL条件に含めて検索
+    const events = await db.searchEvents({
+      keyword: keyword,
+      filters: activeFilters,
+      limit: INITIAL_FETCH,
+      offset: offset
+    });
+    
+    // フィルタ適用後の表示可能イベントを追加
+    const filtered = events.filter(e => passesClientFilters(e));
+    displayableEvents.push(...filtered);
+    
+    // 取得結果が少ない場合は終了
+    if (events.length < INITIAL_FETCH) break;
+    
+    offset += INITIAL_FETCH;
+  }
+  
+  return displayableEvents.slice(0, TARGET_DISPLAY);
+}
+```
+
+#### **検索クエリ最適化**
+
+```sql
+-- フィルタを考慮したDB検索クエリ例
+SELECT e.*, f.file_path, f.file_name, m.*
+FROM events e
+JOIN files f ON e.file_id = f.file_id
+LEFT JOIN measurements m ON e.event_id = m.event_id
+WHERE 
+  -- キーワード検索条件
+  (f.file_name LIKE '%keyword%' OR f.file_path LIKE '%keyword%')
+  -- アクティブフィルタ条件
+  AND e.event_type IN ('find', 'create', 'modify')  -- 例
+  -- 削除済みファイル条件（Uniqueモード時）
+  AND (mode = 'all' OR f.is_deleted = 0)
+ORDER BY e.event_timestamp DESC
+LIMIT :limit OFFSET :offset;
 ```
 
 ### **色分け仕様**
@@ -419,6 +553,20 @@ cctop ./logs
    - エラー時の適切なフォールバック
 
 ## 📝 変更履歴
+
+### v0.3.4.0 (2025-07-06)
+- **キーワード検索の2段階化**: ローカル検索とDB検索の分離
+- **検索UIの改善**: "Apply" → "Search DB"への文言変更
+- **フィルタ連携最適化**: 段階的取得アルゴリズムによる効率的な検索
+- **検索パフォーマンス向上**: SQLクエリにフィルタ条件を含めて最適化
+- **検索データ管理**: LRU方式によるキャッシュ管理とライフサイクル定義
+
+### v0.3.3.0 (2025-07-06)
+- **Elapsed時間拡張**: 長時間経過に対応した段階的表示形式
+- **60分以内**: mm:ss形式でシンプルに表示
+- **72時間まで**: hh:mm:ss形式で時間を含めて表示
+- **90日まで**: n days形式で日数表示
+- **90日以上**: n months形式で月数表示
 
 ### v0.3.2.0 (2025-07-06)
 - **Size表示追加**: ファイルサイズを動的単位（B/K/M/G）で表示する機能を追加
