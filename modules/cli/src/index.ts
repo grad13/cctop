@@ -1,10 +1,11 @@
 /**
  * CCTOP CLI Main Entry Point
  * Blessed.js Terminal UI Implementation
+ * FUNC-104 compliant argument processing
  */
 
 import { BlessedFramelessUISimple } from './ui/blessed-frameless-ui-simple';
-import { DatabaseAdapter } from './database/database-adapter';
+import { DatabaseAdapterFunc000 } from './database/database-adapter-func000';
 import * as path from 'path';
 import * as fs from 'fs';
 
@@ -14,41 +15,158 @@ interface CLIConfig {
   maxRows?: number;
 }
 
+interface CLIArguments {
+  view?: boolean;
+  help?: boolean;
+  verbose?: boolean;
+  directory?: string;
+  timeout?: number;
+}
+
+// FUNC-104: CLI Arguments Processing
+function parseArguments(args: string[]): CLIArguments {
+  const result: CLIArguments = {};
+  
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i];
+    
+    switch (arg) {
+      case '--view':
+        result.view = true;
+        break;
+      case '-h':
+      case '--help':
+        result.help = true;
+        break;
+      case '--verbose':
+        result.verbose = true;
+        break;
+      case '--timeout':
+        if (i + 1 < args.length) {
+          result.timeout = parseInt(args[++i], 10);
+        }
+        break;
+      default:
+        // Position argument: directory
+        if (!arg.startsWith('-') && !result.directory) {
+          result.directory = arg;
+        }
+        break;
+    }
+  }
+  
+  return result;
+}
+
+// FUNC-104: Help Message Display
+function showHelp(): void {
+  console.log(`cctop - Code Change Top (File Watching Tool)
+
+Usage: cctop [options] [directory]
+
+Options:
+  Watching:
+    --timeout <sec>       Timeout in seconds
+    --daemon --start      Start background daemon
+    --daemon --stop       Stop background daemon
+    --daemon --status     Check background daemon status
+
+  Display:
+    --view                View existing data only (no daemon)
+
+  Output:
+    --verbose             Enable verbose output
+
+  System:
+    --check-limits        Check file watch limits
+
+  Help:
+    -h, --help            Show this help message
+
+Interactive Controls:
+  Display modes:
+    a - All events       u - Unique files      q - Quit
+
+  Event filters:
+    f - Find  c - Create  m - Modify  d - Delete  v - Move  r - Restore
+
+Examples:
+  cctop                    # Full auto: init + daemon + cli (recommended)
+  cctop src/               # Watch src directory with full auto
+  cctop --daemon --start   # Start background daemon only
+  cctop --daemon --status  # Check daemon status
+  cctop --view             # View existing data only
+  cctop --check-limits     # Check system limits`);
+}
+
 class CCTOPCli {
   private ui?: BlessedFramelessUISimple;
-  private db?: DatabaseAdapter;
+  private db?: DatabaseAdapterFunc000;
   private config: CLIConfig;
+  private args: CLIArguments;
 
-  constructor(config: CLIConfig = {}) {
+  constructor(config: CLIConfig = {}, args: CLIArguments = {}) {
+    this.args = args;
     this.config = {
-      databasePath: config.databasePath || this.findDatabasePath(),
-      refreshInterval: config.refreshInterval || 1000,
-      maxRows: config.maxRows || 25
+      databasePath: config.databasePath || this.findDatabasePath(args.directory),
+      refreshInterval: config.refreshInterval || (args.timeout ? args.timeout * 1000 : 100),
+      maxRows: config.maxRows || 100
     };
   }
 
-  private findDatabasePath(): string {
-    // Default paths to search for database
-    const possiblePaths = [
-      './.cctop/data/activity.db',
-      path.join(process.cwd(), '.cctop', 'data', 'activity.db'),
-      path.join(process.env.HOME || '', '.cctop', 'data', 'activity.db')
-    ];
-
-    for (const dbPath of possiblePaths) {
-      if (fs.existsSync(dbPath)) {
-        return dbPath;
+  private findDatabasePath(directory?: string): string {
+    // FUNC-105 compliant path - use specified directory or current working directory
+    const targetDir = directory ? path.resolve(directory) : process.cwd();
+    const cctopDir = path.join(targetDir, '.cctop');
+    const dbPath = path.join(cctopDir, 'data', 'activity.db');
+    
+    // FUNC-104: --view mode should not initialize, only read existing data
+    if (this.args.view) {
+      if (!fs.existsSync(dbPath)) {
+        throw new Error(`No existing database found at ${dbPath}. Use 'cctop' without --view to start monitoring.`);
+      }
+      if (this.args.verbose) {
+        console.log(`[--view mode] Reading from existing database: ${dbPath}`);
+      }
+    } else {
+      // Initialize .cctop structure if it doesn't exist (normal mode)
+      if (!fs.existsSync(cctopDir)) {
+        this.initializeCctopStructure(cctopDir);
       }
     }
+    
+    return dbPath;
+  }
 
-    // Default fallback
-    return './.cctop/data/activity.db';
+  private initializeCctopStructure(cctopDir: string): void {
+    // Create FUNC-105 compliant directory structure
+    const dirs = [
+      path.join(cctopDir, 'config'),
+      path.join(cctopDir, 'themes'),
+      path.join(cctopDir, 'data'),
+      path.join(cctopDir, 'logs'),
+      path.join(cctopDir, 'runtime'),
+      path.join(cctopDir, 'temp')
+    ];
+    
+    dirs.forEach(dir => {
+      if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+      }
+    });
   }
 
   public async start(): Promise<void> {
     try {
+      // FUNC-104: --view mode startup message
+      if (this.args.view) {
+        console.log('Starting CCTOP in view-only mode (no daemon)...');
+      } else if (this.args.verbose) {
+        console.log('Starting CCTOP CLI...');
+      }
+
       // Initialize database adapter
-      this.db = new DatabaseAdapter(this.config.databasePath!);
+      this.db = new DatabaseAdapterFunc000(this.config.databasePath!);
       await this.db.connect();
 
       // Initialize UI
@@ -62,6 +180,9 @@ class CCTOPCli {
       await this.ui.start();
     } catch (error) {
       console.error('Failed to start CCTOP CLI:', error);
+      if (error instanceof Error) {
+        console.error('Stack trace:', error.stack);
+      }
       process.exit(1);
     }
   }
@@ -103,13 +224,32 @@ const originalStderr = process.stderr.write.bind(process.stderr);
   return originalStderr(chunk, encoding, callback);
 };
 
-// Start CLI if this file is run directly
-if (require.main === module) {
-  const cli = new CCTOPCli();
-  cli.start().catch((error) => {
-    console.error('Failed to start CLI:', error);
+// FUNC-104: Main CLI entry point with argument processing
+async function main(): Promise<void> {
+  // Parse command line arguments (skip 'node' and script name)
+  const args = parseArguments(process.argv.slice(2));
+  
+  // Handle help option
+  if (args.help) {
+    showHelp();
+    process.exit(0);
+  }
+  
+  try {
+    // Start CLI with parsed arguments
+    const cli = new CCTOPCli({}, args);
+    await cli.start();
+  } catch (error) {
+    console.error('Error:', error instanceof Error ? error.message : String(error));
+    console.error("Try 'cctop --help' for more information.");
     process.exit(1);
-  });
+  }
 }
+
+// Start CLI when this module is loaded
+main().catch((error) => {
+  console.error('Failed to start CLI:', error);
+  process.exit(1);
+});
 
 export { CCTOPCli };

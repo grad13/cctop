@@ -4,7 +4,7 @@
 
 export interface EventRow {
   id: number;
-  timestamp: string;
+  timestamp: string | number; // Support both Unix timestamp (number) and ISO string
   filename: string;
   directory: string;
   event_type: string;

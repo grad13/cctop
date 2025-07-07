@@ -1,0 +1,40 @@
+#!/usr/bin/env node
+
+/**
+ * CCTOP CLI Binary Entry Point
+ * 
+ * This script serves as the main entry point for the CCTOP CLI.
+ * It automatically builds and runs the CLI with proper error handling.
+ */
+
+const path = require('path');
+const { execSync } = require('child_process');
+
+// Get the directory of this script
+const binDir = __dirname;
+const cliDir = path.dirname(binDir);
+
+// Build the TypeScript source
+console.log('Building CCTOP CLI...');
+try {
+  execSync('npm run build', { 
+    cwd: cliDir, 
+    stdio: 'inherit' 
+  });
+} catch (error) {
+  console.error('Failed to build CCTOP CLI:', error.message);
+  process.exit(1);
+}
+
+// Run the CLI
+console.log('Starting CCTOP CLI...');
+console.log('Current working directory:', process.cwd());
+console.log('CLI directory:', cliDir);
+
+try {
+  require(path.join(cliDir, 'dist', 'index.js'));
+} catch (error) {
+  console.error('Failed to start CCTOP CLI:', error);
+  console.error('Stack trace:', error.stack);
+  process.exit(1);
+}

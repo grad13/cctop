@@ -1,10 +1,21 @@
 /**
- * CLI Configuration Interface
+ * CLI Configuration Interface - FUNC-107 compliant
  */
 
 export interface CLIConfig {
+  version: string;
   display: {
-    refreshRateMs: number;
+    maxRows: number;
+    refreshInterval: number;
+    refreshRateMs: number; // Backward compatibility
+    showTimestamps: boolean;
+    dateFormat: string;
+    columnWidths: {
+      time: number;
+      event: number;
+      size: number;
+      path: number;
+    };
     columns: {
       timestamp: { visible: boolean; width: number };
       elapsed: { visible: boolean; width: number };
@@ -14,6 +25,11 @@ export interface CLIConfig {
       blocks: { visible: boolean; width: number };
       directory: { visible: boolean; width: number };
     };
+  };
+  interaction: {
+    enableMouse: boolean;
+    enableKeyboard: boolean;
+    scrollSpeed: number;
   };
   colors: {
     info: string;
@@ -27,11 +43,28 @@ export interface CLIConfig {
     move: string;
     restore: string;
   };
+  logFile?: string;
+  // Legacy fields for backward compatibility
+  refreshInterval?: number;
+  maxRows?: number;
+  displayMode?: string;
+  colorEnabled?: boolean;
 }
 
 export const defaultCLIConfig: CLIConfig = {
+  version: "0.3.0.0",
   display: {
-    refreshRateMs: 100,
+    maxRows: 20,
+    refreshInterval: 100,
+    refreshRateMs: 100, // Backward compatibility
+    showTimestamps: true,
+    dateFormat: "HH:mm:ss",
+    columnWidths: {
+      time: 8,
+      event: 6,
+      size: 8,
+      path: -1
+    },
     columns: {
       timestamp: { visible: true, width: 19 },
       elapsed: { visible: true, width: 7 },
@@ -41,6 +74,11 @@ export const defaultCLIConfig: CLIConfig = {
       blocks: { visible: true, width: 7 },
       directory: { visible: true, width: 20 }
     }
+  },
+  interaction: {
+    enableMouse: true,
+    enableKeyboard: true,
+    scrollSpeed: 3
   },
   colors: {
     info: 'cyan',
@@ -53,5 +91,11 @@ export const defaultCLIConfig: CLIConfig = {
     delete: 'red',
     move: 'magenta',
     restore: 'blue'
-  }
+  },
+  logFile: "./logs/cli.log",
+  // Legacy fields for backward compatibility
+  refreshInterval: 100,
+  maxRows: 20,
+  displayMode: 'all',
+  colorEnabled: true
 };
