@@ -35,6 +35,8 @@ PIL-003-detailed-inspection-mode.md
 | ファイル | 機能 | 対象バージョン | 更新日 |
 |---------|------|---------------|--------|
 | PIL-010-advanced-statistics-module.md | 高度統計モジュール | v0.3.1.0候補 | 2025-06-28 |
+| PIL-011-status-display-area.md | ステータス表示エリア | v0.3.0.0候補 | 2025-07-07 |
+| PIL-012-color-rendering-system.md | 色レンダリングシステム | v0.3.0.0候補 | 2025-07-07 |
 
 ### System & Daemon Experiments
 | ファイル | 機能 | 対象バージョン | 更新日 |

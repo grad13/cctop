@@ -1,10 +1,10 @@
 # FUNC-203: イベントタイプフィルタリング機能
 
 **作成日**: 2025年6月25日 10:00  
-**更新日**: 2025年6月26日 03:00  
+**更新日**: 2025年7月7日  
 **作成者**: Architect Agent  
-**Version**: 0.2.0.0  
-**関連仕様**: FUNC-000, FUNC-202, FUNC-300  
+**Version**: 0.3.0.0  
+**関連仕様**: FUNC-000, FUNC-202, FUNC-300, FUNC-301  
 
 ## 📊 機能概要
 
@@ -16,15 +16,16 @@
 
 ### ✅ **実行する**
 - イベントタイプ別フィルタリング（find/create/modify/delete/move/restore）
-- フィルタロジックの実装・状態管理
-- フィルタ状態の視覚的表示
-- リアルタイム反映（既存表示も即座更新）
+- フィルタロジックの実装
+- FUNC-301への状態変更通知
+- FUNC-300からのキー入力コールバック処理
 
 ### ❌ **実行しない**
 - **キーボード入力の直接処理（FUNC-300の責務）**
+- **フィルタ状態の管理・保持（FUNC-301の責務）**
+- **表示データの生成・管理（FUNC-301の責務）**
 - ファイル名・パス・サイズによるフィルタリング
 - 複雑な検索クエリ・正規表現フィルタ
-- フィルタ状態の永続化（セッション限定）
 
 ## 📋 必要な仕様
 
@@ -48,11 +49,36 @@ KeyInputManager.register({
   mode: 'waiting',
   keys: ['f', 'c', 'm', 'd', 'v', 'r'],
   priority: 10,
-  callback: (key) => FUNC203.toggleEventFilter(key)
+  callback: (key) => {
+    const eventType = FUNC203.getEventTypeFromKey(key);
+    FUNC301.toggleEventFilter(eventType); // 状態はFUNC-301で管理
+  }
 });
 ```
 
 **注意**: 選択状態（PIL-002）時はこれらのキーは無効化され、選択操作が優先される
+
+### **FUNC-301との連携**
+
+**責務分離**:
+- **FUNC-203**: イベントタイプ変換・フィルタロジック
+- **FUNC-301**: フィルタ状態管理・操作履歴
+- **FUNC-202**: フィルタ状態の視覚的表示
+
+**連携フロー**:
+```javascript
+// FUNC-203の役割
+class EventTypeFilter {
+  getEventTypeFromKey(key) {
+    const mapping = { 'f': 'find', 'c': 'create', 'm': 'modify', 'd': 'delete', 'v': 'move', 'r': 'restore' };
+    return mapping[key];
+  }
+  
+  applyFilter(events, activeFilters) {
+    return events.filter(event => activeFilters.includes(event.eventType));
+  }
+}
+```
 
 ### **フィルタ状態表示**
 

@@ -1,28 +1,31 @@
-# Blueprints - バージョン別設計図
+# Blueprints - マイルストーン別設計図
 
-**最終更新**: 2025年6月24日  
+**最終更新**: 2025年7月7日  
 **管理者**: Architect Agent  
-**目的**: バージョン目標ごとの統合設計図管理
+**目的**: 6段階マイルストーンごとの設計図管理
 
 ## 📋 概要
 
-blueprintsディレクトリは、cctopプロジェクトのバージョン別実装設計図を管理します。各バージョンに対して1つの設計図を作成し、specifications/の部品を組み合わせた全体設計を定義します。
+blueprintsディレクトリは、cctopプロジェクトの**6段階マイルストーン**に基づく設計図を管理します。各マイルストーンの技術設計・アーキテクチャ・戦略を体系的に定義します。
 
 ## 🎯 管理原則
 
-### 1バージョン1ファイル原則
-- **v0.1.0.0**: 1つの設計図のみ
-- **v0.2.0.0**: 1つの設計図のみ（v0.1.0.0完了後作成）
-- **重複禁止**: 同じバージョンについて複数の設計図は作成しない
+### マイルストーン別管理
+- **全体基盤**: プロジェクト横断（BP-0〜2）
+- **M1**: streamモード（完了済み、文書化済み）
+- **M2**: filter（進行中）
+- **M3**: 詳細モード（設計完了）
+- **M4-M6**: batch統計・plugin・session分析
 
 ### 命名規則
 ```
-BP-XXX-for-versionYYYY-description.md
+BP-X-description.md          # 全体基盤・戦略（X = 0,1,2,...）
+BP-MX-description.md         # マイルストーン別（MX = M1,M2,M3...）
 
 例:
-BP-000-for-version0100-confirm-foundation.md
-BP-001-for-version0200-selection-detail-mode.md
-BP-002-for-version0300-plugin-system.md
+BP-2-overall-milestones-strategy.md      # 全体戦略
+BP-M2-filter-daemon-cli-architecture.md  # filterのアーキテクチャ
+BP-M3-detail-mode-architecture.md        # 詳細モードの設計
 ```
 
 ### 設計図の純粋性
@@ -32,38 +35,64 @@ BP-002-for-version0300-plugin-system.md
 
 ## 📁 現在のファイル
 
-### BP-000-for-version0100-confirm-foundation.md
-- **目標**: v0.1.0.0 - 100%信頼性のあるファイル監視基盤確立
-- **スコープ**: chokidar → DB → CLI表示の完全動作
-- **参照specifications**: 
-  - db001-schema-design.md（データベース基盤）
-  - ui001-cli-baseline.md（CLI表示）
-  - a002-configuration-system.md（設定システム）
-- **除外機能**: プラグインシステム、Selection/Detailモード、高度Filter
+### 全体基盤・戦略
 
-### BP-001-for-version0200-restructered.md
-- **目標**: v0.2.0.0 - 表示機能強化とインタラクティブ機能
-- **スコープ**: East Asian Width対応、二重バッファ、インタラクティブ機能
-- **参照specifications**: FUNC-200-206、FUNC-400-403
-- **ステータス**: Active（実装中）
+#### BP-2-overall-milestones-strategy.md
+- **目標**: 6段階マイルストーン全体戦略
+- **スコープ**: プロジェクトビジョン・技術戦略・長期計画
+- **マイルストーン**: streamモード → filter → 詳細モード → batch統計 → plugin実装 → session分析
 
-### BP-002-for-version0300-daemon-cli-architecture.md
-- **目標**: v0.3.0.0 - Daemon-CLI分離アーキテクチャ
-- **スコープ**: プロセス分離、堅牢性向上、テスト基盤強化
-- **参照specifications**: PLAN-20250630-001
-- **ステータス**: 設計完了、実装待機
+#### BP-0-component-architecture-overview.md
+- **目標**: 全24 Active機能のコンポーネント分類
+- **スコープ**: Daemon/CLI/Shared分類・並行開発戦略・実装場所明確化
 
-## 🔄 バージョン進行管理
+#### BP-1-func-dependency-diagram.md
+- **目標**: FUNC間の依存関係体系化
+- **スコープ**: 実装順序・影響範囲分析・循環依存回避指針
 
-### 現在の状況
-1. **v0.1.0.0**: 完了
-2. **v0.2.0.0**: 実装中（BP-001）
-3. **v0.3.0.0**: 設計完了、実装待機（BP-002）
+### M1: Stream Mode（完了済み）
 
-### 次期予定機能
-- **Selection/Detailモード**: vis007-tracer-analysis-vision.md参照
-- **プラグインシステム**: vis006-metrics-plugin-system-vision.md参照
-- **高度Filter/Sort**: vis008-viewer-innovations-vision.md参照
+#### BP-M1-stream-mode-architecture.md
+- **目標**: 基本的なリアルタイム表示機能
+- **スコープ**: ファイル監視・データベース基盤・CLI表示・基本設定管理
+- **FUNC仕様**: 000-003（基盤層）、101/104-107（設定管理）、200-202（基本表示）
+- **ステータス**: ✅ 実装完了済み（既存実装の文書化）
+
+### M2: Filter（進行中）
+
+#### BP-M2-filter-daemon-cli-architecture.md
+- **目標**: filterマイルストーンのためのDaemon-CLI分離アーキテクチャ
+- **スコープ**: プロセス分離・堅牢性向上・フィルタ機能基盤
+- **ステータス**: 設計完了、実装準備中
+
+### M3: Detail Mode（設計完了）
+
+#### BP-M3-detail-mode-architecture.md
+- **目標**: インタラクティブ詳細表示・分析機能
+- **スコープ**: 選択・ナビゲーション・詳細検査・統計表示・履歴分析・デュアルペイン
+- **FUNC仕様**: 400-404（インタラクティブ層）
+- **ステータス**: 📋 設計仕様策定完了（M2完了後実装予定）
+
+## 🔄 開発ロードマップ
+
+### 全体マイルストーン（6段階）
+1. **✅ streamモード**: 基本的なリアルタイム表示機能（完了）
+2. **🚧 filter**: フィルタリング機能統合（進行中）
+3. **📋 詳細モード**: インタラクティブ詳細表示（設計完了）
+4. **📊 batch統計**: バッチ処理による統計機能
+5. **🔌 統計値plugin実装**: プラグインアーキテクチャ
+6. **🔍 ccのsession分析等**: 高度分析機能
+
+### 現在の進行状況
+- **現在**: マイルストーン2（filter）に取り組み中
+- **設計状況**: BP-M2-filter-daemon-cli-architecture設計完了、実装準備中
+
+### マイルストーン別BP作成状況
+- **全体基盤**: ✅ 完了（3文書：BP-0,1,2）
+- **M1 (streamモード)**: ✅ 完了（1文書・既存実装の文書化）
+- **M2 (filter)**: 🚧 設計完了、実装準備中（1文書）
+- **M3 (詳細モード)**: ✅ 設計仕様策定完了（1文書）
+- **M4-M6**: 📋 今後作成予定
 
 ## 📊 設計図の構成要素
 
@@ -79,20 +108,21 @@ BP-002-for-version0300-plugin-system.md
 - **リスクと対策**: 想定される課題と対応策
 - **パフォーマンス目標**: 具体的な性能指標
 
-## 🔗 specifications/との関係
+## 🔗 FUNC仕様との関係
 
 ### 参照関係
-- **blueprints** → **specifications** (一方向参照)
-- 設計図は部品仕様を参照して全体を設計
-- 部品仕様は設計図を意識せず独立性を保つ
+- **blueprints** → **functions/FUNC-XXX** (一方向参照)
+- 設計図は個別FUNC仕様を参照してマイルストーン設計を策定
+- FUNC仕様は設計図を意識せず独立性を保つ
 
 ### 典型的な参照パターン
 ```markdown
-## データベース実装（db001準拠）
-specifications/database/db001-schema-design.md の5テーブル構成を採用
+## フィルタ機能（FUNC-301, 203, 208準拠）
+FUNC-301-filter-state-management.md の状態管理アーキテクチャを採用
+FUNC-208-ui-filter-integration.md の統合仕様に基づく実装
 
-## CLI表示（ui001準拠）
-specifications/ui/ui001-cli-baseline.md のAll/Uniqueモードを実装
+## アーキテクチャ（BP-M0参照）
+BP-M0-component-architecture-overview.md のDaemon/CLI/Shared分離に準拠
 ```
 
 ## ⚠️ 重要な注意事項
@@ -100,16 +130,16 @@ specifications/ui/ui001-cli-baseline.md のAll/Uniqueモードを実装
 ### 設計図の更新
 - **実装中の改善**: 積極的に設計図を更新
 - **仕様の詰め**: 曖昧な部分があれば設計図で明確化
-- **参照の追加**: 新しいspecificationsが必要な場合は追加作成
+- **FUNC参照の追加**: 新しいFUNC仕様が必要な場合は追加作成
 
 ### 進捗情報の分離
-- **進捗記録**: Agent statusで管理（`documents/agents/status/builder.md`）
+- **進捗記録**: Agent statusで管理（`documents/agents/status/`）
 - **課題・ブロッカー**: handoffsで連携（`passage/handoffs/`）
-- **実装ログ**: Builder/Validatorのstatus.mdで時系列記録
+- **実装ログ**: Builder/Validator/Runnerのstatus.mdで時系列記録
 
-### バージョン移行
-- **完了確認**: 前バージョンの完全実装確認後に次バージョン設計開始
-- **継続性**: 前バージョンの設計を参考にした発展的設計
+### マイルストーン移行
+- **完了確認**: 前マイルストーンの完全実装確認後に次マイルストーン設計開始
+- **継続性**: 前マイルストーンの設計を参考にした発展的設計
 - **アーカイブ**: 完了した設計図は参考資料として保持
 
 ## 🎯 品質基準
@@ -122,8 +152,8 @@ specifications/ui/ui001-cli-baseline.md のAll/Uniqueモードを実装
 ### 文書品質
 - **明確性**: 曖昧な表現を避けた明確な記述
 - **構造化**: 論理的で読みやすい構成
-- **参照正確性**: specifications/への正確な参照
+- **参照正確性**: FUNC仕様への正確な参照
 
 ---
 
-**理念**: クリーンで実用的な設計図により、確実なバージョン実装を実現する
+**理念**: マイルストーンベースの戦略的設計により、段階的で確実なプロダクト進化を実現する

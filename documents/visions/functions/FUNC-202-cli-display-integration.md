@@ -4,7 +4,7 @@
 **更新日**: 2025年7月6日  
 **作成者**: Architect Agent  
 **Version**: 0.3.4.0  
-**関連仕様**: FUNC-000, FUNC-200, FUNC-201, FUNC-203, FUNC-204, FUNC-205, FUNC-300  
+**関連仕様**: FUNC-000, FUNC-200, FUNC-201, FUNC-203, FUNC-204, FUNC-205, FUNC-300, FUNC-301  
 
 ## 📊 機能概要
 
@@ -19,18 +19,19 @@ FUNC-000のデータベースから取得したファイルイベントを、リ
 
 ### ✅ **実行する**
 - データベースからのイベント取得・表示
-- All/Uniqueモード切り替え
+- FUNC-301からの表示データセット受信・描画
 - FUNC-201（二重バッファ）による描画
 - FUNC-200（East Asian Width）対応
-- 基本的な表示状態管理（待機状態）
+- UI状態の視覚的表現（モード・フィルタ状態の表示）
 
 ### ❌ **実行しない**
 - ファイル監視（FUNC-002の責務）
 - データベース管理（FUNC-000の責務）
 - 設定管理（FUNC-101/105の責務）
 - **キーボード入力処理（FUNC-300の責務）**
+- **フィルター状態管理（FUNC-301の責務）**
+- **フィルタリングロジック（FUNC-203/208の責務）**
 - バックグラウンド監視（FUNC-003 Daemon Processの責務）
-- イベントフィルタリング（FUNC-023の責務）
 
 ## 📋 必要な仕様
 
@@ -114,7 +115,7 @@ Event Timestamp      Elapsed  File Name                     Event   Lines  Block
 
 ##### **2. イベントフィルタモード（fキー押下後）**
 ```
-cctop v1.0.0.0 Daemon: ●RUNNING
+cctop v1.0.0.0 Daemon: ●RUNNING (PID: 43262)
 Event Timestamp      Elapsed  File Name                           Event    Lines  Blocks    Size  Directory
 ────────────────────────────────────────────────────
 [Event rows with filters applied]
@@ -126,7 +127,7 @@ Event Timestamp      Elapsed  File Name                           Event    Lines
 
 ##### **3. クイックサーチモード（/キー押下後）**
 ```
-cctop v1.0.0.0 Daemon: ●RUNNING
+cctop v1.0.0.0 Daemon: ●RUNNING (PID: 43262)
 Event Timestamp      Elapsed  File Name                           Event    Lines  Blocks    Size  Directory
 ────────────────────────────────────────────────────
 [Filtered event rows based on search]
@@ -138,7 +139,7 @@ Search: [_________________________________] [Enter] Search DB [ESC] Cancel
 
 ##### **4. Stream一時停止状態（spaceキー押下後）**
 ```
-cctop v1.0.0.0 Daemon: ●RUNNING
+cctop v1.0.0.0 Daemon: ●RUNNING (PID: 43262)
 Event Timestamp      Elapsed  File Name                           Event    Lines  Blocks    Size  Directory
 ────────────────────────────────────────────────────
 [Frozen event rows - stream display paused]
@@ -160,12 +161,14 @@ Event Timestamp      Elapsed  File Name                           Event    Lines
 - **更新頻度**: 100ms毎（FUNC-021による二重バッファ）
 
 #### **Uniqueモード**
-- **概要**: ファイル毎の最新状態のみ表示
-- **データ取得**:
-  - 各file_idの最新イベントを取得
-  - 削除済みファイルは除外（is_deleted=0）
-  - 最新の測定値を表示
+- **概要**: 「uniqueは最新のを表示する機能」（FUNC-208で確定）
+- **動作**:
+  - 各ファイルの最新イベントのみ表示
+  - 最新イベントがevent filterの対象外の場合、**そのファイル全体が非表示**
+  - 例: ファイルA (Create → Modify → Delete) + Delete除外設定 = **ファイルA全体が非表示**（CreateもModifyも表示されない）
+- **集合論的動作**: 最新イベントがフィルタ条件を満たすファイルのみが表示対象集合に含まれる
 - **更新頻度**: 100ms毎（Allモードと同じ）
+- **統合仕様**: [FUNC-208: UI Filter Integration](./FUNC-208-ui-filter-integration.md)参照
 
 ### **FUNC-300連携によるキー処理**
 

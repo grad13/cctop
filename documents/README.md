@@ -1,6 +1,6 @@
 # Documents ディレクトリ
 
-**最終更新**: 2025年6月22日 19:45  
+**最終更新**: 2025年7月7日  
 **管理者**: Clerk Agent  
 **目的**: cctopプロジェクトの全文書管理
 
@@ -25,6 +25,7 @@ documents/
 │   │   ├── builder.md     # Builder Agent権限定義
 │   │   ├── clerk.md       # Clerk Agent権限定義
 │   │   ├── inspector.md   # Inspector Agent権限定義
+│   │   ├── runner.md      # Runner Agent権限定義
 │   │   └── validator.md   # Validator Agent権限定義
 │   └── status/            # エージェント進捗記録（動的・DDD2対象）
 │       ├── README.md      # 進捗管理システム概要
@@ -34,19 +35,25 @@ documents/
 │       ├── inspector.md   # Inspector Agent作業記録
 │       └── validator.md   # Validator Agent作業記録
 ├── visions/               # 技術文書（Architect主管）
-│   ├── roadmaps/          # 開発計画・将来構想
-│   │   ├── README.md      # ロードマップ管理概要
-│   │   ├── project-roadmap.md # 全体ロードマップ
-│   │   ├── agenda/        # 検討課題
-│   │   ├── completed/     # 完了済み計画
-│   │   └── features/      # 機能別計画
-│   │       └── authentication/ # 認証拡張計画
-│   └── specifications/    # 現在のシステム仕様・定義
-│       ├── README.md      # 仕様管理概要
-│       ├── architecture/  # システムアーキテクチャ
-│       ├── asset-management/ # アセット管理方針
-│       ├── authentication/   # 認証システム仕様
-│       └── terminology/   # 用語・定義管理
+│   ├── blueprints/        # 開発計画・将来構想
+│   │   ├── README.md      # ブループリント管理概要
+│   │   ├── BP-000-for-version0100-confirm-foundation.md
+│   │   ├── BP-001-for-version0200-restructered.md
+│   │   └── BP-002-for-version0300-daemon-cli-architecture.md
+│   ├── functions/         # 機能仕様・要件定義
+│   │   ├── README.md      # 機能仕様管理概要
+│   │   ├── FUNC-000-sqlite-database-foundation.md
+│   │   ├── FUNC-001-file-lifecycle-tracking.md
+│   │   └── [多数のFUNC-XXX機能仕様ファイル]
+│   ├── pilots/            # パイロットプロジェクト
+│   │   ├── README.md      # パイロット管理概要
+│   │   ├── PIL-001-plugin-architecture.md
+│   │   └── [パイロットプロジェクトファイル]
+│   ├── supplementary/     # 補足資料・実装ガイド
+│   │   ├── README.md      # 補足資料管理概要
+│   │   ├── CG-001-event-processor-implementation.md
+│   │   └── [実装ガイド・補足資料]
+│   └── versions.md        # バージョン管理情報
 ├── rules/                 # ルール文書（Clerk主管）
 │   ├── dominants/         # 最高位原則（不変の公理）
 │   │   ├── README.md      # Dominant原則概要
@@ -63,8 +70,12 @@ documents/
 │   ├── README.md          # 記録管理概要
 │   ├── bugs/              # バグ対応記録
 │   │   └── README.md      # バグ記録管理
+│   ├── drafts/            # ドラフト文書・暫定版
+│   │   └── README.md      # ドラフト管理
 │   ├── incidents/         # インシデント記録
 │   │   └── README.md      # インシデント記録管理
+│   ├── plans/             # 実装計画・戦略文書
+│   │   └── README.md      # 計画管理
 │   └── reports/           # 各種レポート
 │       └── README.md      # レポート記録管理
 └── archives/              # L3長期保存（全Agent参照可）
@@ -93,11 +104,15 @@ documents/
 1. **作業記録**: [records/reports/](/documents/records/reports/)
 2. **バグ対応**: [records/bugs/](/documents/records/bugs/)
 3. **インシデント**: [records/incidents/](/documents/records/incidents/)
+4. **計画文書**: [records/plans/](/documents/records/plans/)
+5. **ドラフト**: [records/drafts/](/documents/records/drafts/)
 
 ### 🔧 開発・仕様確認
-1. **システム仕様**: [specifications/](/documents/visions/specifications/)
-2. **開発計画**: [blueprints/](/documents/visions/blueprints/)
-3. **プロトコル**: [meta/protocols/](/documents/rules/meta/protocols/)
+1. **機能仕様**: [visions/functions/](/documents/visions/functions/)
+2. **開発計画**: [visions/blueprints/](/documents/visions/blueprints/)
+3. **パイロット**: [visions/pilots/](/documents/visions/pilots/)
+4. **実装ガイド**: [visions/supplementary/](/documents/visions/supplementary/)
+5. **プロトコル**: [rules/meta/protocols/](/documents/rules/meta/protocols/)
 
 ### 🔬 改善・管理
 1. **プロトコル管理**: [meta/protocols/](/documents/rules/meta/protocols/)
@@ -110,16 +125,16 @@ documents/
 
 ### 基本原則（新構造）
 - **エージェント関連** → `agents/`（roles/権限定義 + status/進捗記録）
-- **技術文書** → `visions/`（blueprints/設計図 + specifications/仕様）
+- **技術文書** → `visions/`（blueprints/設計図 + functions/機能仕様 + pilots/実験 + supplementary/補足）
 - **ルール文書** → `rules/`（dominants/原則 + meta/プロトコル）
-- **記録系** → `records/`（L2アクティブ記録・全Agent編集可）
+- **記録系** → `records/`（L2アクティブ記録・bugs/incidents/reports/plans/drafts）
 - **長期保存** → `archives/`（L3アーカイブ・P043準拠）
 
 ### 判断基準（新構造）
 1. **エージェント権限・進捗** → agents/
-2. **技術仕様・計画** → visions/
+2. **技術仕様・計画・機能定義** → visions/
 3. **ルール・プロトコル** → rules/
-4. **時系列で蓄積される記録** → records/
+4. **時系列で蓄積される記録・ドラフト** → records/
 5. **長期保存・アーカイブ** → archives/
 
 ## 🔍 関連情報

@@ -1,10 +1,10 @@
 # FUNC-206: 即時表示・プログレッシブローディング機能
 
 **作成日**: 2025年6月27日 01:00  
-**更新日**: 2025年6月30日  
+**更新日**: 2025年7月7日  
 **作成者**: Architect Agent  
-**Version**: 0.2.0.0  
-**関連仕様**: FUNC-003, FUNC-202, FUNC-205
+**Version**: 0.3.0.0  
+**関連仕様**: FUNC-003, FUNC-202, FUNC-301
 
 ## 📊 機能概要
 
@@ -23,11 +23,15 @@
 - Daemon起動状況の表示
 - Database接続進捗の表示
 - データのプログレッシブ読み込み
+- 動的データロードトリガー管理
+- vanilla table容量管理・最適化
 - エラー時の画面維持とリトライ表示
 
 ### ❌ **実行しない**
 - Daemon起動のブロッキング待機
 - データ完全読み込みまでの画面非表示
+- **フィルター状態管理（FUNC-301の責務）**
+- **表示データの生成（FUNC-301の責務）**
 - エラー時の即座終了
 - 複雑な起動アニメーション
 
@@ -43,14 +47,49 @@
 #### **表示状態の遷移**
 | 状態 | 表示内容 | 表示場所 | 時間 |
 |------|---------|---------|------|
-| Initial | 空の表示エリア + "Initializing..." | FUNC-205ステータスエリア | 0-100ms |
-| Daemon Starting | "Starting background daemon..." | FUNC-205ステータスエリア | 100-500ms |
-| Data Loading | "Loading file events..." + 既存データ | FUNC-205ステータスエリア + メインエリア | 500ms-2s |
+| Initial | 空の表示エリア + "Initializing..." | ヘッダーエリア | 0-100ms |
+| Daemon Starting | "Starting background daemon..." | ヘッダーエリア | 100-500ms |
+| Data Loading | "Loading file events..." + 既存データ | ヘッダーエリア + メインエリア | 500ms-2s |
 | Live Mode | リアルタイムイベント表示 | メインエリア（通常動作） | 2s以降 |
+
+**注**: FUNC-205（ステータスエリア）はSuspend状態のため、代替としてヘッダーエリアを使用
+
+### **動的データロードトリガー**（conversation-20250707.log準拠）
+
+**トリガー条件**（以下のいずれかを満たし、かつ"end of data"が表示されていない場合）:
+1. **画面内rowが不足**: 表示可能行数に対してrowが不足している
+2. **下端選択**: 選択rowがtable最下部になった
+3. **100msポーリング**: 定期的なDB更新確認
+
+**ロード戦略**:
+- 初回100件取得
+- 最大1000件まで段階的取得
+- vanilla table容量管理（一定件数超過時は古い順に削除）
+
+### **FUNC-301との連携フロー**
+
+```javascript
+// 動的データロード時の処理
+onDataLoad(newEvents) {
+  // 1. FUNC-301のvanilla tableに統合
+  FUNC301.updateVanillaTable(newEvents);
+  
+  // 2. 操作履歴を再適用
+  const filteredData = FUNC301.generateDisplaySet();
+  
+  // 3. 画面に反映
+  FUNC202.updateDisplay(filteredData);
+  
+  // 4. 容量管理
+  if (FUNC301.getVanillaTableSize() > MAX_EVENTS) {
+    FUNC301.optimizeVanillaTable();
+  }
+}
+```
 
 ### **進捗メッセージ仕様**
 
-各フェーズで表示するメッセージ（FUNC-205のステータスエリアに表示）：
+各フェーズで表示するメッセージ（ヘッダーエリアに表示）：
 
 ```
 Phase 1: ">> Initializing cctop..."
@@ -71,32 +110,33 @@ Phase 6: ">> Ready - Watching active"
 async function startCLI() {
   // 3. 空画面表示 + 初期化メッセージ
   displayInitialScreen();
-  // FUNC-205のステータスエリアに表示
-  statusDisplay.addMessage(">> Initializing cctop...", "normal", "progress");
+  // ヘッダーエリアに表示（FUNC-205はSuspend状態）
+  headerDisplay.showMessage(">> Initializing cctop...");
   
   // 4. Daemon起動チェック（非ブロッキング）
   checkDaemonStatus().then(status => {
     if (!status.running) {
       // 5. Daemon未起動なら起動（バックグラウンド）
-      // FUNC-205のステータスエリアに表示
-      statusDisplay.addMessage(">> Starting background daemon...", "normal", "progress");
+      headerDisplay.showMessage(">> Starting background daemon...");
       // 起動者="cli"として記録
       startDaemonProcess({ started_by: "cli" });
     } else {
       // Daemon既起動の場合は起動者情報を維持
-      statusDisplay.addMessage(">> Background daemon already running", "normal", "info");
+      headerDisplay.showMessage(">> Background daemon already running");
     }
   });
   
   // 6. Database接続試行（リトライ付き）
-  // FUNC-205のステータスエリアに表示
-  statusDisplay.addMessage(">> Connecting to database...", "normal", "progress");
+  headerDisplay.showMessage(">> Connecting to database...");
   connectToDatabase();
   
   // 7. 既存データ読み込み（プログレッシブ）
   loadExistingData();
   
-  // 8. リアルタイム監視開始
+  // 8. 動的データロード設定
+  setupDynamicLoading();
+  
+  // 9. リアルタイム監視開始
   startRealtimeMonitoring();
 }
 ```
@@ -112,31 +152,55 @@ async function startCLI() {
 ```javascript
 // データが到着次第、即座に表示開始
 db.on('data', (events) => {
-  displayManager.addEvents(events);
-  // FUNC-205のステータスエリアに進捗更新
-  statusDisplay.updateMessage(
-    `>> Loading existing events... (${events.length} loaded)`,
-    "normal",
-    "progress"
-  );
+  // FUNC-301経由で状態管理
+  FUNC301.updateVanillaTable(events);
+  const filteredData = FUNC301.generateDisplaySet();
+  FUNC202.updateDisplay(filteredData);
+  
+  // ヘッダーに進捗更新
+  headerDisplay.showMessage(`>> Loading existing events... (${events.length} loaded)`);
 });
 
 // データ読み込み完了
 db.on('ready', () => {
-  // FUNC-205のステータスエリアに完了表示
-  statusDisplay.addMessage(">> Ready - Watching active", "normal", "info");
+  headerDisplay.showMessage(">> Ready - Watching active");
+  
+  // 動的ロードトリガー設定
+  setupDynamicLoadTriggers();
 });
+
+// 動的データロードトリガー
+function setupDynamicLoadTriggers() {
+  // 1. スクロール位置監視
+  FUNC202.onScrollToBottom(() => {
+    if (!isEndOfData()) {
+      loadMoreData();
+    }
+  });
+  
+  // 2. 行数不足監視
+  FUNC202.onInsufficientRows(() => {
+    if (!isEndOfData()) {
+      loadMoreData();
+    }
+  });
+  
+  // 3. 100msポーリング
+  setInterval(checkAndLoadNewData, 100);
+}
 ```
 
 #### **エラーリカバリー**
 - DB接続失敗: 
   - 1秒間隔で最大10回リトライ
-  - FUNC-205ステータスエリアに `!! Database connection failed, retrying... (attempt 3/10)` 表示
+  - ヘッダーエリアに `!! Database connection failed, retrying... (attempt 3/10)` 表示
 - Daemon起動失敗: 
   - 読み取り専用モードで継続
-  - FUNC-205ステータスエリアに `!! Daemon start failed, running in read-only mode` 表示
+  - ヘッダーエリアに `!! Daemon start failed, running in read-only mode` 表示
+- 動的ロード失敗:
+  - リトライ機構で対応、FUNC-301のvanilla table整合性を維持
 - 予期せぬエラー: 
-  - エラー詳細をFUNC-205ステータスエリアに表示しつつ画面維持
+  - エラー詳細をヘッダーエリアに表示しつつ画面維持
 
 ## 🔗 他機能との連携
 
@@ -152,13 +216,13 @@ db.on('ready', () => {
 - 初期表示時の空状態をサポート
 - プログレッシブなデータ追加に対応
 
-### FUNC-205: Status Display Area
-- 起動進捗メッセージの表示に活用
-  - 「>> Initializing cctop...」「>> Starting background daemon...」等をストリーム表示
-- エラー・警告の優先表示
-  - 「!! Database connection failed」等を最上行に即座表示
-- 複数行での詳細状態表示
-  - 最大3行（設定可能）で起動プロセスを透明化
+### FUNC-301: フィルター状態管理
+- vanilla table管理との連携
+  - 動的ロードデータの統合・管理
+  - 容量管理による古いデータの削除
+- 操作履歴の継続的適用
+  - 新規データロード後のフィルター再適用
+  - フィルター状態の一貫性維持
 
 ### **実装上の考慮事項**
 
