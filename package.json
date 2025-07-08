@@ -1,7 +1,7 @@
 {
   "name": "cctop",
-  "version": "0.3.0",
-  "description": "CCTOP - Code Change Monitor (v0.3.0 Daemon-CLI Architecture)",
+  "version": "0.5.0",
+  "description": "Agent work monitoring with real-time file tracking",
   "private": true,
   "workspaces": [
     "modules/*"

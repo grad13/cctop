@@ -2,7 +2,7 @@
 
 Real-time file system monitoring tool with daemon-cli architecture.
 
-## Architecture (v0.3.x)
+## Architecture (v0.5.x)
 
 cctop uses a modular daemon-cli architecture for better scalability and maintainability:
 
