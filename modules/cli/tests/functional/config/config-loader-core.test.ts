@@ -7,7 +7,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
-import { ConfigLoader } from '../../src/config/config-loader';
+import { ConfigLoader } from '../../../src/config/config-loader';
 
 describe('ConfigLoader - Core Functionality', () => {
   let configLoader: ConfigLoader;

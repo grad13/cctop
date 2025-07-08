@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { DatabaseAdapterFunc000 } from '../../src/database/database-adapter-func000';
-import { UIState } from '../../src/ui/UIState';
-import { SearchResultCache } from '../../src/ui/SearchResultCache';
-import { EventRow } from '../../src/types/event-row';
+import { DatabaseAdapterFunc000 } from '../../../src/database/database-adapter-func000';
+import { UIState } from '../../../src/ui/UIState';
+import { SearchResultCache } from '../../../src/ui/SearchResultCache';
+import { EventRow } from '../../../src/types/event-row';
 
 describe('FUNC-202 v0.3.4.0 Search Functionality', () => {
   let db: DatabaseAdapterFunc000;

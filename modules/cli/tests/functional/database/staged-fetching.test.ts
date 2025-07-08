@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { DatabaseAdapterFunc000 } from '../../src/database/database-adapter-func000';
+import { DatabaseAdapterFunc000 } from '../../../src/database/database-adapter-func000';
 import sqlite3 from 'sqlite3';
 
 describe('FUNC-202 v0.3.4.0 Staged Fetching', () => {

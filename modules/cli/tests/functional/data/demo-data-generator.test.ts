@@ -4,8 +4,8 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import { DemoDataGenerator } from '../../src/utils/demo-data-generator';
-import { EventRow } from '../../src/types/event-row';
+import { DemoDataGenerator } from '../../../src/utils/demo-data-generator';
+import { EventRow } from '../../../src/types/event-row';
 
 describe('DemoDataGenerator', () => {
   let generator: DemoDataGenerator;

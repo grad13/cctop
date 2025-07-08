@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { CLIConfig, defaultCLIConfig } from '../../src/config/cli-config';
+import { CLIConfig, defaultCLIConfig } from '../../../src/config/cli-config';
 
 describe('CLIConfig', () => {
   describe('Default Configuration', () => {

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { DatabaseAdapterFunc000 } from '../../src/database/database-adapter-func000';
+import { DatabaseAdapterFunc000 } from '../../../src/database/database-adapter-func000';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';

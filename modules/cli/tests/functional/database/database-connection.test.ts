@@ -5,7 +5,7 @@
 
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
 import { DatabaseTestSetup } from './test-helpers/database-test-setup';
-import { DatabaseAdapter } from '../../src/database/database-adapter';
+import { DatabaseAdapter } from '../../../src/database/database-adapter';
 
 describe('Database Connection Management', () => {
   let testSetup: DatabaseTestSetup;

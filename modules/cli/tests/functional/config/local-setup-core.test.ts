@@ -7,7 +7,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
-import { LocalSetupInitializer } from '../../src/config/local-setup-initializer';
+import { LocalSetupInitializer } from '../../../src/config/local-setup-initializer';
 
 describe('LocalSetupInitializer - Core', () => {
   let initializer: LocalSetupInitializer;
