@@ -44,6 +44,10 @@ export class UIState {
   
   // Search base events - snapshot captured when entering search mode for local filtering
   private searchBaseEvents: EventRow[] = [];
+  
+  // FUNC-202: State backup for ESC/Enter functionality
+  private savedEventFilters: Set<EventType> | null = null;
+  private savedSearchText: string | null = null;
 
   constructor(displayMode: DisplayMode = 'all') {
     this.displayMode = displayMode;
@@ -225,10 +229,14 @@ export class UIState {
 
   // Mode Operations
   enterFilterMode(): void {
+    // FUNC-202: Save current state before entering filter mode
+    this.saveCurrentState();
     this.displayState = 'filter';
   }
 
   enterSearchMode(): void {
+    // FUNC-202: Save current state before entering search mode
+    this.saveCurrentState();
     this.displayState = 'search';
     this.searchText = '';
     this.isSearchApplied = false;  // Reset DB search flag for local search
@@ -423,5 +431,36 @@ export class UIState {
   getRelativeSelectedIndex(): number {
     // Return selected index relative to viewport
     return this.selectedIndex - this.viewportStartIndex;
+  }
+
+  // FUNC-202: State backup and restore methods for ESC/Enter functionality
+  private saveCurrentState(): void {
+    this.savedEventFilters = new Set(this.eventFilters);
+    this.savedSearchText = this.searchText;
+  }
+
+  restorePreviousState(): void {
+    // FUNC-202: ESC behavior - discard edits and restore previous state
+    if (this.savedEventFilters !== null) {
+      this.eventFilters = new Set(this.savedEventFilters);
+    }
+    if (this.savedSearchText !== null) {
+      this.searchText = this.savedSearchText;
+    }
+    this.clearSavedState();
+    this.displayState = this.isPaused ? 'paused' : 'normal';
+    this.clearSearchBaseEvents();
+  }
+
+  confirmCurrentState(): void {
+    // FUNC-202: Enter behavior - keep edits and overwrite state
+    this.clearSavedState();
+    this.displayState = this.isPaused ? 'paused' : 'normal';
+    this.clearSearchBaseEvents();
+  }
+
+  private clearSavedState(): void {
+    this.savedEventFilters = null;
+    this.savedSearchText = null;
   }
 }

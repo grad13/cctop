@@ -162,6 +162,22 @@ export class UILayoutManager {
     return `[q] Exit  [space] ${pauseText}  [x] Refresh  ${allText}  ${uniqueText}`;
   }
 
+  buildKeyGuideContent(): string {
+    // FUNC-202: Command Keys Area (2nd line) - changes based on state
+    const displayState = this.uiState.getDisplayState();
+    
+    switch (displayState) {
+      case 'filter':
+      case 'search':
+        return '{bold}[Enter] Confirm Filter [ESC] Cancel Back [↑↓] Select an Event{/bold}';
+      
+      case 'normal':
+      case 'paused':
+      default:
+        return '{bold}[ESC] Reset All Filters [↑↓] Select an Event{/bold}';
+    }
+  }
+
   buildDynamicControlContent(): string {
     // FUNC-202: Dynamic Control Area - changes based on state
     const displayState = this.uiState.getDisplayState();
@@ -175,12 +191,12 @@ export class UILayoutManager {
         const maxSearchLength = 40;
         const paddingLength = Math.max(0, maxSearchLength - searchText.length);
         const padding = '_'.repeat(paddingLength);
-        return `{bold}{yellow-fg}Search: [${searchText}${padding}] [Enter] Search DB [ESC] Cancel{/yellow-fg}{/bold}`;
+        return `{bold}{yellow-fg}Search: [${searchText}${padding}] [Shift+Enter] Search DB{/yellow-fg}{/bold}`;
       
       case 'normal':
       case 'paused':
       default:
-        return '{bold}{yellow-fg}[f] Filter Events  [/] Quick search  [ESC] Clear Filtering{/yellow-fg}{/bold}';
+        return '{bold}{yellow-fg}[f] Filter Events  [/] Quick Search{/yellow-fg}{/bold}';
     }
   }
 
@@ -206,7 +222,7 @@ export class UILayoutManager {
       }
     });
     
-    return '{bold}{yellow-fg}' + filterItems.join(' ') + ' [ESC] Back{/yellow-fg}{/bold}';
+    return '{bold}{yellow-fg}' + filterItems.join(' ') + '{/yellow-fg}{/bold}';
   }
 
   updateDynamicControl(): void {
@@ -219,6 +235,9 @@ export class UILayoutManager {
   updateStatusBar(): void {
     // Update command line 1 with current pause state
     this.statusBar.setContent(this.buildCommandLine1());
+    
+    // FUNC-202: Update key guide bar with state-dependent content
+    this.keyGuideBar.setContent(this.buildKeyGuideContent());
     
     // Update header with filter/search status
     this.headerPanel.setContent(this.buildHeaderContent());

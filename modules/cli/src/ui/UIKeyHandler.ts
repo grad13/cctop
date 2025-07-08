@@ -67,9 +67,9 @@ export class UIKeyHandler {
       process.exit(0);
     });
 
-    // Escape - exit special modes
+    // Escape - FUNC-202: discard edits and restore previous state
     this.screen.key(['escape'], () => {
-      this.exitSpecialMode();
+      this.discardEditsAndRestorePrevious();
     });
     
     // Note: Backspace handling is done in keypress event for search mode
@@ -119,10 +119,19 @@ export class UIKeyHandler {
       }
     });
 
-    // Search mode apply
+    // FUNC-202: Enter - confirm filter/search and overwrite state
     this.screen.key(['enter'], () => {
       if (this.uiState.getDisplayState() === 'search') {
-        this.applySearch();
+        this.confirmSearch();
+      } else if (this.uiState.getDisplayState() === 'filter') {
+        this.confirmFilter();
+      }
+    });
+
+    // FUNC-202: Shift+Enter - execute DB search (search mode only)
+    this.screen.key(['S-enter'], () => {
+      if (this.uiState.getDisplayState() === 'search') {
+        this.executeDbSearch();
       }
     });
 
@@ -305,5 +314,47 @@ export class UIKeyHandler {
       // Refresh to apply search filter
       this.refreshDataCallback();
     }, this.SEARCH_DEBOUNCE_MS);
+  }
+
+  // FUNC-202: New key handling methods for ESC/Enter functionality
+  private discardEditsAndRestorePrevious(): void {
+    this.uiState.restorePreviousState();
+    this.updateDynamicControlCallback();
+    this.updateStatusBarCallback();
+    this.screen.render();
+    
+    // Refresh data to apply restored state
+    this.refreshDataCallback();
+  }
+
+  private confirmSearch(): void {
+    this.uiState.confirmCurrentState();
+    this.updateDynamicControlCallback();
+    this.updateStatusBarCallback();
+    this.screen.render();
+    
+    // Refresh data to apply search
+    this.refreshDataCallback();
+  }
+
+  private confirmFilter(): void {
+    this.uiState.confirmCurrentState();
+    this.updateDynamicControlCallback();
+    this.updateStatusBarCallback();
+    this.screen.render();
+    
+    // Refresh data to apply filter
+    this.refreshDataCallback();
+  }
+
+  private executeDbSearch(): void {
+    // FUNC-202: Shift+Enter behavior - execute database search
+    this.uiState.applySearch(); // Use existing DB search logic
+    this.updateDynamicControlCallback();
+    this.updateStatusBarCallback();
+    this.screen.render();
+    
+    // Refresh data to apply DB search
+    this.refreshDataCallback();
   }
 }
