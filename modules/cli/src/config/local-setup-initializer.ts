@@ -7,6 +7,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 export interface SetupResult {
+  success: boolean;
   created: boolean;
   configPath: string;
   message: string;
@@ -15,7 +16,6 @@ export interface SetupResult {
 export interface LocalSetupConfig {
   targetDirectory?: string;
   dryRun?: boolean;
-  force?: boolean;
 }
 
 export class LocalSetupInitializer {
@@ -29,8 +29,9 @@ export class LocalSetupInitializer {
     const configPath = path.join(targetDir, this.DEFAULT_DIRECTORY);
     
     // Check if already exists
-    if (fs.existsSync(configPath) && !options.force) {
+    if (fs.existsSync(configPath)) {
       return {
+        success: true,
         created: false,
         configPath,
         message: `Configuration already exists at ${configPath}`
@@ -39,6 +40,7 @@ export class LocalSetupInitializer {
     
     if (options.dryRun) {
       return {
+        success: true,
         created: false,
         configPath,
         message: this.generateDryRunMessage(configPath)
@@ -51,6 +53,7 @@ export class LocalSetupInitializer {
       await this.createGitIgnore(configPath);
       
       return {
+        success: true,
         created: true,
         configPath,
         message: this.generateSuccessMessage(configPath)
@@ -72,6 +75,7 @@ export class LocalSetupInitializer {
       'themes/custom',      // user custom themes
       'data',               // database files
       'logs',               // log files
+      'cache',              // cache files
       'runtime',            // runtime files (PID, socket)
       'temp'                // temporary files
     ];
@@ -214,6 +218,7 @@ export class LocalSetupInitializer {
     const gitignoreContent = `# cctop monitoring data
 data/
 logs/
+cache/
 runtime/
 temp/
 

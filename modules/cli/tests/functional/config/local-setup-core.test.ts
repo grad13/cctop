@@ -155,31 +155,5 @@ describe('LocalSetupInitializer - Core', () => {
       }
     });
 
-    it('should support force overwrite', async () => {
-      const originalCwd = process.cwd();
-      process.chdir(testDir);
-
-      try {
-        // First initialization
-        await initializer.initialize();
-        
-        // Modify a config file
-        const configFile = '.cctop/config/cli-config.json';
-        const originalConfig = JSON.parse(fs.readFileSync(configFile, 'utf8'));
-        originalConfig.testProperty = 'should-be-overwritten';
-        fs.writeFileSync(configFile, JSON.stringify(originalConfig, null, 2));
-
-        // Force initialization
-        const result = await initializer.initialize(process.cwd(), { force: true });
-        
-        expect(result.success).toBe(true);
-        
-        // Check that modification is removed
-        const newConfig = JSON.parse(fs.readFileSync(configFile, 'utf8'));
-        expect(newConfig.testProperty).toBeUndefined();
-      } finally {
-        process.chdir(originalCwd);
-      }
-    });
   });
 });

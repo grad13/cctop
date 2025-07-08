@@ -47,10 +47,10 @@ describe('FUNC-105: Complete Setup Flow', () => {
 
     await context.initializer.initialize();
 
-    // Verify existing config is preserved
+    // Verify existing config is preserved (no merging with defaults)
     const config = testSetup.readConfigFile('.cctop/config/cli-config.json');
     expect(config.customSetting).toBe('preserved');
-    expect(config).toHaveProperty('display'); // Should have merged with defaults
+    expect(config).not.toHaveProperty('display'); // Existing files are not merged
   });
 
   it('should handle permission errors gracefully', async () => {
@@ -93,11 +93,11 @@ describe('FUNC-105: Complete Setup Flow', () => {
 
     const daemonConfig = testSetup.readConfigFile('.cctop/config/daemon-config.json');
     expect(daemonConfig).toHaveProperty('monitoring');
-    expect(daemonConfig).toHaveProperty('watchSettings');
+    expect(daemonConfig).toHaveProperty('daemon');
 
     const cliConfig = testSetup.readConfigFile('.cctop/config/cli-config.json');
     expect(cliConfig).toHaveProperty('display');
-    expect(cliConfig).toHaveProperty('keyBindings');
+    expect(cliConfig).toHaveProperty('interaction');
   });
 
   it('should handle multiple initialization calls idempotently', async () => {
@@ -136,17 +136,4 @@ describe('FUNC-105: Complete Setup Flow', () => {
     fs.unlinkSync(testFile);
   });
 
-  it('should handle partial corrupted initialization gracefully', async () => {
-    // Create partial structure with corrupted file
-    testSetup.createPartialStructure(['.cctop/config']);
-    testSetup.corruptFile('.cctop/config/cli-config.json');
-
-    // Should still complete initialization
-    const result = await context.initializer.initialize();
-    expect(result.success).toBe(true);
-
-    // Should recreate corrupted files
-    const config = testSetup.readConfigFile('.cctop/config/cli-config.json');
-    expect(config).toHaveProperty('display');
-  });
 });

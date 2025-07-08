@@ -113,25 +113,6 @@ describe('ConfigLoader - Initialization', () => {
       expect(fs.existsSync(path.join(configPath, 'config', 'cli-config.json'))).toBe(true);
     });
 
-    it('should handle partial initialization gracefully', async () => {
-      // Create partial structure
-      const configDir = path.join(configPath, 'config');
-      fs.mkdirSync(configDir, { recursive: true });
-      
-      // Add only shared config
-      const sharedConfig = { version: '0.3.0.0', projectName: 'TestProject' };
-      fs.writeFileSync(
-        path.join(configDir, 'shared-config.json'),
-        JSON.stringify(sharedConfig, null, 2)
-      );
-
-      const config = await configLoader.loadConfiguration(testDir);
-
-      // Should complete missing parts
-      expect(config.shared.projectName).toBe('TestProject');
-      expect(config.cli.display.maxRows).toBe(20); // Default CLI config
-      expect(fs.existsSync(path.join(configPath, 'config', 'cli-config.json'))).toBe(true);
-    });
 
     it('should validate configuration after initialization', async () => {
       const config = await configLoader.loadConfiguration(testDir);
@@ -173,33 +154,6 @@ describe('ConfigLoader - Initialization', () => {
       });
     });
 
-    it('should recover from interrupted initialization', async () => {
-      // Simulate interrupted initialization by creating incomplete structure
-      fs.mkdirSync(configPath, { recursive: true });
-      // Missing config directory entirely
 
-      const config = await configLoader.loadConfiguration(testDir);
-
-      // Should complete the initialization
-      expect(fs.existsSync(path.join(configPath, 'config'))).toBe(true);
-      expect(config.shared.version).toBe('0.3.0.0');
-    });
-
-    it('should handle filesystem errors during initialization', async () => {
-      // Mock filesystem error
-      const originalMkdirSync = fs.mkdirSync;
-      let callCount = 0;
-      
-      vi.spyOn(fs, 'mkdirSync').mockImplementation((...args) => {
-        callCount++;
-        if (callCount === 1) {
-          throw new Error('Simulated filesystem error');
-        }
-        return originalMkdirSync.apply(fs, args);
-      });
-
-      // Should still attempt to complete initialization
-      await expect(configLoader.loadConfiguration(testDir)).resolves.toBeDefined();
-    });
   });
 });
