@@ -55,21 +55,48 @@ class DaemonManager {
     try {
       this.logger.log('info', 'Performing startup delete detection...');
       
-      const recentEvents = await this.db.getRecentEvents(1000);
+      // Get recent events with full information including file_id
+      const sql = `
+        SELECT 
+          e.id,
+          e.timestamp,
+          e.event_type_id,
+          e.file_id,
+          e.file_path,
+          e.file_name,
+          e.directory,
+          et.code as event_type,
+          f.inode
+        FROM events e
+        JOIN event_types et ON e.event_type_id = et.id
+        JOIN files f ON e.file_id = f.id
+        ORDER BY e.timestamp DESC
+        LIMIT 1000
+      `;
+      
+      const dbConnection = this.db.getConnection();
+      if (!dbConnection) {
+        throw new Error('Database connection not available');
+      }
+      
+      const recentEvents = await new Promise<any[]>((resolve, reject) => {
+        dbConnection.all(sql, [], (err: any, rows: any[]) => {
+          if (err) reject(err);
+          else resolve(rows || []);
+        });
+      });
       
       // Group events by file path and find the last event for each file
-      // Since recentEvents is ordered by timestamp DESC, we need to reverse it
-      // to ensure we get the chronologically last event for each file
       const fileLastEvent = new Map<string, any>();
       for (const event of recentEvents.reverse()) {
-        fileLastEvent.set(event.filePath, event);
+        fileLastEvent.set(event.file_path, event);
       }
       
       let deletedCount = 0;
       for (const [filePath, lastEvent] of fileLastEvent) {
         // Skip if the last event for this file was already a delete
-        this.logger.debugLog(`Checking file ${filePath}, last event: ${lastEvent.eventType}`);
-        if (lastEvent.eventType === 'delete') {
+        this.logger.debugLog(`Checking file ${filePath}, last event: ${lastEvent.event_type}`);
+        if (lastEvent.event_type === 'delete') {
           this.logger.debugLog(`Skipping ${filePath} - already has delete event`);
           continue;
         }
@@ -77,12 +104,25 @@ class DaemonManager {
         try {
           const fs = require('fs');
           if (!fs.existsSync(filePath)) {
-            await this.fileEventHandler.handleFileEvent('delete', filePath, undefined);
+            // Use inode from the files table
+            const inode = lastEvent.inode;
+            this.logger.debugLog(`Delete detection: ${filePath} inode=${inode}`);
+            if (!inode) {
+              this.logger.log('error', `No inode found for ${filePath}, skipping delete detection`);
+              continue;
+            }
+            await this.fileEventHandler.handleFileEvent('delete', filePath, inode);
             deletedCount++;
           }
         } catch (error: unknown) {
           // File access error, treat as deleted
-          await this.fileEventHandler.handleFileEvent('delete', filePath, undefined);
+          const inode = lastEvent.inode;
+          this.logger.debugLog(`Delete detection error: ${filePath} inode=${inode}`);
+          if (!inode) {
+            this.logger.log('error', `No inode found for ${filePath}, skipping delete detection`);
+            continue;
+          }
+          await this.fileEventHandler.handleFileEvent('delete', filePath, inode);
           deletedCount++;
         }
       }
@@ -153,19 +193,56 @@ class DaemonManager {
       });
 
       let isInitialScan = true;
+      const initialScanQueue: string[] = [];
+      let isProcessingQueue = false;
+
+      // Process initial scan queue sequentially with batch processing
+      const processInitialScanQueue = async () => {
+        if (isProcessingQueue || initialScanQueue.length === 0) return;
+        
+        isProcessingQueue = true;
+        const batchSize = 10; // Process in smaller batches to avoid transaction conflicts
+        
+        while (initialScanQueue.length > 0) {
+          const batch = initialScanQueue.splice(0, batchSize);
+          
+          for (const filePath of batch) {
+            try {
+              await this.fileEventHandler.handleFileEvent('find', filePath);
+              // Small delay between operations to prevent transaction conflicts
+              await new Promise(resolve => setTimeout(resolve, 1));
+            } catch (error) {
+              this.logger.log('warn', `Failed to handle find event for ${filePath}: ${error}`);
+            }
+          }
+          
+          // Pause between batches to allow other operations
+          if (initialScanQueue.length > 0) {
+            await new Promise(resolve => setTimeout(resolve, 10));
+          }
+        }
+        isProcessingQueue = false;
+      };
 
       // Handle file events with move detection
       this.watcher
         .on('add', (filePath) => {
           this.logger.debugLog(`CHOKIDAR EVENT: add`, { filePath, timestamp: Date.now(), isInitialScan });
           if (isInitialScan) {
-            this.fileEventHandler.handleFileEvent('find', filePath);
+            initialScanQueue.push(filePath);
+            processInitialScanQueue();
           } else {
             this.fileEventHandler.handleAddEvent(filePath);
           }
         })
         .on('ready', async () => {
           isInitialScan = false;
+          
+          // Wait for queue to finish processing
+          while (isProcessingQueue || initialScanQueue.length > 0) {
+            await new Promise(resolve => setTimeout(resolve, 100));
+          }
+          
           this.logger.log('info', 'Initial file scan completed, switching to real-time monitoring');
           await this.performStartupDeleteDetection();
         })

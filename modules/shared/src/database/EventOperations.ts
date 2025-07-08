@@ -1,36 +1,199 @@
 /**
- * Database Event Operations
+ * Event Operations
+ * FUNC-000準拠のevents テーブル操作
  */
 
 import sqlite3 from 'sqlite3';
-import { FileEvent } from '../types';
+import { FileEvent, EventMeasurement } from '../types';
 
 export class EventOperations {
-  constructor(private db: sqlite3.Database) {}
+  private db: sqlite3.Database;
+  private eventTypeMap: Map<string, number> | null = null;
 
-  async insertEvent(event: FileEvent): Promise<void> {
+  constructor(db: sqlite3.Database) {
+    this.db = db;
+  }
+
+  clearCache(): void {
+    this.eventTypeMap = null;
+  }
+
+  private async ensureEventTypesLoaded(): Promise<void> {
+    if (this.eventTypeMap !== null) {
+      return;
+    }
+
+    return new Promise((resolve) => {
+      this.db.all('SELECT id, code FROM event_types ORDER BY code', (err, rows: any[]) => {
+        if (err || !rows || rows.length === 0) {
+          console.error('Failed to load event types from DB, using FUNC-000 defaults');
+          // Use FUNC-000 specified order as fallback
+          this.eventTypeMap = new Map([
+            ['find', 1],
+            ['create', 2],
+            ['modify', 3],
+            ['delete', 4],
+            ['move', 5],
+            ['restore', 6]
+          ]);
+        } else {
+          // Build map based on actual DB content
+          this.eventTypeMap = new Map();
+          rows.forEach(row => {
+            this.eventTypeMap!.set(row.code, row.id);
+          });
+        }
+        resolve();
+      });
+    });
+  }
+
+  async insertEvent(event: FileEvent, measurement?: EventMeasurement): Promise<number> {
+    await this.ensureEventTypesLoaded();
+    
     return new Promise((resolve, reject) => {
-      const sql = `
-        INSERT INTO events (event_type, file_path, directory, filename, file_size, timestamp, inode_number)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
-      `;
+      let fileId: number;
+      let eventId: number;
       
-      const params = [
-        event.eventType,
-        event.filePath,
-        event.directory,
-        event.filename,
-        event.fileSize,
-        event.timestamp.toISOString(),
-        event.inodeNumber
-      ];
+      // FUNC-000: delete/move events don't require measurements
+      if (['delete', 'move'].includes(event.eventType)) {
+        // For delete/move events, inode can be provided without full measurement
+        if (!measurement || !measurement.inode) {
+          reject(new Error('inode is required for delete/move events'));
+          return;
+        }
+      } else {
+        // For create/modify/find/restore events, full measurement is required
+        if (!measurement || !measurement.inode) {
+          reject(new Error('Measurement with inode is required for FUNC-000 compliance'));
+          return;
+        }
+      }
 
-      this.db.run(sql, params, function(err) {
+      // Start transaction
+      this.db.run('BEGIN TRANSACTION', (err) => {
         if (err) {
           reject(err);
-        } else {
-          resolve();
+          return;
         }
+
+        // First, handle file tracking
+        this.db.get('SELECT id FROM files WHERE inode = ?', [measurement.inode], (err, row: any) => {
+          if (err) {
+            this.db.run('ROLLBACK', () => {});
+            reject(err);
+            return;
+          }
+          
+          if (row) {
+            // File exists, update it
+            fileId = row.id;
+            this.db.run('UPDATE files SET is_active = ? WHERE id = ?', 
+              [event.eventType !== 'delete' ? 1 : 0, fileId], 
+              (updateErr) => {
+                if (updateErr) {
+                  this.db.run('ROLLBACK', () => {});
+                  reject(updateErr);
+                  return;
+                }
+                insertEventAndMeasurement();
+              }
+            );
+          } else {
+            // File doesn't exist, insert it
+            const db = this.db;
+            db.run('INSERT INTO files (inode, is_active) VALUES (?, ?)', 
+              [measurement.inode, event.eventType !== 'delete' ? 1 : 0], 
+              function(insertErr) {
+                if (insertErr) {
+                  db.run('ROLLBACK', () => {});
+                  reject(insertErr);
+                  return;
+                }
+                fileId = this.lastID;
+                insertEventAndMeasurement();
+              }
+            );
+          }
+        });
+
+        // Function to insert event and measurement
+        const insertEventAndMeasurement = () => {
+          const insertEventSql = `
+            INSERT INTO events (timestamp, event_type_id, file_id, file_path, file_name, directory)
+            VALUES (?, ?, ?, ?, ?, ?)
+          `;
+          
+          const eventTypeId = this.eventTypeMap!.get(event.eventType);
+          if (!eventTypeId) {
+            console.error(`Unknown event type: ${event.eventType}. Available types:`, Array.from(this.eventTypeMap!.keys()));
+            reject(new Error(`Unknown event type: ${event.eventType}`));
+            return;
+          }
+          const timestamp = Math.floor(event.timestamp.getTime() / 1000);
+          
+          const eventParams = [
+            timestamp,
+            eventTypeId,
+            fileId,
+            event.filePath,
+            event.fileName,
+            event.directory
+          ];
+          
+          const db = this.db;
+          db.run(insertEventSql, eventParams, function(err) {
+            if (err) {
+              db.run('ROLLBACK', () => {});
+              reject(err);
+              return;
+            }
+            
+            eventId = this.lastID;
+            
+            // Check if measurement should be saved (FUNC-000: no measurements for delete/move)
+            if (event.eventType === 'delete' || event.eventType === 'move') {
+              // Commit without saving measurement
+              db.run('COMMIT', (commitErr: any) => {
+                if (commitErr) {
+                  reject(commitErr);
+                } else {
+                  resolve(eventId);
+                }
+              });
+            } else {
+              // Insert measurement for create/modify/find/restore events
+              const measurementSql = `
+                INSERT INTO measurements (event_id, inode, file_size, line_count, block_count)
+                VALUES (?, ?, ?, ?, ?)
+              `;
+              
+              const measurementParams = [
+                eventId,
+                measurement.inode,
+                measurement.fileSize,
+                measurement.lineCount || null,
+                measurement.blockCount || null
+              ];
+              
+              db.run(measurementSql, measurementParams, (measurementErr: any) => {
+                if (measurementErr) {
+                  console.error('Failed to insert measurement:', measurementErr);
+                  db.run('ROLLBACK', () => {});
+                  reject(measurementErr);
+                } else {
+                  db.run('COMMIT', (commitErr: any) => {
+                    if (commitErr) {
+                      reject(commitErr);
+                    } else {
+                      resolve(eventId);
+                    }
+                  });
+                }
+              });
+            }
+          });
+        };
       });
     });
   }
@@ -38,31 +201,43 @@ export class EventOperations {
   async getRecentEvents(limit: number = 100, filePath?: string): Promise<FileEvent[]> {
     return new Promise((resolve, reject) => {
       let sql = `
-        SELECT * FROM events
+        SELECT 
+          e.id,
+          e.timestamp,
+          e.event_type_id,
+          e.file_path,
+          e.file_name,
+          e.directory,
+          et.code as event_type,
+          COALESCE(m.inode, f.inode) as inode
+        FROM events e
+        JOIN event_types et ON e.event_type_id = et.id
+        JOIN files f ON e.file_id = f.id
+        LEFT JOIN measurements m ON e.id = m.event_id
       `;
-      let params: any[] = [];
-
+      
+      const params: any[] = [];
+      
       if (filePath) {
-        sql += ` WHERE file_path = ?`;
+        sql += ' WHERE e.file_path = ?';
         params.push(filePath);
       }
-
-      sql += ` ORDER BY timestamp DESC LIMIT ?`;
+      
+      sql += ' ORDER BY e.timestamp DESC LIMIT ?';
       params.push(limit);
-
+      
       this.db.all(sql, params, (err, rows: any[]) => {
         if (err) {
           reject(err);
         } else {
-          const events = rows.map(row => ({
+          const events: FileEvent[] = rows.map(row => ({
             id: row.id,
-            eventType: row.event_type,
+            eventType: row.event_type as 'find' | 'create' | 'modify' | 'delete' | 'move' | 'restore',
             filePath: row.file_path,
             directory: row.directory,
-            filename: row.filename,
-            fileSize: row.file_size,
-            timestamp: new Date(row.timestamp),
-            inodeNumber: row.inode_number
+            fileName: row.file_name,
+            timestamp: new Date(row.timestamp * 1000),
+            inode: row.inode
           }));
           resolve(events);
         }
@@ -70,55 +245,37 @@ export class EventOperations {
     });
   }
 
-  async getEventTypeStatistics(): Promise<any[]> {
+  async getEventById(eventId: number): Promise<FileEvent | null> {
     return new Promise((resolve, reject) => {
       const sql = `
         SELECT 
-          event_type,
-          COUNT(*) as count,
-          COUNT(DISTINCT file_path) as unique_files,
-          AVG(file_size) as avg_file_size,
-          SUM(file_size) as total_size,
-          MIN(timestamp) as first_occurrence,
-          MAX(timestamp) as last_occurrence
-        FROM events
-        GROUP BY event_type
-        ORDER BY count DESC
+          e.id,
+          e.timestamp,
+          e.event_type_id,
+          e.file_path,
+          e.file_name,
+          e.directory,
+          et.code as event_type
+        FROM events e
+        JOIN event_types et ON e.event_type_id = et.id
+        WHERE e.id = ?
       `;
-
-      this.db.all(sql, [], (err, rows: any[]) => {
+      
+      this.db.get(sql, [eventId], (err, row: any) => {
         if (err) {
           reject(err);
+        } else if (row) {
+          const event: FileEvent = {
+            id: row.id,
+            eventType: row.event_type as 'find' | 'create' | 'modify' | 'delete' | 'move' | 'restore',
+            filePath: row.file_path,
+            directory: row.directory,
+            fileName: row.file_name,
+            timestamp: new Date(row.timestamp * 1000)
+          };
+          resolve(event);
         } else {
-          resolve(rows);
-        }
-      });
-    });
-  }
-
-  async getTimeBasedStatistics(intervalMinutes: number = 10): Promise<any[]> {
-    return new Promise((resolve, reject) => {
-      const sql = `
-        SELECT 
-          datetime(
-            (strftime('%s', timestamp) / (? * 60)) * (? * 60), 
-            'unixepoch'
-          ) as time_bucket,
-          event_type,
-          COUNT(*) as count,
-          COUNT(DISTINCT file_path) as unique_files,
-          AVG(file_size) as avg_size
-        FROM events
-        WHERE timestamp > datetime('now', '-1 day')
-        GROUP BY time_bucket, event_type
-        ORDER BY time_bucket DESC, count DESC
-      `;
-
-      this.db.all(sql, [intervalMinutes, intervalMinutes], (err, rows: any[]) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve(rows);
+          resolve(null);
         }
       });
     });

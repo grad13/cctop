@@ -13,6 +13,9 @@ export class TriggerManager {
       const dropTriggersSQL = `
         DROP TRIGGER IF EXISTS trigger_update_aggregates_on_event;
         DROP TRIGGER IF EXISTS trigger_maintain_files_and_aggregates;
+        DROP TRIGGER IF EXISTS trigger_maintain_aggregates;
+        DROP TRIGGER IF EXISTS trigger_maintain_aggregates_on_measurement;
+        DROP TRIGGER IF EXISTS trigger_maintain_aggregates_on_event;
       `;
 
       this.db.exec(dropTriggersSQL, (err) => {
@@ -24,58 +27,173 @@ export class TriggerManager {
           });
         }
 
-        // Create new trigger with proper UPSERT logic
+        // Create new triggers with FUNC-000 compliant logic
         const createTriggerSQL = `
-          CREATE TRIGGER trigger_maintain_files_and_aggregates
-          AFTER INSERT ON events
+          -- Trigger on measurements table for events with measurements
+          CREATE TRIGGER trigger_maintain_aggregates_on_measurement
+          AFTER INSERT ON measurements
           FOR EACH ROW
           BEGIN
-            -- Insert or update files table (preserve file_id)
-            INSERT OR IGNORE INTO files (file_path, inode_number, is_active, updated_at)
-            VALUES (NEW.file_path, NEW.inode_number, 
-                    CASE WHEN NEW.event_type = 'delete' THEN 0 ELSE 1 END, 
-                    datetime('now'));
-                    
-            -- Update existing file record
-            UPDATE files 
-            SET inode_number = NEW.inode_number,
-                is_active = CASE WHEN NEW.event_type = 'delete' THEN 0 ELSE 1 END,
-                updated_at = datetime('now')
-            WHERE file_path = NEW.file_path;
-
-            -- UPSERT aggregates: Delete existing then insert with updated values
-            DELETE FROM aggregates WHERE file_id = (SELECT id FROM files WHERE file_path = NEW.file_path);
+            -- Delete existing aggregate for this file
+            DELETE FROM aggregates WHERE file_id = (SELECT file_id FROM events WHERE id = NEW.event_id);
             
+            -- Insert new aggregate with complete recalculation
             INSERT INTO aggregates (
               file_id,
-              total_events, total_finds, total_creates, total_modifies, 
+              period_start,
+              total_size, total_lines, total_blocks,
+              total_events, total_creates, total_modifies, 
               total_deletes, total_moves, total_restores,
-              first_size, max_size, last_size,
               first_event_timestamp, last_event_timestamp,
-              last_updated
+              first_size, max_size, last_size,
+              first_lines, max_lines, last_lines,
+              first_blocks, max_blocks, last_blocks
             ) 
             SELECT 
-              f.id as file_id,
-              COUNT(*) as total_events,
-              SUM(CASE WHEN fe.event_type = 'find' THEN 1 ELSE 0 END) as total_finds,
-              SUM(CASE WHEN fe.event_type = 'create' THEN 1 ELSE 0 END) as total_creates,
-              SUM(CASE WHEN fe.event_type = 'modify' THEN 1 ELSE 0 END) as total_modifies,
-              SUM(CASE WHEN fe.event_type = 'delete' THEN 1 ELSE 0 END) as total_deletes,
-              SUM(CASE WHEN fe.event_type = 'move' THEN 1 ELSE 0 END) as total_moves,
-              SUM(CASE WHEN fe.event_type = 'restore' THEN 1 ELSE 0 END) as total_restores,
+              e.file_id,
+              strftime('%s', date('now', 'start of day')) as period_start,
               
-              MIN(fe.file_size) as first_size,
-              MAX(fe.file_size) as max_size,
-              (SELECT file_size FROM events WHERE file_path = NEW.file_path ORDER BY timestamp DESC LIMIT 1) as last_size,
+              -- Cumulative totals
+              COALESCE(SUM(m.file_size), 0) as total_size,
+              COALESCE(SUM(m.line_count), 0) as total_lines,
+              COALESCE(SUM(m.block_count), 0) as total_blocks,
               
-              MIN(strftime('%s', fe.timestamp)) as first_event_timestamp,
-              MAX(strftime('%s', fe.timestamp)) as last_event_timestamp,
-              strftime('%s', 'now') as last_updated
+              -- Event counts
+              COUNT(DISTINCT e.id) as total_events,
+              SUM(CASE WHEN et.code = 'create' THEN 1 ELSE 0 END) as total_creates,
+              SUM(CASE WHEN et.code = 'modify' THEN 1 ELSE 0 END) as total_modifies,
+              SUM(CASE WHEN et.code = 'delete' THEN 1 ELSE 0 END) as total_deletes,
+              SUM(CASE WHEN et.code = 'move' THEN 1 ELSE 0 END) as total_moves,
+              SUM(CASE WHEN et.code = 'restore' THEN 1 ELSE 0 END) as total_restores,
               
-            FROM files f
-            JOIN events fe ON fe.file_path = f.file_path
-            WHERE f.file_path = NEW.file_path
-            GROUP BY f.id;
+              -- Timestamps
+              MIN(e.timestamp) as first_event_timestamp,
+              MAX(e.timestamp) as last_event_timestamp,
+              
+              -- First values - from earliest event with measurement
+              (SELECT m2.file_size FROM measurements m2 
+               JOIN events e2 ON m2.event_id = e2.id 
+               WHERE e2.file_id = e.file_id 
+               ORDER BY e2.timestamp ASC LIMIT 1) as first_size,
+              
+              -- Max values - maximum across all measurements
+              MAX(m.file_size) as max_size,
+              
+              -- Last values - from latest event with measurement
+              (SELECT m2.file_size FROM measurements m2 
+               JOIN events e2 ON m2.event_id = e2.id 
+               WHERE e2.file_id = e.file_id 
+               ORDER BY e2.timestamp DESC LIMIT 1) as last_size,
+              
+              -- Same pattern for lines
+              (SELECT m2.line_count FROM measurements m2 
+               JOIN events e2 ON m2.event_id = e2.id 
+               WHERE e2.file_id = e.file_id 
+               ORDER BY e2.timestamp ASC LIMIT 1) as first_lines,
+              MAX(m.line_count) as max_lines,
+              (SELECT m2.line_count FROM measurements m2 
+               JOIN events e2 ON m2.event_id = e2.id 
+               WHERE e2.file_id = e.file_id 
+               ORDER BY e2.timestamp DESC LIMIT 1) as last_lines,
+              
+              -- Same pattern for blocks
+              (SELECT m2.block_count FROM measurements m2 
+               JOIN events e2 ON m2.event_id = e2.id 
+               WHERE e2.file_id = e.file_id 
+               ORDER BY e2.timestamp ASC LIMIT 1) as first_blocks,
+              MAX(m.block_count) as max_blocks,
+              (SELECT m2.block_count FROM measurements m2 
+               JOIN events e2 ON m2.event_id = e2.id 
+               WHERE e2.file_id = e.file_id 
+               ORDER BY e2.timestamp DESC LIMIT 1) as last_blocks
+              
+            FROM events e
+            JOIN event_types et ON e.event_type_id = et.id
+            LEFT JOIN measurements m ON e.id = m.event_id
+            WHERE e.file_id = (SELECT file_id FROM events WHERE id = NEW.event_id)
+            GROUP BY e.file_id;
+          END;
+          
+          -- Trigger on events table for delete/move events (no measurements)
+          CREATE TRIGGER trigger_maintain_aggregates_on_event
+          AFTER INSERT ON events
+          FOR EACH ROW
+          WHEN NEW.event_type_id IN (4, 5) -- delete=4, move=5
+          BEGIN
+            -- Delete existing aggregate for this file
+            DELETE FROM aggregates WHERE file_id = NEW.file_id;
+            
+            -- Insert new aggregate with complete recalculation
+            INSERT INTO aggregates (
+              file_id,
+              period_start,
+              total_size, total_lines, total_blocks,
+              total_events, total_creates, total_modifies, 
+              total_deletes, total_moves, total_restores,
+              first_event_timestamp, last_event_timestamp,
+              first_size, max_size, last_size,
+              first_lines, max_lines, last_lines,
+              first_blocks, max_blocks, last_blocks
+            ) 
+            SELECT 
+              e.file_id,
+              strftime('%s', date('now', 'start of day')) as period_start,
+              
+              -- Cumulative totals
+              COALESCE(SUM(m.file_size), 0) as total_size,
+              COALESCE(SUM(m.line_count), 0) as total_lines,
+              COALESCE(SUM(m.block_count), 0) as total_blocks,
+              
+              -- Event counts
+              COUNT(DISTINCT e.id) as total_events,
+              SUM(CASE WHEN et.code = 'create' THEN 1 ELSE 0 END) as total_creates,
+              SUM(CASE WHEN et.code = 'modify' THEN 1 ELSE 0 END) as total_modifies,
+              SUM(CASE WHEN et.code = 'delete' THEN 1 ELSE 0 END) as total_deletes,
+              SUM(CASE WHEN et.code = 'move' THEN 1 ELSE 0 END) as total_moves,
+              SUM(CASE WHEN et.code = 'restore' THEN 1 ELSE 0 END) as total_restores,
+              
+              -- Timestamps
+              MIN(e.timestamp) as first_event_timestamp,
+              MAX(e.timestamp) as last_event_timestamp,
+              
+              -- Size values - COALESCE to handle no measurements case
+              COALESCE((SELECT m2.file_size FROM measurements m2 
+               JOIN events e2 ON m2.event_id = e2.id 
+               WHERE e2.file_id = e.file_id 
+               ORDER BY e2.timestamp ASC LIMIT 1), 0) as first_size,
+              COALESCE(MAX(m.file_size), 0) as max_size,
+              COALESCE((SELECT m2.file_size FROM measurements m2 
+               JOIN events e2 ON m2.event_id = e2.id 
+               WHERE e2.file_id = e.file_id 
+               ORDER BY e2.timestamp DESC LIMIT 1), 0) as last_size,
+              
+              -- Line values
+              COALESCE((SELECT m2.line_count FROM measurements m2 
+               JOIN events e2 ON m2.event_id = e2.id 
+               WHERE e2.file_id = e.file_id 
+               ORDER BY e2.timestamp ASC LIMIT 1), 0) as first_lines,
+              COALESCE(MAX(m.line_count), 0) as max_lines,
+              COALESCE((SELECT m2.line_count FROM measurements m2 
+               JOIN events e2 ON m2.event_id = e2.id 
+               WHERE e2.file_id = e.file_id 
+               ORDER BY e2.timestamp DESC LIMIT 1), 0) as last_lines,
+              
+              -- Block values
+              COALESCE((SELECT m2.block_count FROM measurements m2 
+               JOIN events e2 ON m2.event_id = e2.id 
+               WHERE e2.file_id = e.file_id 
+               ORDER BY e2.timestamp ASC LIMIT 1), 0) as first_blocks,
+              COALESCE(MAX(m.block_count), 0) as max_blocks,
+              COALESCE((SELECT m2.block_count FROM measurements m2 
+               JOIN events e2 ON m2.event_id = e2.id 
+               WHERE e2.file_id = e.file_id 
+               ORDER BY e2.timestamp DESC LIMIT 1), 0) as last_blocks
+              
+            FROM events e
+            JOIN event_types et ON e.event_type_id = et.id
+            LEFT JOIN measurements m ON e.id = m.event_id
+            WHERE e.file_id = NEW.file_id
+            GROUP BY e.file_id;
           END;
         `;
 

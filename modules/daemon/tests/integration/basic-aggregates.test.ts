@@ -70,16 +70,42 @@ describe('Basic Aggregates Functionality', () => {
 
     // Perform modifications
     for (let i = 1; i <= 3; i++) {
-      await testEnv.createTestFile(testFile, `Modified content ${i}`);
+      await testEnv.modifyTestFile(testFile, `Modified content ${i}`);
       await testEnv.wait(300);
     }
 
     await testEnv.wait(1000);
 
+    // Debug: Check actual events
+    const events = await dbQueries.queryEvents(`
+      SELECT e.*, et.code as event_code 
+      FROM events e 
+      JOIN event_types et ON e.event_type_id = et.id 
+      WHERE e.file_path LIKE ?
+      ORDER BY e.timestamp
+    `, `%${testFile}%`);
+    
+    console.log('=== DEBUG: Events recorded ===');
+    events.forEach((event: any, index: number) => {
+      console.log(`Event ${index + 1}:`, {
+        event_code: event.event_code,
+        file_path: event.file_path.split('/').pop(),
+        timestamp: event.timestamp
+      });
+    });
+
     const aggregates = await dbQueries.queryAggregatesTable();
     expect(aggregates.length).toBe(1);
 
     const aggregate = aggregates[0];
+    console.log('=== DEBUG: Aggregate data ===');
+    console.log({
+      total_events: aggregate.total_events,
+      total_creates: aggregate.total_creates,
+      total_modifies: aggregate.total_modifies,
+      total_restores: aggregate.total_restores
+    });
+    
     expect(aggregate.total_events).toBe(4); // 1 create + 3 modify
     expect(aggregate.total_creates).toBe(1);
     expect(aggregate.total_modifies).toBe(3);

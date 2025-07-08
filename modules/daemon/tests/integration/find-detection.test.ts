@@ -59,10 +59,26 @@ describe('Find Detection (FUNC-002)', () => {
     
     // Wait for initial scan
     await new Promise(resolve => setTimeout(resolve, 2000));
+    
+    // Check daemon log
+    const logPath = path.join(testDir, '.cctop/logs/daemon.log');
+    try {
+      const logContent = await fs.readFile(logPath, 'utf8');
+      console.log('Daemon log (find events):', logContent.split('\n').filter(line => line.includes('find')).join('\n'));
+    } catch (e) {
+      console.log('Could not read daemon log:', e);
+    }
 
     // Verify find events
     const events = await dbQueries.getEventsFromDb();
+    console.log('All events:', events.map(e => ({ 
+      id: e.id,
+      event_type: e.event_type,
+      file_name: e.file_name,
+      filename: e.filename
+    })));
     const findEvents = await dbQueries.getEventsByType('find');
+    console.log('Find events:', findEvents.length);
     
     // Should have find events for all pre-existing files
     expect(findEvents.length).toBe(testFiles.length);

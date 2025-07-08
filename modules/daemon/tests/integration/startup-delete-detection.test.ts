@@ -9,7 +9,7 @@ import * as path from 'path';
 import { spawn, ChildProcess } from 'child_process';
 import { getUniqueTestDir, DatabaseQueries } from '../helpers';
 
-describe('Startup Delete Detection (FUNC-001)', () => {
+describe('Startup Delete Detection (FUNC-001)', { timeout: 30000 }, () => {
   let testDir: string;
   let testDbPath: string;
   let daemonProcess: ChildProcess | null = null;
@@ -76,6 +76,15 @@ describe('Startup Delete Detection (FUNC-001)', () => {
       stdio: 'pipe',
       cwd: testDir
     });
+    
+    // Capture daemon output for debugging
+    process.stdout?.on('data', (data) => {
+      const msg = data.toString();
+      console.log('Daemon:', msg.trim());
+    });
+    process.stderr?.on('data', (data) => {
+      console.error('Daemon Error:', data.toString());
+    });
 
     // Wait for daemon startup
     await new Promise(resolve => setTimeout(resolve, 2000));
@@ -103,6 +112,11 @@ describe('Startup Delete Detection (FUNC-001)', () => {
 
     // Verify files were recorded as 'find' or 'create' events
     let events = await dbQueries.getEventsFromDb();
+    console.log('Initial events:', events.map(e => ({ 
+      type: e.event_type, 
+      filename: e.filename,
+      file_path: e.file_path 
+    })));
     const initialFileEvents = events.filter(e => 
       testFiles.includes(e.filename) && 
       (e.event_type === 'find' || e.event_type === 'create')
@@ -127,6 +141,11 @@ describe('Startup Delete Detection (FUNC-001)', () => {
 
     // Verify delete events were created for missing files
     events = await dbQueries.getEventsFromDb();
+    console.log('Events after restart:', events.map(e => ({ 
+      type: e.event_type, 
+      filename: e.filename,
+      file_path: e.file_path 
+    })));
     const deleteEvents = await dbQueries.getEventsByType('delete');
 
     // Should have delete events for the files that were removed

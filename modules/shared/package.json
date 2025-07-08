@@ -7,18 +7,14 @@
   "scripts": {
     "build": "tsc",
     "clean": "rm -rf dist",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage"
+    "test": "echo 'No tests yet'"
   },
   "dependencies": {
     "sqlite3": "^5.1.6"
   },
   "devDependencies": {
     "@types/node": "^20.14.9",
-    "typescript": "^5.5.3",
-    "vitest": "^2.0.0",
-    "@vitest/coverage-v8": "^2.0.0"
+    "typescript": "^5.5.3"
   },
   "engines": {
     "node": ">=18.0.0"

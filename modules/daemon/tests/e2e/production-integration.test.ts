@@ -10,7 +10,7 @@ import sqlite3 from 'sqlite3';
 import { DaemonTestManager, getUniqueTestDir } from '../helpers';
 
 describe('Production Integration (TDD)', () => {
-  const productionDir = '/Users/takuo-h/Workspace/Code/06-cctop/code/worktrees/07-01-daemon-production-ready';
+  const productionDir = path.resolve(__dirname, '../../../..');
   let testDir: string;
   let daemonProcess: ChildProcess | null = null;
   
@@ -40,12 +40,35 @@ describe('Production Integration (TDD)', () => {
   async function getEventsFromProductionDb(): Promise<any[]> {
     return new Promise((resolve, reject) => {
       const dbPath = path.join(testDir, '.cctop/data/activity.db');
-      const db = new sqlite3.Database(dbPath);
-      db.all('SELECT * FROM events ORDER BY id DESC LIMIT 10', (err, rows: any[]) => {
-        if (err) reject(err);
-        else resolve(rows);
-        db.close();
-      });
+      try {
+        const db = new sqlite3.Database(dbPath);
+        // Use FUNC-000 compliant query with JOINs
+        const query = `
+          SELECT 
+            e.id,
+            e.timestamp,
+            et.code as event_type,
+            e.file_name as filename,
+            e.file_path,
+            f.inode as file_inode
+          FROM events e
+          JOIN event_types et ON e.event_type_id = et.id
+          JOIN files f ON e.file_id = f.id
+          ORDER BY e.id DESC LIMIT 10
+        `;
+        db.all(query, (err, rows: any[]) => {
+          if (err) {
+            console.log('Database query error:', err);
+            reject(err);
+          } else {
+            resolve(rows || []);
+          }
+          db.close();
+        });
+      } catch (e) {
+        console.log('Database access error:', e);
+        resolve([]);
+      }
     });
   }
   

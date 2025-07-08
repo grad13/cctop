@@ -125,6 +125,13 @@ export class TestEnvironment {
     await fs.writeFile(filePath, content);
   }
 
+  async modifyTestFile(name: string, content: string): Promise<void> {
+    const filePath = path.join(this.testDir, name);
+    
+    // Use appendFile to ensure a 'change' event instead of 'add'
+    await fs.writeFile(filePath, content, { flag: 'w' });
+  }
+
   async wait(ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
