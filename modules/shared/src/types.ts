@@ -15,7 +15,7 @@ export interface FileEvent {
 }
 
 export interface EventMeasurement {
-  eventId: number;
+  eventId?: number;  // Optional - set internally by insertEvent
   inode: number;
   fileSize: number;
   lineCount?: number;

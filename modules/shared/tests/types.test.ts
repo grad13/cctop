@@ -12,7 +12,7 @@ describe('Types module', () => {
         eventType: 'create',
         filePath: '/test/path/file.txt',
         directory: '/test/path',
-        filename: 'file.txt',
+        fileName: 'file.txt',
         fileSize: 1024,
         timestamp: new Date(),
         inodeNumber: 123456
@@ -35,7 +35,7 @@ describe('Types module', () => {
           eventType: type,
           filePath: '/test.txt',
           directory: '/',
-          filename: 'test.txt',
+          fileName: 'test.txt',
           fileSize: 0,
           timestamp: new Date(),
           inodeNumber: 0
@@ -50,7 +50,7 @@ describe('Types module', () => {
       const validEventRow: EventRow = {
         id: 1,
         timestamp: '2025-07-08T08:00:00.000Z',
-        filename: 'test.txt',
+        fileName: 'test.txt',
         directory: '/test',
         event_type: 'create',
         size: 1024,
@@ -68,7 +68,7 @@ describe('Types module', () => {
       const stringTimestamp: EventRow = {
         id: 1,
         timestamp: '2025-07-08T08:00:00.000Z',
-        filename: 'test.txt',
+        fileName: 'test.txt',
         directory: '/test',
         event_type: 'create',
         size: 0,
@@ -79,7 +79,7 @@ describe('Types module', () => {
       const numberTimestamp: EventRow = {
         id: 2,
         timestamp: 1720425600000,
-        filename: 'test.txt',
+        fileName: 'test.txt',
         directory: '/test',
         event_type: 'modify',
         size: 0,

@@ -122,13 +122,20 @@ describe('Shared Module Integration Tests', () => {
         eventType: 'create',
         filePath: '/test/file.txt',
         directory: '/test',
-        filename: 'file.txt',
+        fileName: 'file.txt',
         fileSize: 1024,
         timestamp: new Date(),
-        inodeNumber: 12345
+        inode: 12345
       };
       
-      await database.insertEvent(testEvent);
+      // Insert with measurement data (FUNC-000 compliant)
+      const measurement = {
+        inode: 12345,
+        fileSize: 1024,
+        lineCount: 50,
+        blockCount: 5
+      };
+      await database.insertEvent(testEvent, measurement);
       
       // Read events via DatabaseReader (CLI interface)
       const events = await databaseReader.getLatestEvents(1);
@@ -151,13 +158,20 @@ describe('Shared Module Integration Tests', () => {
           eventType: eventTypes[i],
           filePath: `/test/file${i}.txt`,
           directory: '/test',
-          filename: `file${i}.txt`,
+          fileName: `file${i}.txt`,
           fileSize: 1024 * (i + 1),
           timestamp: new Date(Date.now() + i * 1000),
-          inodeNumber: 12345 + i
+          inode: 12345 + i
         };
         
-        await database.insertEvent(event);
+        // Insert with measurement data (FUNC-000 compliant)
+        const measurement = {
+          inode: 12345 + i,
+          fileSize: 1024 * (i + 1),
+          lineCount: 50,
+          blockCount: 5
+        };
+        await database.insertEvent(event, measurement);
       }
       
       // Read all events
@@ -180,9 +194,9 @@ describe('Shared Module Integration Tests', () => {
       const baseEvent = {
         filePath,
         directory: '/test',
-        filename: 'lifecycle.txt',
+        fileName: 'lifecycle.txt',
         fileSize: 1024,
-        inodeNumber: 54321
+        inode: 54321
       };
       
       // 1. Find file
@@ -190,6 +204,11 @@ describe('Shared Module Integration Tests', () => {
         ...baseEvent,
         eventType: 'find',
         timestamp: new Date(Date.now())
+      }, {
+        inode: 54321,
+        fileSize: 1024,
+        lineCount: 50,
+        blockCount: 5
       });
       
       // 2. Modify file
@@ -198,6 +217,11 @@ describe('Shared Module Integration Tests', () => {
         eventType: 'modify',
         fileSize: 2048,
         timestamp: new Date(Date.now() + 1000)
+      }, {
+        inode: 54321,
+        fileSize: 2048,
+        lineCount: 75,
+        blockCount: 8
       });
       
       // 3. Delete file
@@ -205,6 +229,11 @@ describe('Shared Module Integration Tests', () => {
         ...baseEvent,
         eventType: 'delete',
         timestamp: new Date(Date.now() + 2000)
+      }, {
+        inode: 54321,
+        fileSize: 0,
+        lineCount: 0,
+        blockCount: 0
       });
       
       // 4. Restore file
@@ -212,6 +241,11 @@ describe('Shared Module Integration Tests', () => {
         ...baseEvent,
         eventType: 'restore',
         timestamp: new Date(Date.now() + 3000)
+      }, {
+        inode: 54321,
+        fileSize: 2048,
+        lineCount: 75,
+        blockCount: 8
       });
       
       // Read complete history

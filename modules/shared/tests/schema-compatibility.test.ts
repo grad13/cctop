@@ -45,12 +45,18 @@ describe('Schema Compatibility Tests', () => {
           // Document current schema
           console.log('Actual events table columns:', columnNames);
           
-          // Check for the inconsistency we found
-          expect(columnNames).toContain('file_size'); // Database.ts uses this
-          expect(columnNames).toContain('inode_number'); // Database.ts uses this
+          // Verify FUNC-000 compliant events table structure
+          expect(columnNames).toContain('id');
+          expect(columnNames).toContain('timestamp');
+          expect(columnNames).toContain('event_type_id');
+          expect(columnNames).toContain('file_id');
+          expect(columnNames).toContain('file_path');
+          expect(columnNames).toContain('file_name');
+          expect(columnNames).toContain('directory');
           
-          // DatabaseReader.ts expects 'size' and 'inode' but actual schema has 'file_size' and 'inode_number'
-          // This is the root cause of the integration issue
+          // FUNC-000: file_size and inode are in measurements table, not events table
+          expect(columnNames).not.toContain('file_size');
+          expect(columnNames).not.toContain('inode');
           
           db.close();
           resolve();
@@ -61,16 +67,23 @@ describe('Schema Compatibility Tests', () => {
     it('should demonstrate the column mapping problem', async () => {
       // Insert a test event using Database (which uses correct column names)
       const testEvent = {
-        eventType: 'test' as any,
+        eventType: 'create',
         filePath: '/test.txt',
         directory: '/test',
-        filename: 'test.txt',
+        fileName: 'test.txt',
         fileSize: 1024,
         timestamp: new Date(),
-        inodeNumber: 12345
+        inode: 12345
       };
 
-      await database.insertEvent(testEvent);
+      // Insert with measurement data (FUNC-000 compliant)
+      const measurement = {
+        inode: 12345,
+        fileSize: 1024,
+        lineCount: 50,
+        blockCount: 5
+      };
+      await database.insertEvent(testEvent, measurement);
 
       // Try to read using raw SQL with DatabaseReader expected column names
       return new Promise<void>((resolve, reject) => {
@@ -113,13 +126,20 @@ describe('Schema Compatibility Tests', () => {
         eventType: 'create' as any,
         filePath: '/test.txt',
         directory: '/test',
-        filename: 'test.txt',
+        fileName: 'test.txt',
         fileSize: 2048,
         timestamp: new Date(),
-        inodeNumber: 54321
+        inode: 54321
       };
 
-      await database.insertEvent(testEvent);
+      // Insert with measurement data (FUNC-000 compliant)
+      const measurement = {
+        inode: 54321,
+        fileSize: 2048,
+        lineCount: 75,
+        blockCount: 8
+      };
+      await database.insertEvent(testEvent, measurement);
 
       // Query using actual column names (what Database.ts creates)
       return new Promise<void>((resolve, reject) => {

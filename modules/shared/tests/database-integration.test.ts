@@ -44,14 +44,20 @@ describe('Database Integration Tests', () => {
         eventType: 'create',
         filePath: '/test/file.txt',
         directory: '/test',
-        filename: 'file.txt',
+        fileName: 'file.txt',
         fileSize: 1024,
         timestamp: new Date(),
-        inodeNumber: 123456
+        inode: 123456
       };
 
-      // Insert via Database
-      await database.insertEvent(testEvent);
+      // Insert via Database with measurement data (FUNC-000 compliant)
+      const measurement = {
+        inode: 123456,
+        fileSize: 1024,
+        lineCount: 50,
+        blockCount: 5
+      };
+      await database.insertEvent(testEvent, measurement);
 
       // Read via DatabaseReader (expects size, inode)
       await reader.connect();
@@ -78,25 +84,31 @@ describe('Database Integration Tests', () => {
           eventType: 'create',
           filePath: '/test/file1.txt',
           directory: '/test',
-          filename: 'file1.txt',
+          fileName: 'file1.txt',
           fileSize: 100,
           timestamp: new Date('2025-07-08T08:00:00.000Z'),
-          inodeNumber: 111
+          inode: 111
         },
         {
           eventType: 'modify',
           filePath: '/test/file1.txt',
           directory: '/test',
-          filename: 'file1.txt',
+          fileName: 'file1.txt',
           fileSize: 200,
           timestamp: new Date('2025-07-08T08:01:00.000Z'),
-          inodeNumber: 111
+          inode: 111
         }
       ];
 
-      // Insert multiple events
+      // Insert multiple events with measurement data (FUNC-000 compliant)
       for (const event of events) {
-        await database.insertEvent(event);
+        const measurement = {
+          inode: event.inode || 111,
+          fileSize: event.fileSize || 1024,
+          lineCount: 50,
+          blockCount: 5
+        };
+        await database.insertEvent(event, measurement);
       }
 
       await reader.connect();
@@ -124,13 +136,20 @@ describe('Database Integration Tests', () => {
         eventType: 'delete',
         filePath: '/test/deleted.txt',
         directory: '/test',
-        filename: 'deleted.txt',
+        fileName: 'deleted.txt',
         fileSize: 0,
         timestamp: new Date(),
-        inodeNumber: 999
+        inode: 999
       };
 
-      await database.insertEvent(fileEvent);
+      // For delete events, provide minimal measurement with inode (FUNC-000 compliant)
+      const measurement = {
+        inode: 999,
+        fileSize: 0,
+        lineCount: 0,
+        blockCount: 0
+      };
+      await database.insertEvent(fileEvent, measurement);
       await reader.connect();
       
       const events = await reader.getLatestEvents(1);
@@ -153,7 +172,7 @@ describe('Database Integration Tests', () => {
           eventType: 'create',
           filePath: '/test/file1.txt',
           directory: '/test',
-          filename: 'file1.txt',
+          fileName: 'file1.txt',
           fileSize: 500,
           timestamp: new Date(),
           inodeNumber: 1001
@@ -162,25 +181,31 @@ describe('Database Integration Tests', () => {
           eventType: 'create',
           filePath: '/test/file2.txt',
           directory: '/test',
-          filename: 'file2.txt',
+          fileName: 'file2.txt',
           fileSize: 1000,
           timestamp: new Date(),
-          inodeNumber: 1002
+          inode: 1002
         },
         {
           eventType: 'modify',
           filePath: '/test/file1.txt',
           directory: '/test',
-          filename: 'file1.txt',
+          fileName: 'file1.txt',
           fileSize: 750,
           timestamp: new Date(),
-          inodeNumber: 1001
+          inode: 1001
         }
       ];
 
-      // Insert test events
+      // Insert test events with measurement data (FUNC-000 compliant)
       for (const event of testEvents) {
-        await database.insertEvent(event);
+        const measurement = {
+          inode: event.inode || 1000,
+          fileSize: event.fileSize || 1024,
+          lineCount: 50,
+          blockCount: 5
+        };
+        await database.insertEvent(event, measurement);
       }
 
       // Get statistics from Database
