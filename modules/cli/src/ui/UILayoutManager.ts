@@ -175,12 +175,12 @@ export class UILayoutManager {
         const maxSearchLength = 40;
         const paddingLength = Math.max(0, maxSearchLength - searchText.length);
         const padding = '_'.repeat(paddingLength);
-        return `Search: [${searchText}${padding}] [Enter] Search DB [ESC] Cancel`;
+        return `{bold}{yellow-fg}Search: [${searchText}${padding}] [Enter] Search DB [ESC] Cancel{/yellow-fg}{/bold}`;
       
       case 'normal':
       case 'paused':
       default:
-        return '{bold}{yellow-fg}[f] Filter Events  [/] Quick search  [ESC] Clear{/yellow-fg}{/bold}';
+        return '{bold}{yellow-fg}[f] Filter Events  [/] Quick search  [ESC] Clear Filtering{/yellow-fg}{/bold}';
     }
   }
 
@@ -206,7 +206,7 @@ export class UILayoutManager {
       }
     });
     
-    return filterItems.join(' ') + ' [ESC] Back';
+    return '{bold}{yellow-fg}' + filterItems.join(' ') + ' [ESC] Back{/yellow-fg}{/bold}';
   }
 
   updateDynamicControl(): void {

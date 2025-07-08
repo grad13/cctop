@@ -158,6 +158,8 @@ async function insertTestEvents(daemonDb: Database, events: any[]): Promise<void
       // Convert to FileEvent format
       eventType: event.event_type,
       filePath: path.join('/test', event.file_name),
+      fileName: event.file_name,              // ← FUNC-000準拠：追加必要
+      directory: '/test',                     // ← FUNC-000準拠：追加必要
       timestamp: new Date(event.timestamp),
     }, {
       inode: event.file_id || 12345,
