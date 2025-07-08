@@ -43,26 +43,23 @@ describe('Restore Detection (FUNC-001)', () => {
 
   test('should detect restore event when deleted file reappears', async () => {
     daemonProcess = await startDaemon();
-    console.log('=== DEBUG: Daemon started, PID:', daemonProcess?.pid);
     await dbQueries.connect();
-    console.log('=== DEBUG: Database connected');
+    
+    // Wait for daemon to fully initialize
+    await new Promise(resolve => setTimeout(resolve, 1000));
 
     const testFile = path.join(testDir, 'restore-test.txt');
     
     // Create file
     await fs.writeFile(testFile, 'Original content');
-    await new Promise(resolve => setTimeout(resolve, 2000)); // Increase wait time
+    await new Promise(resolve => setTimeout(resolve, 1000));
 
     // Verify create event
     let events = await dbQueries.getEventsFromDb();
-    console.log('=== DEBUG: All events after file creation ===');
-    events.forEach(e => console.log(`${e.event_type}: ${e.filename} (${new Date(e.timestamp).toISOString()})`));
-    
     const createEvents = events.filter(e => 
       e.filename === 'restore-test.txt' && 
       (e.event_type === 'create' || e.event_type === 'find')
     );
-    console.log('=== DEBUG: Create events found ===', createEvents.length);
     expect(createEvents.length).toBeGreaterThan(0);
 
     // Delete file
@@ -92,6 +89,9 @@ describe('Restore Detection (FUNC-001)', () => {
   test('should not create restore event for new files', async () => {
     daemonProcess = await startDaemon();
     await dbQueries.connect();
+    
+    // Wait for daemon to fully initialize
+    await new Promise(resolve => setTimeout(resolve, 2000));
 
     const testFile = path.join(testDir, 'new-file.txt');
     
@@ -111,6 +111,13 @@ describe('Restore Detection (FUNC-001)', () => {
       e.filename === 'new-file.txt' && 
       (e.event_type === 'create' || e.event_type === 'find')
     );
+    
+    // Debug output
+    if (createEvents.length === 0) {
+      console.log('All events:', JSON.stringify(events, null, 2));
+      console.log('Events for new-file.txt:', events.filter(e => e.filename === 'new-file.txt'));
+    }
+    
     expect(createEvents.length).toBeGreaterThan(0);
   });
 
@@ -150,6 +157,9 @@ describe('Restore Detection (FUNC-001)', () => {
   test('should restore with different content and size', async () => {
     daemonProcess = await startDaemon();
     await dbQueries.connect();
+    
+    // Wait for daemon to fully initialize
+    await new Promise(resolve => setTimeout(resolve, 1000));
 
     const testFile = path.join(testDir, 'size-test.txt');
     const originalContent = 'Short';
@@ -188,6 +198,9 @@ describe('Restore Detection (FUNC-001)', () => {
   test('should handle restore in subdirectories', async () => {
     daemonProcess = await startDaemon();
     await dbQueries.connect();
+    
+    // Wait for daemon to fully initialize
+    await new Promise(resolve => setTimeout(resolve, 1000));
 
     const subdir = path.join(testDir, 'subdir');
     await fs.mkdir(subdir, { recursive: true });
@@ -216,6 +229,9 @@ describe('Restore Detection (FUNC-001)', () => {
   test('should restore with new inode number', async () => {
     daemonProcess = await startDaemon();
     await dbQueries.connect();
+    
+    // Wait for daemon to fully initialize
+    await new Promise(resolve => setTimeout(resolve, 1000));
 
     const testFile = path.join(testDir, 'inode-test.txt');
     
@@ -228,7 +244,12 @@ describe('Restore Detection (FUNC-001)', () => {
       e.filename === 'inode-test.txt' && 
       (e.event_type === 'create' || e.event_type === 'find')
     );
-    const originalInode = createEvent!.inode_number;
+    
+    if (!createEvent) {
+      throw new Error(`Create event not found for inode-test.txt. Available events: ${originalEvents.map(e => `${e.filename}:${e.event_type}`).join(', ')}`);
+    }
+    
+    const originalInode = createEvent.inode_number;
 
     // Delete and restore
     await fs.unlink(testFile);

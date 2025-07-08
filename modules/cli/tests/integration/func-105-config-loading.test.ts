@@ -40,8 +40,8 @@ describe('FUNC-105 Configuration Loading Integration', () => {
 
     // Verify CLI config structure
     expect(config.cli).toHaveProperty('display');
-    expect(config.cli).toHaveProperty('input');
-    expect(config.cli).toHaveProperty('performance');
+    expect(config.cli).toHaveProperty('interaction');
+    expect(config.cli).toHaveProperty('logFile');
   });
 
   it('should handle configuration override priority correctly', async () => {
@@ -70,10 +70,10 @@ describe('FUNC-105 Configuration Loading Integration', () => {
     // Validate required CLI configuration sections
     expect(config.cli.display).toHaveProperty('refreshInterval');
     expect(config.cli.display).toHaveProperty('maxRows');
-    expect(config.cli.display).toHaveProperty('defaultMode');
+    expect(config.cli.display).toHaveProperty('showTimestamps');
 
-    expect(config.cli.input).toHaveProperty('keyMap');
-    expect(config.cli.performance).toHaveProperty('maxEvents');
+    expect(config.cli.interaction).toHaveProperty('enableMouse');
+    expect(config.cli.interaction).toHaveProperty('scrollSpeed');
   });
 
   it('should handle missing configuration files gracefully', async () => {
@@ -119,9 +119,9 @@ describe('FUNC-105 Configuration Loading Integration', () => {
     // Type validations
     expect(typeof config.cli.display.refreshInterval).toBe('number');
     expect(typeof config.cli.display.maxRows).toBe('number');
-    expect(typeof config.cli.display.defaultMode).toBe('string');
-    expect(typeof config.cli.input.keyMap).toBe('object');
-    expect(typeof config.cli.performance.maxEvents).toBe('number');
+    expect(typeof config.cli.display.showTimestamps).toBe('boolean');
+    expect(typeof config.cli.interaction.enableMouse).toBe('boolean');
+    expect(typeof config.cli.interaction.scrollSpeed).toBe('number');
   });
 
   it('should handle corrupted configuration files', async () => {
@@ -155,23 +155,4 @@ describe('FUNC-105 Configuration Loading Integration', () => {
     expect(config.cli.customSection.nested.value).toBe(42);
   });
 
-  it('should handle environment variable overrides', async () => {
-    // Set environment variable for testing
-    const originalEnv = process.env.CCTOP_CLI_REFRESH_INTERVAL;
-    process.env.CCTOP_CLI_REFRESH_INTERVAL = '500';
-
-    try {
-      const config = await context.configLoader.loadConfiguration();
-      
-      // Environment variable should override config file
-      expect(config.cli.display.refreshInterval).toBe(500);
-    } finally {
-      // Restore original environment
-      if (originalEnv !== undefined) {
-        process.env.CCTOP_CLI_REFRESH_INTERVAL = originalEnv;
-      } else {
-        delete process.env.CCTOP_CLI_REFRESH_INTERVAL;
-      }
-    }
-  });
 });

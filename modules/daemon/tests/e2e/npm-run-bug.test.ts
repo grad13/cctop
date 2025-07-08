@@ -47,11 +47,14 @@ describe('NPM Run Bug (TDD)', () => {
     const daemonConfig = {
       monitoring: {
         watchPaths: ['.'],
-        excludePatterns: ['**/node_modules/**', '**/.git/**', '**/.*', '**/.cctop/**']
+        excludePatterns: ['**/node_modules/**', '**/.git/**', '**/.cctop/**'], // Remove **/.*
+        debounceMs: 50,
+        maxDepth: 5
       },
       daemon: {
         pidFile: '.cctop/runtime/daemon.pid',
-        logFile: '.cctop/logs/daemon.log'
+        logFile: '.cctop/logs/daemon.log',
+        logLevel: 'debug'
       },
       database: {
         path: '.cctop/data/activity.db'
@@ -82,12 +85,31 @@ describe('NPM Run Bug (TDD)', () => {
     return new Promise((resolve, reject) => {
       try {
         const db = new sqlite3.Database(dbPath);
-        db.all('SELECT * FROM events ORDER BY id DESC LIMIT 20', (err, rows: any[]) => {
-          if (err) reject(err);
-          else resolve(rows || []);
+        // Use FUNC-000 compliant query with JOINs
+        const query = `
+          SELECT 
+            e.id,
+            e.timestamp,
+            et.code as event_type,
+            e.file_name as filename,
+            e.file_path,
+            f.inode as file_inode
+          FROM events e
+          JOIN event_types et ON e.event_type_id = et.id
+          JOIN files f ON e.file_id = f.id
+          ORDER BY e.id DESC LIMIT 20
+        `;
+        db.all(query, (err, rows: any[]) => {
+          if (err) {
+            console.log('Database query error:', err);
+            reject(err);
+          } else {
+            resolve(rows || []);
+          }
           db.close();
         });
       } catch (e) {
+        console.log('Database access error:', e);
         resolve([]); // Database might not exist yet
       }
     });
@@ -99,19 +121,21 @@ describe('NPM Run Bug (TDD)', () => {
     try {
       // Start daemon using node directly in test directory
       const daemonPath = path.resolve(__dirname, '../../dist/index.js');
-      daemonProcess = spawn('node', [daemonPath, '--standalone'], {
+      daemonProcess = spawn('node', [daemonPath], {
         stdio: 'pipe',
         cwd: testDir,
-        detached: false
+        detached: false,
+        env: { ...process.env, NODE_ENV: 'test' }
       });
       
       // Log daemon output for debugging
       let daemonOutput = '';
+      let daemonError = '';
       daemonProcess.stdout?.on('data', (data) => {
         daemonOutput += data.toString();
       });
       daemonProcess.stderr?.on('data', (data) => {
-        daemonOutput += data.toString();
+        daemonError += data.toString();
       });
       
       // Wait for daemon startup
@@ -119,10 +143,18 @@ describe('NPM Run Bug (TDD)', () => {
       
       console.log('=== Daemon Output ===');
       console.log(daemonOutput);
+      if (daemonError) {
+        console.log('=== Daemon Errors ===');
+        console.log(daemonError);
+      }
       
       // Check if daemon is actually running
       const pidFileExists = await fs.access(path.join(testDir, '.cctop/runtime/daemon.pid')).then(() => true).catch(() => false);
       console.log('PID file exists:', pidFileExists);
+      
+      // Verify working directory
+      console.log('Test directory:', testDir);
+      console.log('Daemon CWD should be:', testDir);
       
       // Create test file in test directory
       const testFile = path.join(testDir, 'user-test-file.txt');

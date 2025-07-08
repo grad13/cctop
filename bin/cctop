@@ -49,10 +49,11 @@ Architecture:
  */
 function startDaemon() {
   return new Promise((resolve, reject) => {
-    const daemonPath = path.join(__dirname, 'cctop-daemon');
+    const daemonPath = path.join(__dirname, '../modules/daemon/dist/index.js');
     const daemon = spawn('node', [daemonPath], {
       detached: true,
-      stdio: 'ignore'
+      stdio: 'ignore',
+      cwd: process.cwd()
     });
     
     daemon.unref();
@@ -200,7 +201,6 @@ async function main() {
     switch (command) {
       case 'daemon':
         if (subcommand === 'start') {
-          console.log('🚀 Starting daemon...');
           // Start daemon
           const daemonPath = path.join(__dirname, '../modules/daemon/dist/index.js');
           const daemon = spawn('node', [daemonPath], {
@@ -222,7 +222,6 @@ async function main() {
             checkDaemonStatus();
           }, 1000);
         } else if (subcommand === 'stop') {
-          console.log('🛑 Stopping daemon...');
           await stopDaemon();
         } else if (subcommand === 'status') {
           checkDaemonStatus();
@@ -234,9 +233,13 @@ async function main() {
         
       case 'ui':
       case undefined:
-        console.log('📺 Starting UI...');
-        console.log('💡 Make sure daemon is running with "cctop daemon start"');
-        console.log('');
+        // FUNC-104: Auto daemon + cli + auto cleanup
+        await startDaemon();
+        await startCLI();
+        await stopDaemon();
+        break;
+        
+      case 'view':
         await startCLI();
         break;
         

@@ -1,7 +1,7 @@
 /**
  * @cctop/shared - Common types and utilities
+ * Configuration management and initialization only (per FUNC-000 specification)
  */
 
 export * from './types';
-export * from './database';
-export * from './database-reader';
+export * from './config-manager';

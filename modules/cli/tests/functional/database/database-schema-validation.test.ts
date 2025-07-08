@@ -5,7 +5,7 @@
 
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
 import { DatabaseTestSetup } from './test-helpers/database-test-setup';
-import { DatabaseAdapter } from '../../src/database/database-adapter';
+import { DatabaseAdapter } from '../../../../src/database/database-adapter.ts';
 
 describe('FUNC-000 Schema Validation', () => {
   let testSetup: DatabaseTestSetup;

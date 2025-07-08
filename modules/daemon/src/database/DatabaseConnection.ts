@@ -20,12 +20,18 @@ export class DatabaseConnection {
         console.log(`Created database directory: ${dbDir}`);
       }
       
-      this.db = new sqlite3.Database(this.dbPath, (err) => {
+      this.db = new sqlite3.Database(this.dbPath, sqlite3.OPEN_READWRITE | sqlite3.OPEN_CREATE, (err) => {
         if (err) reject(err);
         else {
-          this.db!.run('PRAGMA journal_mode=WAL', (err) => {
-            if (err) reject(err);
-            else resolve(this.db!);
+          // Enable serialized mode to prevent transaction conflicts
+          this.db!.serialize(() => {
+            this.db!.run('PRAGMA journal_mode=WAL', (err) => {
+              if (err) reject(err);
+            });
+            this.db!.run('PRAGMA foreign_keys=ON', (err) => {
+              if (err) reject(err);
+              else resolve(this.db!);
+            });
           });
         }
       });

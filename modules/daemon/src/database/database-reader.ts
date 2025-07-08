@@ -3,7 +3,7 @@
  * Read-only operations for UI display
  */
 
-import sqlite3 from 'sqlite3';
+import * as sqlite3 from 'sqlite3';
 import { EventRow } from './types';
 
 export class DatabaseReader {
@@ -49,18 +49,20 @@ export class DatabaseReader {
 
       const sql = `
         SELECT 
-          id,
-          timestamp,
-          filename,
-          directory,
-          event_type,
-          size,
-          lines,
-          blocks,
-          inode,
-          elapsed_ms
-        FROM events 
-        ORDER BY timestamp DESC 
+          e.id,
+          e.timestamp,
+          e.file_name as filename,
+          e.directory,
+          et.code as event_type,
+          COALESCE(m.file_size, 0) as size,
+          COALESCE(m.line_count, 0) as lines,
+          COALESCE(m.block_count, 0) as blocks,
+          COALESCE(m.inode, 0) as inode,
+          0 as elapsed_ms
+        FROM events e
+        JOIN event_types et ON e.event_type_id = et.id
+        LEFT JOIN measurements m ON e.id = m.event_id
+        ORDER BY e.timestamp DESC 
         LIMIT ?
       `;
 
@@ -95,19 +97,21 @@ export class DatabaseReader {
 
       const sql = `
         SELECT 
-          id,
-          timestamp,
-          filename,
-          directory,
-          event_type,
-          size,
-          lines,
-          blocks,
-          inode,
-          elapsed_ms
-        FROM events 
-        WHERE event_type = ?
-        ORDER BY timestamp DESC 
+          e.id,
+          e.timestamp,
+          e.file_name as filename,
+          e.directory,
+          et.code as event_type,
+          COALESCE(m.file_size, 0) as size,
+          COALESCE(m.line_count, 0) as lines,
+          COALESCE(m.block_count, 0) as blocks,
+          COALESCE(m.inode, 0) as inode,
+          0 as elapsed_ms
+        FROM events e
+        JOIN event_types et ON e.event_type_id = et.id
+        LEFT JOIN measurements m ON e.id = m.event_id
+        WHERE et.code = ?
+        ORDER BY e.timestamp DESC 
         LIMIT ?
       `;
 
@@ -142,24 +146,25 @@ export class DatabaseReader {
 
       const sql = `
         SELECT 
-          id,
-          timestamp,
-          filename,
-          directory,
-          event_type,
-          size,
-          lines,
-          blocks,
-          inode,
-          elapsed_ms
-        FROM events e1
-        WHERE e1.timestamp = (
-          SELECT MAX(e2.timestamp)
+          e.id,
+          e.timestamp,
+          e.file_name as filename,
+          e.directory,
+          et.code as event_type,
+          COALESCE(m.file_size, 0) as size,
+          COALESCE(m.line_count, 0) as lines,
+          COALESCE(m.block_count, 0) as blocks,
+          COALESCE(m.inode, 0) as inode,
+          0 as elapsed_ms
+        FROM events e
+        JOIN event_types et ON e.event_type_id = et.id
+        LEFT JOIN measurements m ON e.id = m.event_id
+        WHERE e.id IN (
+          SELECT MAX(e2.id)
           FROM events e2
-          WHERE e2.filename = e1.filename
-          AND e2.directory = e1.directory
+          GROUP BY e2.file_id
         )
-        ORDER BY timestamp DESC 
+        ORDER BY e.timestamp DESC 
         LIMIT ?
       `;
 
@@ -194,19 +199,21 @@ export class DatabaseReader {
 
       const sql = `
         SELECT 
-          id,
-          timestamp,
-          filename,
-          directory,
-          event_type,
-          size,
-          lines,
-          blocks,
-          inode,
-          elapsed_ms
-        FROM events 
-        WHERE directory LIKE ?
-        ORDER BY timestamp DESC 
+          e.id,
+          e.timestamp,
+          e.file_name as filename,
+          e.directory,
+          et.code as event_type,
+          COALESCE(m.file_size, 0) as size,
+          COALESCE(m.line_count, 0) as lines,
+          COALESCE(m.block_count, 0) as blocks,
+          COALESCE(m.inode, 0) as inode,
+          0 as elapsed_ms
+        FROM events e
+        JOIN event_types et ON e.event_type_id = et.id
+        LEFT JOIN measurements m ON e.id = m.event_id
+        WHERE e.directory LIKE ?
+        ORDER BY e.timestamp DESC 
         LIMIT ?
       `;
 

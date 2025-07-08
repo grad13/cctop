@@ -10,6 +10,6 @@
 
 // This file serves as the main test suite entry point
 // Individual test modules are split for better maintainability
-import './database-connection.test';
-import './database-schema-validation.test';
-import './database-event-retrieval.test';
+import './database-connection.test.ts';
+import './database-schema-validation.test.ts';
+import './database-event-retrieval.test.ts';

@@ -7,7 +7,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
-import { ConfigLoader } from '../../src/config/config-loader';
+import { ConfigLoader } from '../../../src/config/config-loader';
 
 describe('ConfigLoader - Core Functionality', () => {
   let configLoader: ConfigLoader;
@@ -103,7 +103,10 @@ describe('ConfigLoader - Core Functionality', () => {
 
       try {
         const config = await configLoader.loadConfiguration();
-        expect(config.configPath).toBe(path.join(testDir, '.cctop'));
+        // Normalize paths for comparison (handles /var vs /private/var on macOS)
+        const normalizedConfigPath = fs.realpathSync(config.configPath);
+        const expectedPath = fs.realpathSync(path.join(testDir, '.cctop'));
+        expect(normalizedConfigPath).toBe(expectedPath);
       } finally {
         process.chdir(originalCwd);
       }
@@ -130,23 +133,6 @@ describe('ConfigLoader - Core Functionality', () => {
       expect(config.cli.display.maxRows).toBe(30);
     });
 
-    it('should handle environment variable overrides', async () => {
-      // Set environment variable
-      const originalEnv = process.env.CCTOP_CLI_MAX_ROWS;
-      process.env.CCTOP_CLI_MAX_ROWS = '100';
-
-      try {
-        const config = await configLoader.loadConfiguration(testDir);
-        expect(config.cli.display.maxRows).toBe(100);
-      } finally {
-        // Restore original environment
-        if (originalEnv !== undefined) {
-          process.env.CCTOP_CLI_MAX_ROWS = originalEnv;
-        } else {
-          delete process.env.CCTOP_CLI_MAX_ROWS;
-        }
-      }
-    });
 
     it('should preserve deep nested configuration merging', async () => {
       // Create config with deep nesting

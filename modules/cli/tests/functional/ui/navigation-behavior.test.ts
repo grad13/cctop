@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { UIState } from '../../src/ui/UIState';
-import { EventRow } from '../../src/types/event-row';
+import { UIState } from '../../../src/ui/UIState';
+import { EventRow } from '../../../src/types/event-row';
 
 describe('Navigation Behavior', () => {
   let uiState: UIState;

@@ -119,17 +119,14 @@ export class ConfigLoader {
     const content = fs.readFileSync(configFile, 'utf8');
     const config = JSON.parse(content);
     
-    // Merge with defaults to ensure all required fields
-    return {
-      ...defaultCLIConfig,
-      ...config
-    };
+    // Deep merge with defaults to ensure all required fields (FUNC-101)
+    return this.deepMerge(defaultCLIConfig, config);
   }
   
   /**
    * Ensure required directories exist
    */
-  async ensureDirectories(config: MergedConfig): Promise<void> {
+  async ensureDirectories(configPath: string): Promise<void> {
     const directories = [
       'data',
       'logs', 
@@ -138,9 +135,18 @@ export class ConfigLoader {
     ];
     
     for (const dir of directories) {
-      const fullPath = path.join(config.configPath, dir);
+      const fullPath = path.join(configPath, dir);
       if (!fs.existsSync(fullPath)) {
-        fs.mkdirSync(fullPath, { recursive: true, mode: 0o755 });
+        try {
+          fs.mkdirSync(fullPath, { recursive: true, mode: 0o755 });
+        } catch (error) {
+          // For permission errors, warn but don't fail
+          if (error instanceof Error && 'code' in error && error.code === 'EACCES') {
+            console.warn(`Warning: Cannot create directory ${fullPath}: Permission denied`);
+          } else {
+            throw error;
+          }
+        }
       }
     }
   }
@@ -194,5 +200,28 @@ export class ConfigLoader {
         maxEvents: 10000
       }
     };
+  }
+
+
+  /**
+   * Deep merge two objects, preserving nested structures
+   */
+  private deepMerge<T>(target: T, source: Partial<T>): T {
+    const result = { ...target };
+    
+    for (const key in source) {
+      if (source.hasOwnProperty(key)) {
+        const sourceValue = source[key];
+        if (sourceValue !== null && typeof sourceValue === 'object' && !Array.isArray(sourceValue)) {
+          // Recursively merge objects
+          result[key] = this.deepMerge(result[key] as any, sourceValue as any);
+        } else {
+          // For primitives, arrays, and null values, replace directly
+          result[key] = sourceValue as any;
+        }
+      }
+    }
+    
+    return result;
   }
 }

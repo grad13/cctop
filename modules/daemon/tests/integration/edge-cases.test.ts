@@ -50,7 +50,42 @@ describe('Edge Cases and Error Handling', () => {
 
     const aggregates = await dbQueries.queryAggregatesTable();
     
+    // Check if aggregates table is empty
+    const allAggregates = await dbQueries.queryEvents('SELECT COUNT(*) as count FROM aggregates');
+    console.log('Total aggregates count:', allAggregates[0].count);
+    
+    // Get raw aggregates data
+    const rawAggregates = await dbQueries.queryEvents('SELECT * FROM aggregates');
+    console.log('Raw aggregates:', rawAggregates.map(a => ({
+      id: a.id,
+      file_id: a.file_id,
+      first_size: a.first_size,
+      max_size: a.max_size,
+      last_size: a.last_size
+    })));
+    
     console.log('=== DEBUG: Edge cases ===');
+    
+    // Also check measurements directly
+    const measurements = await dbQueries.queryEvents(`
+      SELECT e.*, m.*, et.code as event_code
+      FROM events e
+      LEFT JOIN measurements m ON e.id = m.event_id
+      JOIN event_types et ON e.event_type_id = et.id
+      WHERE e.file_path LIKE '%empty-test.txt%' OR e.file_path LIKE '%immediate-delete.txt%'
+      ORDER BY e.timestamp
+    `);
+    
+    console.log('=== Measurements ===');
+    measurements.forEach((m: any) => {
+      console.log(`${m.file_path.split('/').pop()} - ${m.event_code}:`, {
+        event_id: m.id,
+        file_size: m.file_size,
+        line_count: m.line_count,
+        inode: m.inode
+      });
+    });
+    
     aggregates.forEach((agg, index) => {
       console.log(`Aggregate ${index + 1}:`, {
         file_path: agg.file_path.split('/').pop(),

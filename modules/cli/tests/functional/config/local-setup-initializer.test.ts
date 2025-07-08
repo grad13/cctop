@@ -8,4 +8,4 @@
 
 // This file serves as the main test suite entry point
 // Individual test modules are split for better maintainability
-import './local-setup-core.test';
+import './local-setup-core.test.ts';

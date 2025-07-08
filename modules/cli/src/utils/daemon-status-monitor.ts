@@ -36,13 +36,17 @@ export class DaemonStatusMonitor {
       const pidContent = fs.readFileSync(this.pidFilePath, 'utf8').trim();
       let pid: number;
 
-      try {
-        // Try parsing as JSON first (new format)
-        const pidData = JSON.parse(pidContent);
-        pid = pidData.pid;
-      } catch {
-        // Fallback to plain text format (legacy)
-        pid = parseInt(pidContent, 10);
+      // Try parsing as plain text first (most common format)
+      pid = parseInt(pidContent, 10);
+      
+      if (isNaN(pid)) {
+        try {
+          // Try parsing as JSON format if plain text fails
+          const pidData = JSON.parse(pidContent);
+          pid = pidData.pid;
+        } catch {
+          // Both parsing methods failed
+        }
       }
 
       if (isNaN(pid)) {

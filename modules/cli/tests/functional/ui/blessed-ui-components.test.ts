@@ -9,5 +9,5 @@
 
 // This file serves as the main test suite entry point
 // Individual test modules are split for better maintainability
-import './blessed-ui-core.test';
-import './blessed-ui-display-modes.test';
+import './blessed-ui-core.test.ts';
+import './blessed-ui-display-modes.test.ts';

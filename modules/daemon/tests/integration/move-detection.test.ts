@@ -172,6 +172,9 @@ describe('Move Detection (FUNC-003)', () => {
   test('should preserve file metadata during move', async () => {
     daemonProcess = await startDaemon();
     await dbQueries.connect();
+    
+    // Wait for daemon to fully initialize
+    await new Promise(resolve => setTimeout(resolve, 1000));
 
     const srcFile = path.join(testDir, 'metadata-test.txt');
     const destFile = path.join(testDir, 'metadata-moved.txt');
@@ -189,7 +192,8 @@ describe('Move Detection (FUNC-003)', () => {
     );
     
     if (!createEvent) {
-      throw new Error(`Create event not found for metadata-test.txt. Available events: ${createEvents.map(e => `${e.filename}:${e.event_type}`).join(', ')}`);
+      console.log('All events:', JSON.stringify(createEvents, null, 2));
+      throw new Error(`Create event not found for metadata-test.txt. Available events: ${createEvents.length}`);
     }
     
     const originalInode = createEvent.inode_number;

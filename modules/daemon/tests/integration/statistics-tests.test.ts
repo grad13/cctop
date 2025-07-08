@@ -83,7 +83,14 @@ describe('Statistics and Size Tracking', () => {
 
     await testEnv.wait(1000);
 
+    // Debug: Check all tables
+    const events = await dbQueries.getEventsFromDb();
+    console.log('=== DEBUG: Events ===');
+    console.log(events);
+    
     const aggregates = await dbQueries.queryAggregatesTable();
+    console.log('=== DEBUG: Aggregates ===');
+    console.log(aggregates);
     expect(aggregates.length).toBe(1);
 
     const aggregate = aggregates[0];
@@ -91,6 +98,23 @@ describe('Statistics and Size Tracking', () => {
     const expectedLastSize = sizes[sizes.length - 1].size;
     const expectedMaxSize = Math.max(...sizes.map(s => s.size));
 
+    // Debug: Check all measurements
+    const allMeasurements = await dbQueries.queryEvents(`
+      SELECT m.*, e.timestamp 
+      FROM measurements m 
+      JOIN events e ON m.event_id = e.id 
+      WHERE e.file_path = ? 
+      ORDER BY e.timestamp ASC
+    `, 'size-test.txt');
+    
+    console.log('=== DEBUG: All measurements ===');
+    console.log(allMeasurements);
+    
+    // Debug: Check raw aggregates
+    const rawAggregate = await dbQueries.queryEvent('SELECT * FROM aggregates WHERE file_id = ?', aggregate.file_id);
+    console.log('=== DEBUG: Raw aggregate ===');
+    console.log(rawAggregate);
+    
     console.log('=== DEBUG: Size statistics ===');
     console.log({
       first_size: aggregate.first_size,

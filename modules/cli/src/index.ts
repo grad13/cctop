@@ -125,9 +125,6 @@ class CCTOPCli {
       if (!fs.existsSync(dbPath)) {
         throw new Error(`No existing database found at ${dbPath}. Use 'cctop' without --view to start monitoring.`);
       }
-      if (this.args.verbose) {
-        console.log(`[--view mode] Reading from existing database: ${dbPath}`);
-      }
     } else {
       // Initialize .cctop structure if it doesn't exist (normal mode)
       if (!fs.existsSync(cctopDir)) {
@@ -158,12 +155,6 @@ class CCTOPCli {
 
   public async start(): Promise<void> {
     try {
-      // FUNC-104: --view mode startup message
-      if (this.args.view) {
-        console.log('Starting CCTOP in view-only mode (no daemon)...');
-      } else if (this.args.verbose) {
-        console.log('Starting CCTOP CLI...');
-      }
 
       // Initialize database adapter
       this.db = new DatabaseAdapterFunc000(this.config.databasePath!);
@@ -199,12 +190,10 @@ class CCTOPCli {
 
 // Handle graceful shutdown
 process.on('SIGINT', () => {
-  console.log('\nGracefully shutting down...');
   process.exit(0);
 });
 
 process.on('SIGTERM', () => {
-  console.log('\nGracefully shutting down...');
   process.exit(0);
 });
 

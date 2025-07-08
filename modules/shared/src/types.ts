@@ -5,12 +5,13 @@
 export interface FileEvent {
   id?: number;
   eventType: 'find' | 'create' | 'modify' | 'delete' | 'move' | 'restore';
+  eventTypeId?: number;
+  fileId?: number;
   filePath: string;
   directory: string;
-  filename: string;
-  fileSize: number;
+  fileName: string;
   timestamp: Date;
-  inodeNumber: number;
+  inode?: number;
 }
 
 export interface Config {
@@ -55,17 +56,4 @@ export interface DaemonState {
   working_directory: string;
   watch_paths: string[];
   config_path: string;
-}
-
-export interface EventRow {
-  id: number;
-  timestamp: string;
-  filename: string;
-  directory: string;
-  event_type: string;
-  size: number;
-  lines?: number;
-  blocks?: number;
-  inode: number;
-  elapsed_ms: number;
 }

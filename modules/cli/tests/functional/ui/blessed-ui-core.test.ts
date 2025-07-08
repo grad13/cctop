@@ -4,9 +4,9 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { BlessedFramelessUISimple } from '../../src/ui/blessed-frameless-ui-simple';
-import { DatabaseAdapter } from '../../src/database/database-adapter';
-import { EventRow } from '../../src/types/event-row';
+import { BlessedFramelessUISimple } from '../../../src/ui/blessed-frameless-ui-simple';
+import { DatabaseAdapter } from '../../../src/database/database-adapter';
+import { EventRow } from '../../../src/types/event-row';
 
 // Mock blessed module
 vi.mock('blessed', () => ({
