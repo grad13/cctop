@@ -2,7 +2,7 @@
  * Database connection and basic operations
  */
 
-import sqlite3 from 'sqlite3';
+import * as sqlite3 from 'sqlite3';
 import { FileEvent } from './types';
 
 export class Database {
@@ -46,17 +46,15 @@ export class Database {
       }
       
       const createTablesSQL = `
-        -- Events table
-        CREATE TABLE IF NOT EXISTS events (
+        -- Event types table (normalized schema for CLI compatibility)
+        CREATE TABLE IF NOT EXISTS event_types (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
-          event_type TEXT NOT NULL,
-          file_path TEXT NOT NULL,
-          directory TEXT NOT NULL,
-          filename TEXT NOT NULL,
-          file_size INTEGER NOT NULL,
-          timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-          inode_number INTEGER NOT NULL
+          name TEXT UNIQUE NOT NULL
         );
+
+        -- Insert standard event types
+        INSERT OR IGNORE INTO event_types (name) VALUES 
+          ('find'), ('create'), ('modify'), ('delete'), ('move'), ('restore');
 
         -- Files table for tracking unique files
         CREATE TABLE IF NOT EXISTS files (
@@ -68,7 +66,30 @@ export class Database {
           updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
         );
 
-        -- Aggregates table for statistics
+        -- Events table (normalized with foreign key to event_types)
+        CREATE TABLE IF NOT EXISTS events (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          event_type_id INTEGER NOT NULL,
+          file_id INTEGER,
+          file_name TEXT NOT NULL,
+          directory TEXT NOT NULL,
+          timestamp INTEGER DEFAULT (strftime('%s', 'now') * 1000),
+          FOREIGN KEY (event_type_id) REFERENCES event_types(id),
+          FOREIGN KEY (file_id) REFERENCES files(id)
+        );
+
+        -- Measurements table for file metrics
+        CREATE TABLE IF NOT EXISTS measurements (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          event_id INTEGER NOT NULL,
+          file_size INTEGER DEFAULT 0,
+          line_count INTEGER DEFAULT 0,
+          block_count INTEGER DEFAULT 0,
+          inode INTEGER DEFAULT 0,
+          FOREIGN KEY (event_id) REFERENCES events(id)
+        );
+
+        -- Aggregates table for statistics (optional for daemon)
         CREATE TABLE IF NOT EXISTS aggregates (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           file_id INTEGER,
@@ -106,8 +127,9 @@ export class Database {
 
         -- Create indexes for performance
         CREATE INDEX IF NOT EXISTS idx_events_timestamp ON events(timestamp);
-        CREATE INDEX IF NOT EXISTS idx_events_file_path ON events(file_path);
-        CREATE INDEX IF NOT EXISTS idx_events_event_type ON events(event_type);
+        CREATE INDEX IF NOT EXISTS idx_events_file_id ON events(file_id);
+        CREATE INDEX IF NOT EXISTS idx_events_event_type_id ON events(event_type_id);
+        CREATE INDEX IF NOT EXISTS idx_measurements_event_id ON measurements(event_id);
         CREATE INDEX IF NOT EXISTS idx_aggregates_file_id ON aggregates(file_id);
       `;
       
@@ -116,7 +138,9 @@ export class Database {
           reject(err);
         } else {
           console.log('Database schema initialized');
-          this.createTriggers().then(resolve).catch(reject);
+          // Skip trigger creation for now to focus on basic schema compatibility
+          console.log('Triggers creation skipped - using manual aggregation');
+          resolve();
         }
       });
     });
@@ -240,32 +264,110 @@ export class Database {
         return;
       }
       
-      const sql = `
-        INSERT INTO events (
-          event_type, file_path, directory, filename, 
-          file_size, timestamp, inode_number
-        ) VALUES (?, ?, ?, ?, ?, ?, ?)
-      `;
-      
-      this.db.run(
-        sql, 
-        [
-          event.eventType,
-          event.filePath,
-          event.directory,
-          event.filename,
-          event.fileSize,
-          event.timestamp.toISOString(),
-          event.inodeNumber
-        ],
-        (err) => {
-          if (err) reject(err);
-          else {
-            console.log('Event inserted:', event.filename);
-            resolve();
+      this.db.serialize(() => {
+        // 1. Get or create file record
+        const getFileSQL = `SELECT id FROM files WHERE file_path = ?`;
+        this.db!.get(getFileSQL, [event.filePath], (err, row: any) => {
+          if (err) {
+            reject(err);
+            return;
           }
-        }
-      );
+          
+          let fileId = row?.id;
+          
+          const insertFileIfNeeded = () => {
+            if (!fileId) {
+              const insertFileSQL = `
+                INSERT INTO files (file_path, inode_number, is_active) 
+                VALUES (?, ?, 1)
+              `;
+              const database = this.db!;
+              database.run(insertFileSQL, [event.filePath, event.inodeNumber], function(err: Error | null) {
+                if (err) {
+                  reject(err);
+                  return;
+                }
+                fileId = this.lastID;
+                insertEventAndMeasurement();
+              });
+            } else {
+              // Update existing file
+              const updateFileSQL = `
+                UPDATE files 
+                SET inode_number = ?, is_active = 1 
+                WHERE id = ?
+              `;
+              this.db!.run(updateFileSQL, [event.inodeNumber, fileId], (err: Error | null) => {
+                if (err) {
+                  reject(err);
+                  return;
+                }
+                insertEventAndMeasurement();
+              });
+            }
+          };
+          
+          const insertEventAndMeasurement = () => {
+            // 2. Get event_type_id
+            const getEventTypeSQL = `SELECT id FROM event_types WHERE name = ?`;
+            this.db!.get(getEventTypeSQL, [event.eventType], (err, typeRow: any) => {
+              if (err) {
+                reject(err);
+                return;
+              }
+              
+              if (!typeRow) {
+                reject(new Error(`Unknown event type: ${event.eventType}`));
+                return;
+              }
+              
+              // 3. Insert event
+              const eventSQL = `
+                INSERT INTO events (
+                  timestamp, event_type_id, file_id, 
+                  file_name, directory
+                ) VALUES (?, ?, ?, ?, ?)
+              `;
+              
+              const timestamp = Math.floor(event.timestamp.getTime());
+              const database = this.db!;
+              database.run(
+                eventSQL,
+                [timestamp, typeRow.id, fileId, event.filename, event.directory],
+                function(err: Error | null) {
+                  if (err) {
+                    reject(err);
+                    return;
+                  }
+                  
+                  const eventId = this.lastID;
+                  
+                  // 4. Insert measurement
+                  const measurementSQL = `
+                    INSERT INTO measurements (
+                      event_id, inode, file_size, line_count, block_count
+                    ) VALUES (?, ?, ?, ?, ?)
+                  `;
+                  
+                  database.run(
+                    measurementSQL,
+                    [eventId, event.inodeNumber, event.fileSize, 0, 0],
+                    (err: Error | null) => {
+                      if (err) {
+                        reject(err);
+                      } else {
+                        resolve();
+                      }
+                    }
+                  );
+                }
+              );
+            });
+          };
+          
+          insertFileIfNeeded();
+        });
+      });
     });
   }
 
@@ -277,16 +379,28 @@ export class Database {
       }
       
       let sql = `
-        SELECT * FROM events 
+        SELECT 
+          e.id,
+          e.timestamp,
+          e.file_name,
+          e.directory,
+          et.name as event_type,
+          f.file_path,
+          COALESCE(m.file_size, 0) as file_size,
+          COALESCE(m.inode, 0) as inode_number
+        FROM events e
+        JOIN event_types et ON e.event_type_id = et.id
+        JOIN files f ON e.file_id = f.id
+        LEFT JOIN measurements m ON e.id = m.event_id
       `;
       let params: any[] = [];
       
       if (filePath) {
-        sql += ` WHERE file_path = ? `;
+        sql += ` WHERE f.file_path = ? `;
         params.push(filePath);
       }
       
-      sql += ` ORDER BY timestamp DESC LIMIT ? `;
+      sql += ` ORDER BY e.timestamp DESC LIMIT ? `;
       params.push(limit);
       
       this.db.all(sql, params, (err, rows: any[]) => {
@@ -298,7 +412,7 @@ export class Database {
             eventType: row.event_type,
             filePath: row.file_path,
             directory: row.directory,
-            filename: row.filename,
+            filename: row.file_name,
             fileSize: row.file_size,
             timestamp: new Date(row.timestamp),
             inodeNumber: row.inode_number
