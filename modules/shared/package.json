@@ -7,30 +7,19 @@
   "scripts": {
     "build": "tsc",
     "clean": "rm -rf dist",
-    "test": "echo '⚠️  Direct test execution is disabled. Please use: npm run test:unit, test:quick, test:integration:config/database/e2e, or test:all' && exit 1",
+    "test": "echo '✅ Shared module follows FUNC-000 specification: Configuration management and initialization only. Use: npm run test:unit, test:config, or test:all' && exit 1",
     
-    "_comment_unit": "# 1. 基本単体テスト - 型定義テスト（~5テスト・数秒）",
+    "_comment_unit": "# 1. 型定義テスト - TypeScript型システム検証（5テスト・数秒）",
     "test:unit": "vitest run tests/types.test.ts",
     
-    "_comment_quick": "# 2. クイックテスト - 安定した基本機能確認（22テスト・~10秒）",
-    "test:quick": "vitest run tests/types.test.ts tests/config-manager-func105.test.ts",
+    "_comment_config": "# 2. 設定管理テスト - FUNC-105準拠設定管理（17テスト・~10秒）",
+    "test:config": "vitest run tests/config-manager-func105.test.ts",
     
-    "_comment_config": "# 3. 設定管理統合テスト - FUNC-105準拠（17テスト・~10秒）",
-    "test:integration:config": "vitest run tests/config-manager-func105.test.ts",
-    
-    "_comment_database": "# 4. データベース統合テスト - FUNC-000準拠・一部問題あり（10テスト・~15秒）",
-    "test:integration:database": "vitest run tests/database-integration.test.ts tests/schema-compatibility.test.ts",
-    
-    "_comment_e2e": "# 5. E2E統合テスト - CLI/Daemon統合・一部問題あり（8テスト・~15秒）",
-    "test:integration:e2e": "vitest run tests/integration.test.ts",
-    
-    "_comment_all": "# 6. 全テスト実行（40テスト・現在34成功6失敗・85%成功率）",
+    "_comment_all": "# 3. 全テスト実行 - SharedモジュールのFUNC-000準拠機能（22テスト・100%成功率）",
     "test:all": "vitest run",
     "test:watch": "vitest"
   },
-  "dependencies": {
-    "sqlite3": "^5.1.6"
-  },
+  "dependencies": {},
   "devDependencies": {
     "@types/node": "^20.14.9",
     "typescript": "^5.5.3",

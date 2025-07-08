@@ -64,6 +64,7 @@ export class SchemaManager {
           
           -- イベント回数
           total_events INTEGER DEFAULT 0,
+          total_finds INTEGER DEFAULT 0,
           total_creates INTEGER DEFAULT 0,
           total_modifies INTEGER DEFAULT 0,
           total_deletes INTEGER DEFAULT 0,

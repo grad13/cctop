@@ -14,14 +14,6 @@ export interface FileEvent {
   inode?: number;
 }
 
-export interface EventMeasurement {
-  eventId?: number;  // Optional - set internally by insertEvent
-  inode: number;
-  fileSize: number;
-  lineCount?: number;
-  blockCount?: number;
-}
-
 export interface Config {
   watchPath: string;
   dbPath: string;
@@ -64,24 +56,4 @@ export interface DaemonState {
   working_directory: string;
   watch_paths: string[];
   config_path: string;
-}
-
-export interface MeasurementResult {
-  inode: number;
-  fileSize: number;
-  lineCount: number;
-  blockCount: number;
-}
-
-export interface EventRow {
-  id: number;
-  timestamp: string;
-  filename: string;
-  directory: string;
-  event_type: string;
-  size: number;
-  lines: number;
-  blocks: number;
-  inode: number;
-  elapsed_ms: number;
 }

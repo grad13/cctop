@@ -3,7 +3,7 @@
  * Provides direct database access for test verification
  */
 
-import { Database } from '../../../shared/dist/index';
+import { Database } from '../../src/database/database';
 import type { DbEvent, AggregateData, GlobalStatistics } from './types';
 import sqlite3 from 'sqlite3';
 import { promisify } from 'util';

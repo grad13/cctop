@@ -110,7 +110,7 @@ export class DatabaseReader {
         FROM events e
         JOIN event_types et ON e.event_type_id = et.id
         LEFT JOIN measurements m ON e.id = m.event_id
-        WHERE et.name = ?
+        WHERE et.code = ?
         ORDER BY e.timestamp DESC 
         LIMIT ?
       `;

@@ -4,7 +4,7 @@
  */
 
 import chokidar from 'chokidar';
-import { Database } from '../../shared/dist/index';
+import { Database } from './database/database';
 import { DaemonConfigManager } from './config/DaemonConfig';
 import { LogManager } from './logging/LogManager';
 import { FileEventHandler } from './events/FileEventHandler';

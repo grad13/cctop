@@ -3,13 +3,14 @@
  * Refactored modular architecture with single responsibility principle
  */
 
-import { FileEvent, EventMeasurement, MeasurementResult } from './types';
-import { DatabaseConnection } from './database/DatabaseConnection';
-import { SchemaManager } from './database/SchemaManager';
-import { TriggerManager } from './database/TriggerManager';
-import { EventOperations } from './database/EventOperations';
-import { AggregateOperations } from './database/AggregateOperations';
-import { MeasurementOperations } from './database/MeasurementOperations';
+import { FileEvent } from '../../../shared/src/types';
+import { EventMeasurement, MeasurementResult } from './types';
+import { DatabaseConnection } from './DatabaseConnection';
+import { SchemaManager } from './SchemaManager';
+import { TriggerManager } from './TriggerManager';
+import { EventOperations } from './EventOperations';
+import { AggregateOperations } from './AggregateOperations';
+import { MeasurementOperations } from './MeasurementOperations';
 import sqlite3 from 'sqlite3';
 
 export class Database {
