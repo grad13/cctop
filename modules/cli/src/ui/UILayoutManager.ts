@@ -103,7 +103,7 @@ export class UILayoutManager {
       left: 0,
       width: '100%',
       height: 1,
-      content: '[↑↓] Select an event  [Enter] Show Details',
+      content: '[↑↓] Select an event',
       style: {
         fg: 'white',
         bg: 'transparent',
@@ -155,9 +155,9 @@ export class UILayoutManager {
     const pauseText = this.uiState.isPausedState() ? 'Resume' : 'Pause';
     const displayMode = this.uiState.getDisplayMode();
     
-    // Highlight currently selected mode with arrow and bold styling
-    const allText = displayMode === 'all' ? '{bold}{cyan-fg}► [a] All{/}{/}' : '[a] All';
-    const uniqueText = displayMode === 'unique' ? '{bold}{cyan-fg}► [u] Unique{/}{/}' : '[u] Unique';
+    // Highlight currently selected mode with red color styling
+    const allText = displayMode === 'all' ? '{bold}{red-fg}[a] All{/}{/}' : '[a] All';
+    const uniqueText = displayMode === 'unique' ? '{bold}{red-fg}[u] Unique{/}{/}' : '[u] Unique';
     
     return `[q] Exit  [space] ${pauseText}  [x] Refresh  ${allText}  ${uniqueText}`;
   }
