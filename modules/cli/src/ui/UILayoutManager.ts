@@ -92,7 +92,8 @@ export class UILayoutManager {
       content: this.buildCommandLine1(),
       style: {
         fg: 'white',
-        bg: 'transparent'
+        bg: 'transparent',
+        bold: true
       },
       tags: true
     });
@@ -105,7 +106,8 @@ export class UILayoutManager {
       content: '[↑↓] Select an event  [Enter] Show Details',
       style: {
         fg: 'white',
-        bg: 'transparent'
+        bg: 'transparent',
+        bold: true
       },
       tags: true
     });
@@ -178,7 +180,7 @@ export class UILayoutManager {
       case 'normal':
       case 'paused':
       default:
-        return '{yellow-fg}[f] Filter Events  [/] Quick search  [ESC] Clear{/yellow-fg}';
+        return '{bold}{yellow-fg}[f] Filter Events  [/] Quick search  [ESC] Clear{/yellow-fg}{/bold}';
     }
   }
 
