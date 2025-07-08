@@ -5,7 +5,7 @@
 
 import * as fs from 'fs/promises';
 import { LogManager } from '../logging/LogManager';
-import { MeasurementResult } from '../../../shared/dist/index';
+import { MeasurementResult } from '../database/types';
 
 export class MeasurementCalculator {
   private logger: LogManager;

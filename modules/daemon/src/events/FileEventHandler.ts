@@ -2,7 +2,8 @@
  * File Event Processing
  */
 
-import { Database, FileEvent, EventMeasurement } from '../../../shared/dist/index';
+import { Database } from '../database/database';
+import { FileEvent, EventMeasurement } from '../database/types';
 import * as path from 'path';
 import * as fs from 'fs/promises';
 import { LogManager } from '../logging/LogManager';

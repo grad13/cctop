@@ -4,7 +4,7 @@
  */
 
 import sqlite3 from 'sqlite3';
-import { MeasurementResult } from '../types';
+import { MeasurementResult } from './types';
 
 export class MeasurementOperations {
   private db: sqlite3.Database;

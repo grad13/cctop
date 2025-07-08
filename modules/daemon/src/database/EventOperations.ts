@@ -4,7 +4,7 @@
  */
 
 import sqlite3 from 'sqlite3';
-import { FileEvent, EventMeasurement } from '../types';
+import { FileEvent, EventMeasurement } from './types';
 
 export class EventOperations {
   private db: sqlite3.Database;

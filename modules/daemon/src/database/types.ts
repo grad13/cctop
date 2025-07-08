@@ -3,6 +3,16 @@
  * Moved from shared module per FUNC-000 specification
  */
 
+export interface FileEvent {
+  id?: number;
+  eventType: 'find' | 'create' | 'modify' | 'delete' | 'move' | 'restore';
+  filePath: string;
+  directory: string;
+  fileName: string;
+  timestamp: Date;
+  inode?: number;
+}
+
 export interface EventMeasurement {
   eventId?: number;  // Optional - set internally by insertEvent
   inode: number;

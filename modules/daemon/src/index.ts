@@ -277,7 +277,6 @@ async function main() {
   try {
     await daemon.start();
   } catch (error) {
-    console.error('Daemon startup failed:', error);
     process.exit(1);
   }
 }

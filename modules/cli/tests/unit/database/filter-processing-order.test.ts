@@ -1,24 +1,22 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { DatabaseAdapterFunc000 } from '../../../src/database/database-adapter-func000';
-import { Database } from '../../../../daemon/src/database/database';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
+import { Database as SqliteDatabase } from 'sqlite3';
 
 describe('Filter Processing Order', () => {
   let adapter: DatabaseAdapterFunc000;
   let dbPath: string;
   let testDir: string;
-  let daemonDb: Database;
 
   beforeEach(async () => {
     // Create test environment
     testDir = fs.mkdtempSync(path.join(os.tmpdir(), 'cctop-filter-test-'));
     dbPath = path.join(testDir, 'test-activity.db');
     
-    // Create FUNC-000 compliant database using daemon Database class
-    daemonDb = new Database(dbPath);
-    await daemonDb.connect();
+    // Create minimal FUNC-000 compliant schema
+    await createTestSchema(dbPath);
     
     // Now create CLI adapter for read-only access
     adapter = new DatabaseAdapterFunc000(dbPath);
@@ -28,9 +26,6 @@ describe('Filter Processing Order', () => {
   afterEach(async () => {
     if (adapter) {
       await adapter.disconnect();
-    }
-    if (daemonDb) {
-      await daemonDb.close();
     }
     if (testDir && fs.existsSync(testDir)) {
       fs.rmSync(testDir, { recursive: true, force: true });
@@ -55,7 +50,7 @@ describe('Filter Processing Order', () => {
       ];
 
       // データベースにテストデータを挿入
-      await insertTestEvents(daemonDb, testEvents);
+      await insertTestEvents(dbPath, testEvents);
 
       // Delete eventを除外したフィルターでテスト
       const resultWithDeleteFilter = await adapter.searchEvents({
@@ -102,7 +97,7 @@ describe('Filter Processing Order', () => {
         { file_id: 3, file_name: 'file3.txt', event_type: 'create', timestamp: '2025-01-01 12:00:00' },
       ];
 
-      await insertTestEvents(daemonDb, testEvents);
+      await insertTestEvents(dbPath, testEvents);
 
       const result = await adapter.searchEvents({
         keyword: '',
@@ -126,7 +121,7 @@ describe('Filter Processing Order', () => {
         { file_id: 1, file_name: 'only-delete.txt', event_type: 'delete', timestamp: '2025-01-01 10:00:00' },
       ];
 
-      await insertTestEvents(daemonDb, testEvents);
+      await insertTestEvents(dbPath, testEvents);
 
       const resultWithDeleteFilter = await adapter.searchEvents({
         keyword: '',
@@ -150,34 +145,106 @@ describe('Filter Processing Order', () => {
   });
 });
 
-// テストデータ挿入ヘルパー関数（FUNC-000準拠）
-async function insertTestEvents(daemonDb: Database, events: any[]) {
-  for (const event of events) {
-    try {
-      // FileEventオブジェクトを作成（eventType小文字確認）
-      const eventTypeLower = event.event_type.toLowerCase();
-      const fileEvent = {
-        eventType: eventTypeLower as 'find' | 'create' | 'modify' | 'delete' | 'move' | 'restore',
-        filePath: `/test/${event.file_name}`,
-        directory: '/test',
-        fileName: event.file_name,
-        timestamp: new Date(event.timestamp),
-        inode: event.file_id + 1000 // file_idからinodeを生成
-      };
+// スキーマ作成ヘルパー関数
+async function createTestSchema(dbPath: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const db = new SqliteDatabase(dbPath);
+    
+    const schemaSQL = `
+      PRAGMA foreign_keys = ON;
+      
+      CREATE TABLE IF NOT EXISTS event_types (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL UNIQUE,
+        description TEXT,
+        created_at TEXT DEFAULT (datetime('now'))
+      );
+      
+      CREATE TABLE IF NOT EXISTS files (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        filename TEXT NOT NULL,
+        directory TEXT NOT NULL,
+        full_path TEXT NOT NULL UNIQUE,
+        created_at TEXT DEFAULT (datetime('now')),
+        updated_at TEXT DEFAULT (datetime('now'))
+      );
+      
+      CREATE TABLE IF NOT EXISTS events (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        timestamp TEXT NOT NULL,
+        event_type TEXT NOT NULL,
+        filename TEXT NOT NULL,
+        directory TEXT,
+        lines INTEGER,
+        blocks INTEGER,
+        created_at TEXT DEFAULT (datetime('now')),
+        FOREIGN KEY (event_type) REFERENCES event_types(name)
+      );
+      
+      CREATE TABLE IF NOT EXISTS measurements (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        event_id INTEGER NOT NULL,
+        inode INTEGER,
+        file_size INTEGER,
+        line_count INTEGER,
+        block_count INTEGER,
+        created_at TEXT DEFAULT (datetime('now')),
+        FOREIGN KEY (event_id) REFERENCES events(id)
+      );
+      
+      INSERT OR IGNORE INTO event_types (name, description) VALUES 
+        ('find', 'File discovered'),
+        ('create', 'File created'),
+        ('modify', 'File modified'),
+        ('delete', 'File deleted'),
+        ('move', 'File moved'),
+        ('restore', 'File restored');
+    `;
+    
+    db.exec(schemaSQL, (err) => {
+      db.close();
+      if (err) reject(err);
+      else resolve();
+    });
+  });
+}
 
-      // EventMeasurementオブジェクトを作成
-      const measurement = {
-        inode: event.file_id + 1000,
-        fileSize: 1024,
-        lineCount: 50,
-        blockCount: 5
-      };
-
-      // daemon Databaseクラスを使用してFUNC-000準拠でデータ挿入
-      await daemonDb.insertEvent(fileEvent, measurement);
-    } catch (error) {
-      console.error(`Failed to insert event for ${event.file_name}:`, error);
-      throw error;
-    }
-  }
+// テストデータ挿入ヘルパー関数
+async function insertTestEvents(dbPath: string, events: any[]): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const db = new SqliteDatabase(dbPath);
+    
+    // 直列でイベント挿入
+    const insertNextEvent = (index: number) => {
+      if (index >= events.length) {
+        db.close();
+        resolve();
+        return;
+      }
+      
+      const event = events[index];
+      const sql = `
+        INSERT INTO events (timestamp, event_type, filename, directory, lines, blocks)
+        VALUES (?, ?, ?, ?, ?, ?)
+      `;
+      
+      db.run(sql, [
+        event.timestamp,
+        event.event_type,
+        event.file_name,
+        '/test',
+        50, // lines
+        5   // blocks
+      ], (err) => {
+        if (err) {
+          db.close();
+          reject(err);
+        } else {
+          insertNextEvent(index + 1);
+        }
+      });
+    };
+    
+    insertNextEvent(0);
+  });
 }
