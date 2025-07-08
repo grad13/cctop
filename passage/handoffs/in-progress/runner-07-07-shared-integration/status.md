@@ -1,6 +1,6 @@
 # Status: Runner 07-07 Shared Integration
 
-**Last Updated**: 2025-07-08 10:25 JST  
+**Last Updated**: 2025-07-08 10:55 JST  
 **Phase**: Phase 2 - Type System Unification (進行中)
 
 ## Current Status
@@ -83,6 +83,15 @@
 - **状況**: テスト失敗調査中（26/36テストファイル失敗）
 - **原因**: ファイルパス解決エラー、型定義不一致
 - **次の作業**: テスト修正とCLI DatabaseConnection統合
+
+#### ✅ CLI起動改善 - 完了
+- **問題**: viewコマンドが起動しない、デバッグが困難
+- **解決内容**:
+  - modules/cli/bin/cctop と bin/cctop の両方で起動可能に
+  - main()関数のエクスポートと自動実行追加
+  - 'view' と '--view' の両形式を受け付けるように修正
+  - ビルド出力のノイズを抑制
+- **成果**: 開発・デバッグ時の柔軟なCLI実行が可能に
 
 ## Blockers
 
