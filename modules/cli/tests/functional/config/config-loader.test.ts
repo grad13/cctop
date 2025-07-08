@@ -9,5 +9,5 @@
 
 // This file serves as the main test suite entry point
 // Individual test modules are split for better maintainability
-import './config-loader-core.test';
-import './config-loader-initialization.test';
+import './config-loader-core.test.ts';
+import './config-loader-initialization.test.ts';

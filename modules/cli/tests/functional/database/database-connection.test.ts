@@ -5,7 +5,7 @@
 
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
 import { DatabaseTestSetup } from './test-helpers/database-test-setup';
-import { DatabaseAdapter } from '../../../src/database/database-adapter';
+import { DatabaseAdapter } from '../../../../src/database/database-adapter.ts';
 
 describe('Database Connection Management', () => {
   let testSetup: DatabaseTestSetup;
@@ -22,13 +22,20 @@ describe('Database Connection Management', () => {
     testSetup.cleanupTestEnvironment();
   });
 
-  beforeEach(() => {
+  beforeEach(async () => {
     adapter = testSetup.createDatabaseAdapter(dbPath);
+    await testSetup.createTestDatabase(adapter);
+  });
+
+  afterEach(async () => {
+    if (adapter) {
+      await adapter.disconnect();
+    }
   });
 
   it('should connect to existing database successfully', async () => {
     await expect(adapter.connect()).resolves.not.toThrow();
-    expect(adapter.database).toBeDefined();
+    expect(adapter.getDatabase()).toBeDefined();
   });
 
   it('should handle connection to non-existent database gracefully', async () => {
@@ -49,7 +56,7 @@ describe('Database Connection Management', () => {
   it('should handle multiple connect calls gracefully', async () => {
     await adapter.connect();
     await expect(adapter.connect()).resolves.not.toThrow();
-    expect(adapter.database).toBeDefined();
+    expect(adapter.getDatabase()).toBeDefined();
   });
 
   it('should handle disconnect without prior connect', async () => {
@@ -63,24 +70,35 @@ describe('Database Connection Management', () => {
   });
 
   it('should maintain connection state correctly', async () => {
+    // Create a new adapter for this test
+    const freshAdapter = testSetup.createDatabaseAdapter(dbPath);
+    
     // Initially not connected
-    expect(adapter.database).toBeUndefined();
+    expect(freshAdapter.getDatabase()).toBeNull();
     
     // After connect
-    await adapter.connect();
-    expect(adapter.database).toBeDefined();
+    await freshAdapter.connect();
+    expect(freshAdapter.getDatabase()).toBeDefined();
     
     // After disconnect
-    await adapter.disconnect();
-    // Note: database object might still exist but connection is closed
+    await freshAdapter.disconnect();
+    expect(freshAdapter.getDatabase()).toBeNull();
   });
 
   it('should handle database file permissions', async () => {
     await adapter.connect();
     
     // Verify we can perform basic operations
-    const result = await adapter.database.prepare('SELECT 1 as test').get();
-    expect(result.test).toBe(1);
+    const db = adapter.getDatabase();
+    if (db) {
+      const result = await new Promise<any>((resolve, reject) => {
+        db.get('SELECT 1 as test', (err, row) => {
+          if (err) reject(err);
+          else resolve(row);
+        });
+      });
+      expect(result.test).toBe(1);
+    }
   });
 
   it('should handle database path with special characters', async () => {

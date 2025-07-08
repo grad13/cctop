@@ -3,7 +3,7 @@
  * Shared utilities and setup/teardown logic
  */
 
-import { DatabaseAdapter } from '../../../src/database/database-adapter';
+import { DatabaseAdapter } from '../../../../src/database/database-adapter.ts';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
@@ -40,53 +40,41 @@ export class DatabaseTestSetup {
   }
 
   private async setupTestData(adapter: DatabaseAdapter): Promise<void> {
-    // Create sample test data
-    const testEvents = [
-      {
-        id: 1,
-        timestamp: '2025-07-04 15:30:45',
-        event_type: 'create',
-        filename: 'test1.ts',
-        directory: 'src/components',
-        lines: 100,
-        blocks: 5
-      },
-      {
-        id: 2,
-        timestamp: '2025-07-04 15:31:00',
-        event_type: 'modify',
-        filename: 'test2.js',
-        directory: 'lib/utils',
-        lines: 50,
-        blocks: 3
-      },
-      {
-        id: 3,
-        timestamp: '2025-07-04 15:31:15',
-        event_type: 'find',
-        filename: 'test3.md',
-        directory: 'docs',
-        lines: 25,
-        blocks: 2
-      }
-    ];
-
-    // Insert test data if tables exist
+    // Create basic test table for connection tests
     try {
-      for (const event of testEvents) {
-        await adapter.database.prepare(`
-          INSERT OR IGNORE INTO events (id, timestamp, event_type, filename, directory, lines, blocks)
-          VALUES (?, ?, ?, ?, ?, ?, ?)
-        `).run(event.id, event.timestamp, event.event_type, event.filename, event.directory, event.lines, event.blocks);
+      const db = adapter.getDatabase();
+      if (db) {
+        await new Promise<void>((resolve, reject) => {
+          db.run(`
+            CREATE TABLE IF NOT EXISTS test_table (
+              id INTEGER PRIMARY KEY,
+              test_data TEXT
+            )
+          `, (err) => {
+            if (err) reject(err);
+            else resolve();
+          });
+        });
+
+        // Insert a simple test record
+        await new Promise<void>((resolve, reject) => {
+          db.run(`
+            INSERT OR IGNORE INTO test_table (id, test_data) VALUES (1, 'test')
+          `, (err) => {
+            if (err) reject(err);
+            else resolve();
+          });
+        });
       }
     } catch (error) {
-      // Tables might not exist yet, that's ok for some tests
+      // Tables creation failed, that's ok for some tests
+      console.log('Test table creation failed:', error);
     }
   }
 
   async verifyTableExists(adapter: DatabaseAdapter, tableName: string): Promise<boolean> {
     try {
-      const result = await adapter.database.prepare(`
+      const result = await adapter.getDatabase().prepare(`
         SELECT COUNT(*) as count 
         FROM sqlite_master 
         WHERE type='table' AND name=?
@@ -99,7 +87,7 @@ export class DatabaseTestSetup {
 
   async verifyEventTypesData(adapter: DatabaseAdapter): Promise<boolean> {
     try {
-      const result = await adapter.database.prepare(`
+      const result = await adapter.getDatabase().prepare(`
         SELECT COUNT(*) as count FROM event_types
       `).get();
       return result && result.count >= 6; // Should have at least 6 event types
@@ -110,7 +98,7 @@ export class DatabaseTestSetup {
 
   async verifyForeignKeysEnabled(adapter: DatabaseAdapter): Promise<boolean> {
     try {
-      const result = await adapter.database.prepare(`
+      const result = await adapter.getDatabase().prepare(`
         PRAGMA foreign_keys
       `).get();
       return result && result.foreign_keys === 1;
@@ -121,7 +109,7 @@ export class DatabaseTestSetup {
 
   async verifyIndexExists(adapter: DatabaseAdapter, indexName: string): Promise<boolean> {
     try {
-      const result = await adapter.database.prepare(`
+      const result = await adapter.getDatabase().prepare(`
         SELECT COUNT(*) as count 
         FROM sqlite_master 
         WHERE type='index' AND name=?
@@ -134,7 +122,7 @@ export class DatabaseTestSetup {
 
   async getEventCount(adapter: DatabaseAdapter): Promise<number> {
     try {
-      const result = await adapter.database.prepare(`
+      const result = await adapter.getDatabase().prepare(`
         SELECT COUNT(*) as count FROM events
       `).get();
       return result ? result.count : 0;

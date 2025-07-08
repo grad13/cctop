@@ -3,7 +3,7 @@
  * Tests for daemon process monitoring functionality
  */
 
-import { DaemonStatusMonitor } from '../../src/utils/daemon-status-monitor';
+import { DaemonStatusMonitor } from '../../../src/utils/daemon-status-monitor.ts';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';

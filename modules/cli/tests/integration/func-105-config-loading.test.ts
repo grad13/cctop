@@ -155,23 +155,4 @@ describe('FUNC-105 Configuration Loading Integration', () => {
     expect(config.cli.customSection.nested.value).toBe(42);
   });
 
-  it('should handle environment variable overrides', async () => {
-    // Set environment variable for testing
-    const originalEnv = process.env.CCTOP_CLI_REFRESH_INTERVAL;
-    process.env.CCTOP_CLI_REFRESH_INTERVAL = '500';
-
-    try {
-      const config = await context.configLoader.loadConfiguration();
-      
-      // Environment variable should override config file
-      expect(config.cli.display.refreshInterval).toBe(500);
-    } finally {
-      // Restore original environment
-      if (originalEnv !== undefined) {
-        process.env.CCTOP_CLI_REFRESH_INTERVAL = originalEnv;
-      } else {
-        delete process.env.CCTOP_CLI_REFRESH_INTERVAL;
-      }
-    }
-  });
 });

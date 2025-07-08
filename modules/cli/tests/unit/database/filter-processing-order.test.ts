@@ -1,20 +1,26 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { DatabaseAdapterFunc000 } from '../../src/database/database-adapter-func000';
-import { createTestDatabase } from './test-helpers/database-test-setup';
+import { DatabaseAdapterFunc000 } from '../../../src/database/database-adapter-func000';
+import { DatabaseTestSetup } from '../../functional/database/test-helpers/database-test-setup';
 
 describe('Filter Processing Order', () => {
   let adapter: DatabaseAdapterFunc000;
   let dbPath: string;
+  let testSetup: DatabaseTestSetup;
 
   beforeEach(async () => {
-    const testDb = await createTestDatabase();
-    adapter = testDb.adapter;
-    dbPath = testDb.dbPath;
+    testSetup = new DatabaseTestSetup();
+    const { testDir, dbPath: testDbPath } = testSetup.createTestEnvironment();
+    adapter = new DatabaseAdapterFunc000(testDbPath);
+    dbPath = testDbPath;
+    await testSetup.createTestDatabase(adapter);
   });
 
   afterEach(async () => {
     if (adapter) {
       await adapter.disconnect();
+    }
+    if (testSetup) {
+      testSetup.cleanupTestEnvironment();
     }
   });
 

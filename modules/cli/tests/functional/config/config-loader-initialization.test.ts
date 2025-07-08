@@ -32,11 +32,11 @@ describe('ConfigLoader - Initialization', () => {
     it('should create missing runtime directories', async () => {
       await configLoader.ensureDirectories(configPath);
 
-      // Check runtime directories exist
+      // Check runtime directories exist (FUNC-105 compliant)
       expect(fs.existsSync(path.join(configPath, 'logs'))).toBe(true);
       expect(fs.existsSync(path.join(configPath, 'data'))).toBe(true);
       expect(fs.existsSync(path.join(configPath, 'temp'))).toBe(true);
-      expect(fs.existsSync(path.join(configPath, 'cache'))).toBe(true);
+      expect(fs.existsSync(path.join(configPath, 'runtime'))).toBe(true);
     });
 
     it('should handle existing directories gracefully', async () => {
@@ -51,7 +51,7 @@ describe('ConfigLoader - Initialization', () => {
       expect(fs.existsSync(path.join(configPath, 'logs'))).toBe(true);
       expect(fs.existsSync(path.join(configPath, 'data'))).toBe(true);
       expect(fs.existsSync(path.join(configPath, 'temp'))).toBe(true);
-      expect(fs.existsSync(path.join(configPath, 'cache'))).toBe(true);
+      expect(fs.existsSync(path.join(configPath, 'runtime'))).toBe(true);
     });
 
     it('should handle permission errors gracefully', async () => {

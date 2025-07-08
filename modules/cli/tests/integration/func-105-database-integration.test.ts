@@ -9,5 +9,5 @@
 
 // This file serves as the main test suite entry point
 // Individual test modules are split for better maintainability
-import './func-105-setup-flow.test';
-import './func-105-config-loading.test';
+import './func-105-setup-flow.test.ts';
+import './func-105-config-loading.test.ts';
