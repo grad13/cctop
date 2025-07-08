@@ -1,26 +1,39 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { DatabaseAdapterFunc000 } from '../../../src/database/database-adapter-func000';
-import { DatabaseTestSetup } from '../../functional/database/test-helpers/database-test-setup';
+import { Database } from '../../../../daemon/src/database/database';
+import * as fs from 'fs';
+import * as path from 'path';
+import * as os from 'os';
 
 describe('Filter Processing Order', () => {
   let adapter: DatabaseAdapterFunc000;
   let dbPath: string;
-  let testSetup: DatabaseTestSetup;
+  let testDir: string;
+  let daemonDb: Database;
 
   beforeEach(async () => {
-    testSetup = new DatabaseTestSetup();
-    const { testDir, dbPath: testDbPath } = testSetup.createTestEnvironment();
-    adapter = new DatabaseAdapterFunc000(testDbPath);
-    dbPath = testDbPath;
-    await testSetup.createTestDatabase(adapter);
+    // Create test environment
+    testDir = fs.mkdtempSync(path.join(os.tmpdir(), 'cctop-filter-test-'));
+    dbPath = path.join(testDir, 'test-activity.db');
+    
+    // Create FUNC-000 compliant database using daemon Database class
+    daemonDb = new Database(dbPath);
+    await daemonDb.connect();
+    
+    // Now create CLI adapter for read-only access
+    adapter = new DatabaseAdapterFunc000(dbPath);
+    await adapter.connect();
   });
 
   afterEach(async () => {
     if (adapter) {
       await adapter.disconnect();
     }
-    if (testSetup) {
-      testSetup.cleanupTestEnvironment();
+    if (daemonDb) {
+      await daemonDb.close();
+    }
+    if (testDir && fs.existsSync(testDir)) {
+      fs.rmSync(testDir, { recursive: true, force: true });
     }
   });
 
@@ -29,34 +42,34 @@ describe('Filter Processing Order', () => {
       // テストデータ作成：削除されたファイルと生存しているファイル
       const testEvents = [
         // File 1: Created → Modified → Deleted (削除されたファイル)
-        { file_id: 1, file_name: 'deleted-file.txt', event_type: 'Create', timestamp: '2025-01-01 10:00:00' },
-        { file_id: 1, file_name: 'deleted-file.txt', event_type: 'Modify', timestamp: '2025-01-01 10:01:00' },
-        { file_id: 1, file_name: 'deleted-file.txt', event_type: 'Delete', timestamp: '2025-01-01 10:02:00' },
+        { file_id: 1, file_name: 'deleted-file.txt', event_type: 'create', timestamp: '2025-01-01 10:00:00' },
+        { file_id: 1, file_name: 'deleted-file.txt', event_type: 'modify', timestamp: '2025-01-01 10:01:00' },
+        { file_id: 1, file_name: 'deleted-file.txt', event_type: 'delete', timestamp: '2025-01-01 10:02:00' },
         
         // File 2: Created → Modified (生存しているファイル)
-        { file_id: 2, file_name: 'active-file.txt', event_type: 'Create', timestamp: '2025-01-01 10:00:00' },
-        { file_id: 2, file_name: 'active-file.txt', event_type: 'Modify', timestamp: '2025-01-01 10:01:00' },
+        { file_id: 2, file_name: 'active-file.txt', event_type: 'create', timestamp: '2025-01-01 10:00:00' },
+        { file_id: 2, file_name: 'active-file.txt', event_type: 'modify', timestamp: '2025-01-01 10:01:00' },
         
         // File 3: Created only (生存しているファイル)
-        { file_id: 3, file_name: 'new-file.txt', event_type: 'Create', timestamp: '2025-01-01 10:00:00' },
+        { file_id: 3, file_name: 'new-file.txt', event_type: 'create', timestamp: '2025-01-01 10:00:00' },
       ];
 
       // データベースにテストデータを挿入
-      await insertTestEvents(adapter, testEvents);
+      await insertTestEvents(daemonDb, testEvents);
 
       // Delete eventを除外したフィルターでテスト
-      const resultWithDeleteFilter = await adapter.getEvents({
+      const resultWithDeleteFilter = await adapter.searchEvents({
         keyword: '',
-        filters: ['Create', 'Modify'], // Delete除外
+        filters: ['Create', 'Modify'], // Delete除外（大文字に修正）
         mode: 'unique',
         limit: 100,
         offset: 0
       });
 
       // 全イベントタイプを含むフィルターでテスト
-      const resultWithoutDeleteFilter = await adapter.getEvents({
+      const resultWithoutDeleteFilter = await adapter.searchEvents({
         keyword: '',
-        filters: ['Create', 'Modify', 'Delete'], // 全て含む
+        filters: ['Create', 'Modify', 'Delete'], // 全て含む（大文字に修正）
         mode: 'unique',
         limit: 100,
         offset: 0
@@ -83,17 +96,17 @@ describe('Filter Processing Order', () => {
     it('should maintain correct order after filter processing', async () => {
       const testEvents = [
         // 複数ファイルの複雑な履歴
-        { file_id: 1, file_name: 'file1.txt', event_type: 'Create', timestamp: '2025-01-01 09:00:00' },
-        { file_id: 2, file_name: 'file2.txt', event_type: 'Create', timestamp: '2025-01-01 10:00:00' },
-        { file_id: 1, file_name: 'file1.txt', event_type: 'Delete', timestamp: '2025-01-01 11:00:00' },
-        { file_id: 3, file_name: 'file3.txt', event_type: 'Create', timestamp: '2025-01-01 12:00:00' },
+        { file_id: 1, file_name: 'file1.txt', event_type: 'create', timestamp: '2025-01-01 09:00:00' },
+        { file_id: 2, file_name: 'file2.txt', event_type: 'create', timestamp: '2025-01-01 10:00:00' },
+        { file_id: 1, file_name: 'file1.txt', event_type: 'delete', timestamp: '2025-01-01 11:00:00' },
+        { file_id: 3, file_name: 'file3.txt', event_type: 'create', timestamp: '2025-01-01 12:00:00' },
       ];
 
-      await insertTestEvents(adapter, testEvents);
+      await insertTestEvents(daemonDb, testEvents);
 
-      const result = await adapter.getEvents({
+      const result = await adapter.searchEvents({
         keyword: '',
-        filters: ['Create', 'Modify'], // Delete除外
+        filters: ['Create', 'Modify'], // Delete除外（大文字に修正）
         mode: 'unique',
         limit: 100,
         offset: 0
@@ -110,22 +123,22 @@ describe('Filter Processing Order', () => {
   describe('Edge Cases', () => {
     it('should handle files with only delete events', async () => {
       const testEvents = [
-        { file_id: 1, file_name: 'only-delete.txt', event_type: 'Delete', timestamp: '2025-01-01 10:00:00' },
+        { file_id: 1, file_name: 'only-delete.txt', event_type: 'delete', timestamp: '2025-01-01 10:00:00' },
       ];
 
-      await insertTestEvents(adapter, testEvents);
+      await insertTestEvents(daemonDb, testEvents);
 
-      const resultWithDeleteFilter = await adapter.getEvents({
+      const resultWithDeleteFilter = await adapter.searchEvents({
         keyword: '',
-        filters: ['Create', 'Modify'], // Delete除外
+        filters: ['Create', 'Modify'], // Delete除外（大文字に修正）
         mode: 'unique',
         limit: 100,
         offset: 0
       });
 
-      const resultWithoutDeleteFilter = await adapter.getEvents({
+      const resultWithoutDeleteFilter = await adapter.searchEvents({
         keyword: '',
-        filters: ['Create', 'Modify', 'Delete'], // 全て含む
+        filters: ['Create', 'Modify', 'Delete'], // 全て含む（大文字に修正）
         mode: 'unique',
         limit: 100,
         offset: 0
@@ -137,37 +150,34 @@ describe('Filter Processing Order', () => {
   });
 });
 
-// テストデータ挿入ヘルパー関数
-async function insertTestEvents(adapter: DatabaseAdapterFunc000, events: any[]) {
-  const db = (adapter as any).db;
-  
-  // event_typesテーブルの準備
-  const eventTypes = ['Create', 'Modify', 'Delete', 'Move', 'Find', 'Restore'];
-  for (const eventType of eventTypes) {
-    await new Promise<void>((resolve, reject) => {
-      db.run(
-        'INSERT OR IGNORE INTO event_types (name) VALUES (?)',
-        [eventType],
-        (err: Error | null) => {
-          if (err) reject(err);
-          else resolve();
-        }
-      );
-    });
-  }
-
-  // eventsテーブルにデータ挿入
+// テストデータ挿入ヘルパー関数（FUNC-000準拠）
+async function insertTestEvents(daemonDb: Database, events: any[]) {
   for (const event of events) {
-    await new Promise<void>((resolve, reject) => {
-      db.run(
-        `INSERT INTO events (file_id, file_name, directory, event_type_id, timestamp) 
-         VALUES (?, ?, ?, (SELECT id FROM event_types WHERE name = ?), ?)`,
-        [event.file_id, event.file_name, '/test', event.event_type, event.timestamp],
-        (err: Error | null) => {
-          if (err) reject(err);
-          else resolve();
-        }
-      );
-    });
+    try {
+      // FileEventオブジェクトを作成（eventType小文字確認）
+      const eventTypeLower = event.event_type.toLowerCase();
+      const fileEvent = {
+        eventType: eventTypeLower as 'find' | 'create' | 'modify' | 'delete' | 'move' | 'restore',
+        filePath: `/test/${event.file_name}`,
+        directory: '/test',
+        fileName: event.file_name,
+        timestamp: new Date(event.timestamp),
+        inode: event.file_id + 1000 // file_idからinodeを生成
+      };
+
+      // EventMeasurementオブジェクトを作成
+      const measurement = {
+        inode: event.file_id + 1000,
+        fileSize: 1024,
+        lineCount: 50,
+        blockCount: 5
+      };
+
+      // daemon Databaseクラスを使用してFUNC-000準拠でデータ挿入
+      await daemonDb.insertEvent(fileEvent, measurement);
+    } catch (error) {
+      console.error(`Failed to insert event for ${event.file_name}:`, error);
+      throw error;
+    }
   }
 }
