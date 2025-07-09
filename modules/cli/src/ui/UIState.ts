@@ -1,54 +1,49 @@
 /**
  * UI State Management
- * Manages display state, filters, and search functionality
+ * Simplified state management for display, filters, and search
  */
 
 import { EventRow } from '../types/event-row';
-import { SearchResultCache } from './SearchResultCache';
-import { KeywordSearchManager } from '../search';
+import { EventTypeFilterFlags } from './EventTypeFilterFlags';
 
 // FUNC-202 Display States
-export type DisplayState = 'normal' | 'filter' | 'search' | 'paused';
-
-// Event types
-export type EventType = 'find' | 'create' | 'modify' | 'delete' | 'move' | 'restore';
+export type DisplayState = 'stream_live' | 'event_type_filter' | 'keyword_filter' | 'stream_paused' | 'detail';
 
 // Display modes
 export type DisplayMode = 'all' | 'unique';
 
 export class UIState {
-  private displayState: DisplayState = 'normal';
-  private isPaused: boolean = false;
-  private displayMode: DisplayMode = 'all';
-  private previousDisplayMode: DisplayMode = 'all';
-  private searchText: string = '';
-  private eventFilters: Set<EventType> = new Set<EventType>(['find', 'create', 'modify', 'delete', 'move', 'restore']);
-  private events: EventRow[] = [];
+  // Current state
+  displayMode: DisplayMode = 'all';
+  eventTypeFilters = new EventTypeFilterFlags();
+  searchPattern: string = '';  // Regular expression pattern
+  displayState: DisplayState = 'stream_live';
+  
+  // Temporary saved state for ESC functionality
+  private savedState?: {
+    displayMode: DisplayMode;
+    eventTypeFilters: EventTypeFilterFlags;
+    searchPattern: string;
+  };
+  
+  // Current event data (after filtering)
+  events: EventRow[] = [];
+  
+  // UI state
   private selectedIndex: number = 0;
   private daemonStatus: string = '{yellow-fg}Daemon: ●CHECKING{/yellow-fg}';
-
+  
   // FUNC-204: Dynamic width config
   private directoryWidth: number = 20;
   
   // Viewport management for scrolling
   private viewportStartIndex: number = 0;
   private viewportHeight: number = 20;  // Will be updated based on terminal size
-
-  // FUNC-202 v0.3.4.0: LRU search result cache (max 3 entries)
-  private searchCache: SearchResultCache = new SearchResultCache(3);
-  private isSearchApplied: boolean = false; // Flag for DB search vs local search
   
   // Dynamic loading state
   private hasMoreData: boolean = true;
   private isLoadingMore: boolean = false;
   private totalLoaded: number = 0;
-  
-  // Search base events - snapshot captured when entering search mode for local filtering
-  private searchBaseEvents: EventRow[] = [];
-  
-  // FUNC-202: State backup for ESC/Enter functionality
-  private savedEventFilters: Set<EventType> | null = null;
-  private savedSearchText: string | null = null;
 
   constructor(displayMode: DisplayMode = 'all') {
     this.displayMode = displayMode;
@@ -63,18 +58,13 @@ export class UIState {
     this.displayState = state;
   }
 
-  isNormalOrPaused(): boolean {
-    return this.displayState === 'normal' || this.displayState === 'paused';
-  }
-
   // Pause State
   isPausedState(): boolean {
-    return this.isPaused;
+    return this.displayState === 'stream_paused';
   }
 
   togglePause(): void {
-    this.isPaused = !this.isPaused;
-    this.displayState = this.isPaused ? 'paused' : 'normal';
+    this.displayState = this.displayState === 'stream_paused' ? 'stream_live' : 'stream_paused';
   }
 
   // Display Mode
@@ -83,65 +73,62 @@ export class UIState {
   }
 
   setDisplayMode(mode: DisplayMode): void {
-    this.previousDisplayMode = this.displayMode;
     this.displayMode = mode;
-    // Invalidate LRU search cache on mode switch (all/unique affects results)
-    this.searchCache.invalidate();
-    this.isSearchApplied = false;
     // Reset UI state for clean mode transition
     this.selectedIndex = 0;
     this.viewportStartIndex = 0;
     this.hasMoreData = true; // Allow fresh data loading
   }
+
+  // Search Pattern
+  getSearchPattern(): string {
+    return this.searchPattern;
+  }
   
-  getPreviousDisplayMode(): DisplayMode {
-    return this.previousDisplayMode;
-  }
-
-  // Search Text
+  // For backward compatibility with modules expecting getSearchText
   getSearchText(): string {
-    return this.searchText;
+    return this.searchPattern;
   }
 
-  setSearchText(text: string): void {
-    this.searchText = text;
+  setSearchPattern(pattern: string): void {
+    this.searchPattern = pattern;
   }
 
-  clearSearchText(): void {
-    this.searchText = '';
+  clearSearchPattern(): void {
+    this.searchPattern = '';
   }
 
-  appendToSearchText(char: string): void {
-    this.searchText += char;
-    // Reset DB search flag to enable local search during typing
-    this.isSearchApplied = false;
+  appendToSearchPattern(char: string): void {
+    this.searchPattern += char;
   }
 
-  backspaceSearchText(): void {
-    this.searchText = this.searchText.slice(0, -1);
-    // Reset DB search flag to enable local search during typing
-    this.isSearchApplied = false;
+  backspaceSearchPattern(): void {
+    this.searchPattern = this.searchPattern.slice(0, -1);
   }
 
-  // Event Filters
-  getEventFilters(): Set<EventType> {
-    return this.eventFilters;
+  // Event Type Filters
+  getEventTypeFilters(): EventTypeFilterFlags {
+    return this.eventTypeFilters;
   }
 
-  hasEventFilter(eventType: EventType): boolean {
-    return this.eventFilters.has(eventType);
-  }
-
-  toggleEventFilter(eventType: EventType): void {
-    if (this.eventFilters.has(eventType)) {
-      this.eventFilters.delete(eventType);
-    } else {
-      this.eventFilters.add(eventType);
-    }
+  toggleEventFilter(eventType: string): void {
+    this.eventTypeFilters.toggleEventType(eventType);
   }
 
   resetEventFilters(): void {
-    this.eventFilters = new Set(['find', 'create', 'modify', 'delete', 'move', 'restore']);
+    this.eventTypeFilters.resetAll();
+  }
+  
+  // For backward compatibility
+  hasEventFilter(eventType: string): boolean {
+    return this.eventTypeFilters.isEventTypeEnabled(eventType);
+  }
+
+  // Reset all filters
+  resetAllFilters(): void {
+    this.displayMode = 'all';
+    this.eventTypeFilters.resetAll();
+    this.searchPattern = '';
   }
 
   // Events
@@ -151,25 +138,18 @@ export class UIState {
 
   setEvents(events: EventRow[]): void {
     const previousEventCount = this.events.length;
-    const previousSelectedIndex = this.selectedIndex;
     this.events = events;
     
     // Only reset selection if it's out of bounds
     if (this.selectedIndex >= events.length && events.length > 0) {
-      // Only adjust if we're truly out of bounds
       this.selectedIndex = events.length - 1;
     } else if (events.length === 0) {
       this.selectedIndex = -1;
     }
-    // Otherwise, keep the current selection index
     
     // Preserve viewport position unless we're starting fresh
     if (previousEventCount === 0 || events.length === 0) {
       this.viewportStartIndex = 0;
-    }
-    
-    // Debug log for selection changes
-    if (previousSelectedIndex !== this.selectedIndex) {
     }
     
     this.adjustViewport();
@@ -177,14 +157,6 @@ export class UIState {
 
   getEventsCount(): number {
     return this.events.length;
-  }
-  
-  getSearchBaseEvents(): EventRow[] {
-    return this.searchBaseEvents;
-  }
-  
-  clearSearchBaseEvents(): void {
-    this.searchBaseEvents = [];
   }
 
   // Selected Index
@@ -202,11 +174,9 @@ export class UIState {
   }
 
   moveSelectionDown(): void {
-    // Prevent wrapping to top when at bottom
     if (this.selectedIndex < this.events.length - 1) {
       this.selectedIndex++;
       this.adjustViewport();
-    } else {
     }
   }
 
@@ -228,86 +198,31 @@ export class UIState {
     this.directoryWidth = width;
   }
 
-  // Mode Operations
-  enterFilterMode(): void {
-    // FUNC-202: Save current state before entering filter mode
-    this.saveCurrentState();
-    this.displayState = 'filter';
+  // Filter editing start
+  startEditing(mode: 'event_type_filter' | 'keyword_filter'): void {
+    this.savedState = {
+      displayMode: this.displayMode,
+      eventTypeFilters: this.eventTypeFilters.clone(),
+      searchPattern: this.searchPattern
+    };
+    this.displayState = mode;
   }
 
-  enterSearchMode(): void {
-    // FUNC-202: Save current state before entering search mode
-    this.saveCurrentState();
-    this.displayState = 'search';
-    // Keep existing searchText to preserve previously confirmed keywords
-    this.isSearchApplied = false;  // Reset DB search flag for local search
-    // Capture current events as search base
-    this.searchBaseEvents = [...this.events];
-  }
-
-  exitSpecialMode(): void {
-    if (this.displayState === 'filter' || this.displayState === 'search') {
-      // Clear search text when exiting search mode
-      if (this.displayState === 'search') {
-        this.clearSearchText();
-        this.clearSearchBaseEvents();  // Clear search base
-      }
-      this.displayState = this.isPaused ? 'paused' : 'normal';
-    } else {
-      // Clear filters and search, reset to all mode
-      this.resetEventFilters();
-      this.clearSearchText();
-      this.displayMode = 'all';  // Reset to all mode
+  // ESC: Cancel editing and restore saved state
+  cancelEditing(): void {
+    if (this.savedState) {
+      this.displayMode = this.savedState.displayMode;
+      this.eventTypeFilters = this.savedState.eventTypeFilters;
+      this.searchPattern = this.savedState.searchPattern;
+      this.savedState = undefined;
     }
-    // Clear LRU search cache on ESC (fresh start)
-    this.searchCache.invalidate();
-    this.isSearchApplied = false;
+    this.displayState = 'stream_live';
   }
 
-  applySearch(): void {
-    // Apply search and return to normal mode
-    this.displayState = this.isPaused ? 'paused' : 'normal';
-    this.isSearchApplied = true;
-    this.clearSearchBaseEvents();  // Clear search base after applying
-  }
-
-  // Filter Events
-  applyFilters(events: EventRow[]): EventRow[] {
-    let filteredEvents = events;
-
-    // Apply event type filters
-    if (this.eventFilters.size < 6) {
-      filteredEvents = filteredEvents.filter(event => 
-        this.eventFilters.has(event.event_type.toLowerCase() as EventType)
-      );
-    }
-
-    // FUNC-209: Local search with multi-keyword support - only apply if not DB search
-    if (this.searchText && !this.isSearchApplied) {
-      filteredEvents = KeywordSearchManager.performLocalSearch(filteredEvents, this.searchText);
-    }
-
-    return filteredEvents;
-  }
-
-  // LRU search cache access for database search results
-  getSearchCache(): SearchResultCache {
-    return this.searchCache;
-  }
-
-  isDbSearchApplied(): boolean {
-    return this.isSearchApplied;
-  }
-
-  resetDbSearchFlag(): void {
-    this.isSearchApplied = false;
-  }
-
-  getActiveFilters(): string[] {
-    // Convert to database format (capitalize first letter)
-    return Array.from(this.eventFilters).map(filter => 
-      filter.charAt(0).toUpperCase() + filter.slice(1)
-    );
+  // Enter: Confirm editing
+  confirmEditing(): void {
+    this.savedState = undefined;
+    this.displayState = 'stream_live';
   }
 
   // Dynamic loading state
@@ -341,22 +256,13 @@ export class UIState {
     return this.selectedIndex >= this.events.length - buffer;
   }
 
-  /**
-   * Check if the screen is filled with data
-   * Returns true if we have enough events to fill the viewport
-   */
   isScreenFilled(): boolean {
     return this.events.length >= this.viewportHeight;
   }
 
-  /**
-   * Determine if we should load more data based on screen fill state and selection position
-   * - If screen is not filled: always load more (regardless of selection position)
-   * - If screen is filled: only load more when near bottom
-   */
   shouldLoadMoreData(): boolean {
-    // Don't load in search mode or DB search mode
-    if (this.displayState === 'search' || this.isSearchApplied) {
+    // Don't load in filter/search modes
+    if (this.displayState === 'event_type_filter' || this.displayState === 'keyword_filter') {
       return false;
     }
 
@@ -365,25 +271,22 @@ export class UIState {
       return false;
     }
 
-    // If screen is not filled, always load more (auto-fill strategy)
+    // If screen is not filled, always load more
     if (!this.isScreenFilled()) {
       return true;
     }
 
-    // If screen is filled, only load when near bottom (scroll strategy)
+    // If screen is filled, only load when near bottom
     return this.isNearBottom();
   }
 
   // Calculate Dynamic Width
   calculateDynamicWidth(): void {
-    // FUNC-204: Dynamic width calculation
     const terminalWidth = process.stdout.columns || 80;
-    // FUNC-202 v0.3.2.0: Fixed columns: Timestamp(19) + Elapsed(9) + FileName(35) + Event(8) + Lines(6) + Blocks(8) + Size(7) + spaces(15) = 107
     const fixedWidth = 107;
     this.directoryWidth = Math.max(10, terminalWidth - fixedWidth);
     
     // Also update viewport height based on terminal size
-    // Header (3) + separator (1) + control area (3) = 7 lines reserved
     const terminalHeight = process.stdout.rows || 24;
     this.viewportHeight = Math.max(1, terminalHeight - 7);
   }
@@ -421,52 +324,42 @@ export class UIState {
   }
   
   isTopRowVisible(): boolean {
-    // Check if the first row (index 0) is within the viewport
     return this.viewportStartIndex === 0;
   }
 
   getRelativeSelectedIndex(): number {
-    // Return selected index relative to viewport
     return this.selectedIndex - this.viewportStartIndex;
   }
 
-  // FUNC-202: State backup and restore methods for ESC/Enter functionality
-  private saveCurrentState(): void {
-    this.savedEventFilters = new Set(this.eventFilters);
-    this.savedSearchText = this.searchText;
-  }
+  // Apply filters to events (for UI display)
+  applyFilters(events: EventRow[]): EventRow[] {
+    let filteredEvents = events;
 
-  restorePreviousState(): void {
-    // FUNC-202: ESC behavior - discard edits and restore previous state
-    if (this.savedEventFilters !== null) {
-      // Restore saved state for filter/search modes
-      this.eventFilters = new Set(this.savedEventFilters);
-    } else if (this.displayState === 'normal' || this.displayState === 'paused') {
-      // FUNC-202: In normal mode, ESC resets all filters
-      this.resetEventFilters();
+    // Apply event type filters
+    if (this.eventTypeFilters.countActiveFilters() < 6) {
+      filteredEvents = filteredEvents.filter(event => 
+        this.eventTypeFilters.isEventTypeEnabled(event.event_type)
+      );
     }
-    
-    if (this.savedSearchText !== null) {
-      this.searchText = this.savedSearchText;
-    } else if (this.displayState === 'normal' || this.displayState === 'paused') {
-      // Clear search text in normal mode
-      this.searchText = '';
+
+    // Apply regex pattern filter
+    if (this.searchPattern) {
+      try {
+        const regex = new RegExp(this.searchPattern);
+        filteredEvents = filteredEvents.filter(event => 
+          regex.test(event.filename || '')
+        );
+      } catch (e) {
+        // Invalid regex - return empty array
+        return [];
+      }
     }
-    
-    this.clearSavedState();
-    this.displayState = this.isPaused ? 'paused' : 'normal';
-    this.clearSearchBaseEvents();
+
+    return filteredEvents;
   }
 
-  confirmCurrentState(): void {
-    // FUNC-202: Enter behavior - keep edits and overwrite state
-    this.clearSavedState();
-    this.displayState = this.isPaused ? 'paused' : 'normal';
-    // Don't clear searchBaseEvents here - keep them for continued search filtering
-  }
-
-  private clearSavedState(): void {
-    this.savedEventFilters = null;
-    this.savedSearchText = null;
+  // Get active filters for database query
+  getActiveFilters(): string[] {
+    return this.eventTypeFilters.getActiveFilters();
   }
 }

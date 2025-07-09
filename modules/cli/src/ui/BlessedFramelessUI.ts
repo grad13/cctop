@@ -218,7 +218,7 @@ export class BlessedFramelessUISimple {
         }
         
         // Skip refresh if we have filters and no more data
-        const hasFilters = this.uiState.getEventFilters().size < 6;
+        const hasFilters = this.uiState.getEventTypeFilters().countActiveFilters() < 6;
         const hasNoMoreData = !this.uiState.hasMoreDataToLoad();
         if (hasFilters && hasNoMoreData) {
           return;

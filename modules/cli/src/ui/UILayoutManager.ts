@@ -4,7 +4,7 @@
  */
 
 import * as blessed from 'blessed';
-import { UIState, EventType } from './UIState';
+import { UIState } from './UIState';
 import { KeywordSearchManager } from '../search';
 
 export class UILayoutManager {
@@ -141,9 +141,9 @@ export class UILayoutManager {
     let header = `{bold}cctop v1.0.0.0 ${this.uiState.getDaemonStatus()}`;
     
     // Add keyword status if keyword is active
-    const searchText = this.uiState.getSearchText();
-    if (searchText) {
-      const normalizedText = KeywordSearchManager.getDisplayText(searchText);
+    const searchPattern = this.uiState.getSearchPattern();
+    if (searchPattern) {
+      const normalizedText = KeywordSearchManager.getDisplayText(searchPattern);
       header += ` │ Keyword: ${normalizedText}`;
     }
     
@@ -156,8 +156,17 @@ export class UILayoutManager {
   buildCommandLine1(): string {
     const pauseText = this.uiState.isPausedState() ? 'Resume' : 'Pause';
     const displayMode = this.uiState.getDisplayMode();
+    const isSearchMode = this.uiState.getDisplayState() === 'keyword_filter';
     
-    // Highlight currently selected mode with green color styling (same as Daemon status)
+    // In search mode, gray out all commands except selected All/Unique stays green
+    if (isSearchMode) {
+      const allText = displayMode === 'all' ? '{green-fg}[a] All{/green-fg}' : '{gray-fg}[a] All{/gray-fg}';
+      const uniqueText = displayMode === 'unique' ? '{green-fg}[u] Unique{/green-fg}' : '{gray-fg}[u] Unique{/gray-fg}';
+      
+      return `{gray-fg}[q] Exit  [space] ${pauseText}  [x] Refresh{/gray-fg}  ${allText}  ${uniqueText}`;
+    }
+    
+    // Normal mode: regular display
     const allText = displayMode === 'all' ? '{green-fg}[a] All{/green-fg}' : '[a] All';
     const uniqueText = displayMode === 'unique' ? '{green-fg}[u] Unique{/green-fg}' : '[u] Unique';
     
@@ -169,12 +178,12 @@ export class UILayoutManager {
     const displayState = this.uiState.getDisplayState();
     
     switch (displayState) {
-      case 'filter':
-      case 'search':
+      case 'event_type_filter':
+      case 'keyword_filter':
         return '[Enter] Confirm Filter [ESC] Cancel Back [↑↓] Select an Event';
       
-      case 'normal':
-      case 'paused':
+      case 'stream_live':
+      case 'stream_paused':
       default:
         return '[ESC] Reset All Filters [↑↓] Select an Event';
     }
@@ -183,21 +192,21 @@ export class UILayoutManager {
   buildDynamicControlContent(): string {
     // FUNC-202: Dynamic Control Area - changes based on state
     const displayState = this.uiState.getDisplayState();
-    const searchText = this.uiState.getSearchText();
+    const searchPattern = this.uiState.getSearchPattern();
     
     switch (displayState) {
-      case 'filter':
+      case 'event_type_filter':
         return this.buildFilterModeDisplay();
       
-      case 'search':
-        const normalizedSearchText = KeywordSearchManager.getDisplayText(searchText);
+      case 'keyword_filter':
+        const normalizedSearchText = KeywordSearchManager.getDisplayText(searchPattern);
         const maxSearchLength = 40;
         const paddingLength = Math.max(0, maxSearchLength - normalizedSearchText.length);
         const padding = '_'.repeat(paddingLength);
         return `{bold}{yellow-fg}Keyword: [${normalizedSearchText}${padding}] [Shift+Enter] Search DB{/yellow-fg}{/bold}`;
       
-      case 'normal':
-      case 'paused':
+      case 'stream_live':
+      case 'stream_paused':
       default:
         // Always show the same message regardless of keyword status (keyword is shown in header)
         return '{bold}{yellow-fg}[f] Event-Type Filter  [/] Keyword Filter{/yellow-fg}{/bold}';
@@ -205,7 +214,7 @@ export class UILayoutManager {
   }
 
   buildFilterModeDisplay(): string {
-    const FILTER_KEY_MAP: { [key: string]: EventType } = {
+    const FILTER_KEY_MAP: { [key: string]: string } = {
       'f': 'find',
       'c': 'create',
       'm': 'modify',
@@ -216,7 +225,7 @@ export class UILayoutManager {
 
     const filterItems = Object.entries(FILTER_KEY_MAP).map(([key, type]) => {
       const label = type.charAt(0).toUpperCase() + type.slice(1);
-      const isEnabled = this.uiState.hasEventFilter(type);
+      const isEnabled = this.uiState.getEventTypeFilters().isEventTypeEnabled(type);
       
       if (isEnabled) {
         // Active filters: bold yellow

@@ -4,4 +4,4 @@
  */
 
 export { BlessedFramelessUISimple, UIFramelessConfigSimple } from './BlessedFramelessUI';
-export { DisplayState, EventType, DisplayMode } from './UIState';
+export { DisplayState, DisplayMode } from './UIState';

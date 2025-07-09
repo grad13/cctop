@@ -4,7 +4,7 @@
  */
 
 import * as blessed from 'blessed';
-import { UIState, EventType } from './UIState';
+import { UIState } from './UIState';
 
 export class UIKeyHandler {
   private screen: blessed.Widgets.Screen;
@@ -19,7 +19,7 @@ export class UIKeyHandler {
   private searchDebounceTimer?: NodeJS.Timeout;
   private readonly SEARCH_DEBOUNCE_MS = 300; // 300ms delay
 
-  private readonly FILTER_KEY_MAP: { [key: string]: EventType } = {
+  private readonly FILTER_KEY_MAP: { [key: string]: string } = {
     'f': 'find',
     'c': 'create',
     'm': 'modify',
@@ -53,7 +53,6 @@ export class UIKeyHandler {
   }
 
   setupKeyHandlers(): void {
-    
     this.setupGlobalKeys();
     this.setupModeKeys();
     this.setupFilterKeys();
@@ -61,91 +60,118 @@ export class UIKeyHandler {
   }
 
   private setupGlobalKeys(): void {
-    // Exit
-    this.screen.key(['q', 'C-c'], () => {
+    // Exit - q is disabled in search mode, but C-c always works
+    this.screen.key(['q'], () => {
+      if (this.uiState.getDisplayState() !== 'keyword_filter') {
+        this.stopCallback();
+        process.exit(0);
+      }
+    });
+    
+    this.screen.key(['C-c'], () => {
       this.stopCallback();
       process.exit(0);
     });
 
-    // Escape - FUNC-202: discard edits and restore previous state
+    // Escape - handle based on current mode
     this.screen.key(['escape'], () => {
-      this.discardEditsAndRestorePrevious();
+      const state = this.uiState.getDisplayState();
+      
+      if (state === 'event_type_filter' || state === 'keyword_filter') {
+        // Edit mode: cancel editing
+        this.uiState.cancelEditing();
+        this.updateDynamicControlCallback();
+        this.updateStatusBarCallback();
+        this.screen.render();
+        this.refreshDataCallback();
+      } else if (state === 'stream_live' || state === 'stream_paused') {
+        // Normal mode: reset all filters
+        this.uiState.resetAllFilters();
+        this.updateDynamicControlCallback();
+        this.updateStatusBarCallback();
+        this.screen.render();
+        this.refreshDataCallback();
+      }
     });
-    
-    // Note: Backspace handling is done in keypress event for search mode
 
     // Manual refresh
     this.screen.key(['x'], () => {
-      this.refreshDataCallback();
+      if (this.uiState.getDisplayState() !== 'keyword_filter') {
+        this.refreshDataCallback();
+      }
     });
 
     // Pause/Resume
     this.screen.key(['space'], () => {
-      this.togglePause();
+      if (this.uiState.getDisplayState() !== 'keyword_filter') {
+        this.togglePause();
+      }
     });
   }
 
   private setupModeKeys(): void {
     // Filter mode toggle
     this.screen.key(['f'], () => {
-      if (this.uiState.isNormalOrPaused()) {
+      const state = this.uiState.getDisplayState();
+      if (state === 'stream_live' || state === 'stream_paused') {
         this.enterFilterMode();
-      } else if (this.uiState.getDisplayState() === 'filter') {
+      } else if (state === 'event_type_filter') {
         this.toggleEventFilter('find');
       }
     });
 
     // Search mode
     this.screen.key(['/'], () => {
-      if (this.uiState.isNormalOrPaused()) {
+      const state = this.uiState.getDisplayState();
+      if (state === 'stream_live' || state === 'stream_paused') {
         this.enterSearchMode();
       }
     });
 
     // Search mode character input
     this.screen.on('keypress', (ch: string, key: any) => {
-      if (this.uiState.getDisplayState() === 'search') {
+      if (this.uiState.getDisplayState() === 'keyword_filter') {
         if (key && key.name === 'backspace') {
-          this.uiState.backspaceSearchText();
+          this.uiState.backspaceSearchPattern();
           this.updateDynamicControlCallback();
-          this.updateStatusBarCallback();  // Update header with keyword
-          this.screen.render();  // Ensure immediate visual update
+          this.updateStatusBarCallback();
+          this.screen.render();
           // Use debounced search
           this.debouncedSearch();
         } else if (ch && ch.length === 1 && !key.ctrl && !key.meta) {
-          this.uiState.appendToSearchText(ch);
+          this.uiState.appendToSearchPattern(ch);
           this.updateDynamicControlCallback();
-          this.updateStatusBarCallback();  // Update header with keyword
-          this.screen.render();  // Ensure immediate visual update
+          this.updateStatusBarCallback();
+          this.screen.render();
           // Use debounced search
           this.debouncedSearch();
         }
       }
     });
 
-    // FUNC-202: Enter - confirm filter/search and overwrite state
+    // Enter - confirm editing
     this.screen.key(['enter'], () => {
-      if (this.uiState.getDisplayState() === 'search') {
-        this.confirmSearch();
-      } else if (this.uiState.getDisplayState() === 'filter') {
-        this.confirmFilter();
-      }
-    });
-
-    // FUNC-202: Shift+Enter - execute DB search (search mode only)
-    this.screen.key(['S-enter'], () => {
-      if (this.uiState.getDisplayState() === 'search') {
-        this.executeDbSearch();
+      const state = this.uiState.getDisplayState();
+      if (state === 'event_type_filter' || state === 'keyword_filter') {
+        this.uiState.confirmEditing();
+        this.updateDynamicControlCallback();
+        this.updateStatusBarCallback();
+        this.screen.render();
+        this.refreshDataCallback();
       }
     });
 
     // Display mode switching
     this.screen.key(['a'], () => {
-      this.switchDisplayMode('all');
+      if (this.uiState.getDisplayState() !== 'keyword_filter') {
+        this.switchDisplayMode('all');
+      }
     });
 
     this.screen.key(['u'], () => {
-      this.switchDisplayMode('unique');
+      if (this.uiState.getDisplayState() !== 'keyword_filter') {
+        this.switchDisplayMode('unique');
+      }
     });
   }
 
@@ -155,7 +181,7 @@ export class UIKeyHandler {
 
     Object.entries(filterKeyMap).forEach(([key, eventType]) => {
       this.screen.key([key], () => {
-        if (this.uiState.getDisplayState() === 'filter') {
+        if (this.uiState.getDisplayState() === 'event_type_filter') {
           this.toggleEventFilter(eventType);
         }
       });
@@ -163,23 +189,20 @@ export class UIKeyHandler {
   }
 
   private setupNavigationKeys(): void {
-    // Since we're using box instead of list, we need to handle up/down keys manually
+    // Up/down navigation
     this.screen.key(['up', 'k'], () => {
-      // Allow navigation in normal, paused, filter, and search modes
       const state = this.uiState.getDisplayState();
-      if (state === 'normal' || state === 'paused' || state === 'filter' || state === 'search') {
+      if (state !== 'detail') {
         this.uiState.moveSelectionUp();
         this.updateDisplayCallback();
       }
     });
 
     this.screen.key(['down', 'j'], async () => {
-      // Allow navigation in normal, paused, filter, and search modes
       const state = this.uiState.getDisplayState();
-      if (state === 'normal' || state === 'paused' || state === 'filter' || state === 'search') {
+      if (state !== 'detail') {
         const currentIndex = this.uiState.getSelectedIndex();
         const eventsCount = this.uiState.getEventsCount();
-        const hasMore = this.uiState.hasMoreDataToLoad();
         
         // Extra safety check to prevent wrapping
         if (currentIndex >= eventsCount - 1) {
@@ -190,12 +213,11 @@ export class UIKeyHandler {
         this.updateDisplayCallback();
         
         // Check if we need to load more data
-        // Use the new comprehensive load strategy
         if (this.uiState.shouldLoadMoreData()) {
-          // Trigger dynamic loading
           if (this.loadMoreCallback) {
             // Don't await here to prevent blocking the UI
             this.loadMoreCallback().catch(err => {
+              console.error('Load more error:', err);
             });
           }
         }
@@ -205,7 +227,7 @@ export class UIKeyHandler {
     // Home/End keys for quick navigation
     this.screen.key(['home', 'g'], () => {
       const state = this.uiState.getDisplayState();
-      if (state === 'normal' || state === 'paused' || state === 'filter' || state === 'search') {
+      if (state !== 'detail') {
         this.uiState.setSelectedIndex(0);
         this.uiState.adjustViewport();
         this.updateDisplayCallback();
@@ -214,7 +236,7 @@ export class UIKeyHandler {
 
     this.screen.key(['end', 'G'], () => {
       const state = this.uiState.getDisplayState();
-      if (state === 'normal' || state === 'paused' || state === 'filter' || state === 'search') {
+      if (state !== 'detail') {
         const count = this.uiState.getEventsCount();
         if (count > 0) {
           this.uiState.setSelectedIndex(count - 1);
@@ -227,7 +249,7 @@ export class UIKeyHandler {
     // Page up/down for faster navigation
     this.screen.key(['pageup'], () => {
       const state = this.uiState.getDisplayState();
-      if (state === 'normal' || state === 'paused' || state === 'filter' || state === 'search') {
+      if (state !== 'detail') {
         for (let i = 0; i < 10; i++) {
           this.uiState.moveSelectionUp();
         }
@@ -237,7 +259,7 @@ export class UIKeyHandler {
 
     this.screen.key(['pagedown'], () => {
       const state = this.uiState.getDisplayState();
-      if (state === 'normal' || state === 'paused' || state === 'filter' || state === 'search') {
+      if (state !== 'detail') {
         for (let i = 0; i < 10; i++) {
           this.uiState.moveSelectionDown();
         }
@@ -247,39 +269,21 @@ export class UIKeyHandler {
   }
 
   private enterFilterMode(): void {
-    this.uiState.enterFilterMode();
+    this.uiState.startEditing('event_type_filter');
     this.updateDynamicControlCallback();
     this.updateStatusBarCallback();
     this.screen.render();
   }
 
   private enterSearchMode(): void {
-    this.uiState.enterSearchMode();
+    this.uiState.startEditing('keyword_filter');
     this.updateDynamicControlCallback();
     this.updateStatusBarCallback();
     this.screen.render();
   }
 
-  private exitSpecialMode(): void {
-    this.uiState.exitSpecialMode();
-    this.updateDynamicControlCallback();
-    this.updateStatusBarCallback();
-    this.screen.render();
-    
-    // If filters/search were cleared, refresh data
-    if (this.uiState.getDisplayState() === 'normal' || this.uiState.getDisplayState() === 'paused') {
-      this.refreshDataCallback();
-    }
-  }
-
-  private toggleEventFilter(eventType: EventType): void {
+  private toggleEventFilter(eventType: string): void {
     this.uiState.toggleEventFilter(eventType);
-    this.updateDynamicControlCallback();
-    this.refreshDataCallback(); // Use smart refresh with filter mode detection
-  }
-
-  private applySearch(): void {
-    this.uiState.applySearch();
     this.updateDynamicControlCallback();
     this.refreshDataCallback();
   }
@@ -287,7 +291,6 @@ export class UIKeyHandler {
   private switchDisplayMode(mode: 'all' | 'unique'): void {
     if (this.uiState.getDisplayMode() !== mode) {
       this.uiState.setDisplayMode(mode);
-      // Direct refresh
       this.refreshDataCallback();
     }
   }
@@ -299,7 +302,7 @@ export class UIKeyHandler {
   }
 
   // Getter for filter key map (used by other components)
-  getFilterKeyMap(): { [key: string]: EventType } {
+  getFilterKeyMap(): { [key: string]: string } {
     return this.FILTER_KEY_MAP;
   }
 
@@ -318,47 +321,5 @@ export class UIKeyHandler {
       // Refresh to apply search filter
       this.refreshDataCallback();
     }, this.SEARCH_DEBOUNCE_MS);
-  }
-
-  // FUNC-202: New key handling methods for ESC/Enter functionality
-  private discardEditsAndRestorePrevious(): void {
-    this.uiState.restorePreviousState();
-    this.updateDynamicControlCallback();
-    this.updateStatusBarCallback();
-    this.screen.render();
-    
-    // Refresh data to apply restored state
-    this.refreshDataCallback();
-  }
-
-  private confirmSearch(): void {
-    this.uiState.confirmCurrentState();
-    this.updateDynamicControlCallback();
-    this.updateStatusBarCallback();
-    this.screen.render();
-    
-    // Refresh data to apply search
-    this.refreshDataCallback();
-  }
-
-  private confirmFilter(): void {
-    this.uiState.confirmCurrentState();
-    this.updateDynamicControlCallback();
-    this.updateStatusBarCallback();
-    this.screen.render();
-    
-    // Refresh data to apply filter
-    this.refreshDataCallback();
-  }
-
-  private executeDbSearch(): void {
-    // FUNC-202: Shift+Enter behavior - execute database search
-    this.uiState.applySearch(); // Use existing DB search logic
-    this.updateDynamicControlCallback();
-    this.updateStatusBarCallback();
-    this.screen.render();
-    
-    // Refresh data to apply DB search
-    this.refreshDataCallback();
   }
 }
