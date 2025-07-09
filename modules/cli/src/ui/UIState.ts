@@ -239,7 +239,7 @@ export class UIState {
     // FUNC-202: Save current state before entering search mode
     this.saveCurrentState();
     this.displayState = 'search';
-    this.searchText = '';
+    // Keep existing searchText to preserve previously confirmed keywords
     this.isSearchApplied = false;  // Reset DB search flag for local search
     // Capture current events as search base
     this.searchBaseEvents = [...this.events];
