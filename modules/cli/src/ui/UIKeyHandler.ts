@@ -108,11 +108,15 @@ export class UIKeyHandler {
         if (key && key.name === 'backspace') {
           this.uiState.backspaceSearchText();
           this.updateDynamicControlCallback();
+          this.updateStatusBarCallback();  // Update header with keyword
+          this.screen.render();  // Ensure immediate visual update
           // Use debounced search
           this.debouncedSearch();
         } else if (ch && ch.length === 1 && !key.ctrl && !key.meta) {
           this.uiState.appendToSearchText(ch);
           this.updateDynamicControlCallback();
+          this.updateStatusBarCallback();  // Update header with keyword
+          this.screen.render();  // Ensure immediate visual update
           // Use debounced search
           this.debouncedSearch();
         }

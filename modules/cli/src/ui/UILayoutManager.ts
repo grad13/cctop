@@ -138,7 +138,16 @@ export class UILayoutManager {
 
   buildHeaderContent(): string {
     // FUNC-202: Header Area format
-    let header = `{bold}cctop v1.0.0.0 ${this.uiState.getDaemonStatus()}{/bold}\n`;
+    let header = `{bold}cctop v1.0.0.0 ${this.uiState.getDaemonStatus()}`;
+    
+    // Add keyword status if keyword is active
+    const searchText = this.uiState.getSearchText();
+    if (searchText) {
+      const normalizedText = KeywordSearchManager.getDisplayText(searchText);
+      header += ` │ Keyword: ${normalizedText}`;
+    }
+    
+    header += `{/bold}\n`;
     header += `Event Timestamp      Elapsed  File Name                           Event    Lines  Blocks    Size  Directory\n`;
     header += `${'─'.repeat(Number(this.screen.width) || 180)}`;  // Column header separator line
     return header;
@@ -181,19 +190,16 @@ export class UILayoutManager {
         return this.buildFilterModeDisplay();
       
       case 'search':
+        const normalizedSearchText = KeywordSearchManager.getDisplayText(searchText);
         const maxSearchLength = 40;
-        const paddingLength = Math.max(0, maxSearchLength - searchText.length);
+        const paddingLength = Math.max(0, maxSearchLength - normalizedSearchText.length);
         const padding = '_'.repeat(paddingLength);
-        return `{bold}{yellow-fg}Search: [${searchText}${padding}] [Shift+Enter] Search DB{/yellow-fg}{/bold}`;
+        return `{bold}{yellow-fg}Keyword: [${normalizedSearchText}${padding}] [Shift+Enter] Search DB{/yellow-fg}{/bold}`;
       
       case 'normal':
       case 'paused':
       default:
-        // Check if keyword filter is active
-        if (searchText) {
-          const normalizedText = KeywordSearchManager.getDisplayText(searchText);
-          return `{bold}{yellow-fg}[f] Event-Type Filter  [/] Keyword Filter (current keyword:"${normalizedText}"){/yellow-fg}{/bold}`;
-        }
+        // Always show the same message regardless of keyword status (keyword is shown in header)
         return '{bold}{yellow-fg}[f] Event-Type Filter  [/] Keyword Filter{/yellow-fg}{/bold}';
     }
   }
@@ -243,6 +249,9 @@ export class UILayoutManager {
     
     // Update separator line width
     this.separatorLine.setContent('─'.repeat(Number(this.screen.width) || 80));
+    
+    // Render screen to ensure updates are visible
+    this.screen.render();
   }
 
   updateDisplay(items: string[]): void {
