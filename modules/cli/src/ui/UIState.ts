@@ -439,11 +439,20 @@ export class UIState {
   restorePreviousState(): void {
     // FUNC-202: ESC behavior - discard edits and restore previous state
     if (this.savedEventFilters !== null) {
+      // Restore saved state for filter/search modes
       this.eventFilters = new Set(this.savedEventFilters);
+    } else if (this.displayState === 'normal' || this.displayState === 'paused') {
+      // FUNC-202: In normal mode, ESC resets all filters
+      this.resetEventFilters();
     }
+    
     if (this.savedSearchText !== null) {
       this.searchText = this.savedSearchText;
+    } else if (this.displayState === 'normal' || this.displayState === 'paused') {
+      // Clear search text in normal mode
+      this.searchText = '';
     }
+    
     this.clearSavedState();
     this.displayState = this.isPaused ? 'paused' : 'normal';
     this.clearSearchBaseEvents();
@@ -453,7 +462,7 @@ export class UIState {
     // FUNC-202: Enter behavior - keep edits and overwrite state
     this.clearSavedState();
     this.displayState = this.isPaused ? 'paused' : 'normal';
-    this.clearSearchBaseEvents();
+    // Don't clear searchBaseEvents here - keep them for continued search filtering
   }
 
   private clearSavedState(): void {

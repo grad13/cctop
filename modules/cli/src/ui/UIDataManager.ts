@@ -111,8 +111,9 @@ export class UIDataManager {
         // hasMoreData is set inside performDatabaseSearch
       } else {
         
-        // If in search mode and searching locally, use search base events
-        if (this.uiState.getDisplayState() === 'search' && this.uiState.getSearchText() && !this.uiState.isDbSearchApplied()) {
+        // If searching locally, use search base events
+        // This applies both in search mode and after confirming search (normal mode with searchText)
+        if (this.uiState.getSearchText() && !this.uiState.isDbSearchApplied() && this.uiState.getSearchBaseEvents().length > 0) {
           const searchBase = this.uiState.getSearchBaseEvents();
           // Apply search filters to the base events
           events = this.uiState.applyFilters(searchBase);
