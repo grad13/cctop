@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * cctop v0.3.0 - Code Change Top (File Monitoring Tool)
+ * cctop v0.5.2.0 - Code Change Top (File Monitoring Tool)
  * Unified CLI interface for daemon-cli architecture
  */
 
@@ -13,7 +13,7 @@ const fs = require('fs');
  * Show help message
  */
 function showHelpMessage() {
-  console.log(`cctop v0.3.0 - Code Change Top (File Monitoring Tool)
+  console.log(`cctop v0.5.2.0 - Code Change Top (File Monitoring Tool)
 
 Usage: cctop [command] [subcommand] [options]
 
@@ -74,7 +74,8 @@ function startDaemon() {
  */
 function startCLI() {
   return new Promise((resolve, reject) => {
-    const cliPath = path.join(__dirname, 'cctop-cli');
+    // Direct execution of CLI module without cctop-cli wrapper
+    const cliPath = path.join(__dirname, '../modules/cli/dist/index.js');
     const cli = spawn('node', [cliPath], {
       stdio: 'inherit'
     });
@@ -185,7 +186,7 @@ async function main() {
     }
     
     if (arg === '--version') {
-      console.log('cctop v0.3.0');
+      console.log('cctop v0.5.2.0');
       process.exit(0);
     }
     
