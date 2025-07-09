@@ -137,17 +137,8 @@ export class UILayoutManager {
   }
 
   buildHeaderContent(): string {
-    // FUNC-202: Header Area format with filter/search status
-    let header = `{bold}cctop v1.0.0.0 ${this.uiState.getDaemonStatus()}`;
-    
-    // Add search status if search is active (normalized for display)
-    const searchText = this.uiState.getSearchText();
-    if (searchText) {
-      const normalizedText = KeywordSearchManager.getDisplayText(searchText);
-      header += ` │ Search: "${normalizedText}"`;
-    }
-    
-    header += `{/bold}\n`;
+    // FUNC-202: Header Area format
+    let header = `{bold}cctop v1.0.0.0 ${this.uiState.getDaemonStatus()}{/bold}\n`;
     header += `Event Timestamp      Elapsed  File Name                           Event    Lines  Blocks    Size  Directory\n`;
     header += `${'─'.repeat(Number(this.screen.width) || 180)}`;  // Column header separator line
     return header;
@@ -157,9 +148,9 @@ export class UILayoutManager {
     const pauseText = this.uiState.isPausedState() ? 'Resume' : 'Pause';
     const displayMode = this.uiState.getDisplayMode();
     
-    // Highlight currently selected mode with red color styling
-    const allText = displayMode === 'all' ? '{bold}{red-fg}[a] All{/}{/}' : '[a] All';
-    const uniqueText = displayMode === 'unique' ? '{bold}{red-fg}[u] Unique{/}{/}' : '[u] Unique';
+    // Highlight currently selected mode with green color styling (same as Daemon status)
+    const allText = displayMode === 'all' ? '{green-fg}[a] All{/green-fg}' : '[a] All';
+    const uniqueText = displayMode === 'unique' ? '{green-fg}[u] Unique{/green-fg}' : '[u] Unique';
     
     return `[q] Exit  [space] ${pauseText}  [x] Refresh  ${allText}  ${uniqueText}`;
   }
@@ -171,12 +162,12 @@ export class UILayoutManager {
     switch (displayState) {
       case 'filter':
       case 'search':
-        return '{bold}[Enter] Confirm Filter [ESC] Cancel Back [↑↓] Select an Event{/bold}';
+        return '[Enter] Confirm Filter [ESC] Cancel Back [↑↓] Select an Event';
       
       case 'normal':
       case 'paused':
       default:
-        return '{bold}[ESC] Reset All Filters [↑↓] Select an Event{/bold}';
+        return '[ESC] Reset All Filters [↑↓] Select an Event';
     }
   }
 
@@ -198,7 +189,12 @@ export class UILayoutManager {
       case 'normal':
       case 'paused':
       default:
-        return '{bold}{yellow-fg}[f] Filter Events  [/] Quick Search{/yellow-fg}{/bold}';
+        // Check if keyword filter is active
+        if (searchText) {
+          const normalizedText = KeywordSearchManager.getDisplayText(searchText);
+          return `{bold}{yellow-fg}[f] Event-Type Filter  [/] Keyword Filter (current keyword:"${normalizedText}"){/yellow-fg}{/bold}`;
+        }
+        return '{bold}{yellow-fg}[f] Event-Type Filter  [/] Keyword Filter{/yellow-fg}{/bold}';
     }
   }
 
@@ -217,14 +213,15 @@ export class UILayoutManager {
       const isEnabled = this.uiState.hasEventFilter(type);
       
       if (isEnabled) {
-        return `[${key}] ${label}`;
+        // Active filters: bold yellow
+        return `{bold}{yellow-fg}[${key}] ${label}{/yellow-fg}{/bold}`;
       } else {
-        // Use ANSI codes for dimmed appearance
-        return `\x1b[90m[${key}] ${label}\x1b[0m`;
+        // Inactive filters: bold gray (or use bright-black for better gray effect)
+        return `{bold}{gray-fg}[${key}] ${label}{/gray-fg}{/bold}`;
       }
     });
     
-    return '{bold}{yellow-fg}' + filterItems.join(' ') + '{/yellow-fg}{/bold}';
+    return filterItems.join(' ');
   }
 
   updateDynamicControl(): void {

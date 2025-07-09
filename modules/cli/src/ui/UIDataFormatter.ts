@@ -92,7 +92,7 @@ export class UIDataFormatter {
       const terminalWidth = process.stdout.columns || 80;
       const endMessage = '─── end of data ───';
       const padding = Math.max(0, Math.floor((terminalWidth - endMessage.length) / 2));
-      formattedEvents.push(' '.repeat(padding) + `{red-fg}${endMessage}{/red-fg}`);
+      formattedEvents.push(' '.repeat(padding) + `{bold}{white-fg}${endMessage}{/white-fg}{/bold}`);
     }
     
     return formattedEvents;
