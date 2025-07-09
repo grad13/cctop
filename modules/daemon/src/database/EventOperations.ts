@@ -26,7 +26,6 @@ export class EventOperations {
     return new Promise((resolve) => {
       this.db.all('SELECT id, code FROM event_types ORDER BY code', (err, rows: any[]) => {
         if (err || !rows || rows.length === 0) {
-          console.error('Failed to load event types from DB, using FUNC-000 defaults');
           // Use FUNC-000 specified order as fallback
           this.eventTypeMap = new Map([
             ['find', 1],
@@ -55,20 +54,16 @@ export class EventOperations {
       let fileId: number;
       let eventId: number;
       
-      console.log('DEBUG: insertEvent called', { eventType: event.eventType, measurement });
-      
       // FUNC-000: delete/move events don't require measurements
       if (['delete', 'move'].includes(event.eventType)) {
         // For delete/move events, inode can be provided without full measurement
         if (!measurement || !measurement.inode) {
-          console.log('DEBUG: delete/move inode check failed', { measurement, inode: measurement?.inode });
           reject(new Error('inode is required for delete/move events'));
           return;
         }
       } else {
         // For create/modify/find/restore events, full measurement is required
         if (!measurement || !measurement.inode) {
-          console.log('DEBUG: create/modify/find/restore inode check failed', { measurement, inode: measurement?.inode });
           reject(new Error('Measurement with inode is required for FUNC-000 compliance'));
           return;
         }
@@ -95,7 +90,6 @@ export class EventOperations {
             
             // For find events, skip insertion since file already exists
             if (event.eventType === 'find') {
-              console.log(`DEBUG: Skipping find event for existing file: file_id=${fileId}, inode=${measurement.inode}`);
               this.db.run('COMMIT', () => {});
               resolve(fileId); // Return existing file_id (not event_id since no event was created)
               return;
@@ -140,7 +134,6 @@ export class EventOperations {
           
           const eventTypeId = this.eventTypeMap!.get(event.eventType);
           if (!eventTypeId) {
-            console.error(`Unknown event type: ${event.eventType}. Available types:`, Array.from(this.eventTypeMap!.keys()));
             reject(new Error(`Unknown event type: ${event.eventType}`));
             return;
           }
@@ -192,7 +185,6 @@ export class EventOperations {
               
               db.run(measurementSql, measurementParams, (measurementErr: any) => {
                 if (measurementErr) {
-                  console.error('Failed to insert measurement:', measurementErr);
                   db.run('ROLLBACK', () => {});
                   reject(measurementErr);
                 } else {

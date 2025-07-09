@@ -41,7 +41,7 @@ export class DynamicDataLoader {
   private vanillaTable: EventData[] = [];
   private readonly INITIAL_LOAD_SIZE = 100;
   private readonly MAX_LOAD_SIZE = 1000;
-  private readonly SCREEN_ROWS = 20; // 画面に表示可能な行数
+  private readonly SCREEN_ROWS = 20; // Number of rows displayable on screen
   private loadCallCount = 0;
   private dbLoadFunction?: (offset: number, limit: number) => Promise<EventData[]>;
 
@@ -66,21 +66,21 @@ export class DynamicDataLoader {
   private async simulateDBLoad(offset: number, limit: number): Promise<EventData[]> {
     this.loadCallCount++;
     
-    // シミュレーション遅延
+    // Simulation delay
     await new Promise(resolve => setTimeout(resolve, 10));
     
-    // ダミーデータ生成（offset基準）
+    // Generate dummy data (offset-based)
     const events: EventData[] = [];
     for (let i = 0; i < limit; i++) {
       const id = offset + i + 1;
-      if (id > 500) break; // 500件で終了（テスト用）
+      if (id > 500) break; // End at 500 items (for testing)
       
       events.push({
         id,
         file_id: id,
         file_name: `file-${id}.txt`,
         event_type: ['Create', 'Modify', 'Delete'][id % 3],
-        timestamp: new Date(Date.now() - id * 60000).toISOString(), // idが大きいほど古い
+        timestamp: new Date(Date.now() - id * 60000).toISOString(), // Older as id increases
         directory: `/dir${Math.floor(id / 10)}`
       });
     }
@@ -93,7 +93,7 @@ export class DynamicDataLoader {
    * 画面内にrowがfillされていない & end of dataが表示されていない場合
    */
   async checkScreenFillTrigger(): Promise<boolean> {
-    // 画面内にrowがfillされていない & end of dataが表示されていない
+    // Screen not filled with rows & end of data not displayed
     const needsFill = this.loadingState.visibleRows < this.SCREEN_ROWS && 
                      !this.loadingState.endOfDataReached;
     
@@ -110,7 +110,7 @@ export class DynamicDataLoader {
    * 選択rowがtable最下部 & end of dataが表示されていない場合
    */
   async checkBottomSelectionTrigger(): Promise<boolean> {
-    // 選択rowがtable最下部 & end of dataが表示されていない
+    // Selected row at table bottom & end of data not displayed
     const isAtBottom = this.loadingState.selectedRowIndex >= this.loadingState.visibleRows - 1;
     const needsMore = isAtBottom && !this.loadingState.endOfDataReached;
     
@@ -127,7 +127,7 @@ export class DynamicDataLoader {
    * ポーリングによる新データチェック
    */
   async check100msPollingTrigger(): Promise<boolean> {
-    // ポーリングによる新データチェック（実際のDBポーリングをシミュレート）
+    // Check for new data via polling (simulate actual DB polling)
     if (!this.loadingState.isLoading && this.loadingState.hasMore) {
       await this.executeLoad('polling');
       return true;
@@ -148,7 +148,7 @@ export class DynamicDataLoader {
     this.loadingState.isLoading = true;
     
     try {
-      // ロード戦略: 初回100件、最大1000件まで段階的取得
+      // Load strategy: Initial 100 items, max 1000 items progressively
       const loadSize = this.vanillaTable.length === 0 ? 
         this.INITIAL_LOAD_SIZE : 
         Math.min(100, this.MAX_LOAD_SIZE - this.vanillaTable.length);
@@ -158,22 +158,22 @@ export class DynamicDataLoader {
         loadSize
       );
       
-      // vanilla tableに統合
+      // Integrate into vanilla table
       this.vanillaTable.push(...newEvents);
       
-      // 状態更新
+      // Update state
       this.loadingState.currentOffset += newEvents.length;
       this.loadingState.totalAvailableRows = this.vanillaTable.length;
       this.loadingState.visibleRows = Math.min(this.SCREEN_ROWS, this.vanillaTable.length);
       
-      // end of data判定
+      // Check for end of data
       if (newEvents.length === 0 || this.vanillaTable.length >= this.MAX_LOAD_SIZE) {
         this.loadingState.hasMore = false;
         this.loadingState.endOfDataReached = true;
       }
       
     } catch (error) {
-      console.error('Data loading failed:', error);
+      // Silently handle error
     } finally {
       this.loadingState.isLoading = false;
     }

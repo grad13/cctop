@@ -114,7 +114,6 @@ export class SchemaManager {
         if (err) {
           reject(err);
         } else {
-          console.log('Database schema initialized');
           this.insertInitialEventTypes().then(() => {
             resolve();
           }).catch(reject);
@@ -137,7 +136,6 @@ export class SchemaManager {
       // Check existing event types
       this.db.all('SELECT id, code FROM event_types', (err, existingRows: any[]) => {
         if (err) {
-          console.error('Failed to check existing event types:', err);
           reject(err);
           return;
         }
@@ -156,14 +154,11 @@ export class SchemaManager {
           const existingId = existingMap.get(et.code);
           if (existingId && existingId !== et.id) {
             needsFix = true;
-            console.log(`Event type '${et.code}' has wrong ID: ${existingId}, should be ${et.id}`);
           }
         });
 
         if (needsFix && existingRows.length > 0) {
           // If there are existing events, we can't easily fix the IDs
-          console.warn('Event types have incorrect IDs but cannot be fixed due to existing data');
-          console.log('Event types initialized with existing IDs');
           resolve();
           return;
         }
@@ -178,11 +173,9 @@ export class SchemaManager {
           
           this.db.run(sql, [eventType.id, eventType.code, eventType.name, eventType.description], (err) => {
             if (err) {
-              console.error(`Failed to insert event type ${eventType.code}:`, err);
             }
             completed++;
             if (completed === eventTypes.length) {
-              console.log('Event types initialized');
               resolve();
             }
           });

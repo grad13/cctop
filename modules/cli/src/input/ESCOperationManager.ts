@@ -63,14 +63,14 @@ export class ESCOperationManager {
    */
   executeEscape(): FilterState {
     if (this.currentMode === 'editing') {
-      // 編集モード中のESC: 編集結果を破棄し、元の状態に戻す
+      // ESC in edit mode: Discard edit results and restore previous state
       if (this.previousState) {
         this.currentState = { ...this.previousState };
         this.previousState = null;
       }
       this.currentMode = 'normal';
     } else {
-      // Normal Mode中のESC: 全てのeditをclear
+      // ESC in normal mode: Clear all edits
       this.currentState = this.getDefaultState();
     }
     

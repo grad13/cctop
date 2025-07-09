@@ -73,14 +73,14 @@ export class FilterStateManager {
    * vanilla tableにイベント追加
    */
   addToVanillaTable(events: EventData[]): void {
-    // 重複チェック（idベース）
+    // Duplicate check (id-based)
     const existingIds = new Set(this.vanillaTable.map(event => event.id));
     const uniqueNewEvents = events.filter(event => !existingIds.has(event.id));
 
-    // vanilla tableに追加
+    // Add to vanilla table
     this.vanillaTable.push(...uniqueNewEvents);
 
-    // 容量管理
+    // Capacity management
     if (this.vanillaTable.length > this.MAX_VANILLA_EVENTS) {
       this.optimizeVanillaTable();
     }
@@ -97,7 +97,7 @@ export class FilterStateManager {
    * 古いデータの削除（容量管理）
    */
   private optimizeVanillaTable(): void {
-    // timestampでソートし、古いものから削除
+    // Sort by timestamp and delete oldest
     this.vanillaTable.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
     
     const excessCount = this.vanillaTable.length - this.MAX_VANILLA_EVENTS;
@@ -118,7 +118,7 @@ export class FilterStateManager {
 
     this.operationHistory.push(history);
 
-    // 履歴サイズ管理
+    // History size management
     if (this.operationHistory.length > this.MAX_HISTORY) {
       this.operationHistory.shift();
     }
@@ -167,18 +167,18 @@ export class FilterStateManager {
   applyFilters(): EventData[] {
     let result = [...this.vanillaTable];
 
-    // 1. unique処理（mode: 'unique'の場合）
+    // 1. Apply unique processing (when mode is 'unique')
     if (this.currentState.mode === 'unique') {
       result = this.applyUniqueProcessing(result);
     }
 
-    // 2. event filter適用
+    // 2. Apply event filters
     result = this.applyEventFilters(result);
 
-    // 3. keyword filter適用
+    // 3. Apply keyword filter
     result = this.applyKeywordFilter(result);
 
-    // 4. 時系列降順でソート
+    // 4. Sort by timestamp in descending order
     result = result.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 
     return result;
@@ -191,7 +191,7 @@ export class FilterStateManager {
   private applyUniqueProcessing(events: EventData[]): EventData[] {
     const fileLatestEvents = new Map<number, EventData>();
 
-    // 各ファイルの最新イベントを特定
+    // Identify latest event for each file
     for (const event of events) {
       const existing = fileLatestEvents.get(event.file_id);
       if (!existing || new Date(event.timestamp) > new Date(existing.timestamp)) {
@@ -282,7 +282,7 @@ export class FilterStateManager {
   }
 
   // ========================================
-  // テスト互換メソッド - HO-20250707-002準拠
+  // Test compatibility methods - HO-20250707-002 compliant
   // ========================================
 
   /**

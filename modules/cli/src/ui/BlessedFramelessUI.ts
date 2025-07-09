@@ -80,7 +80,6 @@ export class BlessedFramelessUISimple {
         this.uiState.setViewportHeight(this.cliConfig.display.maxRows);
       }
     } catch (error) {
-      console.error('Failed to initialize config:', error);
       // Use default CLIConfig object (import default)
       const { defaultCLIConfig } = require('../config/cli-config');
       this.cliConfig = defaultCLIConfig;

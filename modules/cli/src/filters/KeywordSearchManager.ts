@@ -33,11 +33,11 @@ export class KeywordSearchManager {
   private vanillaTable: EventData[] = [];
   private dbSearchResults: Map<string, EventData[]> = new Map();
   private searchHistory: string[] = [];
-  private readonly MAX_VANILLA_EVENTS = 1000; // 容量制限
-  private readonly MAX_SEARCH_HISTORY = 50; // 検索履歴制限
+  private readonly MAX_VANILLA_EVENTS = 1000; // Capacity limit
+  private readonly MAX_SEARCH_HISTORY = 50; // Search history limit
 
   constructor(private dbSearchFunction?: (keyword: string) => Promise<SearchResult>) {
-    // DB検索関数が提供されない場合は、テスト用のシミュレーション関数を使用
+    // Use test simulation function if DB search function is not provided
     if (!this.dbSearchFunction) {
       this.dbSearchFunction = this.simulateDBSearch.bind(this);
     }
@@ -48,7 +48,7 @@ export class KeywordSearchManager {
    * 実際の実装では、DatabaseAdapterやQueryEngineを使用
    */
   private async simulateDBSearch(keyword: string): Promise<SearchResult> {
-    // テスト用のダミーDB
+    // Dummy DB for testing
     const dummyDB: EventData[] = [
       { id: 100, file_id: 10, file_name: 'important-file.txt', event_type: 'Create', timestamp: '2025-01-01 12:00:00', directory: '/projects' },
       { id: 101, file_id: 11, file_name: 'config.json', event_type: 'Modify', timestamp: '2025-01-01 12:01:00', directory: '/important' },
@@ -58,7 +58,7 @@ export class KeywordSearchManager {
       { id: 105, file_id: 15, file_name: 'debug.log', event_type: 'Modify', timestamp: '2025-01-01 12:05:00', directory: '/logs/important' },
     ];
 
-    // キーワードでフィルタリング（ファイル名またはディレクトリパス）
+    // Filter by keyword (filename or directory path)
     const results = dummyDB.filter(event => 
       event.file_name.includes(keyword) || event.directory.includes(keyword)
     );
@@ -85,21 +85,20 @@ export class KeywordSearchManager {
     }
 
     try {
-      // 1. DB検索実行
+      // 1. Execute DB search
       const searchResults = await this.dbSearchFunction!(keyword);
       
-      // 2. 検索結果をvanilla tableに統合
+      // 2. Integrate search results into vanilla table
       this.addToVanillaTable(searchResults.events);
       
-      // 3. 検索履歴に追加
+      // 3. Add to search history
       this.addToSearchHistory(keyword);
       
-      // 4. 検索結果をキャッシュ
+      // 4. Cache search results
       this.dbSearchResults.set(keyword, searchResults.events);
       
       return searchResults.events;
     } catch (error) {
-      console.error('Keyword search failed:', error);
       return [];
     }
   }
@@ -109,14 +108,14 @@ export class KeywordSearchManager {
    * 重複チェック（idベース）と容量管理を実行
    */
   private addToVanillaTable(newEvents: EventData[]): void {
-    // 重複チェック（idベース）
+    // Duplicate check (id-based)
     const existingIds = new Set(this.vanillaTable.map(event => event.id));
     const uniqueNewEvents = newEvents.filter(event => !existingIds.has(event.id));
     
-    // vanilla tableに追加
+    // Add to vanilla table
     this.vanillaTable.push(...uniqueNewEvents);
     
-    // 容量管理: 一定件数超過時は古い順に削除
+    // Capacity management: Delete oldest when exceeding limit
     if (this.vanillaTable.length > this.MAX_VANILLA_EVENTS) {
       this.optimizeVanillaTable();
     }
@@ -127,7 +126,7 @@ export class KeywordSearchManager {
    * timestampでソートし、古いものから削除
    */
   private optimizeVanillaTable(): void {
-    // timestampでソートし、古いものから削除
+    // Sort by timestamp and delete oldest
     this.vanillaTable.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
     
     const excessCount = this.vanillaTable.length - this.MAX_VANILLA_EVENTS;
@@ -141,14 +140,14 @@ export class KeywordSearchManager {
    * 重複を避け、履歴サイズを管理
    */
   private addToSearchHistory(keyword: string): void {
-    // 重複チェック
+    // Duplicate check
     if (!this.searchHistory.includes(keyword)) {
       this.searchHistory.push(keyword);
     }
 
-    // 履歴サイズ管理
+    // History size management
     if (this.searchHistory.length > this.MAX_SEARCH_HISTORY) {
-      this.searchHistory.shift(); // 最古の履歴を削除
+      this.searchHistory.shift(); // Delete oldest history
     }
   }
 

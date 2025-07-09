@@ -20,11 +20,6 @@ export class TriggerManager {
 
       this.db.exec(dropTriggersSQL, (err) => {
         if (err) {
-          console.error('Failed to drop existing triggers:', {
-            error: err.message,
-            code: (err as any).code || 'UNKNOWN',
-            timestamp: new Date().toISOString()
-          });
         }
 
         // Create new triggers with FUNC-000 compliant logic
@@ -201,7 +196,6 @@ export class TriggerManager {
           if (err) {
             reject(err);
           } else {
-            console.log('Database triggers created successfully');
             resolve();
           }
         });

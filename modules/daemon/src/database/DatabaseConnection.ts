@@ -17,7 +17,6 @@ export class DatabaseConnection {
       
       if (!fs.existsSync(dbDir)) {
         fs.mkdirSync(dbDir, { recursive: true });
-        console.log(`Created database directory: ${dbDir}`);
       }
       
       this.db = new sqlite3.Database(this.dbPath, sqlite3.OPEN_READWRITE | sqlite3.OPEN_CREATE, (err) => {

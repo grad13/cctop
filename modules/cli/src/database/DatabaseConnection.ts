@@ -17,15 +17,11 @@ export class DatabaseConnection {
     }
     
     return new Promise((resolve, reject) => {
-      console.log(`Attempting to connect to database: ${this.dbPath}`);
       this.db = new sqlite3.Database(this.dbPath, sqlite3.OPEN_READWRITE | sqlite3.OPEN_CREATE, (err) => {
         if (err) {
-          console.error(`Database connection failed: ${err.message}`);
-          console.log('Switching to demo mode with random data');
           this.useRandomData = true;
           resolve();
         } else {
-          console.log('Database connected successfully');
           resolve();
         }
       });

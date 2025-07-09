@@ -220,7 +220,7 @@ export class UIKeyHandler {
           if (this.loadMoreCallback) {
             // Don't await here to prevent blocking the UI
             this.loadMoreCallback().catch(err => {
-              console.error('Load more error:', err);
+              // Silently handle error
             });
           }
         }

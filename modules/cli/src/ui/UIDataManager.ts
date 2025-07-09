@@ -96,7 +96,6 @@ export class UIDataManager {
           this.uiState.setEvents(searchResults);
           this.uiState.setTotalLoaded(searchResults.length);
         }).catch(error => {
-          console.error('Database search error:', error);
           this.uiState.setHasMoreData(false);
           this.uiState.setEvents([]);
         });
@@ -155,7 +154,6 @@ export class UIDataManager {
       this.uiState.setTotalLoaded(events.length);
       
     } catch (error) {
-      console.error('refreshData error:', error);
       // Fallback to empty array to prevent UI crash
       this.uiState.setEvents([]);
     } finally {
@@ -193,7 +191,6 @@ export class UIDataManager {
       this.uiState.setTotalLoaded(searchResults.length);
       
     } catch (error) {
-      console.error('Database search error:', error);
       // Return empty array on error
       this.uiState.setHasMoreData(false);
       this.uiState.setEvents([]);
