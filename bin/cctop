@@ -59,7 +59,6 @@ function startDaemon() {
     daemon.unref();
     
     setTimeout(() => {
-      console.log(`✅ Daemon started (PID: ${daemon.pid})`);
       resolve(daemon.pid);
     }, 1000);
     
@@ -108,7 +107,6 @@ function stopDaemon() {
         process.kill(pid, 0);
         // Process exists, send SIGTERM
         process.kill(pid, 'SIGTERM');
-        console.log(`✅ Stopping daemon with PID ${pid}...`);
         
         // Wait for process to exit
         let attempts = 0;
@@ -125,7 +123,6 @@ function stopDaemon() {
             }
           } catch (e) {
             // Process no longer exists
-            console.log('✅ Daemon stopped successfully');
             clearInterval(checkInterval);
             resolve();
           }

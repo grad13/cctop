@@ -139,12 +139,15 @@ export class UIKeyHandler {
           // Use debounced search
           this.debouncedSearch();
         } else if (ch && ch.length === 1 && !key.ctrl && !key.meta) {
-          this.uiState.appendToSearchPattern(ch);
-          this.updateDynamicControlCallback();
-          this.updateStatusBarCallback();
-          this.screen.render();
-          // Use debounced search
-          this.debouncedSearch();
+          // Filter out control characters (including \r, \n, etc.)
+          if (ch.charCodeAt(0) >= 32 && ch.charCodeAt(0) <= 126) {
+            this.uiState.appendToSearchPattern(ch);
+            this.updateDynamicControlCallback();
+            this.updateStatusBarCallback();
+            this.screen.render();
+            // Use debounced search
+            this.debouncedSearch();
+          }
         }
       }
     });

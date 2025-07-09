@@ -55,16 +55,20 @@ export class EventOperations {
       let fileId: number;
       let eventId: number;
       
+      console.log('DEBUG: insertEvent called', { eventType: event.eventType, measurement });
+      
       // FUNC-000: delete/move events don't require measurements
       if (['delete', 'move'].includes(event.eventType)) {
         // For delete/move events, inode can be provided without full measurement
         if (!measurement || !measurement.inode) {
+          console.log('DEBUG: delete/move inode check failed', { measurement, inode: measurement?.inode });
           reject(new Error('inode is required for delete/move events'));
           return;
         }
       } else {
         // For create/modify/find/restore events, full measurement is required
         if (!measurement || !measurement.inode) {
+          console.log('DEBUG: create/modify/find/restore inode check failed', { measurement, inode: measurement?.inode });
           reject(new Error('Measurement with inode is required for FUNC-000 compliance'));
           return;
         }
@@ -86,8 +90,18 @@ export class EventOperations {
           }
           
           if (row) {
-            // File exists, update it
+            // File exists in files table
             fileId = row.id;
+            
+            // For find events, skip insertion since file already exists
+            if (event.eventType === 'find') {
+              console.log(`DEBUG: Skipping find event for existing file: file_id=${fileId}, inode=${measurement.inode}`);
+              this.db.run('COMMIT', () => {});
+              resolve(fileId); // Return existing file_id (not event_id since no event was created)
+              return;
+            }
+            
+            // For non-find events, proceed normally
             this.db.run('UPDATE files SET is_active = ? WHERE id = ?', 
               [event.eventType !== 'delete' ? 1 : 0, fileId], 
               (updateErr) => {

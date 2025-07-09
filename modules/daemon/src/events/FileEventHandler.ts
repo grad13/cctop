@@ -34,10 +34,13 @@ export class FileEventHandler {
       let stats: any = null;
       let inode = 0;
 
+      this.logger.debugLog(`DEBUG: handleFileEvent start`, { eventType, filePath, preservedInode });
+
       if (eventType !== 'delete') {
         try {
           stats = await fs.stat(filePath);
           inode = stats.ino;
+          this.logger.debugLog(`DEBUG: fs.stat success`, { filePath, inode, size: stats.size });
         } catch (statError) {
           this.logger.log('warn', `Could not get stats for ${filePath}: ${statError}`);
           inode = 0;
@@ -69,6 +72,7 @@ export class FileEventHandler {
             lineCount: result.lineCount,
             blockCount: result.blockCount
           };
+          this.logger.debugLog(`DEBUG: measurement created`, { filePath, measurement });
         } else {
           // For delete/move events, still need inode for file tracking
           measurement = {
@@ -78,6 +82,7 @@ export class FileEventHandler {
             lineCount: 0,
             blockCount: 0
           };
+          this.logger.debugLog(`DEBUG: delete/move measurement created`, { filePath, measurement });
         }
       } catch (error) {
         this.logger.log('warn', `Could not calculate measurements for ${filePath}: ${error}`);
@@ -89,8 +94,10 @@ export class FileEventHandler {
           lineCount: 0,
           blockCount: 0
         };
+        this.logger.debugLog(`DEBUG: error measurement created`, { filePath, measurement });
       }
 
+      this.logger.debugLog(`DEBUG: before insertEvent`, { filePath, eventType, measurement });
       const eventId = await this.db.insertEvent(event, measurement);
       this.logger.debugLog(`Event recorded`, { eventType, filePath, inode, eventId })
       

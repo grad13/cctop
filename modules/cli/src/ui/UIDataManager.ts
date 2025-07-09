@@ -83,6 +83,26 @@ export class UIDataManager {
     
     this.isRefreshing = true;
     try {
+      // Check if we have a search pattern
+      const searchPattern = this.uiState.getSearchPattern();
+      if (searchPattern) {
+        // Use database search for keyword queries
+        await this.db.searchEvents({
+          keyword: searchPattern,
+          mode: this.uiState.getDisplayMode(),
+          filters: this.uiState.getActiveFilters()
+        }).then(searchResults => {
+          this.uiState.setHasMoreData(false);
+          this.uiState.setEvents(searchResults);
+          this.uiState.setTotalLoaded(searchResults.length);
+        }).catch(error => {
+          console.error('Database search error:', error);
+          this.uiState.setHasMoreData(false);
+          this.uiState.setEvents([]);
+        });
+        return;
+      }
+      
       let events: EventRow[];
       
       // Fetch from database
@@ -106,8 +126,8 @@ export class UIDataManager {
       // Check if we have more data
       const hasMoreInDb = rawEvents.length === limit;
       
-      // Apply filters (event type and regex pattern)
-      const filteredNewEvents = this.uiState.applyFilters(rawEvents);
+      // Don't apply client-side regex filter - DB should handle it
+      const filteredNewEvents = rawEvents;
       
       if (append && this.uiState.getEvents().length > 0) {
         // Append to existing events
@@ -152,7 +172,10 @@ export class UIDataManager {
     
     if (!searchPattern) {
       // No search pattern, just refresh normally
-      await this.refreshData();
+      this.currentOffset = 0;
+      this.uiState.setHasMoreData(true);
+      this.uiState.setEvents([]);
+      this.uiState.setTotalLoaded(0);
       return;
     }
     

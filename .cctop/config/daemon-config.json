@@ -26,7 +26,7 @@
   "daemon": {
     "pidFile": ".cctop/runtime/daemon.pid",
     "logFile": ".cctop/logs/daemon.log",
-    "logLevel": "info",
+    "logLevel": "debug",
     "heartbeatInterval": 30000,
     "autoStart": true,
     "maxRestarts": 3,

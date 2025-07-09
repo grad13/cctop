@@ -44,6 +44,7 @@ export class DatabaseAdapterFunc000 {
         return;
       }
 
+
       // Build filter condition
       const buildFilterCondition = (filters?: string[]): string => {
         if (!filters || filters.length === 0 || filters.length >= 6) {
@@ -60,7 +61,7 @@ export class DatabaseAdapterFunc000 {
         `WITH latest_events AS (
           SELECT 
             e.*,
-            ROW_NUMBER() OVER (PARTITION BY e.file_id ORDER BY e.timestamp DESC) as rn
+            ROW_NUMBER() OVER (PARTITION BY e.file_name, e.directory ORDER BY e.timestamp DESC) as rn
           FROM events e
           ${filters && filters.length > 0 && filters.length < 6 ? 
             `JOIN event_types et2 ON e.event_type_id = et2.id 
@@ -161,7 +162,7 @@ export class DatabaseAdapterFunc000 {
         `WITH latest_events AS (
           SELECT 
             e.*,
-            ROW_NUMBER() OVER (PARTITION BY e.file_id ORDER BY e.timestamp DESC) as rn
+            ROW_NUMBER() OVER (PARTITION BY e.file_name, e.directory ORDER BY e.timestamp DESC) as rn
           FROM events e
           WHERE (e.file_name LIKE ? OR e.directory LIKE ?)
         )

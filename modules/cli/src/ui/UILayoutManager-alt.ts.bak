@@ -1,0 +1,22 @@
+// Alternative color options if gray-fg is not supported:
+
+// Option 1: Using bright-black-fg (often displays as dark gray)
+if (isEnabled) {
+  return `{bold}{yellow-fg}[${key}] ${label}{/yellow-fg}{/bold}`;
+} else {
+  return `{bold}{bright-black-fg}[${key}] ${label}{/bright-black-fg}{/bold}`;
+}
+
+// Option 2: Using white-fg without bold (appears dimmer)
+if (isEnabled) {
+  return `{bold}{yellow-fg}[${key}] ${label}{/yellow-fg}{/bold}`;
+} else {
+  return `{white-fg}[${key}] ${label}{/white-fg}`;
+}
+
+// Option 3: Using black-fg with bright attribute
+if (isEnabled) {
+  return `{bold}{yellow-fg}[${key}] ${label}{/yellow-fg}{/bold}`;
+} else {
+  return `{bold}{black-fg}{bright}[${key}] ${label}{/bright}{/black-fg}{/bold}`;
+}

@@ -22,7 +22,9 @@ export class LogManager {
 
   debugLog(message: string, data?: any): void {
     const timestamp = new Date().toISOString();
-    console.log(`${timestamp} [DEBUG] ${message}`, data ? JSON.stringify(data, null, 2) : '');
+    const logEntry = `${timestamp} [DEBUG] ${message}${data ? ' ' + JSON.stringify(data, null, 2) : ''}`;
+    console.log(logEntry);
+    this.writeToLogFileSync(logEntry);
   }
 
   private writeToLogFileSync(logEntry: string): void {

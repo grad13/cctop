@@ -342,18 +342,8 @@ export class UIState {
       );
     }
 
-    // Apply regex pattern filter
-    if (this.searchPattern) {
-      try {
-        const regex = new RegExp(this.searchPattern);
-        filteredEvents = filteredEvents.filter(event => 
-          regex.test(event.filename || '')
-        );
-      } catch (e) {
-        // Invalid regex - return empty array
-        return [];
-      }
-    }
+    // Note: regex pattern filter is now handled by database search
+    // This method only applies event type filters
 
     return filteredEvents;
   }
