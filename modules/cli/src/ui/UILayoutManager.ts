@@ -138,7 +138,7 @@ export class UILayoutManager {
 
   buildHeaderContent(): string {
     // FUNC-202: Header Area format
-    let header = `{bold}cctop v1.0.0.0 ${this.uiState.getDaemonStatus()}`;
+    let header = `{bold}cctop v0.5.0.0 ${this.uiState.getDaemonStatus()}`;
     
     // Add keyword status if keyword is active
     const searchPattern = this.uiState.getSearchPattern();
