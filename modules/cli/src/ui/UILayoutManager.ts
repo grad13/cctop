@@ -5,6 +5,7 @@
 
 import * as blessed from 'blessed';
 import { UIState, EventType } from './UIState';
+import { KeywordSearchManager } from '../search';
 
 export class UILayoutManager {
   private screen: blessed.Widgets.Screen;
@@ -139,10 +140,11 @@ export class UILayoutManager {
     // FUNC-202: Header Area format with filter/search status
     let header = `{bold}cctop v1.0.0.0 ${this.uiState.getDaemonStatus()}`;
     
-    // Add search status if search is active
+    // Add search status if search is active (normalized for display)
     const searchText = this.uiState.getSearchText();
     if (searchText) {
-      header += ` │ Search: "${searchText}"`;
+      const normalizedText = KeywordSearchManager.getDisplayText(searchText);
+      header += ` │ Search: "${normalizedText}"`;
     }
     
     header += `{/bold}\n`;

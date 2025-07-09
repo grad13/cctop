@@ -5,6 +5,7 @@
 
 import { EventRow } from '../types/event-row';
 import { SearchResultCache } from './SearchResultCache';
+import { KeywordSearchManager } from '../search';
 
 // FUNC-202 Display States
 export type DisplayState = 'normal' | 'filter' | 'search' | 'paused';
@@ -281,13 +282,9 @@ export class UIState {
       );
     }
 
-    // FUNC-202 v0.3.4.0: Local search (Phase 1) - only apply if not DB search
+    // FUNC-209: Local search with multi-keyword support - only apply if not DB search
     if (this.searchText && !this.isSearchApplied) {
-      const searchLower = this.searchText.toLowerCase();
-      filteredEvents = filteredEvents.filter(event => 
-        (event.filename || '').toLowerCase().includes(searchLower) ||
-        (event.directory || '').toLowerCase().includes(searchLower)
-      );
+      filteredEvents = KeywordSearchManager.performLocalSearch(filteredEvents, this.searchText);
     }
 
     return filteredEvents;
