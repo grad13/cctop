@@ -57,27 +57,31 @@ export class DatabaseAdapterFunc000 {
       
       // FUNC-000 compliant query only
       const query = mode === 'unique' ? 
-        `SELECT 
-          e.id,
-          e.timestamp,
-          e.file_name as filename,
-          e.directory,
+        `WITH latest_events AS (
+          SELECT 
+            e.*,
+            ROW_NUMBER() OVER (PARTITION BY e.file_id ORDER BY e.timestamp DESC) as rn
+          FROM events e
+          ${filters && filters.length > 0 && filters.length < 6 ? 
+            `JOIN event_types et2 ON e.event_type_id = et2.id 
+             WHERE et2.name IN (${filters.map(f => `'${f}'`).join(',')})` : ''}
+        )
+        SELECT 
+          le.id,
+          le.timestamp,
+          le.file_name as filename,
+          le.directory,
           et.name as event_type,
           COALESCE(m.file_size, 0) as size,
           COALESCE(m.line_count, 0) as lines,
           COALESCE(m.block_count, 0) as blocks,
           COALESCE(m.inode, 0) as inode,
           0 as elapsed_ms
-        FROM events e
-        JOIN event_types et ON e.event_type_id = et.id
-        LEFT JOIN measurements m ON e.id = m.event_id
-        WHERE e.id IN (
-          SELECT MAX(e2.id)
-          FROM events e2
-          GROUP BY e2.file_id
-        )
-        ${filterCondition}
-        ORDER BY e.timestamp DESC 
+        FROM latest_events le
+        JOIN event_types et ON le.event_type_id = et.id
+        LEFT JOIN measurements m ON le.id = m.event_id
+        WHERE le.rn = 1
+        ORDER BY le.timestamp DESC 
         LIMIT ? OFFSET ?` :
         `SELECT 
           e.id,
