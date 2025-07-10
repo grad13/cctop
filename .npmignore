@@ -1,0 +1,56 @@
+# Source files (only dist is needed)
+src/
+*.ts
+!*.d.ts
+
+# Test files
+tests/
+test/
+*.test.js
+*.test.ts
+*.spec.js
+*.spec.ts
+coverage/
+.nyc_output/
+
+# Development files
+.git/
+.gitignore
+.DS_Store
+*.log
+tsconfig.json
+tsconfig.tsbuildinfo
+vitest.config.ts
+jest.config.js
+
+# Documentation
+*.md
+!README.md
+docs/
+scripts/
+demo-*.js
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.bak
+
+# Build artifacts not needed
+*.map
+
+# User data (should be created at runtime)
+.cctop/
+
+# Images (except screenshot)
+*.png
+!screenshot.png
+*.jpg
+*.jpeg
+*.gif
