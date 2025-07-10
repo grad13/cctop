@@ -1,7 +1,16 @@
 # Source files (only dist is needed)
-src/
+src/*/src/
+src/*/tests/
+src/*/tsconfig.json
+src/*/vitest.config.ts
+src/*/*.ts
+src/*/node_modules/
+!src/*/dist/
 *.ts
 !*.d.ts
+
+# Node modules
+node_modules/
 
 # Test files
 tests/

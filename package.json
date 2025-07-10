@@ -1,6 +1,6 @@
 {
   "name": "cctop",
-  "version": "0.5.0.0",
+  "version": "0.5.4",
   "description": "Agent work monitoring with real-time file tracking",
   "workspaces": [
     "src/*"
@@ -10,17 +10,22 @@
   },
   "scripts": {
     "install:all": "npm install",
-    "build": "npm run build --workspaces",
+    "build": "npm run build -w @cctop/shared && npm run build -w @cctop/daemon && npm run build -w @cctop/cli",
     "test": "npm run test --workspaces",
     "daemon": "node bin/cctop daemon start",
     "cli": "node bin/cctop cli",
     "dev": "npm run daemon & npm run cli",
     "clean": "rm -rf src/*/node_modules src/*/package-lock.json",
-    "clean:all": "rm -rf node_modules package-lock.json src/*/node_modules src/*/package-lock.json src/*/dist src/*/*.tsbuildinfo",
+    "clean:all": "rm -rf node_modules package-lock.json src/*/node_modules src/*/package-lock.json src/*/*.tsbuildinfo",
     "clean:dist": "rm -rf src/*/dist",
+    "prepublishOnly": "npm run build"
   },
   "dependencies": {
-    "blessed": "^0.1.81"
+    "blessed": "^0.1.81",
+    "chalk": "^4.1.2",
+    "chokidar": "^3.5.3",
+    "sqlite3": "^5.1.6",
+    "string-width": "^5.1.2"
   },
   "devDependencies": {
     "@types/node": "^20.19.2",
