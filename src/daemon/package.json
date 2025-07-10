@@ -1,0 +1,38 @@
+{
+  "name": "@cctop/daemon",
+  "version": "1.0.2",
+  "description": "Daemon process for cctop",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist",
+    "start": "node dist/index.js",
+    "test": "echo '⚠️  Direct test execution is disabled due to timeout issues. Please use: npm run test:unit, test:integration:1/2/3/4/5, or test:e2e' && exit 1",
+    "test:unit": "vitest run --reporter=default tests/unit",
+    "test:integration": "echo '⚠️  Direct integration test execution is disabled due to timeout issues. Please use: npm run test:integration:1, test:integration:2, test:integration:3, test:integration:4, or test:integration:5' && exit 1",
+    "test:integration:1": "vitest run --reporter=default tests/integration/basic-aggregates.test.ts tests/integration/daemon.test.ts tests/integration/edge-cases.test.ts",
+    "test:integration:2": "vitest run --reporter=default tests/integration/find-detection.test.ts tests/integration/move-detection-improved.test.ts tests/integration/move-detection.test.ts",
+    "test:integration:3": "vitest run --reporter=default tests/integration/restore-detection.test.ts tests/integration/startup-delete-detection.test.ts tests/integration/statistics-tests.test.ts",
+    "test:integration:4": "vitest run --reporter=default tests/integration/func000-measurement-integration.test.ts",
+    "test:integration:5": "vitest run --reporter=default tests/integration/database-core-integration.test.ts tests/integration/database-schema-management.test.ts",
+    "test:e2e": "vitest run --reporter=default tests/e2e",
+    "test:quick": "vitest run --reporter=default tests/unit tests/integration/move-detection-improved.test.ts",
+    "test:verbose": "vitest run --reporter=verbose",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@cctop/shared": "^0.3.0",
+    "chokidar": "^3.5.3"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.9",
+    "better-sqlite3": "^12.2.0",
+    "sqlite3": "^5.1.6",
+    "typescript": "^5.5.3",
+    "vitest": "^1.6.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

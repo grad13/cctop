@@ -1,0 +1,52 @@
+{
+  "name": "cctop",
+  "version": "0.5.0.0",
+  "description": "Agent work monitoring with real-time file tracking",
+  "workspaces": [
+    "src/*"
+  ],
+  "bin": {
+    "cctop": "bin/cctop"
+  },
+  "scripts": {
+    "install:all": "npm install",
+    "build": "npm run build --workspaces",
+    "test": "npm run test --workspaces",
+    "daemon": "node bin/cctop daemon start",
+    "cli": "node bin/cctop cli",
+    "dev": "npm run daemon & npm run cli",
+    "clean": "rm -rf src/*/node_modules src/*/package-lock.json",
+    "clean:all": "rm -rf node_modules package-lock.json src/*/node_modules src/*/package-lock.json src/*/dist src/*/*.tsbuildinfo",
+    "clean:dist": "rm -rf src/*/dist",
+  },
+  "dependencies": {
+    "blessed": "^0.1.81"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.2",
+    "typescript": "^5.5.3"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "monitoring",
+    "files",
+    "real-time",
+    "agent",
+    "development",
+    "cli",
+    "filesystem",
+    "watch"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/grad13/cctop.git"
+  },
+  "bugs": {
+    "url": "https://github.com/grad13/cctop/issues"
+  },
+  "homepage": "https://github.com/grad13/cctop#readme",
+  "license": "MIT",
+  "author": "grad13"
+}
