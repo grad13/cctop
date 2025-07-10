@@ -1,6 +1,6 @@
 /**
  * Measurement Calculator
- * FUNC-000準拠の測定値計算機能
+ * File measurement calculation functionality
  */
 
 import * as fs from 'fs/promises';

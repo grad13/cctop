@@ -11,35 +11,35 @@ export class DemoDataGenerator {
     // English files
     'index.ts', 'app.js', 'config.json', 'README.md', 'package.json',
     'component.tsx', 'utils.js', 'style.css', 'main.py', 'test.spec.js',
-    // Japanese files
-    'API設計書.md', '仕様書.txt', 'メインスタイル.css', 'ユーティリティ.ts',
-    'テストファイル.spec.js', 'ドキュメント.md', '開発ガイド.pdf',
-    '新機能実装.tsx', 'バグ修正.js', 'リファクタリング.ts',
-    // Mixed
-    'user_管理画面.tsx', 'config_設定.json', 'test_テスト.js'
+    // Documentation files
+    'API-design.md', 'specification.txt', 'main-styles.css', 'utilities.ts',
+    'test-file.spec.js', 'documentation.md', 'development-guide.pdf',
+    'new-feature.tsx', 'bug-fix.js', 'refactoring.ts',
+    // Complex names
+    'user-management.tsx', 'config-settings.json', 'test-suite.js'
   ];
   
   private directories = [
     // Short paths
     'src/', 'test/', 'docs/', 'lib/', 'config/', 'assets/',
     'src/components/', 'src/utils/', 'test/unit/', 'docs/api/',
-    'ドキュメント/', '設計書/', 'テスト/', 'ソース/',
+    'documentation/', 'specs/', 'tests/', 'source/',
     
-    // Long paths to test FUNC-204
-    '/Users/takuo-h/Workspace/Code/06-cctop/modules/cli/src/ui/components/',
+    // Long paths for testing
+    '/home/user/projects/my-app/modules/cli/src/ui/components/',
     '/very/long/path/to/deeply/nested/project/structure/src/database/models/',
     '/home/user/Development/projects/enterprise/application/backend/services/api/v2/',
     '/var/www/html/applications/production/releases/2025-07-04/dist/assets/images/',
     '/opt/kubernetes/clusters/production/namespaces/default/deployments/backend/',
     
-    // Japanese long paths
-    '/プロジェクト/開発環境/ソースコード/フロントエンド/コンポーネント/共通部品/',
-    '/ドキュメント/設計書/詳細設計/画面設計/管理画面/ユーザー管理/',
-    '/システム/本番環境/アプリケーション/バックエンド/サービス/認証/',
+    // Additional long paths for testing
+    '/workspace/projects/enterprise/source/frontend/components/shared/',
+    '/documents/specifications/detailed/screens/admin/user-management/',
+    '/system/production/applications/backend/services/authentication/',
     
-    // Mixed language paths
-    '/Users/開発者/Projects/新機能開発/frontend/src/components/管理画面/',
-    '/home/developer/ワークスペース/project-xyz/backend/api/v2/endpoints/'
+    // Complex project structures
+    '/home/developer/projects/feature-development/frontend/src/components/dashboard/',
+    '/workspace/projects/project-xyz/backend/api/v2/endpoints/'
   ];
   
   private eventId = 1;

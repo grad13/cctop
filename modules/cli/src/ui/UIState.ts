@@ -6,7 +6,7 @@
 import { EventRow } from '../types/event-row';
 import { EventTypeFilterFlags } from './EventTypeFilterFlags';
 
-// FUNC-202 Display States
+// Display States
 export type DisplayState = 'stream_live' | 'event_type_filter' | 'keyword_filter' | 'stream_paused' | 'detail';
 
 // Display modes
@@ -33,7 +33,7 @@ export class UIState {
   private selectedIndex: number = 0;
   private daemonStatus: string = '{yellow-fg}Daemon: ●CHECKING{/yellow-fg}';
   
-  // FUNC-204: Dynamic width config
+  // Dynamic width config
   private directoryWidth: number = 20;
   
   // Viewport management for scrolling

@@ -1,5 +1,5 @@
 /**
- * Daemon Configuration Management - FUNC-101/106 Compliant
+ * Daemon Configuration Management
  * 3-Layer Configuration Architecture Implementation
  */
 
@@ -56,7 +56,7 @@ export class DaemonConfigManager {
   }
 
   async loadConfig(): Promise<void> {
-    // FUNC-106: Daemon-specific configuration loading
+    // Load daemon-specific configuration
     const daemonConfig = await this.loadDaemonConfig();
     
     // Merge with defaults

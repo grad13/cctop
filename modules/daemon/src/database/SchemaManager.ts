@@ -13,7 +13,7 @@ export class SchemaManager {
         -- Enable foreign key constraints
         PRAGMA foreign_keys = ON;
 
-        -- 1. event_types table (FUNC-000 compliant)
+        -- 1. event_types table
         CREATE TABLE IF NOT EXISTS event_types (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           code TEXT NOT NULL UNIQUE,
@@ -21,14 +21,14 @@ export class SchemaManager {
           description TEXT
         );
 
-        -- 2. files table (FUNC-000 compliant)
+        -- 2. files table
         CREATE TABLE IF NOT EXISTS files (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           inode INTEGER,
           is_active BOOLEAN DEFAULT TRUE
         );
 
-        -- 3. events table (FUNC-000 compliant)
+        -- 3. events table
         CREATE TABLE IF NOT EXISTS events (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           timestamp INTEGER NOT NULL,
@@ -41,7 +41,7 @@ export class SchemaManager {
           FOREIGN KEY (file_id) REFERENCES files(id)
         );
 
-        -- 4. measurements table (FUNC-000 compliant)
+        -- 4. measurements table
         CREATE TABLE IF NOT EXISTS measurements (
           event_id INTEGER PRIMARY KEY,
           inode INTEGER,
@@ -51,7 +51,7 @@ export class SchemaManager {
           FOREIGN KEY (event_id) REFERENCES events(id)
         );
 
-        -- 5. aggregates table (FUNC-000 compliant)
+        -- 5. aggregates table
         CREATE TABLE IF NOT EXISTS aggregates (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           file_id INTEGER,
@@ -103,7 +103,7 @@ export class SchemaManager {
           FOREIGN KEY (last_event_type_id) REFERENCES event_types(id)
         );
 
-        -- Create indexes (FUNC-000 compliant)
+        -- Create indexes
         CREATE INDEX IF NOT EXISTS idx_events_timestamp ON events(timestamp);
         CREATE INDEX IF NOT EXISTS idx_events_file_path ON events(file_path);
         CREATE INDEX IF NOT EXISTS idx_events_file_id ON events(file_id);

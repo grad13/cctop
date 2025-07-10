@@ -1,6 +1,6 @@
 /**
  * Event Operations
- * FUNC-000準拠のevents テーブル操作
+ * Events table operations
  */
 
 import sqlite3 from 'sqlite3';
@@ -26,7 +26,7 @@ export class EventOperations {
     return new Promise((resolve) => {
       this.db.all('SELECT id, code FROM event_types ORDER BY code', (err, rows: any[]) => {
         if (err || !rows || rows.length === 0) {
-          // Use FUNC-000 specified order as fallback
+          // Use specified order as fallback
           this.eventTypeMap = new Map([
             ['find', 1],
             ['create', 2],
@@ -54,7 +54,7 @@ export class EventOperations {
       let fileId: number;
       let eventId: number;
       
-      // FUNC-000: delete/move events don't require measurements
+      // delete/move events don't require measurements
       if (['delete', 'move'].includes(event.eventType)) {
         // For delete/move events, inode can be provided without full measurement
         if (!measurement || !measurement.inode) {
@@ -64,7 +64,7 @@ export class EventOperations {
       } else {
         // For create/modify/find/restore events, full measurement is required
         if (!measurement || !measurement.inode) {
-          reject(new Error('Measurement with inode is required for FUNC-000 compliance'));
+          reject(new Error('Measurement with inode is required for database compliance'));
           return;
         }
       }
@@ -158,7 +158,7 @@ export class EventOperations {
             
             eventId = this.lastID;
             
-            // Check if measurement should be saved (FUNC-000: no measurements for delete/move)
+            // Check if measurement should be saved (no measurements for delete/move)
             if (event.eventType === 'delete' || event.eventType === 'move') {
               // Commit without saving measurement
               db.run('COMMIT', (commitErr: any) => {

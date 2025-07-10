@@ -39,7 +39,7 @@ export class UIScreenManager {
 
     this.screen = blessed.screen({
       smartCSR: true,
-      title: 'CCTOP v1.0.0 - FUNC-202 Compliant',
+      title: 'CCTOP v0.5.0.0',
       fullUnicode: true,
       autoPadding: false,
       warnings: false,

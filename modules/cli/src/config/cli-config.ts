@@ -1,5 +1,5 @@
 /**
- * CLI Configuration Interface - FUNC-107 compliant
+ * CLI Configuration Interface
  */
 
 export interface CLIConfig {

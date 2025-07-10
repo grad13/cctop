@@ -1,5 +1,5 @@
 /**
- * FUNC-202 Compliant Frameless UI Implementation (Legacy Compatibility)
+ * Frameless UI Implementation (Legacy Compatibility)
  * Re-exports the refactored implementation for backward compatibility
  */
 

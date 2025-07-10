@@ -1,15 +1,15 @@
 # @cctop/daemon
 
-Real-time file monitoring daemon for cctop - a high-performance file change tracking system with **FUNC-000 SQLite Foundation** compliance.
+Real-time file monitoring daemon for cctop - a high-performance file change tracking system with **SQLite Foundation** compliance.
 
 ## Overview
 
-The daemon module provides continuous background file monitoring capabilities, tracking file system events (create, modify, delete, move, restore) and persisting them to a SQLite database. It implements **FUNC-000 complete compliance** with 5-table normalized architecture for comprehensive file system monitoring with production-ready reliability.
+The daemon module provides continuous background file monitoring capabilities, tracking file system events (create, modify, delete, move, restore) and persisting them to a SQLite database. It implements **complete compliance** with 5-table normalized architecture for comprehensive file system monitoring with production-ready reliability.
 
 ## Features
 
 - **Real-time File Monitoring**: Powered by chokidar for efficient file system watching
-- **FUNC-000 Complete Compliance**: 5-table normalized database architecture
+- **Complete Database Compliance**: 5-table normalized architecture
   - `events` - Main event records with foreign key relationships
   - `event_types` - Event type definitions (find/create/modify/delete/move/restore)
   - `files` - File metadata with inode tracking
@@ -130,14 +130,14 @@ pkill -f "node.*daemon.*standalone"
 
 ## Configuration
 
-The daemon uses a configuration system (FUNC-106):
+The daemon uses a configuration system:
 
 ### Directory Structure
 
 ```
 .cctop/
 ├── config/
-│   └── daemon-config.json    # Daemon-specific settings (FUNC-106)
+│   └── daemon-config.json    # Daemon-specific settings
 ├── data/
 │   └── activity.db          # SQLite database with WAL mode
 ├── logs/
@@ -149,7 +149,7 @@ The daemon uses a configuration system (FUNC-106):
 
 ### Configuration File
 
-#### daemon-config.json (FUNC-106)
+#### daemon-config.json
 ```json
 {
   "monitoring": {
@@ -199,7 +199,7 @@ The daemon uses a configuration system (FUNC-106):
 2. daemon-config.json (if exists)
 3. Command-line arguments (highest priority)
 
-## Database Schema (FUNC-000 Compliant)
+## Database Schema (Standard Compliant)
 
 The daemon writes to an SQLite database with the following **normalized 5-table structure**:
 
@@ -273,7 +273,7 @@ CREATE TABLE aggregates (
 );
 ```
 
-### Key FUNC-000 Features
+### Key Database Features
 - **Foreign Key Relationships**: Normalized data integrity
 - **Automatic Indexing**: Performance-optimized queries
 - **Trigger-based Aggregation**: Real-time statistical updates
@@ -291,7 +291,7 @@ DaemonManager
 ├── FileEventHandler         # Event processing core
 │   ├── MoveDetector        # Move detection logic
 │   └── MeasurementCalculator # File measurement calculation
-└── Database (FUNC-000)      # SQLite with WAL mode
+└── Database                 # SQLite with WAL mode
     ├── SchemaManager        # 5-table schema initialization
     ├── EventOperations      # Event CRUD operations
     ├── MeasurementOperations # Measurement handling
@@ -299,7 +299,7 @@ DaemonManager
     └── TriggerManager       # Automatic aggregation triggers
 ```
 
-### Event Processing Flow (FUNC-000)
+### Event Processing Flow
 
 1. **File System Event** → chokidar detects change
 2. **Event Handler** → FileEventHandler processes event
@@ -321,7 +321,7 @@ npm run test:unit
 npm run test:integration:1  # basic-aggregates, daemon, edge-cases (16 tests)
 npm run test:integration:2  # find-detection, move-detection (16 tests)  
 npm run test:integration:3  # restore-detection, startup-delete, statistics (18 tests)
-npm run test:integration:4  # FUNC-000 measurement integration (11 tests + 1 skip)
+npm run test:integration:4  # measurement integration (11 tests + 1 skip)
 
 # Run E2E tests (production scenarios) - 4 tests
 npm run test:e2e

@@ -1,7 +1,7 @@
 import sqlite3 from 'sqlite3';
 
 /**
- * FUNC-000 compliant database adapter
+ * Database adapter
  * Simple, clean implementation that only supports the correct schema
  */
 export class DatabaseAdapterFunc000 {
@@ -56,7 +56,7 @@ export class DatabaseAdapterFunc000 {
       
       const filterCondition = buildFilterCondition(filters);
       
-      // FUNC-000 compliant query only
+      // Standard compliant query only
       const query = mode === 'unique' ? 
         `WITH latest_events AS (
           SELECT 
@@ -131,7 +131,7 @@ export class DatabaseAdapterFunc000 {
 
   /**
    * Search events with keyword and filters
-   * FUNC-202 v0.3.4.0 compliant implementation with staged fetching
+   * Implementation with staged fetching
    */
   async searchEvents(params: {
     keyword: string;
@@ -157,7 +157,7 @@ export class DatabaseAdapterFunc000 {
       // Build filter conditions
       const filterConditions = filters.map(f => `'${f}'`).join(',');
       
-      // FUNC-000 compliant query with search
+      // Standard compliant query with search
       const query = mode === 'unique' ? 
         `WITH latest_events AS (
           SELECT 

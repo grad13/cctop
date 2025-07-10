@@ -1,7 +1,7 @@
 /**
- * FUNC-202 Compliant Frameless UI Implementation
+ * Frameless UI Implementation
  * Main UI controller integrating all UI components
- * FUNC-200 East Asian Width support
+ * East Asian Width support
  * 
  * Refactored to use UIDataManager for data operations
  */
@@ -195,7 +195,7 @@ export class BlessedFramelessUISimple {
     );
     this.keyHandler.setupKeyHandlers();
     
-    // FUNC-204: Handle terminal resize
+    // Handle terminal resize
     process.stdout.on('resize', () => {
       this.uiState.calculateDynamicWidth();
       this.updateDisplay();
@@ -230,7 +230,7 @@ export class BlessedFramelessUISimple {
           // Silently handle auto-fill errors
         });
       }
-    }, 100); // FUNC-202: 100ms refresh interval
+    }, 100); // 100ms refresh interval
 
     screen.render();
   }

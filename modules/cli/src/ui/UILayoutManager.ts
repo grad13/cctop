@@ -26,7 +26,7 @@ export class UILayoutManager {
   }
 
   setupFramelessLayout(): void {
-    // FUNC-202: Header Area (Line 1-2)
+    // Header Area (Line 1-2)
     this.headerPanel = blessed.box({
       top: 0,
       left: 0,
@@ -41,7 +41,7 @@ export class UILayoutManager {
       tags: true
     });
 
-    // FUNC-202: Event Rows Area (Main content)
+    // Event Rows Area (Main content)
     this.eventArea = blessed.box({
       top: 3,
       left: 0,
@@ -84,7 +84,7 @@ export class UILayoutManager {
       }
     });
 
-    // FUNC-202: Command Keys Area (Bottom-2, Bottom-1)
+    // Command Keys Area (Bottom-2, Bottom-1)
     this.statusBar = blessed.box({
       bottom: 2,
       left: 0,
@@ -113,7 +113,7 @@ export class UILayoutManager {
       tags: true
     });
 
-    // FUNC-202: Dynamic Control Area (Bottom)
+    // Dynamic Control Area (Bottom)
     this.dynamicControlBar = blessed.text({
       bottom: 0,
       left: 0,
@@ -137,7 +137,7 @@ export class UILayoutManager {
   }
 
   buildHeaderContent(): string {
-    // FUNC-202: Header Area format
+    // Header Area format
     let header = `{bold}cctop v0.5.0.0 ${this.uiState.getDaemonStatus()}`;
     
     // Add keyword status if keyword is active
@@ -174,7 +174,7 @@ export class UILayoutManager {
   }
 
   buildKeyGuideContent(): string {
-    // FUNC-202: Command Keys Area (2nd line) - changes based on state
+    // Command Keys Area (2nd line) - changes based on state
     const displayState = this.uiState.getDisplayState();
     
     switch (displayState) {
@@ -190,7 +190,7 @@ export class UILayoutManager {
   }
 
   buildDynamicControlContent(): string {
-    // FUNC-202: Dynamic Control Area - changes based on state
+    // Dynamic Control Area - changes based on state
     const displayState = this.uiState.getDisplayState();
     const searchPattern = this.uiState.getSearchPattern();
     
@@ -250,7 +250,7 @@ export class UILayoutManager {
     // Update command line 1 with current pause state
     this.statusBar.setContent(this.buildCommandLine1());
     
-    // FUNC-202: Update key guide bar with state-dependent content
+    // Update key guide bar with state-dependent content
     this.keyGuideBar.setContent(this.buildKeyGuideContent());
     
     // Update header with filter/search status

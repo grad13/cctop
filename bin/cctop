@@ -231,7 +231,7 @@ async function main() {
         
       case 'ui':
       case undefined:
-        // FUNC-104: Auto daemon + cli + auto cleanup
+        // Auto daemon + cli + auto cleanup
         await startDaemon();
         await startCLI();
         await stopDaemon();

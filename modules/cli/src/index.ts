@@ -1,7 +1,7 @@
 /**
  * CCTOP CLI Main Entry Point
  * Blessed.js Terminal UI Implementation
- * FUNC-104 compliant argument processing
+ * Command-line argument processing
  */
 
 import { BlessedFramelessUISimple } from './ui/blessed-frameless-ui-simple';
@@ -23,7 +23,7 @@ interface CLIArguments {
   timeout?: number;
 }
 
-// FUNC-104: CLI Arguments Processing
+// Parse command-line arguments
 function parseArguments(args: string[]): CLIArguments {
   const result: CLIArguments = {};
   
@@ -58,7 +58,7 @@ function parseArguments(args: string[]): CLIArguments {
   return result;
 }
 
-// FUNC-104: Help Message Display
+// Display help message
 function showHelp(): void {
   console.log(`cctop - Code Change Top (File Watching Tool)
 
@@ -115,12 +115,12 @@ class CCTOPCli {
   }
 
   private findDatabasePath(directory?: string): string {
-    // FUNC-105 compliant path - use specified directory or current working directory
+    // Use specified directory or current working directory
     const targetDir = directory ? path.resolve(directory) : process.cwd();
     const cctopDir = path.join(targetDir, '.cctop');
     const dbPath = path.join(cctopDir, 'data', 'activity.db');
     
-    // FUNC-104: --view mode should not initialize, only read existing data
+    // In view mode, only read existing data without initialization
     if (this.args.view) {
       if (!fs.existsSync(dbPath)) {
         throw new Error(`No existing database found at ${dbPath}. Use 'cctop' without --view to start monitoring.`);
@@ -136,7 +136,7 @@ class CCTOPCli {
   }
 
   private initializeCctopStructure(cctopDir: string): void {
-    // Create FUNC-105 compliant directory structure
+    // Create directory structure
     const dirs = [
       path.join(cctopDir, 'config'),
       path.join(cctopDir, 'themes'),
@@ -213,7 +213,7 @@ const originalStderr = process.stderr.write.bind(process.stderr);
   return originalStderr(chunk, encoding, callback);
 };
 
-// FUNC-104: Main CLI entry point with argument processing
+// Main CLI entry point
 async function main(): Promise<void> {
   // Parse command line arguments (skip 'node' and script name)
   const args = parseArguments(process.argv.slice(2));

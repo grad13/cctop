@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `modules/shared/` - Common types, database layer, and utilities
   - `modules/daemon/` - Background file monitoring service  
   - `modules/cli/` - Terminal UI client
-- **FUNC-105: 3-layer Configuration Architecture**
+- **3-layer Configuration Architecture**
   - Shared Config: Common settings across modules
   - Daemon Config: Background processing settings
   - CLI Config: User interface settings
@@ -57,7 +57,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Breaking Change**: Command structure changed from monolithic to daemon-cli pattern
 - **Backward Compatibility**: Legacy v0.2.x implementation preserved for reference
-- **Upgrade Path**: Existing configurations can be migrated using FUNC-105 initialization
+- **Upgrade Path**: Existing configurations can be migrated using local initialization
 
 ---
 
@@ -113,11 +113,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - **Interactive Feature Suite - User Experience Revolution**
-  - Interactive Selection Mode (FUNC-400): Intuitive file selection with arrow keys
-  - Detail Inspection Mode (FUNC-401): Comprehensive file information display
-  - Aggregate Display Module (FUNC-402): High-speed statistical display
-  - History Display Module (FUNC-403): Time-series event history navigation
-  - Key Input Management System (FUNC-300): Unified keyboard input management
+  - Interactive Selection Mode: Intuitive file selection with arrow keys
+  - Detail Inspection Mode: Comprehensive file information display
+  - Aggregate Display Module: High-speed statistical display
+  - History Display Module: Time-series event history navigation
+  - Key Input Management System: Unified keyboard input management
 - **Experimental Features**
   - Advanced Statistics Module (PIL-010): Time-series analysis and anomaly detection
 
@@ -128,7 +128,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Preset color names: 'black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white'
   - Hexadecimal colors: #000000 format direct color specification
   - Theme management system with 4 preset themes
-  - FUNC-207 Display Color Customization adopted
+  - Display Color Customization adopted
 
 ## [0.2.1.0] - 2025-06-27
 
@@ -151,7 +151,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.3.0] - 2025-06-25
 
 ### Added
-- **Double Buffer Rendering System (FUNC-018)**
+- **Double Buffer Rendering System**
   - Complete flicker prevention
   - 60fps rate limiting with smooth display updates
   - Advanced screen control with ANSI escape sequences

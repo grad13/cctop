@@ -1,6 +1,6 @@
 /**
  * Database-specific type definitions
- * Moved from shared module per FUNC-000 specification
+ * Moved from shared module per database specification
  */
 
 export interface FileEvent {

@@ -22,7 +22,7 @@ export class TriggerManager {
         if (err) {
         }
 
-        // Create new triggers with FUNC-000 compliant logic
+        // Create new triggers for aggregate table maintenance
         const createTriggerSQL = `
           -- Trigger on measurements table for events with measurements
           CREATE TRIGGER trigger_maintain_aggregates_on_measurement

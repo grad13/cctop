@@ -34,10 +34,10 @@ export class UIConfigManager {
     if (config.config) {
       this.cliConfig = config.config;
     } else {
-      // Check if FUNC-105 configuration exists, if not create it
+      // Check if local configuration exists, if not create it
       const initializer = new LocalSetupInitializer();
       if (!initializer.isInitialized()) {
-        console.log('FUNC-105: Initializing .cctop configuration...');
+        console.log('Initializing .cctop configuration...');
         const result = await initializer.initialize();
         console.log(result.message);
       }

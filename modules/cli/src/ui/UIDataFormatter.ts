@@ -15,7 +15,7 @@ export class UIDataFormatter {
   }
 
   formatEventList(): string[] {
-    // FUNC-204: Calculate dynamic directory width
+    // Calculate dynamic directory width
     this.uiState.calculateDynamicWidth();
     
     const visibleEvents = this.uiState.getVisibleEvents();
@@ -29,17 +29,17 @@ export class UIDataFormatter {
     const formattedEvents = visibleEvents.map((event, index) => {
       // Calculate absolute index for selection highlighting
       const absoluteIndex = viewportStart + index;
-      // FUNC-202: Rebuild completely to match header exactly
+      // Rebuild completely to match header exactly
       const timestamp = this.formatTimestamp(event.timestamp);                    // 19 chars
       const elapsed = this.formatElapsed(event.timestamp);                        // 5 chars like "03:33"
       const filename = event.filename || '';                                      
       const eventTypeRaw = event.event_type || '';
       const lines = (event.lines || 0).toString();
       const blocks = (event.blocks || 0).toString();  
-      const size = this.formatFileSize(event.size || 0);     // FUNC-202 v0.3.2.0: Size column
+      const size = this.formatFileSize(event.size || 0);     // Size column
       const directory = event.directory || '';
 
-      // Build exact spacing to match FUNC-202: "Event Timestamp      Elapsed  File Name                           Event    Lines  Blocks    Size  Directory"
+      // Build exact spacing to match header: "Event Timestamp      Elapsed  File Name                           Event    Lines  Blocks    Size  Directory"
       let result = '';
       let resultBeforeEvent = '';
       let resultAfterEvent = '';
@@ -117,7 +117,7 @@ export class UIDataFormatter {
     const eventTime = typeof timestamp === 'number' ? timestamp * 1000 : new Date(timestamp).getTime();
     const diffSeconds = Math.floor((now - eventTime) / 1000);
     
-    // FUNC-202 v0.3.3.0: Staged elapsed time display
+    // Staged elapsed time display
     const MINUTE = 60;
     const HOUR = 3600;
     const DAY = 86400;
@@ -162,7 +162,7 @@ export class UIDataFormatter {
   }
 
   truncateDirectoryPath(path: string, maxWidth: number): string {
-    // FUNC-204: Tail-first truncation for directories
+    // Tail-first truncation for directories
     const width = stringWidth(path);
     
     if (width <= maxWidth) {
@@ -193,7 +193,7 @@ export class UIDataFormatter {
   }
 
   padOrTruncate(text: string, targetWidth: number): string {
-    // FUNC-200: East Asian Width support
+    // East Asian Width support
     // Remove blessed tags for width calculation
     const cleanText = text.replace(/\{[^}]+\}/g, '');
     const currentWidth = stringWidth(cleanText);
@@ -207,7 +207,7 @@ export class UIDataFormatter {
   }
   
   truncateWithEllipsis(text: string, maxWidth: number): string {
-    // FUNC-200: Proper truncation with East Asian Width support
+    // Proper truncation with East Asian Width support
     const ellipsis = '...';
     const ellipsisWidth = 3;
     
@@ -240,7 +240,7 @@ export class UIDataFormatter {
     return ' '.repeat(width - currentWidth) + text;
   }
 
-  // FUNC-202 v0.3.2.0: Dynamic file size formatting
+  // Dynamic file size formatting
   formatFileSize(bytes: number): string {
     if (bytes === 0) return '0B';
     

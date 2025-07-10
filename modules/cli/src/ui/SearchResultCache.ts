@@ -1,6 +1,5 @@
 /**
  * Search Result Cache with LRU eviction policy
- * FUNC-202 v0.3.4.0 compliant implementation
  */
 
 import { EventRow } from '../types/event-row';

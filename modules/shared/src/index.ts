@@ -1,6 +1,6 @@
 /**
  * @cctop/shared - Common types and utilities
- * Configuration management and initialization only (per FUNC-000 specification)
+ * Configuration management and initialization only
  */
 
 export * from './types';

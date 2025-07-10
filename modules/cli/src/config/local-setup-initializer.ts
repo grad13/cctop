@@ -1,5 +1,5 @@
 /**
- * Local Setup Initializer - FUNC-105 Implementation
+ * Local Setup Initializer
  * Handles automatic creation of .cctop/ directory structure and initial configuration
  */
 
@@ -65,7 +65,7 @@ export class LocalSetupInitializer {
   }
   
   /**
-   * Create .cctop/ directory structure as per FUNC-105
+   * Create .cctop/ directory structure
    */
   private async createDirectoryStructure(configPath: string): Promise<void> {
     const directories = [
@@ -95,7 +95,7 @@ export class LocalSetupInitializer {
     const configDir = path.join(configPath, 'config');
     const themesDir = path.join(configPath, 'themes');
     
-    // shared-config.json (FUNC-101)
+    // shared-config.json
     const sharedConfig = {
       version: "0.3.0.0",
       projectName: path.basename(process.cwd()),
@@ -109,7 +109,7 @@ export class LocalSetupInitializer {
       createdAt: new Date().toISOString()
     };
     
-    // daemon-config.json (FUNC-106)
+    // daemon-config.json
     const daemonConfig = {
       version: "0.3.0.0",
       daemon: {
@@ -126,7 +126,7 @@ export class LocalSetupInitializer {
       }
     };
     
-    // cli-config.json (FUNC-107)
+    // cli-config.json
     const cliConfig = {
       version: "0.3.0.0",
       display: {
@@ -232,7 +232,7 @@ themes/custom/
   }
   
   /**
-   * Generate success message as per FUNC-105
+   * Generate success message
    */
   private generateSuccessMessage(configPath: string): string {
     return `Created configuration in ${configPath}/

@@ -1,6 +1,6 @@
 /**
  * Configuration Manager for .cctop directory initialization
- * FUNC-105 compliant unified configuration management
+ * Unified configuration management
  */
 
 import * as fs from 'fs';
@@ -65,7 +65,7 @@ export class ConfigManager {
 
   /**
    * Initialize .cctop directory structure and configuration
-   * FUNC-105 compliant directory structure
+   * Standard compliant directory structure
    */
   async initializeCctopStructure(): Promise<void> {
     const cctopDir = path.join(this.workingDirectory, '.cctop');
@@ -91,7 +91,7 @@ export class ConfigManager {
     // Create default configuration files if they don't exist
     await this.ensureConfigFiles();
     
-    // Create theme files (FUNC-105 compliant)
+    // Create theme files
     await this.ensureThemeFiles();
     
     // Create .gitignore for runtime files
@@ -133,7 +133,7 @@ export class ConfigManager {
   }
 
   /**
-   * Ensure all required theme files exist (FUNC-105 compliant)
+   * Ensure all required theme files exist
    */
   private async ensureThemeFiles(): Promise<void> {
     const themesDir = path.join(this.workingDirectory, '.cctop', 'themes');

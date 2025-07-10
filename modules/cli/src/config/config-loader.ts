@@ -1,5 +1,5 @@
 /**
- * Configuration Loader - Enhanced with FUNC-105 Local Setup
+ * Configuration Loader
  */
 
 import * as fs from 'fs';
@@ -82,7 +82,7 @@ export class ConfigLoader {
   }
   
   /**
-   * Load shared configuration (FUNC-101)
+   * Load shared configuration
    */
   private async loadSharedConfig(configPath: string): Promise<SharedConfig> {
     const configFile = path.join(configPath, 'config', 'shared-config.json');
@@ -95,7 +95,7 @@ export class ConfigLoader {
   }
   
   /**
-   * Load daemon configuration (FUNC-106)
+   * Load daemon configuration
    */
   private async loadDaemonConfig(configPath: string): Promise<DaemonConfig> {
     const configFile = path.join(configPath, 'config', 'daemon-config.json');
@@ -108,7 +108,7 @@ export class ConfigLoader {
   }
   
   /**
-   * Load CLI configuration (FUNC-107)
+   * Load CLI configuration
    */
   private async loadCLIConfig(configPath: string): Promise<CLIConfig> {
     const configFile = path.join(configPath, 'config', 'cli-config.json');
@@ -119,7 +119,7 @@ export class ConfigLoader {
     const content = fs.readFileSync(configFile, 'utf8');
     const config = JSON.parse(content);
     
-    // Deep merge with defaults to ensure all required fields (FUNC-101)
+    // Deep merge with defaults to ensure all required fields
     return this.deepMerge(defaultCLIConfig, config);
   }
   

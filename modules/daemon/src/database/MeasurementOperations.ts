@@ -1,6 +1,6 @@
 /**
  * Measurement Operations
- * FUNC-000準拠のmeasurements テーブル操作
+ * Database measurements table operations
  */
 
 import sqlite3 from 'sqlite3';

@@ -60,7 +60,7 @@ export class FileEventHandler {
         timestamp: new Date()
       };
 
-      // Prepare measurement data - always include inode for FUNC-000 compliance
+      // Prepare measurement data - always include inode as required by database schema
       let measurement: EventMeasurement | undefined;
       try {
         if (eventType === 'create' || eventType === 'modify' || eventType === 'find') {
