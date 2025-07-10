@@ -2,9 +2,9 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { KeywordSearchManager, EventData, SearchResult } from '../../../src/filters/KeywordSearchManager.js';
 
 /**
- * キーワード検索テスト - HO-20250707-002仕様準拠
- * [Enter]時のDB検索とvanilla table統合をテスト
- * 実装ファイル src/filters/KeywordSearchManager.ts をテスト
+ * Keyword search test
+ * Tests DB search on [Enter] key and vanilla table integration
+ * Tests implementation file src/filters/KeywordSearchManager.ts
  */
 
 describe('Keyword Search System', () => {

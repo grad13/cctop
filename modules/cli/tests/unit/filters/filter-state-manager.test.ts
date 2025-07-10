@@ -2,9 +2,9 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { FilterStateManager, FilterState, EventData } from '../../../src/filters/FilterStateManager.js';
 
 /**
- * FilterState管理システムのテスト
- * HO-20250707-002で指定された要件に基づく
- * 実装ファイル src/filters/FilterStateManager.ts をテスト
+ * FilterState management system test
+ * Based on specified requirements
+ * Tests implementation file src/filters/FilterStateManager.ts
  */
 
 describe('FilterStateManager', () => {
@@ -14,9 +14,9 @@ describe('FilterStateManager', () => {
     manager = new FilterStateManager();
   });
 
-  describe('処理順序テスト（最重要）', () => {
-    it('should exclude deleted files when delete events are filtered - HO-20250707-002 Specification', () => {
-      // テストデータ：HOで指定された具体例
+  describe('Processing order test (most important)', () => {
+    it('should exclude deleted files when delete events are filtered', () => {
+      // Test data: specific examples
       const testEvents: EventData[] = [
         // ファイルA: Create → Modify → Delete (最新)
         { id: 1, file_id: 1, file_name: 'fileA.txt', event_type: 'Create', timestamp: '2025-01-01 10:00:00', directory: '/test' },

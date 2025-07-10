@@ -1,6 +1,6 @@
 /**
- * FilterStateManager - HO-20250707-002仕様準拠
- * UI filter機能の集合論的状態管理とvanilla table運用
+ * FilterStateManager
+ * Set-theoretic state management for UI filter functionality and vanilla table operation
  */
 
 export interface FilterState {
@@ -27,11 +27,11 @@ interface OperationHistory {
 /**
  * FilterStateManager
  * 
- * 核心機能:
- * 1. unique processing → filter check 処理順序の実装
- * 2. vanilla table によるメモリベース状態管理
- * 3. 操作履歴管理とundo機能
- * 4. 集合論的フィルタ適用
+ * Core features:
+ * 1. Implementation of unique processing → filter check processing order
+ * 2. Memory-based state management with vanilla table
+ * 3. Operation history management and undo functionality
+ * 4. Set-theoretic filter application
  */
 export class FilterStateManager {
   private currentState: FilterState;
@@ -45,7 +45,7 @@ export class FilterStateManager {
   }
 
   /**
-   * デフォルト状態取得
+   * Get default state
    */
   private getDefaultState(): FilterState {
     return {
@@ -56,21 +56,21 @@ export class FilterStateManager {
   }
 
   /**
-   * 現在のフィルタ状態取得
+   * Get current filter state
    */
   getCurrentState(): FilterState {
     return { ...this.currentState };
   }
 
   /**
-   * vanilla table取得
+   * Get vanilla table
    */
   getVanillaTable(): EventData[] {
     return [...this.vanillaTable];
   }
 
   /**
-   * vanilla tableにイベント追加
+   * Add events to vanilla table
    */
   addToVanillaTable(events: EventData[]): void {
     // Duplicate check (id-based)
@@ -87,14 +87,14 @@ export class FilterStateManager {
   }
 
   /**
-   * vanilla tableにイベント追加 - テスト互換エイリアス
+   * Add events to vanilla table - test compatibility alias
    */
   updateVanillaTable(events: EventData[]): void {
     this.addToVanillaTable(events);
   }
 
   /**
-   * 古いデータの削除（容量管理）
+   * Delete old data (capacity management)
    */
   private optimizeVanillaTable(): void {
     // Sort by timestamp and delete oldest
@@ -107,7 +107,7 @@ export class FilterStateManager {
   }
 
   /**
-   * 操作履歴に追加
+   * Add to operation history
    */
   private addToHistory(type: OperationHistory['type']): void {
     const history: OperationHistory = {
@@ -125,7 +125,7 @@ export class FilterStateManager {
   }
 
   /**
-   * フィルタ状態更新
+   * Update filter state
    */
   updateFilterState(updates: Partial<FilterState>): void {
     this.addToHistory('filter');
@@ -133,7 +133,7 @@ export class FilterStateManager {
   }
 
   /**
-   * モード切替
+   * Switch mode
    */
   setMode(mode: 'all' | 'unique'): void {
     if (this.currentState.mode !== mode) {
@@ -143,7 +143,7 @@ export class FilterStateManager {
   }
 
   /**
-   * イベントフィルタ設定
+   * Set event filters
    */
   setEventFilters(eventTypes: string[]): void {
     this.addToHistory('filter');
@@ -151,7 +151,7 @@ export class FilterStateManager {
   }
 
   /**
-   * キーワードフィルタ設定
+   * Set keyword filter
    */
   setKeywordFilter(keyword: string): void {
     this.addToHistory('keyword');
@@ -159,10 +159,10 @@ export class FilterStateManager {
   }
 
   /**
-   * フィルタ処理実行 - HO-20250707-002核心仕様
+   * Execute filter processing
    * 
-   * 処理順序: unique processing → filter check
-   * 重要: unique処理で最新イベントがfilter対象外の場合、ファイル全体を非表示
+   * Processing order: unique processing → filter check
+   * Important: If the latest event is excluded by filter in unique mode, hide the entire file
    */
   applyFilters(): EventData[] {
     let result = [...this.vanillaTable];
@@ -185,8 +185,8 @@ export class FilterStateManager {
   }
 
   /**
-   * unique処理実装
-   * 各ファイルについて最新イベントのみを抽出
+   * Unique processing implementation
+   * Extract only the latest event for each file
    */
   private applyUniqueProcessing(events: EventData[]): EventData[] {
     const fileLatestEvents = new Map<number, EventData>();
@@ -203,8 +203,8 @@ export class FilterStateManager {
   }
 
   /**
-   * イベントフィルタ適用
-   * unique処理済みの結果に対してフィルタを適用
+   * Apply event filters
+   * Apply filters to unique-processed results
    */
   private applyEventFilters(events: EventData[]): EventData[] {
     if (this.currentState.eventFilters.length === 0) {
@@ -217,7 +217,7 @@ export class FilterStateManager {
   }
 
   /**
-   * キーワードフィルタ適用
+   * Apply keyword filter
    */
   private applyKeywordFilter(events: EventData[]): EventData[] {
     const keyword = this.currentState.keywordFilter.trim();
@@ -231,7 +231,7 @@ export class FilterStateManager {
   }
 
   /**
-   * 直前の操作をundo
+   * Undo last operation
    */
   undo(): boolean {
     const lastOperation = this.operationHistory.pop();
@@ -243,7 +243,7 @@ export class FilterStateManager {
   }
 
   /**
-   * 全フィルタクリア
+   * Clear all filters
    */
   clearAllFilters(): void {
     this.addToHistory('filter');
@@ -251,21 +251,21 @@ export class FilterStateManager {
   }
 
   /**
-   * vanilla tableクリア
+   * Clear vanilla table
    */
   clearVanillaTable(): void {
     this.vanillaTable = [];
   }
 
   /**
-   * 操作履歴クリア
+   * Clear operation history
    */
   clearHistory(): void {
     this.operationHistory = [];
   }
 
   /**
-   * 統計情報取得
+   * Get statistics
    */
   getStats(): {
     vanillaTableSize: number;
@@ -282,18 +282,18 @@ export class FilterStateManager {
   }
 
   // ========================================
-  // Test compatibility methods - HO-20250707-002 compliant
+  // Test compatibility methods
   // ========================================
 
   /**
-   * モード更新 - テスト互換エイリアス
+   * Update mode - test compatibility alias
    */
   updateMode(mode: 'all' | 'unique'): void {
     this.setMode(mode);
   }
 
   /**
-   * イベントフィルタのトグル
+   * Toggle event filter
    */
   toggleEventFilter(eventType: string): void {
     const currentFilters = [...this.currentState.eventFilters];
@@ -309,28 +309,28 @@ export class FilterStateManager {
   }
 
   /**
-   * キーワードフィルタ更新 - テスト互換エイリアス
+   * Update keyword filter - test compatibility alias
    */
   updateKeywordFilter(keyword: string): void {
     this.setKeywordFilter(keyword);
   }
 
   /**
-   * フィルタリセット - テスト互換エイリアス
+   * Reset filters - test compatibility alias
    */
   resetFilters(): void {
     this.clearAllFilters();
   }
 
   /**
-   * 状態取得 - テスト互換エイリアス
+   * Get state - test compatibility alias
    */
   getState(): FilterState {
     return this.getCurrentState();
   }
 
   /**
-   * vanilla tableサイズ取得
+   * Get vanilla table size
    */
   getVanillaTableSize(): number {
     return this.vanillaTable.length;

@@ -31,11 +31,11 @@ db.serialize(() => {
 
   // Insert test data
   const files = [
-    { name: 'README.md', path: '/Users/takuo-h/projects/cctop/README.md' },
-    { name: 'index.js', path: '/Users/takuo-h/projects/cctop/src/index.js' },
-    { name: 'package.json', path: '/Users/takuo-h/projects/cctop/package.json' },
-    { name: 'test.spec.js', path: '/Users/takuo-h/projects/cctop/test/test.spec.js' },
-    { name: '設定ファイル.json', path: '/Users/takuo-h/projects/config/設定ファイル.json' }
+    { name: 'README.md', path: '/projects/cctop/README.md' },
+    { name: 'index.js', path: '/projects/cctop/src/index.js' },
+    { name: 'package.json', path: '/projects/cctop/package.json' },
+    { name: 'test.spec.js', path: '/projects/cctop/test/test.spec.js' },
+    { name: 'config.json', path: '/projects/config/config.json' }
   ];
 
   const eventTypes = ['find', 'create', 'modify', 'delete', 'move', 'restore'];

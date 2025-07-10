@@ -1,6 +1,6 @@
 /**
- * ESCOperationManager - HO-20250707-002仕様準拠
- * 2つの異なるESC動作を管理（編集破棄 vs 全クリア）
+ * ESCOperationManager
+ * Manages two different ESC behaviors (discard edits vs clear all)
  */
 
 export interface FilterState {
@@ -12,11 +12,11 @@ export interface FilterState {
 /**
  * ESCOperationManager
  * 
- * 核心機能:
- * 1. 編集モード vs 通常モードの管理
- * 2. 編集モード中のESC: 編集結果破棄・元状態復元
- * 3. 通常モード中のESC: 全フィルタクリア
- * 4. previousState保存・復元機能
+ * Core features:
+ * 1. Edit mode vs normal mode management
+ * 2. ESC in edit mode: Discard edits and restore original state
+ * 3. ESC in normal mode: Clear all filters
+ * 4. Save and restore previousState functionality
  */
 export class ESCOperationManager {
   private currentState: FilterState;
@@ -28,7 +28,7 @@ export class ESCOperationManager {
   }
 
   /**
-   * デフォルト状態取得
+   * Get default state
    */
   private getDefaultState(): FilterState {
     return {
@@ -39,8 +39,8 @@ export class ESCOperationManager {
   }
 
   /**
-   * 編集モードに入る
-   * previousStateを保存し、編集前の状態を記録
+   * Enter editing mode
+   * Save previousState to record state before editing
    */
   enterEditingMode(field: 'eventFilter' | 'keywordFilter'): void {
     this.previousState = { ...this.currentState };
@@ -48,18 +48,18 @@ export class ESCOperationManager {
   }
 
   /**
-   * 状態更新
+   * Update state
    */
   updateState(updates: Partial<FilterState>): void {
     this.currentState = { ...this.currentState, ...updates };
   }
 
   /**
-   * ESC操作実行 - HO-20250707-002核心仕様
+   * Execute ESC operation
    * 
-   * 動作パターン:
-   * 1. 編集モード中: 編集結果を破棄し、元の状態に復元
-   * 2. 通常モード中: 全フィルタをデフォルト状態にクリア
+   * Behavior patterns:
+   * 1. In edit mode: Discard edits and restore original state
+   * 2. In normal mode: Clear all filters to default state
    */
   executeEscape(): FilterState {
     if (this.currentMode === 'editing') {
@@ -78,29 +78,29 @@ export class ESCOperationManager {
   }
 
   /**
-   * 現在の状態取得
+   * Get current state
    */
   getCurrentState(): FilterState {
     return { ...this.currentState };
   }
 
   /**
-   * 現在のモード取得
+   * Get current mode
    */
   getCurrentMode(): string {
     return this.currentMode;
   }
 
   /**
-   * 編集モード確認
+   * Check if in editing mode
    */
   isEditing(): boolean {
     return this.currentMode === 'editing';
   }
 
   /**
-   * 編集モード終了（確定）
-   * ESCとは異なり、編集内容を保存して通常モードに戻る
+   * Confirm and exit edit mode
+   * Unlike ESC, this saves the edits and returns to normal mode
    */
   confirmEdit(): FilterState {
     this.currentMode = 'normal';
@@ -109,15 +109,15 @@ export class ESCOperationManager {
   }
 
   /**
-   * 外部からの状態同期
-   * FilterStateManagerとの統合時に使用
+   * Sync state from external source
+   * Used for integration with FilterStateManager
    */
   syncState(newState: FilterState): void {
     this.currentState = { ...newState };
   }
 
   /**
-   * previousState確認（デバッグ用）
+   * Check if previousState exists (for debugging)
    */
   hasPreviousState(): boolean {
     return this.previousState !== null;

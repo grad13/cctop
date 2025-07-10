@@ -1,6 +1,6 @@
 /**
- * KeywordSearchManager - HO-20250707-002仕様準拠
- * [Enter]時のDB検索とvanilla table統合を管理
+ * KeywordSearchManager
+ * Manages DB search on [Enter] key and vanilla table integration
  */
 
 export interface EventData {
@@ -21,13 +21,13 @@ export interface SearchResult {
 /**
  * KeywordSearchManager
  * 
- * 核心機能:
- * 1. [Enter]押下時のDB検索実行
- * 2. 検索結果のvanilla table統合（重複排除）
- * 3. 検索履歴管理
- * 4. 結果キャッシュ
- * 5. 容量管理（古いデータ自動削除）
- * 6. リアルタイムキーワードフィルタリング
+ * Core features:
+ * 1. Execute DB search on [Enter] key press
+ * 2. Integrate search results into vanilla table (with deduplication)
+ * 3. Search history management
+ * 4. Result caching
+ * 5. Capacity management (auto-delete old data)
+ * 6. Real-time keyword filtering
  */
 export class KeywordSearchManager {
   private vanillaTable: EventData[] = [];
@@ -44,8 +44,8 @@ export class KeywordSearchManager {
   }
 
   /**
-   * テスト用のDB検索シミュレーション
-   * 実際の実装では、DatabaseAdapterやQueryEngineを使用
+   * Test DB search simulation
+   * In production, use DatabaseAdapter or QueryEngine
    */
   private async simulateDBSearch(keyword: string): Promise<SearchResult> {
     // Dummy DB for testing
@@ -71,13 +71,13 @@ export class KeywordSearchManager {
   }
 
   /**
-   * [Enter]押下時のDB検索実行 - HO-20250707-002核心仕様
+   * Execute DB search on [Enter] key press
    * 
-   * 処理フロー:
-   * 1. DB検索実行
-   * 2. 検索結果をvanilla tableに統合
-   * 3. 検索履歴に追加
-   * 4. 検索結果をキャッシュ
+   * Processing flow:
+   * 1. Execute DB search
+   * 2. Integrate search results into vanilla table
+   * 3. Add to search history
+   * 4. Cache search results
    */
   async executeKeywordSearch(keyword: string): Promise<EventData[]> {
     if (!keyword.trim()) {
@@ -104,8 +104,8 @@ export class KeywordSearchManager {
   }
 
   /**
-   * vanilla tableに検索結果を統合
-   * 重複チェック（idベース）と容量管理を実行
+   * Integrate search results into vanilla table
+   * Perform duplicate check (id-based) and capacity management
    */
   private addToVanillaTable(newEvents: EventData[]): void {
     // Duplicate check (id-based)
@@ -122,8 +122,8 @@ export class KeywordSearchManager {
   }
 
   /**
-   * 古いデータの削除（容量管理）
-   * timestampでソートし、古いものから削除
+   * Delete old data (capacity management)
+   * Sort by timestamp and delete oldest
    */
   private optimizeVanillaTable(): void {
     // Sort by timestamp and delete oldest
@@ -136,8 +136,8 @@ export class KeywordSearchManager {
   }
 
   /**
-   * 検索履歴に追加
-   * 重複を避け、履歴サイズを管理
+   * Add to search history
+   * Avoid duplicates and manage history size
    */
   private addToSearchHistory(keyword: string): void {
     // Duplicate check
@@ -152,8 +152,8 @@ export class KeywordSearchManager {
   }
 
   /**
-   * キーワードフィルタリング（リアルタイム適用）
-   * vanilla table内のイベントをキーワードでフィルタリング
+   * Keyword filtering (real-time application)
+   * Filter events in vanilla table by keyword
    */
   applyKeywordFilter(keyword: string): EventData[] {
     if (!keyword.trim()) {
@@ -166,49 +166,49 @@ export class KeywordSearchManager {
   }
 
   /**
-   * vanilla table取得
+   * Get vanilla table
    */
   getVanillaTable(): EventData[] {
     return [...this.vanillaTable];
   }
 
   /**
-   * vanilla tableサイズ取得
+   * Get vanilla table size
    */
   getVanillaTableSize(): number {
     return this.vanillaTable.length;
   }
 
   /**
-   * 検索履歴取得
+   * Get search history
    */
   getSearchHistory(): string[] {
     return [...this.searchHistory];
   }
 
   /**
-   * 検索結果キャッシュ取得
+   * Get search results cache
    */
   getSearchResultsCache(): Map<string, EventData[]> {
     return new Map(this.dbSearchResults);
   }
 
   /**
-   * キャッシュされた検索結果取得
+   * Get cached search result
    */
   getCachedSearchResult(keyword: string): EventData[] | undefined {
     return this.dbSearchResults.get(keyword);
   }
 
   /**
-   * vanilla table初期化（テスト用）
+   * Initialize vanilla table (for testing)
    */
   initializeVanillaTable(events: EventData[]): void {
     this.vanillaTable = [...events];
   }
 
   /**
-   * 全データクリア
+   * Clear all data
    */
   clearAll(): void {
     this.vanillaTable = [];
@@ -217,21 +217,21 @@ export class KeywordSearchManager {
   }
 
   /**
-   * 検索履歴クリア
+   * Clear search history
    */
   clearSearchHistory(): void {
     this.searchHistory = [];
   }
 
   /**
-   * キャッシュクリア
+   * Clear cache
    */
   clearCache(): void {
     this.dbSearchResults.clear();
   }
 
   /**
-   * 統計情報取得
+   * Get statistics
    */
   getStats(): {
     vanillaTableSize: number;
@@ -246,7 +246,7 @@ export class KeywordSearchManager {
   }
 
   /**
-   * DB検索関数の設定（実運用時）
+   * Set database search function (for production use)
    */
   setDatabaseSearchFunction(searchFunction: (keyword: string) => Promise<SearchResult>): void {
     this.dbSearchFunction = searchFunction;

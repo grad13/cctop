@@ -186,7 +186,6 @@ export class DaemonConfigManager {
         }
       };
       await fs.writeFile(daemonConfigPath, JSON.stringify(daemonConfig, null, 2));
-      console.log('Created daemon-config.json with default settings');
     }
 
     // Create .gitignore if not exists
@@ -204,7 +203,6 @@ temp/
 themes/custom/
 `;
       await fs.writeFile(gitignorePath, gitignoreContent);
-      console.log('Created .cctop/.gitignore');
     }
   }
 }

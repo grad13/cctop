@@ -1,6 +1,6 @@
 /**
- * DynamicDataLoader - HO-20250707-002仕様準拠
- * 3つのトリガー条件での動的データ読み込みを管理
+ * DynamicDataLoader
+ * Manages dynamic data loading with 3 trigger conditions
  */
 
 export interface EventData {
@@ -27,14 +27,14 @@ export type LoadTrigger = 'screen-fill' | 'bottom-selection' | 'polling' | 'manu
 /**
  * DynamicDataLoader
  * 
- * 核心機能:
- * 1. 3つのトリガー条件での自動読み込み
- *    - 画面内row不足時（screen-fill）
- *    - 選択row最下部到達時（bottom-selection）
- *    - 100msポーリング（polling）
- * 2. 段階的読み込み戦略（初回100件→最大1000件）
- * 3. 競合制御（isLoading状態管理）
- * 4. vanilla table統合・容量管理
+ * Core features:
+ * 1. Auto-loading with 3 trigger conditions
+ *    - When screen rows are insufficient (screen-fill)
+ *    - When selection reaches bottom (bottom-selection)
+ *    - 100ms polling (polling)
+ * 2. Progressive loading strategy (initial 100 items → max 1000 items)
+ * 3. Concurrency control (isLoading state management)
+ * 4. Vanilla table integration and capacity management
  */
 export class DynamicDataLoader {
   private loadingState: LoadingState;
@@ -60,8 +60,8 @@ export class DynamicDataLoader {
   }
 
   /**
-   * テスト用のDB読み込みシミュレーション
-   * 実際の実装では、DatabaseAdapterやQueryEngineを使用
+   * Test DB loading simulation
+   * In production, use DatabaseAdapter or QueryEngine
    */
   private async simulateDBLoad(offset: number, limit: number): Promise<EventData[]> {
     this.loadCallCount++;
@@ -89,8 +89,8 @@ export class DynamicDataLoader {
   }
 
   /**
-   * 1. 画面Fill不足トリガー - HO-20250707-002仕様
-   * 画面内にrowがfillされていない & end of dataが表示されていない場合
+   * 1. Screen fill insufficient trigger
+   * When screen is not filled with rows & end of data is not displayed
    */
   async checkScreenFillTrigger(): Promise<boolean> {
     // Screen not filled with rows & end of data not displayed
@@ -106,8 +106,8 @@ export class DynamicDataLoader {
   }
 
   /**
-   * 2. 下端選択トリガー - HO-20250707-002仕様
-   * 選択rowがtable最下部 & end of dataが表示されていない場合
+   * 2. Bottom selection trigger
+   * When selected row is at table bottom & end of data is not displayed
    */
   async checkBottomSelectionTrigger(): Promise<boolean> {
     // Selected row at table bottom & end of data not displayed
@@ -123,8 +123,8 @@ export class DynamicDataLoader {
   }
 
   /**
-   * 3. 100msポーリングトリガー - HO-20250707-002仕様
-   * ポーリングによる新データチェック
+   * 3. 100ms polling trigger
+   * Check for new data via polling
    */
   async check100msPollingTrigger(): Promise<boolean> {
     // Check for new data via polling (simulate actual DB polling)
@@ -137,12 +137,12 @@ export class DynamicDataLoader {
   }
 
   /**
-   * データ読み込み実行 - 段階的読み込み戦略
+   * Execute data loading - progressive loading strategy
    * 
-   * ロード戦略:
-   * - 初回: 100件
-   * - 追加: 100件ずつ  
-   * - 最大: 1000件まで
+   * Load strategy:
+   * - Initial: 100 items
+   * - Additional: 100 items each time  
+   * - Maximum: up to 1000 items
    */
   private async executeLoad(trigger: LoadTrigger): Promise<void> {
     this.loadingState.isLoading = true;
@@ -180,7 +180,7 @@ export class DynamicDataLoader {
   }
 
   /**
-   * 手動読み込み実行
+   * Execute manual loading
    */
   async manualLoad(): Promise<void> {
     if (!this.loadingState.isLoading && this.loadingState.hasMore) {
@@ -189,7 +189,7 @@ export class DynamicDataLoader {
   }
 
   /**
-   * 画面状態の更新
+   * Update screen state
    */
   updateScreenState(visibleRows: number, selectedRowIndex: number): void {
     this.loadingState.visibleRows = visibleRows;
@@ -197,7 +197,7 @@ export class DynamicDataLoader {
   }
 
   /**
-   * ユーザー操作シミュレーション: 選択を下に移動
+   * User operation simulation: move selection down
    */
   moveSelectionDown(): void {
     if (this.loadingState.selectedRowIndex < this.loadingState.totalAvailableRows - 1) {
@@ -206,7 +206,7 @@ export class DynamicDataLoader {
   }
 
   /**
-   * ユーザー操作シミュレーション: 選択を上に移動
+   * User operation simulation: move selection up
    */
   moveSelectionUp(): void {
     if (this.loadingState.selectedRowIndex > 0) {
@@ -215,35 +215,35 @@ export class DynamicDataLoader {
   }
 
   /**
-   * 現在の読み込み状態取得
+   * Get current loading state
    */
   getLoadingState(): LoadingState {
     return { ...this.loadingState };
   }
 
   /**
-   * 状態更新（テスト用）
+   * Update state (for testing)
    */
   setLoadingState(updates: Partial<LoadingState>): void {
     this.loadingState = { ...this.loadingState, ...updates };
   }
 
   /**
-   * vanilla table取得
+   * Get vanilla table
    */
   getVanillaTable(): EventData[] {
     return [...this.vanillaTable];
   }
 
   /**
-   * 読み込み呼び出し回数取得（テスト用）
+   * Get load call count (for testing)
    */
   getLoadCallCount(): number {
     return this.loadCallCount;
   }
 
   /**
-   * 統計情報取得
+   * Get statistics
    */
   getStats(): {
     vanillaTableSize: number;
@@ -262,7 +262,7 @@ export class DynamicDataLoader {
   }
 
   /**
-   * 全データリセット（テスト用）
+   * Reset all data (for testing)
    */
   reset(): void {
     this.loadingState = {
@@ -279,7 +279,7 @@ export class DynamicDataLoader {
   }
 
   /**
-   * DB読み込み関数の設定（実運用時）
+   * Set database load function (for production use)
    */
   setDatabaseLoadFunction(loadFunction: (offset: number, limit: number) => Promise<EventData[]>): void {
     this.dbLoadFunction = loadFunction;

@@ -2,9 +2,9 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { ESCOperationManager, FilterState } from '../../src/input/ESCOperationManager.js';
 
 /**
- * ESC操作テスト - HO-20250707-002仕様準拠
- * 2つの異なるESC動作をテスト
- * 実装ファイル src/input/ESCOperationManager.ts をテスト
+ * ESC operation test
+ * Tests two different ESC behaviors
+ * Tests implementation file src/input/ESCOperationManager.ts
  */
 
 describe('ESC Operations', () => {

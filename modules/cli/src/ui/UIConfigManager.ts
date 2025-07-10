@@ -37,9 +37,7 @@ export class UIConfigManager {
       // Check if local configuration exists, if not create it
       const initializer = new LocalSetupInitializer();
       if (!initializer.isInitialized()) {
-        console.log('Initializing .cctop configuration...');
         const result = await initializer.initialize();
-        console.log(result.message);
       }
       
       const configLoader = new ConfigLoader();

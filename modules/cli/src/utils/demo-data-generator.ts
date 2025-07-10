@@ -26,9 +26,9 @@ export class DemoDataGenerator {
     'documentation/', 'specs/', 'tests/', 'source/',
     
     // Long paths for testing
-    '/home/user/projects/my-app/modules/cli/src/ui/components/',
+    '/project/my-app/modules/cli/src/ui/components/',
     '/very/long/path/to/deeply/nested/project/structure/src/database/models/',
-    '/home/user/Development/projects/enterprise/application/backend/services/api/v2/',
+    '/development/projects/enterprise/application/backend/services/api/v2/',
     '/var/www/html/applications/production/releases/2025-07-04/dist/assets/images/',
     '/opt/kubernetes/clusters/production/namespaces/default/deployments/backend/',
     
@@ -38,7 +38,7 @@ export class DemoDataGenerator {
     '/system/production/applications/backend/services/authentication/',
     
     // Complex project structures
-    '/home/developer/projects/feature-development/frontend/src/components/dashboard/',
+    '/projects/feature-development/frontend/src/components/dashboard/',
     '/workspace/projects/project-xyz/backend/api/v2/endpoints/'
   ];
   

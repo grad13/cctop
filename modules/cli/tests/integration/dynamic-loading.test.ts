@@ -2,9 +2,9 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { DynamicDataLoader, EventData, LoadingState } from '../../src/loading/DynamicDataLoader.js';
 
 /**
- * 動的データ読み込みテスト - HO-20250707-002仕様準拠
- * トリガー条件とロード戦略をテスト
- * 実装ファイル src/loading/DynamicDataLoader.ts をテスト
+ * Dynamic data loading test
+ * Tests trigger conditions and load strategies
+ * Tests implementation file src/loading/DynamicDataLoader.ts
  */
 
 describe('Dynamic Data Loading System', () => {
