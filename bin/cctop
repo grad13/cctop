@@ -8,6 +8,7 @@
 const { spawn } = require('child_process');
 const path = require('path');
 const fs = require('fs');
+const fsPromises = fs.promises;
 
 // Internal daemon reference for UI mode
 let activeDaemon = null;
@@ -24,7 +25,8 @@ Commands:
   daemon start       Start the daemon
   daemon stop        Stop the daemon
   daemon status      Show daemon status
-  ui                 Start the UI (default)
+  view               Start viewer only (no daemon)
+  init               Initialize .cctop directory with default config
 
 Options:
   -h, --help         Show this help message
@@ -32,8 +34,9 @@ Options:
   --verbose          Enable verbose output
 
 Examples:
-  cctop              # Start the UI
-  cctop ui           # Same as above
+  cctop              # Start UI with auto daemon management
+  cctop view         # Start viewer only (no daemon)
+  cctop init         # Initialize .cctop directory
   cctop daemon start # Start daemon in background
   cctop daemon stop  # Stop running daemon
   cctop daemon status # Check if daemon is running
@@ -45,6 +48,100 @@ Architecture:
   - Daemon: Background file monitoring service
   - UI: Real-time event display interface
   - Database: SQLite with WAL mode for concurrent access`);
+}
+
+/**
+ * Initialize .cctop directory with default configuration
+ */
+async function initializeConfig() {
+  const basePath = process.cwd();
+  const cctopDir = path.join(basePath, '.cctop');
+  
+  try {
+    // Create .cctop directory
+    await fsPromises.mkdir(cctopDir, { recursive: true });
+    
+    // Create subdirectories
+    const subdirs = ['config', 'data', 'logs', 'runtime', 'temp'];
+    for (const dir of subdirs) {
+      await fsPromises.mkdir(path.join(cctopDir, dir), { recursive: true });
+    }
+    
+    // Create daemon-config.json if not exists
+    const daemonConfigPath = path.join(cctopDir, 'config', 'daemon-config.json');
+    try {
+      await fsPromises.access(daemonConfigPath);
+      console.log('daemon-config.json already exists');
+    } catch {
+      const daemonConfig = {
+        monitoring: {
+          watchPaths: [basePath],
+          excludePatterns: [
+            '**/node_modules/**',
+            '**/.git/**',
+            '**/.*',
+            '**/.cctop/**',
+            '**/dist/**',
+            '**/coverage/**',
+            '**/build/**',
+            '**/*.log',
+            '**/.DS_Store'
+          ],
+          debounceMs: 100,
+          maxDepth: 10,
+          moveThresholdMs: 100,
+          systemLimits: {
+            requiredLimit: 524288,
+            checkOnStartup: true,
+            warnIfInsufficient: true
+          }
+        },
+        daemon: {
+          pidFile: '.cctop/runtime/daemon.pid',
+          logFile: '.cctop/logs/daemon.log',
+          logLevel: 'info',
+          heartbeatInterval: 30000,
+          autoStart: true,
+          maxRestarts: 3,
+          restartDelay: 5000
+        },
+        database: {
+          writeMode: 'WAL',
+          syncMode: 'NORMAL',
+          cacheSize: 65536,
+          busyTimeout: 5000,
+          checkpointInterval: 300000
+        }
+      };
+      await fsPromises.writeFile(daemonConfigPath, JSON.stringify(daemonConfig, null, 2));
+      console.log('Created daemon-config.json');
+    }
+    
+    // Create .gitignore if not exists
+    const gitignorePath = path.join(cctopDir, '.gitignore');
+    try {
+      await fsPromises.access(gitignorePath);
+      console.log('.gitignore already exists');
+    } catch {
+      const gitignoreContent = `# cctop monitoring data
+data/
+logs/
+runtime/
+temp/
+
+# User customizations
+themes/custom/
+`;
+      await fsPromises.writeFile(gitignorePath, gitignoreContent);
+      console.log('Created .gitignore');
+    }
+    
+    console.log('Initialization completed successfully');
+    console.log(`Created .cctop directory at: ${cctopDir}`);
+  } catch (error) {
+    console.error('Failed to initialize:', error.message);
+    process.exit(1);
+  }
 }
 
 /**
@@ -223,7 +320,7 @@ function checkDaemonStatus() {
 
 async function main() {
   const args = process.argv.slice(2);
-  const command = args[0] || 'ui';
+  const command = args[0];
   const subcommand = args[1];
   
   // Handle options
@@ -277,7 +374,11 @@ async function main() {
         }
         break;
         
-      case 'ui':
+      case 'view':
+        // View only - no daemon
+        await startCLI();
+        break;
+        
       case undefined:
         // Auto daemon + cli + auto cleanup
         await startDaemon();
@@ -285,8 +386,8 @@ async function main() {
         await stopDaemon(true);  // Silent mode for UI
         break;
         
-      case 'view':
-        await startCLI();
+      case 'init':
+        await initializeConfig();
         break;
         
       default:
