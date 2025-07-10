@@ -52,7 +52,7 @@ Architecture:
  */
 function startDaemon() {
   return new Promise((resolve, reject) => {
-    const daemonPath = path.join(__dirname, '../modules/daemon/dist/index.js');
+    const daemonPath = path.join(__dirname, '../src/daemon/dist/index.js');
     const daemon = spawn('node', [daemonPath], {
       detached: true,
       stdio: 'ignore',
@@ -82,7 +82,7 @@ function startDaemon() {
 function startCLI() {
   return new Promise((resolve, reject) => {
     // Direct execution of CLI module without cctop-cli wrapper
-    const cliPath = path.join(__dirname, '../modules/cli/dist/index.js');
+    const cliPath = path.join(__dirname, '../src/cli/dist/index.js');
     const cli = spawn('node', [cliPath], {
       stdio: 'inherit'
     });
@@ -229,7 +229,7 @@ async function main() {
       case 'daemon':
         if (subcommand === 'start') {
           // Start daemon
-          const daemonPath = path.join(__dirname, '../modules/daemon/dist/index.js');
+          const daemonPath = path.join(__dirname, '../src/daemon/dist/index.js');
           const daemon = spawn('node', [daemonPath], {
             stdio: 'ignore',
             detached: true,
