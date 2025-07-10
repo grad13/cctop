@@ -14,17 +14,17 @@ Pythonスクリプトを使用してCCTOPのテスト用ダミーデータを生
 
 ## 特徴
 
-### 🎯 現実的なデータパターン
+### 現実的なデータパターン
 - **ファイルタイプ別の重み付け**: ソースコード40%、ドキュメント20%、設定15%等
 - **時間ベースの活動パターン**: 朝のラッシュ、午後の作業時間、夜間コーディング
 - **ファイルサイズ・行数の相関**: 拡張子に基づく現実的なメトリクス
 
-### 📊 豊富な設定オプション
+### 豊富な設定オプション
 - ファイル数、日数、ファイル当たりのイベント数を調整可能
 - 統計情報の自動生成
 - サンプルデータのJSON出力
 
-### 🔧 FUNC-000完全準拠
+### FUNC-000完全準拠
 - 正確なスキーマ定義
 - 外部キー制約の適切な処理
 - インデックスの自動作成
@@ -80,27 +80,27 @@ python3 scripts/dummy_data_generator.py \\
 
 ### コンソール出力
 ```
-🚀 CCTOP Dummy Data Generator
+CCTOP Dummy Data Generator
 Database: ./temp/dummy_activity.db
 Files: 100, Days: 30, Events/file: 10
 
-✓ Connected to database: ./temp/dummy_activity.db
-📊 Initializing database schema...
+Connected to database: ./temp/dummy_activity.db
+Initializing database schema...
   1. Created table
   2. Created table
   3. Created table
   4. Created table
   5. Created table
-  ✓ Created indexes
-  ✓ Inserted event types
-✓ Schema initialization completed
-🎲 Generating events for 100 files over 30 days...
+  Created indexes
+  Inserted event types
+Schema initialization completed
+Generating events for 100 files over 30 days...
   Generated data for 10/100 files
   Generated data for 20/100 files
   ...
-✓ Generated 987 events for 100 files
+Generated 987 events for 100 files
 
-📊 Database Statistics:
+Database Statistics:
   events_count: 987
   files_count: 100
   measurements_count: 987
@@ -122,7 +122,7 @@ Files: 100, Days: 30, Events/file: 10
     avg_lines: 78.34
     max_lines: 203
 
-✅ Dummy data generation completed!
+Dummy data generation completed!
 ```
 
 ### 生成されるファイルパターン

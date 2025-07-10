@@ -45,7 +45,7 @@ npm run build
 
 ## Dependencies
 
-**⚠️ Important**: This daemon module has dependencies on `@cctop/shared` for:
+**Important**: This daemon module has dependencies on `@cctop/shared` for:
 - Type definitions (`DaemonConfig`, `FileEvent`, `DaemonState`)
 - Database operations (`Database` class and related operations)
 
@@ -327,10 +327,10 @@ npm run test:integration:4  # measurement integration (11 tests + 1 skip)
 npm run test:e2e
 
 # All tests summary:
-# - Unit: 52/52 ✅ (100%)
-# - Integration: 58/59 ✅ (98.3% - 1 intentional skip)
-# - E2E: 4/4 ✅ (100%)
-# - Total: 114/115 ✅ (99.1%)
+# - Unit: 52/52 (100%)
+# - Integration: 58/59 (98.3% - 1 intentional skip)
+# - E2E: 4/4 (100%)
+# - Total: 114/115 (99.1%)
 
 # Run specific test file
 npm test tests/unit/duplicate-prevention.test.ts

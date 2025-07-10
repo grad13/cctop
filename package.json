@@ -14,7 +14,10 @@
     "test": "npm run test --workspaces",
     "daemon": "node bin/cctop daemon start",
     "cli": "node bin/cctop cli",
-    "dev": "npm run daemon & npm run cli"
+    "dev": "npm run daemon & npm run cli",
+    "clean": "rm -rf src/*/node_modules src/*/package-lock.json",
+    "clean:all": "rm -rf node_modules package-lock.json src/*/node_modules src/*/package-lock.json src/*/dist",
+    "clean:dist": "rm -rf src/*/dist"
   },
   "dependencies": {
     "blessed": "^0.1.81"

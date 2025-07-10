@@ -69,7 +69,7 @@ function startDaemon() {
     }, 1000);
     
     daemon.on('error', (error) => {
-      console.error('❌ Failed to start daemon:', error.message);
+      console.error('Failed to start daemon:', error.message);
       activeDaemon = null;
       reject(error);
     });
@@ -92,7 +92,7 @@ function startCLI() {
     });
     
     cli.on('error', (error) => {
-      console.error('❌ Failed to start CLI:', error.message);
+      console.error('Failed to start CLI:', error.message);
       reject(error);
     });
   });
@@ -100,8 +100,9 @@ function startCLI() {
 
 /**
  * Stop daemon
+ * @param {boolean} silent - If true, suppress output messages
  */
-function stopDaemon() {
+function stopDaemon(silent = false) {
   return new Promise((resolve) => {
     // First check if we have an active daemon reference (UI mode)
     if (activeDaemon && !activeDaemon.killed) {
@@ -113,11 +114,14 @@ function stopDaemon() {
         attempts++;
         if (activeDaemon.killed || attempts > 20) {
           if (attempts > 20 && !activeDaemon.killed) {
-            console.log('⚠️  Daemon did not stop gracefully, sending SIGKILL...');
+            // Daemon did not stop gracefully, sending SIGKILL
             activeDaemon.kill('SIGKILL');
           }
           clearInterval(checkInterval);
           activeDaemon = null;
+          if (!silent) {
+            console.log('Daemon stopped');
+          }
           resolve();
         }
       }, 500);
@@ -146,30 +150,45 @@ function stopDaemon() {
             process.kill(pid, 0);
             // Process still exists
             if (attempts > 20) { // Increased from 10 to 20 (10 seconds total)
-              console.log('⚠️  Daemon did not stop gracefully, sending SIGKILL...');
+              // Daemon did not stop gracefully, sending SIGKILL
+              if (!silent) {
+                console.log('Daemon did not stop gracefully, forcing shutdown...');
+              }
               process.kill(pid, 'SIGKILL');
               clearInterval(checkInterval);
+              if (!silent) {
+                console.log('Daemon stopped');
+              }
               resolve();
             }
           } catch (e) {
             // Process no longer exists
             clearInterval(checkInterval);
+            if (!silent) {
+              console.log('Daemon stopped');
+            }
             resolve();
           }
         }, 500);
       } catch (e) {
-        console.log('⚠️  Daemon is not running (PID file exists but process not found)');
+        // Daemon is not running (PID file exists but process not found)
+        if (!silent) {
+          console.log('Daemon is not running');
+        }
         // Clean up stale PID file
         try {
           fs.unlinkSync(pidFilePath);
-          console.log('🧹 Cleaned up stale PID file');
+          // Cleaned up stale PID file
         } catch (err) {
           // Ignore error
         }
         resolve();
       }
     } catch (error) {
-      console.log('ℹ️  No daemon is currently running (PID file not found)');
+      // No daemon is currently running (PID file not found)
+      if (!silent) {
+        console.log('No daemon is currently running');
+      }
       resolve();
     }
   });
@@ -189,16 +208,16 @@ function checkDaemonStatus() {
     // Check if process exists
     try {
       process.kill(pid, 0);
-      console.log(`✅ Daemon is running (PID: ${pid})`);
+      console.log(`Daemon is running (PID: ${pid})`);
       console.log(`   Working directory: ${pidData.working_directory}`);
       console.log(`   Monitoring: ${pidData.watch_paths.join(', ')}`);
       console.log(`   Started at: ${new Date(pidData.started_at).toLocaleString()}`);
     } catch (e) {
-      console.log('⚠️  Daemon is not running (PID file exists but process not found)');
-      console.log('   You may want to run "cctop daemon stop" to clean up');
+      console.log('Daemon is not running (PID file exists but process not found)');
+      console.log('   Run "cctop daemon stop" to clean up');
     }
   } catch (error) {
-    console.log('ℹ️  No daemon is currently running');
+    console.log('No daemon is currently running');
   }
 }
 
@@ -237,7 +256,7 @@ async function main() {
           });
           
           daemon.on('error', (error) => {
-            console.error('❌ Failed to start daemon:', error.message);
+            console.error('Failed to start daemon:', error.message);
             process.exit(1);
           });
           
@@ -253,7 +272,7 @@ async function main() {
         } else if (subcommand === 'status') {
           checkDaemonStatus();
         } else {
-          console.error('❌ Usage: cctop daemon [start|stop|status]');
+          console.error('Usage: cctop daemon [start|stop|status]');
           process.exit(1);
         }
         break;
@@ -263,7 +282,7 @@ async function main() {
         // Auto daemon + cli + auto cleanup
         await startDaemon();
         await startCLI();
-        await stopDaemon();
+        await stopDaemon(true);  // Silent mode for UI
         break;
         
       case 'view':
@@ -271,20 +290,18 @@ async function main() {
         break;
         
       default:
-        console.error(`❌ Unknown command: ${command}`);
+        console.error(`Unknown command: ${command}`);
         console.error('Try "cctop --help" for usage information');
         process.exit(1);
     }
   } catch (error) {
-    console.error('❌ Error:', error.message);
+    console.error('Error:', error.message);
     process.exit(1);
   }
 }
 
 // Handle signals
 process.on('SIGINT', () => {
-  console.log('\n👋 Goodbye!');
-  
   // Stop active daemon if running
   if (activeDaemon && !activeDaemon.killed) {
     activeDaemon.kill('SIGTERM');
