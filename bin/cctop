@@ -9,6 +9,9 @@ const { spawn } = require('child_process');
 const path = require('path');
 const fs = require('fs');
 
+// Internal daemon reference for UI mode
+let activeDaemon = null;
+
 /**
  * Show help message
  */
@@ -58,12 +61,16 @@ function startDaemon() {
     
     daemon.unref();
     
+    // Store daemon reference for UI mode cleanup
+    activeDaemon = daemon;
+    
     setTimeout(() => {
       resolve(daemon.pid);
     }, 1000);
     
     daemon.on('error', (error) => {
       console.error('❌ Failed to start daemon:', error.message);
+      activeDaemon = null;
       reject(error);
     });
   });
@@ -96,6 +103,28 @@ function startCLI() {
  */
 function stopDaemon() {
   return new Promise((resolve) => {
+    // First check if we have an active daemon reference (UI mode)
+    if (activeDaemon && !activeDaemon.killed) {
+      activeDaemon.kill('SIGTERM');
+      
+      // Wait for process to exit
+      let attempts = 0;
+      const checkInterval = setInterval(() => {
+        attempts++;
+        if (activeDaemon.killed || attempts > 20) {
+          if (attempts > 20 && !activeDaemon.killed) {
+            console.log('⚠️  Daemon did not stop gracefully, sending SIGKILL...');
+            activeDaemon.kill('SIGKILL');
+          }
+          clearInterval(checkInterval);
+          activeDaemon = null;
+          resolve();
+        }
+      }, 500);
+      return;
+    }
+    
+    // Fall back to PID file based approach
     const fs = require('fs');
     const pidFilePath = path.join(process.cwd(), '.cctop/runtime/daemon.pid');
     
@@ -255,6 +284,12 @@ async function main() {
 // Handle signals
 process.on('SIGINT', () => {
   console.log('\n👋 Goodbye!');
+  
+  // Stop active daemon if running
+  if (activeDaemon && !activeDaemon.killed) {
+    activeDaemon.kill('SIGTERM');
+  }
+  
   process.exit(0);
 });
 
