@@ -6,6 +6,7 @@
 import * as blessed from 'blessed';
 import { UIState } from './UIState';
 import { KeywordSearchManager } from '../search';
+import { EventTable, HeaderRenderer } from './components/EventTable';
 
 export class UILayoutManager {
   private screen: blessed.Widgets.Screen;
@@ -18,7 +19,7 @@ export class UILayoutManager {
   private dynamicControlBar: any;
   private separatorLine: any;
   private eventArea: any;
-  private eventList: any;
+  private eventTable!: EventTable;
 
   constructor(screen: blessed.Widgets.Screen, uiState: UIState) {
     this.screen = screen;
@@ -53,23 +54,18 @@ export class UILayoutManager {
       }
     });
 
-    // Use box instead of list to support colors
-    this.eventList = blessed.box({
+    // Use EventTable component
+    this.eventTable = new EventTable({
       parent: this.eventArea,
       top: 0,
       left: 0,
       width: '100%',
       height: '100%',
-      keys: false,  // Disable key handling on the box
-      scrollable: false,  // Disable scrolling to prevent auto-wrap
-      alwaysScroll: false,
       style: {
         fg: 'white',
         bg: 'transparent'
-      },
-      tags: true,  // This WILL work with box
-      mouse: false
-    }) as any;
+      }
+    }, this.screen.width as number || 180);
 
     // Separator line between event stream and control area
     this.separatorLine = blessed.box({
@@ -148,7 +144,7 @@ export class UILayoutManager {
     }
     
     header += `{/bold}\n`;
-    header += `Event Timestamp      Elapsed  File Name                           Event    Lines  Blocks    Size  Directory\n`;
+    header += HeaderRenderer.renderColumnLine() + '\n';
     header += `${'─'.repeat(Number(this.screen.width) || 180)}`;  // Column header separator line
     return header;
   }
@@ -263,27 +259,30 @@ export class UILayoutManager {
     this.screen.render();
   }
 
-  updateDisplay(items: string[]): void {
-    // Since we're using box instead of list, join items with newlines
-    const newContent = items.join('\n');
-    const currentContent = this.eventList.getContent();
+  updateDisplay(): void {
+    // Calculate dynamic width and viewport height based on terminal size
+    this.uiState.calculateDynamicWidth();
     
-    // Strip ANSI/blessed tags for comparison
-    const stripTags = (str: string) => str.replace(/\{[^}]+\}/g, '');
-    const newContentStripped = stripTags(newContent);
-    const currentContentStripped = stripTags(currentContent);
+    // Update EventTable screen width if terminal resized
+    this.eventTable.updateScreenWidth(this.screen.width as number || 180);
     
-    // Only update and render if content actually changed (ignoring color tags)
-    if (newContentStripped !== currentContentStripped) {
-      this.eventList.setContent(newContent);
-      this.updateStatusBar();
-      this.screen.render();
-    }
+    // Get visible events and selected index from UIState
+    const visibleEvents = this.uiState.getVisibleEvents();
+    const absoluteSelectedIndex = this.uiState.getSelectedIndex();
+    const viewportStart = this.uiState.getViewportStartIndex();
+    
+    // Calculate relative selected index within viewport
+    const selectedIndex = absoluteSelectedIndex - viewportStart;
+    
+    // Update event table with optimized rendering
+    this.eventTable.render(visibleEvents, selectedIndex);
+    this.updateStatusBar();
+    this.screen.render();
   }
 
   // Getters for components
   getEventList(): any {
-    return this.eventList;
+    return this.eventTable.getBox();
   }
 
   getHeaderPanel(): any {

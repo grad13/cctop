@@ -18,7 +18,6 @@ import { UIState, DisplayMode } from './UIState';
 import { UIScreenManager } from './UIScreenManager';
 import { UILayoutManager } from './UILayoutManager';
 import { UIKeyHandler } from './UIKeyHandler';
-import { UIDataFormatter } from './UIDataFormatter';
 import { UIDataManager } from './UIDataManager';
 
 export interface UIFramelessConfigSimple {
@@ -34,7 +33,6 @@ export class BlessedFramelessUISimple {
   private screenManager: UIScreenManager;
   private layoutManager!: UILayoutManager;
   private keyHandler!: UIKeyHandler;
-  private dataFormatter: UIDataFormatter;
   private dataManager: UIDataManager;
 
   // Data and configuration
@@ -51,7 +49,6 @@ export class BlessedFramelessUISimple {
     // Initialize components
     this.uiState = new UIState(config.displayMode || 'all');
     this.screenManager = new UIScreenManager();
-    this.dataFormatter = new UIDataFormatter(this.uiState);
     this.dataManager = new UIDataManager(this.db, this.uiState);
     
     // Initialize daemon monitor with current working directory .cctop
@@ -103,8 +100,7 @@ export class BlessedFramelessUISimple {
   }
 
   private updateDisplay(): void {
-    const items = this.dataFormatter.formatEventList();
-    this.layoutManager.updateDisplay(items);
+    this.layoutManager.updateDisplay();
   }
 
   private updateDynamicControl(): void {
