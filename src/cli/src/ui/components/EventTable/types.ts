@@ -56,9 +56,9 @@ export const COLUMN_CONFIGS: ColumnConfig[] = [
   { name: 'timestamp', width: 19, align: 'left', headerText: 'Event Timestamp', headerAlign: 'left' },
   { name: 'elapsed', width: 8, align: 'right', headerText: 'Elapsed', headerAlign: 'right' },
   { name: 'filename', width: 35, align: 'left', truncate: 'tail', headerText: 'File Name', headerAlign: 'left' },
-  { name: 'event_type', width: 8, align: 'left', headerText: 'Event', headerAlign: 'left' },
+  { name: 'event_type', width: 6, align: 'left', headerText: 'Event', headerAlign: 'left' },
   { name: 'lines', width: 5, align: 'right', headerText: 'Lines', headerAlign: 'right' },
-  { name: 'blocks', width: 4, align: 'right', headerText: 'Blocks', headerAlign: 'right' },
+  { name: 'blocks', width: 4, align: 'right', headerText: 'Blks', headerAlign: 'right' },
   { name: 'size', width: 7, align: 'right', headerText: 'Size', headerAlign: 'right' },
   { name: 'directory', width: -1, align: 'left', truncate: 'head', headerText: 'Directory', headerAlign: 'left' } // -1 means dynamic width
 ];

@@ -7,7 +7,7 @@ import { eventTypeColor } from '../../../utils/styleFormatter';
 export class EventTypeFormatter {
   /**
    * Colorize event type with blessed tags
-   * Each event type is padded to exactly 8 characters
+   * Each event type is padded to exactly 6 characters
    */
   static colorize(eventType: string): string {
     // Get formatted (padded) event type
@@ -21,14 +21,15 @@ export class EventTypeFormatter {
    */
   static format(eventType: string): string {
     const typeMap: { [key: string]: string } = {
-      find: 'find    ',
-      create: 'create  ',
-      modify: 'modify  ',
-      delete: 'delete  ',
-      move: 'move    ',
-      restore: 'restore '
+      find: 'find  ',
+      create: 'create',
+      modify: 'modify',
+      delete: 'delete',
+      move: 'move  ',
+      restore: 'back  ',
+      back: 'back  '
     };
     
-    return typeMap[eventType.toLowerCase()] || eventType.padEnd(8);
+    return typeMap[eventType.toLowerCase()] || eventType.padEnd(6);
   }
 }

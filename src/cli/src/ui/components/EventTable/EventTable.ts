@@ -158,8 +158,8 @@ export class EventTable {
    * Calculate dynamic directory column width
    */
   private calculateDirectoryWidth(): void {
-    // Fixed columns total: 19 + 1 + 8 + 1 + 35 + 1 + 8 + 1 + 5 + 1 + 4 + 1 + 7 + 1 = 93
-    const fixedWidth = 93;
+    // Fixed columns total: 19 + 1 + 8 + 1 + 35 + 1 + 6 + 1 + 5 + 1 + 4 + 1 + 7 + 1 = 91
+    const fixedWidth = 91;
     this.directoryWidth = Math.max(20, this.screenWidth - fixedWidth);
   }
 

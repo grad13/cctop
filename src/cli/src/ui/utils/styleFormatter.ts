@@ -79,7 +79,8 @@ export function eventTypeColor(eventType: string): string {
     'modify': 'yellow',
     'delete': 'red',
     'move': 'magenta',
-    'restore': 'blue'
+    'restore': 'blue',
+    'back': 'blue'
   };
   
   const color = colorMap[eventType.toLowerCase().trim()] || 'white';
