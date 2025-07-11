@@ -22,7 +22,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@cctop/shared": "^0.3.0",
+    "@cctop/shared": "file:../shared",
     "chokidar": "^3.5.3"
   },
   "devDependencies": {
