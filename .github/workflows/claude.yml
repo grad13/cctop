@@ -38,16 +38,5 @@ jobs:
       uses: anthropics/claude-code-action@beta
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
-        oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-        
-        # Optional: Specify model (default is claude-3-5-sonnet-20241022)
-        # model: claude-3-5-sonnet-20241022
-        
-        # Optional: Custom instructions
-        instructions: |
-          You are a helpful assistant for the cctop project.
-          When reviewing code or implementing features:
-          - Follow TypeScript best practices
-          - Ensure changes are compatible with the existing workspace structure
-          - Add appropriate tests when implementing new features
-          - Update documentation as needed
+      env:
+        CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
