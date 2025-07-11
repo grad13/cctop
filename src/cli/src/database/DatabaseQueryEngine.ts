@@ -21,38 +21,27 @@ export class DatabaseQueryEngine {
         return;
       }
 
-      // Try different table schemas with mode support
-      const queries = this.buildQueries(mode, limit, offset, filters);
+      const query = this.buildQueries(mode, limit, offset, filters)[0];
 
-      const tryQuery = (queryIndex: number) => {
-        if (queryIndex >= queries.length) {
-          reject(new Error('No compatible table schema found'));
-          return;
+      db.all(query, [limit, offset], (err, rows: any[]) => {
+        if (err) {
+          reject(err);
+        } else {
+          const events: EventRow[] = rows.map(row => ({
+            id: row.id,
+            timestamp: row.timestamp,
+            filename: row.filename || 'Unknown',
+            directory: row.directory || '.',
+            event_type: row.event_type || 'unknown',
+            size: row.size || 0,
+            lines: row.lines || 0,
+            blocks: row.blocks || 0,
+            inode: row.inode || 0,
+            elapsed_ms: row.elapsed_ms || 0
+          }));
+          resolve(events);
         }
-
-        db.all(queries[queryIndex], [limit, offset], (err, rows: any[]) => {
-          if (err) {
-            // Try next query
-            tryQuery(queryIndex + 1);
-          } else {
-            const events: EventRow[] = rows.map(row => ({
-              id: row.id,
-              timestamp: row.timestamp,
-              filename: row.filename || 'Unknown',
-              directory: row.directory || '.',
-              event_type: row.event_type || 'unknown',
-              size: row.size || 0,
-              lines: row.lines || 0,
-              blocks: row.blocks || 0,
-              inode: row.inode || 0,
-              elapsed_ms: row.elapsed_ms || 0
-            }));
-            resolve(events);
-          }
-        });
-      };
-
-      tryQuery(0);
+      });
     });
   }
 
@@ -67,10 +56,9 @@ export class DatabaseQueryEngine {
 
   private buildQueries(mode: 'all' | 'unique', limit: number, offset: number = 0, filters?: string[]): string[] {
     const filterCondition = this.buildFilterCondition(filters);
-    return [
-      // Actual production schema (events table with direct event_type)
-      mode === 'unique' ? 
-      `SELECT 
+    
+    if (mode === 'unique') {
+      return [`SELECT 
         e.id,
         e.timestamp,
         e.file_name as filename,
@@ -90,9 +78,10 @@ export class DatabaseQueryEngine {
         GROUP BY e2.file_id
       )
       ${filterCondition}
-      ORDER BY e.timestamp DESC 
-      LIMIT ? OFFSET ?` :
-      `SELECT 
+      ORDER BY e.id DESC 
+      LIMIT ? OFFSET ?`];
+    } else {
+      return [`SELECT 
         e.id,
         e.timestamp,
         e.file_name as filename,
@@ -107,85 +96,9 @@ export class DatabaseQueryEngine {
       JOIN event_types et ON e.event_type_id = et.id
       LEFT JOIN measurements m ON e.id = m.event_id
       ${filterCondition ? `WHERE ${filterCondition.replace('AND ', '')}` : ''}
-      ORDER BY e.timestamp DESC 
-      LIMIT ? OFFSET ?`,
-      
-      // Legacy v0.3.0 schema (fallback)
-      mode === 'unique' ? 
-      `SELECT 
-        e.id,
-        e.timestamp,
-        e.filename,
-        e.directory,
-        e.event_type,
-        e.size,
-        e.lines,
-        e.blocks,
-        e.inode,
-        e.elapsed_ms
-      FROM events e
-      INNER JOIN (
-        SELECT filename, directory, MAX(timestamp) as max_timestamp
-        FROM events
-        GROUP BY filename, directory
-      ) latest ON e.filename = latest.filename 
-               AND e.directory = latest.directory 
-               AND e.timestamp = latest.max_timestamp
-      ORDER BY e.timestamp DESC 
-      LIMIT ?` :
-      `SELECT 
-        id,
-        timestamp,
-        filename,
-        directory,
-        event_type,
-        size,
-        lines,
-        blocks,
-        inode,
-        elapsed_ms
-      FROM events 
-      ORDER BY timestamp DESC 
-      LIMIT ?`,
-      
-      // v0.2.x schema 
-      mode === 'unique' ?
-      `SELECT 
-        e.id,
-        e.created_at as timestamp,
-        e.filename,
-        e.directory,
-        e.event_type,
-        e.file_size as size,
-        e.line_count as lines,
-        e.block_count as blocks,
-        e.inode_number as inode,
-        0 as elapsed_ms
-      FROM file_events e
-      INNER JOIN (
-        SELECT filename, directory, MAX(created_at) as max_timestamp
-        FROM file_events
-        GROUP BY filename, directory
-      ) latest ON e.filename = latest.filename 
-               AND e.directory = latest.directory 
-               AND e.created_at = latest.max_timestamp
-      ORDER BY e.created_at DESC 
-      LIMIT ?` :
-      `SELECT 
-        id,
-        created_at as timestamp,
-        filename,
-        directory,
-        event_type,
-        file_size as size,
-        line_count as lines,
-        block_count as blocks,
-        inode_number as inode,
-        0 as elapsed_ms
-      FROM file_events 
-      ORDER BY created_at DESC 
-      LIMIT ?`
-    ];
+      ORDER BY e.id DESC 
+      LIMIT ? OFFSET ?`];
+    }
   }
 
   async getEventsByType(eventType: string, limit: number = 25): Promise<EventRow[]> {
@@ -212,27 +125,13 @@ export class DatabaseQueryEngine {
         return;
       }
 
-      const queries = [
-        'SELECT COUNT(*) as count FROM events',
-        'SELECT COUNT(*) as count FROM file_events'
-      ];
-
-      const tryQuery = (queryIndex: number) => {
-        if (queryIndex >= queries.length) {
-          resolve(0);
-          return;
+      db.get('SELECT COUNT(*) as count FROM events', (err, row: any) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(row.count);
         }
-
-        db.get(queries[queryIndex], (err, row: any) => {
-          if (err) {
-            tryQuery(queryIndex + 1);
-          } else {
-            resolve(row.count);
-          }
-        });
-      };
-
-      tryQuery(0);
+      });
     });
   }
 }
