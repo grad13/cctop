@@ -43,3 +43,6 @@ pids
 *.pid
 *.seed
 *.pid.lock
+
+# npm package files
+*.tgz
