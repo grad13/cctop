@@ -1,0 +1,20 @@
+{
+  "name": "high-contrast",
+  "colors": {
+    "background": "black",
+    "foreground": "white",
+    "border": "white",
+    "highlight": "yellow",
+    "event": {
+      "create": "bright-green",
+      "modify": "bright-yellow",
+      "delete": "bright-red",
+      "move": "bright-blue"
+    },
+    "ui": {
+      "statusBar": "bright-blue",
+      "searchBox": "bright-cyan",
+      "selection": "bright-white"
+    }
+  }
+}
