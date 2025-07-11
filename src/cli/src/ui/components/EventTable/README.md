@@ -1,7 +1,7 @@
 # EventTable Module Specification
 
 ## Overview
-EventTable is a display-only component responsible for rendering event lists in a table format with optimized performance through intelligent diff detection.
+EventTable is a display-only component responsible for rendering event lists in a table format with optimized performance through intelligent diff detection. It manages EventRow instances for each event, providing efficient updates and rendering.
 
 ## Core Principles
 - **Display-only responsibility**: No data management, filtering, or scrolling logic
@@ -32,24 +32,53 @@ getBox(): blessed.Box     // Access to underlying blessed element
 destroy(): void           // Cleanup
 ```
 
-## Internal Optimization
+## Internal Architecture
 
-### State Tracking
+### Class Structure
+- **EventTable**: Main coordinator class that manages the overall table
+- **EventRow**: Individual row instances that handle their own state and rendering
+- **Renderers**: Static utility classes for headers and special messages
+- **Formatters**: Type-specific formatting (time, file size, event type)
+- **Utils**: Shared utilities (columnNormalizer, styleFormatter)
+
+### State Management
 ```typescript
-private previousEvents: EventRow[] = [];
-private previousSelectedIndex: number = -1;
-private formattedRowsCache: Map<number, string> = new Map();
+// EventTable state
+private rows: Map<number, EventRow> = new Map(); // key: event.id
+private rowOrder: number[] = []; // ordered event IDs
+private selectedId: number | null = null;
+private directoryWidth: number = 40;
+
+// EventRow state
+private data: EventRowData;
+private selected: boolean = false;
+private directoryWidth: number;
+private cachedRender?: string;
+private isDirty: boolean = true;
 ```
 
+### Update Flow
+1. `update(events, selectedIndex)` called with new data
+2. EventTable compares event IDs to detect changes
+3. Removes EventRow instances for deleted events
+4. Updates existing EventRow instances with new data
+5. Creates new EventRow instances for new events
+6. Updates selection state on affected rows
+7. Calls `render()` on each EventRow in order
+8. Concatenates results and updates blessed box
+
 ### Diff Detection Strategy
-1. **Selection-only change**: Re-render only 2 rows (old and new selection)
-2. **Same events, different data**: Update changed rows only
-3. **Completely different events**: Full re-render
+1. **Event-level diff**: Compare event IDs to detect additions/removals
+2. **Row-level updates**: EventRow handles its own dirty checking
+3. **Selection changes**: Only affected rows (old/new) are marked dirty
+4. **Data changes**: EventRow compares data deeply before marking dirty
 
 ### Performance Characteristics
-- Selection change: O(1) - only 2 rows updated
-- Append new events: O(n) where n = new events count
-- Complete refresh: O(n) where n = total events
+- Selection change: O(1) - only affected EventRow instances re-render
+- Event updates: O(n) where n = changed events
+- Full refresh: O(n) where n = total events
+- Memory: O(n) for EventRow instance storage
+- Cache hit rate: High for stable lists with selection changes
 
 ## Column Definition (Fixed)
 
@@ -103,6 +132,38 @@ const eventTable = new EventTable({
 // In render loop
 eventTable.render(visibleEvents, selectedIndex);
 ```
+
+## Testing Guidelines
+
+### EventTable Tests Should Cover:
+1. **Update Method**
+   - Correct EventRow instance management
+   - Proper row ordering
+   - Event ID-based diff detection
+   - Selection state propagation
+
+2. **Row Management**
+   - EventRow creation for new events
+   - EventRow removal for deleted events
+   - EventRow update for changed events
+   - Instance reuse based on ID
+
+3. **Rendering**
+   - Correct concatenation of EventRow outputs
+   - Header generation
+   - blessed box content updates
+   - Screen width calculations
+
+4. **Performance**
+   - Minimal EventRow renders on selection change
+   - Efficient diff detection
+   - Memory management (row cleanup)
+
+### Integration Points
+- See `EventRow.md` for EventRow-specific test cases
+- Mock blessed box for rendering tests
+- Test with various event list sizes (0, 1, 100, 1000)
+- Test rapid updates and selection changes
 
 ## Future Enhancements
 - [ ] Row-level caching with content hash
