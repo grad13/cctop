@@ -10,7 +10,10 @@
   },
   "scripts": {
     "install:all": "npm install",
-    "build": "npm run build -w @cctop/shared && npm run build -w @cctop/daemon && npm run build -w @cctop/cli",
+    "build": "npm run build:shared && npm run build:daemon && npm run build:cli",
+    "build:shared": "npm run build -w @cctop/shared",
+    "build:daemon": "npm run build -w @cctop/daemon",
+    "build:cli": "npm run build -w @cctop/cli",
     "test": "npm run test --workspaces",
     "daemon": "node bin/cctop daemon start",
     "cli": "node bin/cctop cli",

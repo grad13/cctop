@@ -2,7 +2,7 @@
  * PID File Management
  */
 
-import { DaemonState } from '../../../shared/dist/types';
+import { DaemonState } from '@cctop/shared';
 import * as path from 'path';
 import * as fs from 'fs/promises';
 import { LogManager } from '../logging/LogManager';
@@ -25,7 +25,7 @@ export class PidManager {
       pid: process.pid,
       started_at: Date.now(),
       working_directory: process.cwd(),
-      watch_paths: config.monitoring.watchPaths.map(p => path.resolve(p)),
+      watch_paths: config.monitoring.watchPaths.map((p: string) => path.resolve(p)),
       config_path: path.resolve('.cctop/daemon-config.json')
     };
 

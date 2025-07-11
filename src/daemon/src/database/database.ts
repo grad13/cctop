@@ -3,7 +3,7 @@
  * Refactored modular architecture with single responsibility principle
  */
 
-import { FileEvent } from '../../../shared/src/types';
+import { FileEvent } from '@cctop/shared';
 import { EventMeasurement, MeasurementResult } from './types';
 import { DatabaseConnection } from './DatabaseConnection';
 import { SchemaManager } from './SchemaManager';
