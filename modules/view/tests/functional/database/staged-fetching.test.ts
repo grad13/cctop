@@ -1,9 +1,9 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { DatabaseAdapterFunc000 } from '../../../src/database/database-adapter-func000.ts';
+import { FileEventReader } from '../../../src/database/FileEventReader.ts';
 import sqlite3 from 'sqlite3';
 
 describe('FUNC-202 v0.3.4.0 Staged Fetching', () => {
-  let db: DatabaseAdapterFunc000;
+  let db: FileEventReader;
   let sqliteDb: sqlite3.Database;
 
   beforeEach(async () => {
@@ -75,7 +75,7 @@ describe('FUNC-202 v0.3.4.0 Staged Fetching', () => {
       sqliteDb.close(() => resolve());
     });
     
-    db = new DatabaseAdapterFunc000(':memory:');
+    db = new FileEventReader(':memory:');
   });
 
   describe('searchEvents method', () => {

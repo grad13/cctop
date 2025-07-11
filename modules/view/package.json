@@ -1,7 +1,7 @@
 {
-  "name": "@cctop/cli",
+  "name": "@cctop/view",
   "version": "0.3.0",
-  "description": "CCTOP CLI Module (v0.3.0)",
+  "description": "CCTOP View Module (v0.3.0)",
   "main": "dist/index.js",
   "bin": {
     "cctop": "./bin/cctop"

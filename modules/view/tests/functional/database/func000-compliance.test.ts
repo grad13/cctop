@@ -1,11 +1,11 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { DatabaseAdapterFunc000 } from '../../../src/database/database-adapter-func000.ts';
+import { FileEventReader } from '../../../src/database/FileEventReader.ts';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
 describe('FUNC-000 Compliance Test', () => {
-  let dbAdapter: DatabaseAdapterFunc000;
+  let dbAdapter: FileEventReader;
   let tempDbPath: string;
 
   beforeEach(async () => {
@@ -16,7 +16,7 @@ describe('FUNC-000 Compliance Test', () => {
     const { execSync } = require('child_process');
     execSync(`python3 scripts/dummy_data_generator.py --db-path ${tempDbPath} --files 10 --days 1`);
     
-    dbAdapter = new DatabaseAdapterFunc000(tempDbPath);
+    dbAdapter = new FileEventReader(tempDbPath);
     await dbAdapter.connect();
   });
 
