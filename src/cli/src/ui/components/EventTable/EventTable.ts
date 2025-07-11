@@ -6,19 +6,21 @@
  */
 
 import blessed from 'blessed';
-import { EventRow } from '../../../types/event-row';
+import { EventRow as EventRowData } from '../../../types/event-row';
+import { EventRow } from './EventRow';
 import { EventTableOptions } from './types';
-import { RowRenderer, HeaderRenderer } from './renderers';
+import { HeaderRenderer } from './renderers';
 import { stripTags } from './utils/stringUtils';
+import { style } from '../../utils/styleFormatter';
 
 export class EventTable {
   private box: blessed.Widgets.BoxElement;
   private screenWidth: number;
   
-  // State tracking for optimization
-  private previousEvents: EventRow[] = [];
-  private previousSelectedIndex: number = -1;
-  private formattedRowsCache: Map<string, string> = new Map(); // key: eventId_isSelected
+  // EventRow instances management
+  private rows: Map<number, EventRow> = new Map(); // key: event.id
+  private rowOrder: number[] = []; // ordered event IDs
+  private selectedId: number | null = null;
   private directoryWidth: number = 40; // Will be calculated dynamically
   
   constructor(options: EventTableOptions, screenWidth: number) {
@@ -45,152 +47,79 @@ export class EventTable {
   }
 
   /**
-   * Main render method - optimized with diff detection
+   * Main update method - handles event list changes
    */
-  render(events: EventRow[], selectedIndex: number): void {
-    // Fast path: selection-only change
-    if (this.isSelectionOnlyChange(events, selectedIndex)) {
-      this.updateSelectionOnly(selectedIndex);
-      return;
-    }
+  update(events: EventRowData[], selectedIndex: number): void {
+    // Determine selected event ID
+    const newSelectedId = selectedIndex >= 0 && selectedIndex < events.length 
+      ? events[selectedIndex].id 
+      : null;
     
-    // Full or partial update needed
-    this.renderFull(events, selectedIndex);
+    // Update rows based on new events
+    this.updateRows(events, newSelectedId);
+    
+    // Render all rows
+    this.render();
   }
 
   /**
-   * Check if only selection changed
+   * Update EventRow instances based on new event data
    */
-  private isSelectionOnlyChange(events: EventRow[], selectedIndex: number): boolean {
-    if (selectedIndex === this.previousSelectedIndex) return false;
-    if (events.length !== this.previousEvents.length) return false;
+  private updateRows(events: EventRowData[], selectedId: number | null): void {
+    const newIds = new Set(events.map(e => e.id));
+    const currentIds = new Set(this.rows.keys());
     
-    // Compare event IDs to detect if list is the same
-    for (let i = 0; i < events.length; i++) {
-      if (events[i].id !== this.previousEvents[i].id) {
-        return false;
+    // Remove rows that no longer exist
+    for (const id of currentIds) {
+      if (!newIds.has(id)) {
+        this.rows.delete(id);
       }
     }
     
-    return true;
-  }
-
-  /**
-   * Optimized update for selection change only
-   */
-  private updateSelectionOnly(newSelectedIndex: number): void {
-    const formattedRows: string[] = [];
-    
-    // Get all cached rows, updating only selection states
-    for (let i = 0; i < this.previousEvents.length; i++) {
-      const event = this.previousEvents[i];
-      const isSelected = i === newSelectedIndex;
-      const wasSelected = i === this.previousSelectedIndex;
+    // Update or create rows
+    const newRowOrder: number[] = [];
+    for (const event of events) {
+      let row = this.rows.get(event.id);
       
-      // Only re-format if selection state changed
-      if (isSelected || wasSelected) {
-        const formatted = this.formatRow(event, i, isSelected);
-        formattedRows.push(formatted);
+      if (row) {
+        // Update existing row
+        row.update(event);
       } else {
-        // Use cached version
-        const cacheKey = this.getCacheKey(event, false);
-        const cached = this.formattedRowsCache.get(cacheKey);
-        formattedRows.push(cached || this.formatRow(event, i, false));
+        // Create new row
+        row = new EventRow(event, this.directoryWidth);
+        this.rows.set(event.id, row);
+      }
+      
+      // Update selection state
+      row.setSelected(event.id === selectedId);
+      newRowOrder.push(event.id);
+    }
+    
+    this.rowOrder = newRowOrder;
+    this.selectedId = selectedId;
+  }
+
+  /**
+   * Render all rows to the box
+   */
+  private render(): void {
+    const formattedRows: string[] = [];
+    
+    // Render each row in order
+    for (const id of this.rowOrder) {
+      const row = this.rows.get(id);
+      if (row) {
+        formattedRows.push(row.render());
       }
     }
     
     // Add end of data if needed
     if (this.shouldShowEndOfData()) {
-      formattedRows.push(RowRenderer.renderEndOfData(this.screenWidth));
+      formattedRows.push(this.renderEndOfData());
     }
     
     // Update display
     this.updateContent(formattedRows.join('\n'));
-    this.previousSelectedIndex = newSelectedIndex;
-  }
-
-  /**
-   * Full render with caching
-   */
-  private renderFull(events: EventRow[], selectedIndex: number): void {
-    const formattedRows: string[] = [];
-    
-    // Clear cache if event list is completely different
-    if (!this.haveSomeCommonEvents(events)) {
-      this.formattedRowsCache.clear();
-    }
-    
-    // Format each row
-    for (let i = 0; i < events.length; i++) {
-      const event = events[i];
-      const isSelected = i === selectedIndex;
-      const formatted = this.formatRow(event, i, isSelected);
-      formattedRows.push(formatted);
-    }
-    
-    // Add end of data if needed
-    if (this.shouldShowEndOfData()) {
-      formattedRows.push(RowRenderer.renderEndOfData(this.screenWidth));
-    }
-    
-    // Update display
-    this.updateContent(formattedRows.join('\n'));
-    
-    // Save state
-    this.previousEvents = events;
-    this.previousSelectedIndex = selectedIndex;
-  }
-
-  /**
-   * Format a single row with caching
-   */
-  private formatRow(event: EventRow, index: number, isSelected: boolean): string {
-    const cacheKey = this.getCacheKey(event, isSelected);
-    
-    // Check cache first
-    const cached = this.formattedRowsCache.get(cacheKey);
-    if (cached) {
-      return cached;
-    }
-    
-    // Format new row
-    const formatted = RowRenderer.renderRow(
-      event,
-      index,
-      index, // absoluteIndex same as index since we receive visible events
-      isSelected ? index : -1,
-      this.directoryWidth
-    );
-    
-    // Cache it
-    this.formattedRowsCache.set(cacheKey, formatted);
-    
-    // Limit cache size to prevent memory bloat
-    if (this.formattedRowsCache.size > 2000) {
-      // Remove oldest entries
-      const keysToDelete = Array.from(this.formattedRowsCache.keys()).slice(0, 500);
-      keysToDelete.forEach(key => this.formattedRowsCache.delete(key));
-    }
-    
-    return formatted;
-  }
-
-  /**
-   * Generate cache key for a row
-   */
-  private getCacheKey(event: EventRow, isSelected: boolean): string {
-    // Include all fields that affect display
-    return `${event.id}_${isSelected}_${event.size}_${event.lines || 0}_${event.blocks || 0}`;
-  }
-
-  /**
-   * Check if current and previous events have some overlap
-   */
-  private haveSomeCommonEvents(events: EventRow[]): boolean {
-    if (this.previousEvents.length === 0) return false;
-    
-    const previousIds = new Set(this.previousEvents.map(e => e.id));
-    return events.some(e => previousIds.has(e.id));
   }
 
   /**
@@ -200,6 +129,15 @@ export class EventTable {
     // This would need to be passed in or configured
     // For now, always false since we don't have this info
     return false;
+  }
+
+  /**
+   * Render "end of data" message
+   */
+  private renderEndOfData(): string {
+    const endMessage = '─── end of data ───';
+    const padding = Math.max(0, Math.floor((this.screenWidth - endMessage.length) / 2));
+    return ' '.repeat(padding) + style(endMessage, { fg: 'white', bold: true });
   }
 
   /**
@@ -252,15 +190,28 @@ export class EventTable {
   updateScreenWidth(width: number): void {
     this.screenWidth = width;
     this.calculateDirectoryWidth();
-    // Force re-render on next update
-    this.formattedRowsCache.clear();
+    
+    // Update all rows with new directory width
+    for (const row of this.rows.values()) {
+      row.setDirectoryWidth(this.directoryWidth);
+    }
+  }
+
+  /**
+   * Force refresh of all rows
+   */
+  refresh(): void {
+    for (const row of this.rows.values()) {
+      row.invalidate();
+    }
+    this.render();
   }
 
   /**
    * Destroy the event table
    */
   destroy(): void {
-    this.formattedRowsCache.clear();
+    this.rows.clear();
     this.box.destroy();
   }
 }

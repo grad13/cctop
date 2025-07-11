@@ -291,7 +291,7 @@ export class UILayoutManager {
     const selectedIndex = absoluteSelectedIndex - viewportStart;
     
     // Update event table with optimized rendering
-    this.eventTable.render(visibleEvents, selectedIndex);
+    this.eventTable.update(visibleEvents, selectedIndex);
     this.updateStatusBar();
     this.screen.render();
   }
