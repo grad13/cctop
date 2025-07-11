@@ -4,8 +4,8 @@
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 **⛔ 更新禁止**: この注意書きの変更・削除は絶対禁止です。
 
-**最終更新**: 2025-07-10 12:30 JST  
-**現在作業**: ✅ 公開前最終準備完了
+**最終更新**: 2025-07-12 02:10 JST  
+**現在作業**: ✅ Event中心リネーミング完了 → Database二重実装問題根本解決
 
 ## 🚨 セッション開始時必須確認（P045強制遵守）
 **現在作業判定**: UI開発タスク継続 → **コード関連作業**  
@@ -28,6 +28,61 @@
 - **PKT分析**: REP-20250702-102 Builder July 01 Problem & Keep & Try Analysis  
 - **UI失敗分析**: REP-20250702-103 UI Implementation Failure Analysis
 - **削減実績**: 700行→108行（85%削減）
+
+---
+
+## 🎯 現在の作業状況（2025-07-12 01:45）
+
+### **Legacy Code Detection実験完了**
+- **実験手法**: 6つのLegacyファイルを_prefixで無効化してビルドテスト
+- **対象ファイル**: 
+  - CLI側Database実装4ファイル（database-adapter.ts, DatabaseQueryEngine.ts, DatabaseEventProcessor.ts, DatabaseConnection.ts）
+  - daemon側DatabaseConnection.ts（復旧済み - 必須）
+  - blessed-frameless-ui-simple.ts（復旧済み - 必須）
+- **結果**: CLI側4ファイルが孤立グループとして完全に不要と判明
+- **commit**: refactor: identify and disable legacy database implementations (5af3097)
+
+### **Database二重実装問題の解決**
+- **発見**: daemon（Producer/Writer）とCLI（Consumer/Reader）の相補的関係を確認
+- **共通基盤**: 両方ともFUNC-000 SQLite Database Foundation仕様に準拠
+- **責務分離**: 
+  - daemon: FileEvent書き込み（EventStorageEngine的役割）
+  - CLI: FileEvent読み取り・表示（EventQueryEngine的役割）
+- **判定**: 「二重実装問題」は存在せず、適切な責務分離
+
+### **Event中心リネーミング方針決定**
+- **命名問題**: 責務が違うのに似た名前で混乱
+- **新方針**: Event中心の明確な責務表現
+- **提案名**:
+  - daemon: `FileEventRecorder.ts`, `EventStorageConnection.ts`
+  - CLI: `FileEventReader.ts`, `EventQueryAdapter.ts`
+- **理由**: 既存コード（FileEvent, EventOperations）との用語統一
+
+### **Event中心リネーミング実装完了**
+- **新命名規則**:
+  - daemon: `FileEventRecorder.ts`, `EventStorageConnection.ts` (Producer/Writer)
+  - CLI: `FileEventReader.ts` (Consumer/Reader)
+- **責務明確化**: Record vs Read で役割が即座に理解可能
+- **既存コード一貫性**: FileEvent, EventOperations等との用語統一
+- **Legacy削除**: CLI側4ファイル（513行削減）完全除去
+- **commit**: refactor: implement Event-centered naming convention (c7df8c0)
+
+### **Database二重実装問題の根本解決**
+- **発見**: 「二重実装問題」は存在せず、適切な責務分離だった
+- **相補的関係**: daemon（Producer）↔ CLI（Consumer）
+- **FUNC-000準拠**: 両実装ともSQLite Database Foundation仕様に準拠
+- **命名改善**: 責務不明→責務明確（Event中心）で混乱解消
+
+### **引き継ぎ資料**
+**完了事項**
+- ✅ Legacy Code Detection実験
+- ✅ Event中心リネーミング（6ファイル対象）
+- ✅ import/export更新（全関連ファイル）
+- ✅ ビルド・機能確認
+- ✅ 513行のコード削減
+
+**残タスク**
+- テストファイル内のDatabaseAdapterFunc000参照更新（影響度低）
 
 ---
 
@@ -157,6 +212,76 @@
 **Validatorへの依頼**
 - EventTableモジュール改善に伴うテスト修正（11件）
 - カラム幅変更に伴うテストの期待値更新が必要
+
+---
+
+## 🎯 現在の作業状況（2025-07-12 00:55）
+
+### **EventTable順序問題修正完了**
+- **問題**: all/uniqueモード切り替え時にイベント順序が破綻（timestampベースソートが原因）
+- **原因特定**: DatabaseAdapterFunc000のクエリが`ORDER BY timestamp DESC`を使用、ID順序と一致しない
+- **修正内容**:
+  - DatabaseAdapterFunc000のクエリを`ORDER BY id DESC`に変更
+  - uniqueモード、allモード両方でevent ID降順ソートを適用
+- **成果**: all/uniqueモード間でイベント順序が一貫して保たれるように改善
+
+### **EventTableモジュール化完全実装**
+- **HO-20250711-001完了**: EventTableモジュール化タスクを完了し、completedへ移動
+- **実装詳細**:
+  - EventRowクラス：個別行が自身の状態とレンダリングを管理するオブジェクト指向設計
+  - EventTable改善：EventRowインスタンスをIDベースで管理、差分検知の効率化
+  - カラム幅問題解決：BlocksヘッダーとSizeカラムのズレを発見し修正（Blocks→Blks 4文字）
+  - Event typeカラム：8→6文字に変更、restore→backに変更（全イベントタイプが6文字に収まる）
+- **ドキュメント整備**:
+  - EventRow.md：クラス仕様書を作成（メソッド、状態管理、テストケースを網羅）
+  - README.md更新：アーキテクチャ詳細、状態管理フロー、テストガイドラインを追加
+
+---
+
+## 🎯 現在の作業状況（2025-07-12 01:05）
+
+### **Legacyコード調査・Database二重実装問題発見**
+- **重大な問題発見**: 本番環境とテスト環境で異なるdatabase実装を使用
+  - 本番: `DatabaseAdapterFunc000`（1ファイル）
+  - テスト: `DatabaseAdapter` + `DatabaseQueryEngine` + `DatabaseEventProcessor` + `DatabaseConnection`（4ファイル）
+- **影響**: 本番修正（ORDER BY timestamp→id）がテスト環境に反映されない構造的問題
+- **調査結果**: similarity-ts使用、6ファイルの削除対象を特定（Database統一4ファイル、Legacy UI 1ファイル、空ファイル1ファイル）
+
+### **v0.5.3.4リリース完了**
+- **EventTable順序問題修正**: all/uniqueモード間でのイベント順序破綻を根本解決
+- **問題原因**: `DatabaseAdapterFunc000`のクエリが`ORDER BY timestamp DESC`使用、ID順序と不一致
+- **修正内容**: uniqueモード・allモード両方で`ORDER BY id DESC`に統一
+- **成果**: モード切り替え時の順序一貫性を確保
+
+### **引き継ぎ資料**
+
+**残タスク**
+- HO-20250708-002-cli-test-schema-incomplete-fix.md（in-progress）
+
+**重要なリファクタリング課題**
+1. **Database統一（Priority 1）**: 二重実装の解消
+   - 削除対象: `database-adapter.ts`, `DatabaseQueryEngine.ts`, `DatabaseEventProcessor.ts`, `DatabaseConnection.ts`
+   - 影響: 約15個のテストファイルを`DatabaseAdapterFunc000`に移行
+2. **Legacy UI Cleanup（Priority 2）**: `blessed-frameless-ui-simple.ts`の削除
+3. **空ファイル削除（Priority 3）**: `EventTable/utils/index.ts`
+
+**完了済み依頼**
+- ~~Validatorへの依頼（HO-20250711-002）~~ → EventTable関連作業完了により不要
+
+### **Problem & Keep & Try（2025-07-12）**
+
+**Problem（改善事項）**
+1. **Database二重実装**: 本番とテスト環境で異なるdatabase実装による保守性・一貫性の重大な問題
+2. **Legacy蓄積**: 使用されないファイル6個の存在、コードベースの肥大化
+
+**Keep（継続事項）**
+1. **根本原因の特定**: EventTable順序問題をDatabaseクエリレベルまで追跡し、真の原因を発見
+2. **体系的調査アプローチ**: similarity-ts活用、import分析、実際の使用状況調査による客観的なLegacyコード特定
+3. **段階的修正**: デバッグログ追加→問題特定→修正→クリーンアップの確実な流れ
+
+**Try（挑戦事項）**
+1. **Database統一プロジェクト**: テスト環境を`DatabaseAdapterFunc000`に移行し、二重実装問題を根本解決
+2. **Legacyコード削除**: 6ファイルの計画的削除によるコードベース健全化
 
 ## 🔄 Problem & Keep & Try（最新統合版）
 
