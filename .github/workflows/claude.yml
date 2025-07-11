@@ -32,10 +32,10 @@ jobs:
     
     steps:
     - name: Claude Code Action
-      uses: anthropics/claude-code-action@v1
+      uses: anthropics/claude-code-action@beta
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
-        anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+        oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
         
         # Optional: Specify model (default is claude-3-5-sonnet-20241022)
         # model: claude-3-5-sonnet-20241022
