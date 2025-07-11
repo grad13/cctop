@@ -141,20 +141,22 @@
 
 ---
 
-## 🎯 現在の作業状況（2025-07-11 16:50）
+## 🎯 現在の作業状況（2025-07-11 17:50）
 
-### **EventTableモジュール改善完了**
+### **EventTableモジュール実装完了**
 - **worktree**: `07-11-event-table-module`
 - **実装内容**:
+  - EventRowクラス実装（個別行の状態管理）
+  - EventTableリファクタリング（EventRowインスタンス管理）
   - normalizeColumn関数によるカラム幅処理の統一化
-  - styleFormatterによる色・スタイル処理の統一化（UI共通utils配下に配置）
-  - ファイル名が長い場合のレイアウト崩れ修正
+  - styleFormatterによる色・スタイル処理の統一化（UI共通utils配下）
+  - カラム幅調整（Blocks→Blks、Event 8→6、restore→back）
 - **ハンドオフ作成**: HO-20250711-002-eventtable-test-fixes.md（Validator向け）
 
 ### **引き継ぎ資料**
 **Validatorへの依頼**
 - EventTableモジュール改善に伴うテスト修正（11件）
-- normalizeColumn/styleFormatter使用による期待値更新が必要
+- カラム幅変更に伴うテストの期待値更新が必要
 
 ## 🔄 Problem & Keep & Try（最新統合版）
 
