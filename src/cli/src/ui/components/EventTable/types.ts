@@ -19,6 +19,8 @@ export interface ColumnConfig {
   width: number;
   align: 'left' | 'right' | 'center';
   truncate?: 'head' | 'tail' | 'middle';
+  headerText?: string;
+  headerAlign?: 'left' | 'right' | 'center';
 }
 
 export interface FormatterContext {
@@ -51,12 +53,12 @@ export const DEFAULT_COLORS: EventTableColors = {
 };
 
 export const COLUMN_CONFIGS: ColumnConfig[] = [
-  { name: 'timestamp', width: 19, align: 'left' },
-  { name: 'elapsed', width: 9, align: 'right' },
-  { name: 'filename', width: 35, align: 'left', truncate: 'tail' },
-  { name: 'event_type', width: 8, align: 'left' },
-  { name: 'lines', width: 6, align: 'right' },
-  { name: 'blocks', width: 8, align: 'right' },
-  { name: 'size', width: 7, align: 'right' },
-  { name: 'directory', width: -1, align: 'left', truncate: 'head' } // -1 means dynamic width
+  { name: 'timestamp', width: 19, align: 'left', headerText: 'Event Timestamp', headerAlign: 'left' },
+  { name: 'elapsed', width: 8, align: 'right', headerText: 'Elapsed', headerAlign: 'right' },
+  { name: 'filename', width: 35, align: 'left', truncate: 'tail', headerText: 'File Name', headerAlign: 'left' },
+  { name: 'event_type', width: 8, align: 'left', headerText: 'Event', headerAlign: 'left' },
+  { name: 'lines', width: 5, align: 'right', headerText: 'Lines', headerAlign: 'right' },
+  { name: 'blocks', width: 4, align: 'right', headerText: 'Blocks', headerAlign: 'right' },
+  { name: 'size', width: 7, align: 'right', headerText: 'Size', headerAlign: 'right' },
+  { name: 'directory', width: -1, align: 'left', truncate: 'head', headerText: 'Directory', headerAlign: 'left' } // -1 means dynamic width
 ];

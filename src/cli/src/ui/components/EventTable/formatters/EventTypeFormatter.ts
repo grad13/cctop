@@ -1,6 +1,5 @@
 /**
  * Event type formatting and coloring for EventTable
- * Extracted from UIDataFormatter
  */
 
 export class EventTypeFormatter {

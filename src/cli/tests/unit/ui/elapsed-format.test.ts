@@ -4,12 +4,9 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { UIDataFormatter } from '../../../src/ui/UIDataFormatter';
-import { UIState } from '../../../src/ui/UIState';
+import { TimeFormatter } from '../../../src/ui/components/EventTable/formatters/TimeFormatter';
 
-describe('UIDataFormatter - Elapsed Time Format', () => {
-  const uiState = new UIState('all');
-  const formatter = new UIDataFormatter(uiState);
+describe('TimeFormatter - Elapsed Time Format', () => {
 
   describe('formatElapsed - Leading Zero Removal', () => {
     it('should remove leading zero for hours under 10', () => {
@@ -17,7 +14,7 @@ describe('UIDataFormatter - Elapsed Time Format', () => {
       
       // 6時間18分47秒前 (Unix timestamp)
       const timestamp = Math.floor((now - (6 * 3600 + 18 * 60 + 47) * 1000) / 1000);
-      const result = formatter.formatElapsed(timestamp);
+      const result = TimeFormatter.formatElapsed(timestamp);
       
       // 先頭の0が除去されて "6:18:47" になることを確認
       expect(result).toMatch(/^6:\d{2}:\d{2}$/);
@@ -29,7 +26,7 @@ describe('UIDataFormatter - Elapsed Time Format', () => {
       
       // 12時間34分56秒前 (Unix timestamp)
       const timestamp = Math.floor((now - (12 * 3600 + 34 * 60 + 56) * 1000) / 1000);
-      const result = formatter.formatElapsed(timestamp);
+      const result = TimeFormatter.formatElapsed(timestamp);
       
       // 10時間以上は従来通り "12:34:56" になることを確認
       expect(result).toMatch(/^1\d:\d{2}:\d{2}$/);
@@ -46,7 +43,7 @@ describe('UIDataFormatter - Elapsed Time Format', () => {
 
       testCases.forEach(({ hours, expected }) => {
         const timestamp = Math.floor((now - hours * 3600 * 1000) / 1000);
-        const result = formatter.formatElapsed(timestamp);
+        const result = TimeFormatter.formatElapsed(timestamp);
         expect(result).toMatch(expected);
         expect(result).not.toMatch(/^0/);
       });
@@ -63,7 +60,7 @@ describe('UIDataFormatter - Elapsed Time Format', () => {
 
       testCases.forEach(({ hours, expected }) => {
         const timestamp = Math.floor((now - hours * 3600 * 1000) / 1000);
-        const result = formatter.formatElapsed(timestamp);
+        const result = TimeFormatter.formatElapsed(timestamp);
         expect(result).toMatch(expected);
       });
     });
@@ -73,7 +70,7 @@ describe('UIDataFormatter - Elapsed Time Format', () => {
       
       // 30分前
       const timestamp = Math.floor((now - 30 * 60 * 1000) / 1000);
-      const result = formatter.formatElapsed(timestamp);
+      const result = TimeFormatter.formatElapsed(timestamp);
       
       // 分:秒形式 "30:00" であることを確認
       expect(result).toMatch(/^\d{2}:\d{2}$/);

@@ -35,7 +35,7 @@ export class RowRenderer {
     // Part before event type (will be colored green if not selected)
     resultBeforeEvent += padOrTruncate(timestamp, 19);                            // Event Timestamp (19 chars)
     resultBeforeEvent += ' ';                                                      // 1 space
-    resultBeforeEvent += padLeft(elapsed, 9);                                      // Elapsed (9 chars, right-aligned)
+    resultBeforeEvent += padLeft(elapsed, 8);                                      // Elapsed (8 chars, right-aligned)
     resultBeforeEvent += ' ';                                                      // 1 space
     resultBeforeEvent += padOrTruncate(filename, 35);                             // File Name (35 chars)
     resultBeforeEvent += ' ';                                                      // 1 space
@@ -45,9 +45,9 @@ export class RowRenderer {
     
     // Part after event type (will be colored green if not selected)
     resultAfterEvent += ' ';                                                       // 1 space
-    resultAfterEvent += padLeft(lines, 6);                                        // Lines (6 chars, right-aligned)
+    resultAfterEvent += padLeft(lines, 5);                                        // Lines (5 chars, right-aligned)
     resultAfterEvent += ' ';                                                       // 1 space
-    resultAfterEvent += padLeft(blocks, 8);                                       // Blocks (8 chars, right-aligned)
+    resultAfterEvent += padLeft(blocks, 4);                                       // Blocks (4 chars, right-aligned)
     resultAfterEvent += ' ';                                                       // 1 space
     resultAfterEvent += padLeft(size, 7);                                         // Size (7 chars, right-aligned)
     resultAfterEvent += ' ';                                                       // 1 space

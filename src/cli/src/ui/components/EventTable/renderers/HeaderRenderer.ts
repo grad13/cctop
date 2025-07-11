@@ -8,8 +8,8 @@ export class HeaderRenderer {
   /**
    * Render table header with column names
    */
-  static renderHeader(screenWidth: number): string {
-    const headerLine = generateHeaderLine();
+  static renderHeader(screenWidth: number, directoryWidth: number): string {
+    const headerLine = generateHeaderLine(directoryWidth);
     const separatorLine = generateSeparatorLine(screenWidth || 180);
     
     return `${headerLine}\n${separatorLine}`;
@@ -18,8 +18,8 @@ export class HeaderRenderer {
   /**
    * Render just the column header line
    */
-  static renderColumnLine(): string {
-    return generateHeaderLine();
+  static renderColumnLine(directoryWidth: number = 40): string {
+    return generateHeaderLine(directoryWidth);
   }
 
   /**

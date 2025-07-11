@@ -33,8 +33,6 @@ export class UIState {
   private selectedIndex: number = 0;
   private daemonStatus: string = '{yellow-fg}Daemon: ●CHECKING{/yellow-fg}';
   
-  // Dynamic width config
-  private directoryWidth: number = 20;
   
   // Viewport management for scrolling
   private viewportStartIndex: number = 0;
@@ -189,14 +187,6 @@ export class UIState {
     this.daemonStatus = status;
   }
 
-  // Directory Width
-  getDirectoryWidth(): number {
-    return this.directoryWidth;
-  }
-
-  setDirectoryWidth(width: number): void {
-    this.directoryWidth = width;
-  }
 
   // Filter editing start
   startEditing(mode: 'event_type_filter' | 'keyword_filter'): void {
@@ -280,13 +270,9 @@ export class UIState {
     return this.isNearBottom();
   }
 
-  // Calculate Dynamic Width
+  // Update viewport dimensions based on terminal size
   calculateDynamicWidth(): void {
-    const terminalWidth = process.stdout.columns || 80;
-    const fixedWidth = 107;
-    this.directoryWidth = Math.max(10, terminalWidth - fixedWidth);
-    
-    // Also update viewport height based on terminal size
+    // Update viewport height based on terminal size
     const terminalHeight = process.stdout.rows || 24;
     this.viewportHeight = Math.max(1, terminalHeight - 7);
   }

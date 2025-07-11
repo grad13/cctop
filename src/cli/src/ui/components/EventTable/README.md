@@ -52,14 +52,28 @@ private formattedRowsCache: Map<number, string> = new Map();
 - Complete refresh: O(n) where n = total events
 
 ## Column Definition (Fixed)
-| Column | Width | Alignment | Format |
-|--------|-------|-----------|---------|
+
+### Header Configuration
+| Column | Header Text | Width | Header Alignment |
+|--------|------------|-------|------------------|
+| timestamp | Event Timestamp | 19 | left |
+| elapsed | Elapsed | 8 | right |
+| filename | File Name | 35 | left |
+| event_type | Event | 8 | left |
+| lines | Lines | 5 | right |
+| blocks | Blocks | 4 | right |
+| size | Size | 7 | right |
+| directory | Directory | * | left |
+
+### Value Configuration
+| Column | Width | Value Alignment | Format |
+|--------|-------|-----------------|---------|
 | Timestamp | 19 | left | YYYY-MM-DD HH:MM:SS |
-| Elapsed | 9 | right | Dynamic (mm:ss, hh:mm:ss, days, months) |
+| Elapsed | 8 | right | Dynamic (mm:ss, hh:mm:ss, days, months) |
 | Filename | 35 | left | Truncate with ellipsis |
 | Event Type | 8 | left | Colored by type |
-| Lines | 6 | right | Numeric |
-| Blocks | 8 | right | Numeric |
+| Lines | 5 | right | Numeric |
+| Blocks | 4 | right | Numeric |
 | Size | 7 | right | Dynamic (B, K, M, G) |
 | Directory | * | left | Tail-first truncation |
 

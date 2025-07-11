@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { BlessedFramelessUISimple } from '../../../src/ui/blessed-frameless-ui-simple';
+import { BlessedFramelessUISimple } from '../../../src/ui/BlessedFramelessUI';
 import { DatabaseAdapterFunc000 } from '../../../src/database/database-adapter-func000';
 import { EventRow } from '../../../src/types/event-row';
 
@@ -215,21 +215,16 @@ describe('Refactor Protection - Core Functions', () => {
   });
 
   describe('Display Update Functionality', () => {
-    it('should call formatter and layout manager', async () => {
-      const dataFormatter = (ui as any).dataFormatter;
+    it('should call layout manager update', async () => {
       const layoutManager = { updateDisplay: vi.fn() };
       (ui as any).layoutManager = layoutManager;
-      
-      // Mock formatter
-      const formatEventList = vi.spyOn(dataFormatter, 'formatEventList').mockReturnValue(['test line']);
       
       // Call updateDisplay
       const updateDisplay = (ui as any).updateDisplay;
       updateDisplay.call(ui);
       
-      // Should call formatter and layout manager
-      expect(formatEventList).toHaveBeenCalled();
-      expect(layoutManager.updateDisplay).toHaveBeenCalledWith(['test line']);
+      // Should call layout manager
+      expect(layoutManager.updateDisplay).toHaveBeenCalled();
     });
   });
 

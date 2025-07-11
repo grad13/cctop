@@ -6,7 +6,7 @@
 import * as blessed from 'blessed';
 import { UIState } from './UIState';
 import { KeywordSearchManager } from '../search';
-import { EventTable, HeaderRenderer } from './components/EventTable';
+import { EventTable } from './components/EventTable';
 
 export class UILayoutManager {
   private screen: blessed.Widgets.Screen;
@@ -14,6 +14,7 @@ export class UILayoutManager {
   
   // UI Components
   private headerPanel: any;
+  private headerSeparator: any;
   private statusBar: any;
   private keyGuideBar: any;
   private dynamicControlBar: any;
@@ -27,34 +28,19 @@ export class UILayoutManager {
   }
 
   setupFramelessLayout(): void {
-    // Header Area (Line 1-2)
-    this.headerPanel = blessed.box({
-      top: 0,
-      left: 0,
-      width: '100%',
-      height: 3,
-      content: this.buildHeaderContent(),
-      style: {
-        fg: 'white',
-        bg: 'transparent',
-        bold: true
-      },
-      tags: true
-    });
-
-    // Event Rows Area (Main content)
+    // Event Rows Area (Main content) - Create this first so we can create EventTable
     this.eventArea = blessed.box({
-      top: 3,
+      top: 3,  // Start after header (2 lines) + separator (1 line)
       left: 0,
       width: '100%',
-      height: '100%-7',  // Adjusted for separator line
+      height: '100%-7',  // Adjusted for header and control areas
       style: {
         fg: 'white',
         bg: 'transparent'
       }
     });
 
-    // Use EventTable component
+    // Use EventTable component - Create before header so getColumnHeader() is available
     this.eventTable = new EventTable({
       parent: this.eventArea,
       top: 0,
@@ -66,6 +52,33 @@ export class UILayoutManager {
         bg: 'transparent'
       }
     }, this.screen.width as number || 180);
+
+    // Header Area (Line 1-2)
+    this.headerPanel = blessed.box({
+      top: 0,
+      left: 0,
+      width: '100%',
+      height: 2,
+      content: this.buildHeaderContent(),
+      style: {
+        fg: 'white',
+        bg: 'transparent'
+      },
+      tags: true
+    });
+    
+    // Header separator line
+    this.headerSeparator = blessed.box({
+      top: 2,
+      left: 0,
+      width: '100%',
+      height: 1,
+      content: '─'.repeat(180),
+      style: {
+        fg: 'white',
+        bg: 'transparent'
+      }
+    });
 
     // Separator line between event stream and control area
     this.separatorLine = blessed.box({
@@ -125,6 +138,7 @@ export class UILayoutManager {
 
     // Append all components
     this.screen.append(this.headerPanel);
+    this.screen.append(this.headerSeparator);
     this.screen.append(this.eventArea);
     this.screen.append(this.separatorLine);
     this.screen.append(this.statusBar);
@@ -144,8 +158,8 @@ export class UILayoutManager {
     }
     
     header += `{/bold}\n`;
-    header += HeaderRenderer.renderColumnLine() + '\n';
-    header += `${'─'.repeat(Number(this.screen.width) || 180)}`;  // Column header separator line
+    header += this.eventTable.getColumnHeader();
+    
     return header;
   }
 
@@ -253,7 +267,9 @@ export class UILayoutManager {
     this.headerPanel.setContent(this.buildHeaderContent());
     
     // Update separator line width
-    this.separatorLine.setContent('─'.repeat(Number(this.screen.width) || 80));
+    const terminalWidth = process.stdout.columns || 180;
+    this.headerSeparator.setContent('─'.repeat(terminalWidth));
+    this.separatorLine.setContent('─'.repeat(terminalWidth));
     
     // Render screen to ensure updates are visible
     this.screen.render();

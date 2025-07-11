@@ -1,6 +1,5 @@
 /**
  * Time formatting utilities for EventTable
- * Extracted from UIDataFormatter
  */
 
 export class TimeFormatter {
@@ -27,7 +26,7 @@ export class TimeFormatter {
     const now = Date.now();
     // Handle both Unix timestamp (number) and ISO string
     const eventTime = typeof timestamp === 'number' ? timestamp * 1000 : new Date(timestamp).getTime();
-    const diffSeconds = Math.floor((now - eventTime) / 1000);
+    const diffSeconds = Math.max(0, Math.floor((now - eventTime) / 1000));
     
     // Staged elapsed time display
     const MINUTE = 60;

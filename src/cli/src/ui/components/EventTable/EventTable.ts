@@ -220,8 +220,8 @@ export class EventTable {
    * Calculate dynamic directory column width
    */
   private calculateDirectoryWidth(): void {
-    // Fixed columns total: 19 + 1 + 9 + 1 + 35 + 1 + 8 + 1 + 6 + 1 + 8 + 1 + 7 + 1 = 99
-    const fixedWidth = 99;
+    // Fixed columns total: 19 + 1 + 8 + 1 + 35 + 1 + 8 + 1 + 5 + 1 + 4 + 1 + 7 + 1 = 93
+    const fixedWidth = 93;
     this.directoryWidth = Math.max(20, this.screenWidth - fixedWidth);
   }
 
@@ -229,14 +229,14 @@ export class EventTable {
    * Get table header
    */
   getHeader(): string {
-    return HeaderRenderer.renderHeader(this.screenWidth);
+    return HeaderRenderer.renderHeader(this.screenWidth, this.directoryWidth);
   }
 
   /**
    * Get column header line only
    */
   getColumnHeader(): string {
-    return HeaderRenderer.renderColumnLine();
+    return HeaderRenderer.renderColumnLine(this.directoryWidth);
   }
 
   /**

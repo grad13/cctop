@@ -27,6 +27,12 @@ export function truncateWithEllipsis(text: string, maxWidth: number): string {
   const ellipsis = '...';
   const ellipsisWidth = 3;
   
+  // Check if text fits within maxWidth
+  const textWidth = stringWidth(text);
+  if (textWidth <= maxWidth) {
+    return text;
+  }
+  
   if (maxWidth <= ellipsisWidth) {
     return ellipsis.substring(0, maxWidth);
   }
@@ -35,14 +41,24 @@ export function truncateWithEllipsis(text: string, maxWidth: number): string {
   let result = '';
   let currentWidth = 0;
   
-  for (const char of text) {
+  const chars = Array.from(text);
+  for (let i = 0; i < chars.length; i++) {
+    const char = chars[i];
     const charWidth = stringWidth(char);
-    if (currentWidth + charWidth <= targetWidth) {
-      result += char;
-      currentWidth += charWidth;
-    } else {
+    
+    if (currentWidth + charWidth > targetWidth) {
       break;
     }
+    
+    if (currentWidth + charWidth === targetWidth) {
+      // Check if there are more characters after this one
+      if (i + 1 < chars.length) {
+        break;
+      }
+    }
+    
+    result += char;
+    currentWidth += charWidth;
   }
   
   return result + ellipsis;

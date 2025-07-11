@@ -2,7 +2,8 @@
  * Column configuration utilities for EventTable
  */
 
-import { ColumnConfig } from '../types';
+import { ColumnConfig, COLUMN_CONFIGS } from '../types';
+import { padOrTruncate, padLeft } from './stringUtils';
 
 /**
  * Calculate total fixed width of columns
@@ -22,12 +23,28 @@ export function calculateColumnSpacing(columns: ColumnConfig[]): number {
 }
 
 /**
- * Generate header line matching existing format exactly:
- * "Event Timestamp      Elapsed  File Name                           Event    Lines  Blocks    Size  Directory"
+ * Generate header line with proper alignment for each column
  */
-export function generateHeaderLine(): string {
-  // This matches the exact format from UILayoutManager.buildHeaderContent()
-  return 'Event Timestamp      Elapsed  File Name                           Event    Lines  Blocks    Size  Directory';
+export function generateHeaderLine(directoryWidth: number = 40): string {
+  const parts: string[] = [];
+  
+  for (const col of COLUMN_CONFIGS) {
+    const width = col.width === -1 ? directoryWidth : col.width;
+    const headerText = col.headerText || col.name;
+    const headerAlign = col.headerAlign || col.align;
+    
+    let formattedHeader: string;
+    if (headerAlign === 'right') {
+      formattedHeader = padLeft(headerText, width);
+    } else {
+      // left or center (center not used currently)
+      formattedHeader = padOrTruncate(headerText, width);
+    }
+    
+    parts.push(formattedHeader);
+  }
+  
+  return parts.join(' ');
 }
 
 /**
