@@ -18,7 +18,7 @@ describe('HeaderRenderer', () => {
       expect(lines).toHaveLength(2);
       
       // First line should be column headers
-      expect(lines[0]).toBe('Event Timestamp      Elapsed  File Name                           Event    Lines  Blocks    Size  Directory');
+      expect(lines[0]).toBe('Event Timestamp      Elapsed File Name                           Event  Lines Blks    Size Directory                               ');
       
       // Second line should be separator
       expect(lines[1]).toBe('─'.repeat(180));
@@ -49,7 +49,7 @@ describe('HeaderRenderer', () => {
       const result = HeaderRenderer.renderColumnLine();
       
       // Should be the exact header format
-      expect(result).toBe('Event Timestamp      Elapsed  File Name                           Event    Lines  Blocks    Size  Directory');
+      expect(result).toBe('Event Timestamp      Elapsed File Name                           Event  Lines Blks    Size Directory                               ');
       
       // Should not contain newlines
       expect(result).not.toContain('\n');

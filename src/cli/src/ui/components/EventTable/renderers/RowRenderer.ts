@@ -17,7 +17,8 @@ export class RowRenderer {
     index: number, 
     absoluteIndex: number,
     selectedIndex: number,
-    directoryWidth: number
+    directoryWidth: number,
+    directoryMutePaths?: string[]
   ): string {
     // Format column values
     const timestamp = TimeFormatter.formatTimestamp(event.timestamp);
@@ -27,7 +28,17 @@ export class RowRenderer {
     const lines = (event.lines || 0).toString();
     const blocks = (event.blocks || 0).toString();
     const size = FileSizeFormatter.format(event.size || 0);
-    const directory = event.directory || '';
+    let directory = event.directory || '';
+    
+    // Apply directory mute paths
+    if (directoryMutePaths && directoryMutePaths.length > 0) {
+      for (const mutePath of directoryMutePaths) {
+        if (directory.startsWith(mutePath)) {
+          directory = directory.substring(mutePath.length);
+          break;  // Apply only the first matching mute path
+        }
+      }
+    }
 
     // Normalize columns using unified function
     const columns = [];
@@ -37,15 +48,15 @@ export class RowRenderer {
     columns.push(normalizeColumn(elapsed, 8, 'right'));
     columns.push(normalizeColumn(filename, 35, 'left', 'tail'));
     
-    // Event type needs special handling for color
-    const eventTypeColored = EventTypeFormatter.colorize(eventTypeRaw);
-    
     // Continue with remaining columns
     const afterEventColumns = [];
     afterEventColumns.push(normalizeColumn(lines, 5, 'right'));
     afterEventColumns.push(normalizeColumn(blocks, 4, 'right'));
     afterEventColumns.push(normalizeColumn(size, 7, 'right'));
     afterEventColumns.push(normalizeColumn(directory, directoryWidth, 'left', 'head'));
+    
+    // Event type needs special handling for color
+    const eventTypeColored = EventTypeFormatter.colorize(eventTypeRaw);
     
     // Build result
     const beforeEvent = columns.join(' ') + ' ';

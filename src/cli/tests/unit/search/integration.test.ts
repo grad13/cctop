@@ -12,12 +12,12 @@ describe('FUNC-209 Integration Test - Control Character Handling', () => {
   describe('Control Character Input Simulation', () => {
     it('should handle Enter key (\\n) in search text', () => {
       // Simulate user typing 'test' then pressing Enter
-      uiState.enterSearchMode();
-      uiState.appendToSearchText('t');
-      uiState.appendToSearchText('e');
-      uiState.appendToSearchText('s');
-      uiState.appendToSearchText('t');
-      uiState.appendToSearchText('\n'); // Enter key
+      // enterSearchMode no longer exists in UIState API
+      uiState.appendToSearchPattern('t');
+      uiState.appendToSearchPattern('e');
+      uiState.appendToSearchPattern('s');
+      uiState.appendToSearchPattern('t');
+      uiState.appendToSearchPattern('\n'); // Enter key
       
       const searchText = uiState.getSearchText();
       console.log('Raw search text:', JSON.stringify(searchText));
@@ -34,10 +34,10 @@ describe('FUNC-209 Integration Test - Control Character Handling', () => {
     });
 
     it('should handle Tab key (\\t) in search text', () => {
-      uiState.enterSearchMode();
-      uiState.appendToSearchText('hello');
-      uiState.appendToSearchText('\t'); // Tab key
-      uiState.appendToSearchText('world');
+      // enterSearchMode no longer exists in UIState API
+      uiState.appendToSearchPattern('hello');
+      uiState.appendToSearchPattern('\t'); // Tab key
+      uiState.appendToSearchPattern('world');
       
       const searchText = uiState.getSearchText();
       expect(searchText).toBe('hello\tworld');
@@ -48,12 +48,12 @@ describe('FUNC-209 Integration Test - Control Character Handling', () => {
     });
 
     it('should handle multiple control characters', () => {
-      uiState.enterSearchMode();
-      uiState.appendToSearchText('line1');
-      uiState.appendToSearchText('\n');
-      uiState.appendToSearchText('\t');
-      uiState.appendToSearchText('line2');
-      uiState.appendToSearchText('\r');
+      // enterSearchMode no longer exists in UIState API
+      uiState.appendToSearchPattern('line1');
+      uiState.appendToSearchPattern('\n');
+      uiState.appendToSearchPattern('\t');
+      uiState.appendToSearchPattern('line2');
+      uiState.appendToSearchPattern('\r');
       
       const searchText = uiState.getSearchText();
       expect(searchText).toBe('line1\n\tline2\r');

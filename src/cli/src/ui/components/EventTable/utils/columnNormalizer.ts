@@ -24,6 +24,11 @@ export function normalizeColumn(
 ): string {
   // Special handling for directory truncation
   if (truncate === 'head') {
+    // If the value fits, just pad it
+    if (value.length <= width) {
+      return padOrTruncate(value, width);
+    }
+    // Only truncate if too long
     const normalized = truncateDirectoryPath(value, width);
     // Ensure exact width
     return padOrTruncate(normalized, width);

@@ -46,7 +46,7 @@ describe('RowRenderer', () => {
       
       // Event type color is preserved inside the blue background
       // The 'create' event type will have {green-fg} color
-      expect(result).toContain('{green-fg}create  {/green-fg}');
+      expect(result).toContain('{green-fg}create{/green-fg}');
     });
 
     it('should format all columns correctly', () => {
@@ -59,18 +59,18 @@ describe('RowRenderer', () => {
       expect(stripped.substring(0, 19)).toMatch(/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/);
       
       // Check that the row has expected length (accounting for spaces)
-      // Fixed columns: 19 + 1 + 9 + 1 + 35 + 1 + 8 + 1 + 6 + 1 + 8 + 1 + 7 + 1 = 99
+      // Fixed columns: 19 + 1 + 8 + 1 + 35 + 1 + 6 + 1 + 5 + 1 + 4 + 1 + 7 + 1 = 91
       // Plus directory width: 40
-      // Total: 132 (based on actual output)
-      expect(stripped.length).toBe(132);
+      // Total: 131
+      expect(stripped.length).toBe(131);
     });
 
     it('should truncate long filenames', () => {
       const result = RowRenderer.renderRow(mockEvent, 0, 0, -1, 40);
       const stripped = result.replace(/\{[^}]+\}/g, '');
       
-      // Filename column starts at position 30 (19 + 1 + 9 + 1)
-      const filenameColumn = stripped.substring(30, 65); // 35 chars
+      // Filename column starts at position 29 (19 + 1 + 8 + 1)
+      const filenameColumn = stripped.substring(29, 64); // 35 chars
       expect(filenameColumn.length).toBe(35);
       
       // Should be truncated with ellipsis
@@ -81,8 +81,8 @@ describe('RowRenderer', () => {
       const result = RowRenderer.renderRow(mockEvent, 0, 0, -1, 40);
       const stripped = result.replace(/\{[^}]+\}/g, '');
       
-      // Directory column starts at position 99
-      const directoryColumn = stripped.substring(99);
+      // Directory column starts at position 91
+      const directoryColumn = stripped.substring(91);
       expect(directoryColumn.length).toBe(40);
       
       // Should be truncated from the beginning
@@ -105,8 +105,8 @@ describe('RowRenderer', () => {
         const result = RowRenderer.renderRow(event, 0, 0, -1, 40);
         const stripped = result.replace(/\{[^}]+\}/g, '');
         
-        // Size column position: 19 + 1 + 9 + 1 + 35 + 1 + 8 + 1 + 6 + 1 + 8 + 1 = 91
-        const sizeColumn = stripped.substring(91, 98).trim();
+        // Size column position: 19 + 1 + 8 + 1 + 35 + 1 + 6 + 1 + 5 + 1 + 4 + 1 = 83
+        const sizeColumn = stripped.substring(83, 90).trim();
         expect(sizeColumn).toBe(expected);
       });
     });
@@ -126,7 +126,7 @@ describe('RowRenderer', () => {
       
       // Should not throw error
       const stripped = result.replace(/\{[^}]+\}/g, '');
-      expect(stripped.length).toBe(139);
+      expect(stripped.length).toBe(131);
     });
 
     it('should apply event type colors', () => {
@@ -138,7 +138,8 @@ describe('RowRenderer', () => {
         
         // Should contain color tags for event type
         // The exact color depends on EventTypeFormatter
-        expect(result).toMatch(/\{[a-z]+-fg\}(find|create|modify|delete|move|restore)\{\/[a-z]+-fg\}/);
+        // Event types are padded to 6 characters
+        expect(result).toMatch(/\{[a-z]+-fg\}(find  |create|modify|delete|move  |back  )\{\/[a-z]+-fg\}/);
       });
     });
   });

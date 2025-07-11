@@ -4,32 +4,8 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import { CLIConfig, defaultCLIConfig } from './cli-config';
-import { LocalSetupInitializer } from './local-setup-initializer';
+import { CLIConfig, defaultCLIConfig, SharedConfig, defaultSharedConfig, DaemonConfig, defaultDaemonConfig, LocalSetupInitializer } from '@cctop/shared';
 
-export interface SharedConfig {
-  version: string;
-  projectName: string;
-  watchPaths: string[];
-  excludePatterns: string[];
-  createdAt: string;
-}
-
-export interface DaemonConfig {
-  version: string;
-  daemon: {
-    enabled: boolean;
-    autoStart: boolean;
-    pidFile: string;
-    logFile: string;
-    socketPath: string;
-  };
-  monitoring: {
-    interval: number;
-    bufferSize: number;
-    maxEvents: number;
-  };
-}
 
 export interface MergedConfig {
   cli: CLIConfig;
@@ -74,8 +50,8 @@ export class ConfigLoader {
       console.warn(`Failed to load configuration: ${errorMessage}. Using defaults.`);
       return {
         cli: defaultCLIConfig,
-        shared: this.getDefaultSharedConfig(),
-        daemon: this.getDefaultDaemonConfig(),
+        shared: defaultSharedConfig,
+        daemon: defaultDaemonConfig,
         configPath
       };
     }
@@ -87,7 +63,7 @@ export class ConfigLoader {
   private async loadSharedConfig(configPath: string): Promise<SharedConfig> {
     const configFile = path.join(configPath, 'config', 'shared-config.json');
     if (!fs.existsSync(configFile)) {
-      return this.getDefaultSharedConfig();
+      return defaultSharedConfig;
     }
     
     const content = fs.readFileSync(configFile, 'utf8');
@@ -100,7 +76,7 @@ export class ConfigLoader {
   private async loadDaemonConfig(configPath: string): Promise<DaemonConfig> {
     const configFile = path.join(configPath, 'config', 'daemon-config.json');
     if (!fs.existsSync(configFile)) {
-      return this.getDefaultDaemonConfig();
+      return defaultDaemonConfig;
     }
     
     const content = fs.readFileSync(configFile, 'utf8');
@@ -169,38 +145,6 @@ export class ConfigLoader {
     return this.initializer.isInitialized(targetDirectory);
   }
   
-  private getDefaultSharedConfig(): SharedConfig {
-    return {
-      version: "0.3.0.0",
-      projectName: path.basename(process.cwd()),
-      watchPaths: ["."],
-      excludePatterns: [
-        "node_modules/**",
-        ".git/**", 
-        ".cctop/**",
-        "*.log"
-      ],
-      createdAt: new Date().toISOString()
-    };
-  }
-  
-  private getDefaultDaemonConfig(): DaemonConfig {
-    return {
-      version: "0.3.0.0",
-      daemon: {
-        enabled: true,
-        autoStart: true,
-        pidFile: "./runtime/daemon.pid",
-        logFile: "./logs/daemon.log",
-        socketPath: "./runtime/daemon.sock"
-      },
-      monitoring: {
-        interval: 100,
-        bufferSize: 1000,
-        maxEvents: 10000
-      }
-    };
-  }
 
 
   /**

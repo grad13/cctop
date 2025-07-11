@@ -172,7 +172,7 @@ export class BlessedFramelessUISimple {
     const screen = this.screenManager.initializeScreen();
     
     // Initialize layout manager
-    this.layoutManager = new UILayoutManager(screen, this.uiState);
+    this.layoutManager = new UILayoutManager(screen, this.uiState, this.cliConfig);
     this.layoutManager.setupFramelessLayout();
     
     // Initialize key handler

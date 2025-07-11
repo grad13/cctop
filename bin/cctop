@@ -54,90 +54,16 @@ Architecture:
  * Initialize .cctop directory with default configuration
  */
 async function initializeConfig() {
-  const basePath = process.cwd();
-  const cctopDir = path.join(basePath, '.cctop');
+  const { LocalSetupInitializer } = require('../src/shared/dist/config/LocalSetupInitializer');
+  const initializer = new LocalSetupInitializer();
   
   try {
-    // Create .cctop directory
-    await fsPromises.mkdir(cctopDir, { recursive: true });
-    
-    // Create subdirectories
-    const subdirs = ['config', 'data', 'logs', 'runtime', 'temp'];
-    for (const dir of subdirs) {
-      await fsPromises.mkdir(path.join(cctopDir, dir), { recursive: true });
+    const result = await initializer.initialize();
+    if (result.created) {
+      console.log(result.message);
+    } else {
+      console.log('Configuration already exists');
     }
-    
-    // Create daemon-config.json if not exists
-    const daemonConfigPath = path.join(cctopDir, 'config', 'daemon-config.json');
-    try {
-      await fsPromises.access(daemonConfigPath);
-      console.log('daemon-config.json already exists');
-    } catch {
-      const daemonConfig = {
-        monitoring: {
-          watchPaths: [basePath],
-          excludePatterns: [
-            '**/node_modules/**',
-            '**/.git/**',
-            '**/.*',
-            '**/.cctop/**',
-            '**/dist/**',
-            '**/coverage/**',
-            '**/build/**',
-            '**/*.log',
-            '**/.DS_Store'
-          ],
-          debounceMs: 100,
-          maxDepth: 10,
-          moveThresholdMs: 100,
-          systemLimits: {
-            requiredLimit: 524288,
-            checkOnStartup: true,
-            warnIfInsufficient: true
-          }
-        },
-        daemon: {
-          pidFile: '.cctop/runtime/daemon.pid',
-          logFile: '.cctop/logs/daemon.log',
-          logLevel: 'info',
-          heartbeatInterval: 30000,
-          autoStart: true,
-          maxRestarts: 3,
-          restartDelay: 5000
-        },
-        database: {
-          writeMode: 'WAL',
-          syncMode: 'NORMAL',
-          cacheSize: 65536,
-          busyTimeout: 5000,
-          checkpointInterval: 300000
-        }
-      };
-      await fsPromises.writeFile(daemonConfigPath, JSON.stringify(daemonConfig, null, 2));
-      console.log('Created daemon-config.json');
-    }
-    
-    // Create .gitignore if not exists
-    const gitignorePath = path.join(cctopDir, '.gitignore');
-    try {
-      await fsPromises.access(gitignorePath);
-      console.log('.gitignore already exists');
-    } catch {
-      const gitignoreContent = `# cctop monitoring data
-data/
-logs/
-runtime/
-temp/
-
-# User customizations
-themes/custom/
-`;
-      await fsPromises.writeFile(gitignorePath, gitignoreContent);
-      console.log('Created .gitignore');
-    }
-    
-    console.log('Initialization completed successfully');
-    console.log(`Created .cctop directory at: ${cctopDir}`);
   } catch (error) {
     console.error('Failed to initialize:', error.message);
     process.exit(1);
@@ -176,7 +102,15 @@ function startDaemon() {
 /**
  * Start CLI
  */
-function startCLI() {
+async function startCLI() {
+  // Check if config exists, create if not
+  const { LocalSetupInitializer } = require('../src/shared/dist/config/LocalSetupInitializer');
+  const initializer = new LocalSetupInitializer();
+  
+  if (!initializer.isInitialized()) {
+    await initializer.initialize();
+  }
+  
   return new Promise((resolve, reject) => {
     // Direct execution of CLI module without cctop-cli wrapper
     const cliPath = path.join(__dirname, '../src/cli/dist/index.js');

@@ -30,6 +30,11 @@ export class EventTypeFormatter {
       back: 'back  '
     };
     
-    return typeMap[eventType.toLowerCase()] || eventType.padEnd(6);
+    const result = typeMap[eventType.toLowerCase()] || eventType;
+    // Ensure exactly 6 characters - truncate if longer, pad if shorter
+    if (result.length > 6) {
+      return result.substring(0, 6);
+    }
+    return result.padEnd(6);
   }
 }

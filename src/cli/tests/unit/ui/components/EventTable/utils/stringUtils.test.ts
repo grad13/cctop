@@ -25,7 +25,7 @@ describe('stringUtils', () => {
     });
 
     it('should truncate long text with ellipsis', () => {
-      expect(padOrTruncate('verylongfilename.txt', 10)).toBe('verylo...');
+      expect(padOrTruncate('verylongfilename.txt', 10)).toBe('verylon...');
     });
 
     it('should handle blessed tags correctly', () => {
@@ -38,7 +38,7 @@ describe('stringUtils', () => {
     it('should handle East Asian characters', () => {
       // Each Japanese character is typically 2 width
       expect(padOrTruncate('日本', 10)).toBe('日本      '); // 4 width + 6 spaces
-      expect(padOrTruncate('日本語テスト', 10)).toBe('日本語...'); // Truncated
+      expect(padOrTruncate('日本語テスト', 10)).toBe('日本語... '); // Truncated
     });
 
     it('should handle empty string', () => {
@@ -48,7 +48,7 @@ describe('stringUtils', () => {
 
   describe('truncateWithEllipsis', () => {
     it('should truncate text with ellipsis', () => {
-      expect(truncateWithEllipsis('verylongtext', 10)).toBe('verylo...');
+      expect(truncateWithEllipsis('verylongtext', 10)).toBe('verylon...');
       expect(truncateWithEllipsis('short', 10)).toBe('short');
     });
 
@@ -60,8 +60,8 @@ describe('stringUtils', () => {
 
     it('should handle East Asian characters correctly', () => {
       // Each character is 2 width
-      expect(truncateWithEllipsis('日本語テスト', 10)).toBe('日本語...');
-      expect(truncateWithEllipsis('あいうえお', 8)).toBe('あい...');
+      expect(truncateWithEllipsis('日本語テスト', 10)).toBe('日本語... ');
+      expect(truncateWithEllipsis('あいうえお', 8)).toBe('あい... ');
     });
 
     it('should not truncate if text fits', () => {
@@ -96,12 +96,12 @@ describe('stringUtils', () => {
 
     it('should truncate from the beginning for long paths', () => {
       const longPath = '/very/long/directory/path/to/file';
-      expect(truncateDirectoryPath(longPath, 20)).toBe('...ory/path/to/file');
+      expect(truncateDirectoryPath(longPath, 20)).toBe('...tory/path/to/file');
     });
 
     it('should keep the most important part (end) of the path', () => {
       const projectPath = '/Users/username/projects/myproject/src/components';
-      expect(truncateDirectoryPath(projectPath, 30)).toBe('...ject/src/components');
+      expect(truncateDirectoryPath(projectPath, 30)).toBe('...ts/myproject/src/components');
     });
 
     it('should handle paths with East Asian characters', () => {

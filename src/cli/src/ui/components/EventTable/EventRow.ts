@@ -6,6 +6,7 @@ import { EventRow as EventRowData } from '../../../types/event-row';
 import { normalizeColumn } from './utils/columnNormalizer';
 import { TimeFormatter, EventTypeFormatter, FileSizeFormatter } from './formatters';
 import { fg, bg } from '../../utils/styleFormatter';
+import { EventTableColors } from './types';
 
 export class EventRow {
   private data: EventRowData;
@@ -13,10 +14,14 @@ export class EventRow {
   private directoryWidth: number;
   private cachedRender?: string;
   private isDirty: boolean = true;
+  private colors?: EventTableColors;
+  private directoryMutePaths?: string[];
 
-  constructor(data: EventRowData, directoryWidth: number = 40) {
+  constructor(data: EventRowData, directoryWidth: number = 40, colors?: EventTableColors, directoryMutePaths?: string[]) {
     this.data = data;
     this.directoryWidth = directoryWidth;
+    this.colors = colors;
+    this.directoryMutePaths = directoryMutePaths;
   }
 
   /**
@@ -65,6 +70,18 @@ export class EventRow {
   }
 
   /**
+   * Update directory mute paths
+   */
+  setDirectoryMutePaths(paths: string[] | undefined): void {
+    // Only mark dirty if paths actually changed
+    const pathsChanged = JSON.stringify(this.directoryMutePaths) !== JSON.stringify(paths);
+    if (pathsChanged) {
+      this.directoryMutePaths = paths;
+      this.isDirty = true;
+    }
+  }
+
+  /**
    * Generate rendered text for this row
    */
   render(): string {
@@ -81,7 +98,17 @@ export class EventRow {
     const lines = (this.data.lines || 0).toString();
     const blocks = (this.data.blocks || 0).toString();
     const size = FileSizeFormatter.format(this.data.size || 0);
-    const directory = this.data.directory || '';
+    let directory: string = this.data.directory || '';
+    
+    // Apply directory mute paths
+    if (this.directoryMutePaths && this.directoryMutePaths.length > 0) {
+      for (const mutePath of this.directoryMutePaths) {
+        if (directory.startsWith(mutePath)) {
+          directory = directory.substring(mutePath.length);
+          break;  // Apply only the first matching mute path
+        }
+      }
+    }
 
     // Normalize columns using unified function
     const columns = [];
@@ -90,14 +117,18 @@ export class EventRow {
     columns.push(normalizeColumn(filename, 35, 'left', 'tail'));
     
     // Event type with color
-    const eventTypeColored = EventTypeFormatter.colorize(eventTypeRaw);
+    const eventTypeColored = this.colorizeEventType(eventTypeRaw);
     
     // Remaining columns
     const afterEventColumns = [];
     afterEventColumns.push(normalizeColumn(lines, 5, 'right'));
     afterEventColumns.push(normalizeColumn(blocks, 4, 'right'));
     afterEventColumns.push(normalizeColumn(size, 7, 'right'));
-    afterEventColumns.push(normalizeColumn(directory, this.directoryWidth, 'left', 'head'));
+    
+    // If directory was muted (doesn't start with /), show from beginning
+    const wasMuted = !directory.startsWith('/');
+    const truncateMode = wasMuted ? 'tail' : 'head';  // tail = truncate end, head = truncate beginning
+    afterEventColumns.push(normalizeColumn(directory, this.directoryWidth, 'left', truncateMode));
     
     // Build result
     const beforeEvent = columns.join(' ') + ' ';
@@ -108,13 +139,18 @@ export class EventRow {
     if (this.selected) {
       result = bg(result, 'blue');
     } else {
-      // Apply green text color for non-selected rows
+      // Apply green text color for non-selected rows (Claude Code style)
+      // Only apply green to parts that don't have event type colors
       result = fg(beforeEvent, 'green') + eventTypeColored + fg(afterEvent, 'green');
     }
     
     // Cache the result
     this.cachedRender = result;
     this.isDirty = false;
+    
+    // Debug - log muted directory and result
+    const fs = require('fs');
+    fs.appendFileSync('.cctop/logs/render-debug.log', `EventRow render: mutedDirectory="${directory}", result="${result}"\n`);
     
     return result;
   }
@@ -124,5 +160,24 @@ export class EventRow {
    */
   invalidate(): void {
     this.isDirty = true;
+  }
+
+  /**
+   * Colorize event type based on config colors
+   */
+  private colorizeEventType(eventType: string): string {
+    const formatted = EventTypeFormatter.format(eventType);
+    
+    // Use config colors if available
+    if (this.colors) {
+      const colorKey = eventType.toLowerCase() as keyof EventTableColors;
+      const color = this.colors[colorKey];
+      if (color) {
+        return fg(formatted, color as any);
+      }
+    }
+    
+    // Fallback to default colorize
+    return EventTypeFormatter.colorize(eventType);
   }
 }

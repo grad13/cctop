@@ -9,12 +9,6 @@ import { DatabaseAdapterFunc000 } from './database/database-adapter-func000';
 import * as path from 'path';
 import * as fs from 'fs';
 
-interface CLIConfig {
-  databasePath?: string;
-  refreshInterval?: number;
-  maxRows?: number;
-}
-
 interface CLIArguments {
   view?: boolean;
   help?: boolean;
@@ -102,16 +96,12 @@ Examples:
 class CCTOPCli {
   private ui?: BlessedFramelessUISimple;
   private db?: DatabaseAdapterFunc000;
-  private config: CLIConfig;
+  private databasePath: string;
   private args: CLIArguments;
 
-  constructor(config: CLIConfig = {}, args: CLIArguments = {}) {
+  constructor(args: CLIArguments = {}) {
     this.args = args;
-    this.config = {
-      databasePath: config.databasePath || this.findDatabasePath(args.directory),
-      refreshInterval: config.refreshInterval || (args.timeout ? args.timeout * 1000 : 100),
-      maxRows: config.maxRows || 100
-    };
+    this.databasePath = this.findDatabasePath(args.directory);
   }
 
   private findDatabasePath(directory?: string): string {
@@ -157,13 +147,11 @@ class CCTOPCli {
     try {
 
       // Initialize database adapter
-      this.db = new DatabaseAdapterFunc000(this.config.databasePath!);
+      this.db = new DatabaseAdapterFunc000(this.databasePath);
       await this.db.connect();
 
-      // Initialize UI
+      // Initialize UI - let it load config from files
       this.ui = new BlessedFramelessUISimple(this.db, {
-        refreshInterval: this.config.refreshInterval,
-        maxRows: this.config.maxRows,
         displayMode: 'all'
       });
 
@@ -226,7 +214,7 @@ async function main(): Promise<void> {
   
   try {
     // Start CLI with parsed arguments
-    const cli = new CCTOPCli({}, args);
+    const cli = new CCTOPCli(args);
     await cli.start();
   } catch (error) {
     console.error('Error:', error instanceof Error ? error.message : String(error));

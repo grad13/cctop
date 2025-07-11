@@ -28,7 +28,10 @@ class DaemonManager {
     this.logger = new LogManager(config.daemon.logFile);
     this.pidManager = new PidManager(config.daemon.pidFile, this.logger, this.configManager);
     
-    this.db = new Database(config.database.path || '.cctop/data/activity.db');
+    // TODO: Load database path from shared-config.json (FUNC-101)
+    // For now, use default path
+    const dbPath = '.cctop/data/activity.db';
+    this.db = new Database(dbPath);
     this.fileEventHandler = new FileEventHandler(this.db, this.logger, config.monitoring.moveThresholdMs);
     
     this.signalHandler = new SignalHandler(

@@ -20,36 +20,6 @@ export interface Config {
   pollingInterval: number;
 }
 
-export interface DaemonConfig {
-  version: string;
-  monitoring: {
-    watchPaths: string[];
-    excludePatterns: string[];
-    debounceMs: number;
-    maxDepth: number;
-    moveThresholdMs: number;
-    systemLimits: {
-      requiredLimit: number;
-      checkOnStartup: boolean;
-      warnIfInsufficient: boolean;
-    };
-  };
-  daemon: {
-    pidFile: string;
-    logFile: string;
-    logLevel: string;
-    heartbeatInterval: number;
-    autoStart: boolean;
-  };
-  database: {
-    path: string;
-    writeMode: string;
-    syncMode: string;
-    cacheSize: number;
-    busyTimeout: number;
-  };
-}
-
 export interface DaemonState {
   pid: number;
   started_at: number;

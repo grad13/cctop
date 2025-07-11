@@ -8,10 +8,11 @@
 import blessed from 'blessed';
 import { EventRow as EventRowData } from '../../../types/event-row';
 import { EventRow } from './EventRow';
-import { EventTableOptions } from './types';
+import { EventTableOptions, updateColumnConfigs, generateColors, EventTableColors } from './types';
 import { HeaderRenderer } from './renderers';
 import { stripTags } from './utils/stringUtils';
 import { style } from '../../utils/styleFormatter';
+import { defaultCLIConfig } from '../../../config/cli-config';
 
 export class EventTable {
   private box: blessed.Widgets.BoxElement;
@@ -22,9 +23,18 @@ export class EventTable {
   private rowOrder: number[] = []; // ordered event IDs
   private selectedId: number | null = null;
   private directoryWidth: number = 40; // Will be calculated dynamically
+  private colors: EventTableColors;
+  private directoryMutePaths?: string[];
   
   constructor(options: EventTableOptions, screenWidth: number) {
     this.screenWidth = screenWidth;
+    
+    // Update column configurations from config
+    const config = options.config || defaultCLIConfig;
+    updateColumnConfigs(config);
+    this.colors = generateColors(config);
+    this.directoryMutePaths = config.display.directoryMutePaths;
+    
     this.calculateDirectoryWidth();
     
     // Create blessed box
@@ -86,7 +96,7 @@ export class EventTable {
         row.update(event);
       } else {
         // Create new row
-        row = new EventRow(event, this.directoryWidth);
+        row = new EventRow(event, this.directoryWidth, this.colors, this.directoryMutePaths);
         this.rows.set(event.id, row);
       }
       
@@ -144,6 +154,10 @@ export class EventTable {
    * Update box content with minimal re-render
    */
   private updateContent(content: string): void {
+    // Debug - log what content is being set
+    const fs = require('fs');
+    fs.appendFileSync('.cctop/logs/eventtable-debug.log', `EventTable updateContent: content="${content.substring(0, 500)}"\n`);
+    
     const currentContent = this.box.getContent();
     const currentStripped = stripTags(currentContent);
     const newStripped = stripTags(content);

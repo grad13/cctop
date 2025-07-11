@@ -120,8 +120,8 @@ describe('EventTable', () => {
       ];
     });
 
-    it('should render events correctly', () => {
-      eventTable.render(mockEvents, 0);
+    it('should update events correctly', () => {
+      eventTable.update(mockEvents, 0);
 
       expect(mockBox.setContent).toHaveBeenCalled();
       expect(mockScreen.render).toHaveBeenCalled();
@@ -129,14 +129,14 @@ describe('EventTable', () => {
 
     it('should optimize selection-only changes', () => {
       // First render
-      eventTable.render(mockEvents, 0);
+      eventTable.update(mockEvents, 0);
       
       // Clear mocks
       mockBox.setContent.mockClear();
       mockScreen.render.mockClear();
 
       // Change only selection
-      eventTable.render(mockEvents, 1);
+      eventTable.update(mockEvents, 1);
 
       // Should still update content (blessed limitation)
       expect(mockBox.setContent).toHaveBeenCalled();
@@ -145,7 +145,7 @@ describe('EventTable', () => {
 
     it('should detect when events are completely different', () => {
       // First render
-      eventTable.render(mockEvents, 0);
+      eventTable.update(mockEvents, 0);
 
       // New events
       const newEvents: EventRow[] = [
@@ -161,7 +161,7 @@ describe('EventTable', () => {
       mockScreen.render.mockClear();
 
       // Render different events
-      eventTable.render(newEvents, 0);
+      eventTable.update(newEvents, 0);
 
       expect(mockBox.setContent).toHaveBeenCalled();
       expect(mockScreen.render).toHaveBeenCalled();
@@ -171,7 +171,7 @@ describe('EventTable', () => {
       // Set initial content to something different
       mockBox.getContent.mockReturnValue('initial content');
       
-      eventTable.render([], -1);
+      eventTable.update([], -1);
 
       expect(mockBox.setContent).toHaveBeenCalled();
       expect(mockBox.setContent).toHaveBeenCalledWith('');
@@ -230,14 +230,14 @@ describe('EventTable', () => {
         elapsed_ms: 0
       }];
       
-      eventTable.render(events, 0);
+      eventTable.update(events, 0);
       
       // Update screen width
       eventTable.updateScreenWidth(newWidth);
       
       // Re-render should use new width
       mockBox.setContent.mockClear();
-      eventTable.render(events, 0);
+      eventTable.update(events, 0);
       
       expect(mockBox.setContent).toHaveBeenCalled();
     });
@@ -304,7 +304,7 @@ describe('EventTable', () => {
       // Render in batches to build up cache
       for (let i = 0; i < 25; i++) {
         const batch = manyEvents.slice(i * 100, (i + 1) * 100);
-        eventTable.render(batch, 0);
+        eventTable.update(batch, 0);
       }
 
       // Cache should be limited (implementation detail)

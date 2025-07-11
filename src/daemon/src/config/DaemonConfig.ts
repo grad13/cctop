@@ -39,18 +39,20 @@ export class DaemonConfigManager {
         }
       },
       database: {
-        path: '.cctop/data/activity.db',
         writeMode: 'WAL',
         syncMode: 'NORMAL',
         cacheSize: 65536,
-        busyTimeout: 5000
+        busyTimeout: 5000,
+        checkpointInterval: 300000
       },
       daemon: {
         pidFile: '.cctop/runtime/daemon.pid',
         logFile: '.cctop/logs/daemon.log',
         logLevel: 'info',
         heartbeatInterval: 30000,
-        autoStart: true
+        autoStart: true,
+        maxRestarts: 3,
+        restartDelay: 5000
       }
     };
   }
@@ -119,7 +121,6 @@ export class DaemonConfigManager {
       path.join(this.basePath, '.cctop/logs'),
       path.join(this.basePath, '.cctop/runtime'),
       path.join(this.basePath, '.cctop/temp'),
-      path.join(this.basePath, path.dirname(this.config.database.path!)),
       path.join(this.basePath, path.dirname(this.config.daemon.pidFile)),
       path.join(this.basePath, path.dirname(this.config.daemon.logFile))
     ];

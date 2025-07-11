@@ -7,10 +7,12 @@ import * as blessed from 'blessed';
 import { UIState } from './UIState';
 import { KeywordSearchManager } from '../search';
 import { EventTable } from './components/EventTable';
+import { CLIConfig } from '../config/cli-config';
 
 export class UILayoutManager {
   private screen: blessed.Widgets.Screen;
   private uiState: UIState;
+  private config?: CLIConfig;
   
   // UI Components
   private headerPanel: any;
@@ -22,9 +24,10 @@ export class UILayoutManager {
   private eventArea: any;
   private eventTable!: EventTable;
 
-  constructor(screen: blessed.Widgets.Screen, uiState: UIState) {
+  constructor(screen: blessed.Widgets.Screen, uiState: UIState, config?: CLIConfig) {
     this.screen = screen;
     this.uiState = uiState;
+    this.config = config;
   }
 
   setupFramelessLayout(): void {
@@ -47,6 +50,7 @@ export class UILayoutManager {
       left: 0,
       width: '100%',
       height: '100%',
+      config: this.config,
       style: {
         fg: 'white',
         bg: 'transparent'
@@ -144,6 +148,13 @@ export class UILayoutManager {
     this.screen.append(this.statusBar);
     this.screen.append(this.keyGuideBar);
     this.screen.append(this.dynamicControlBar);
+    
+    // Debug - log screen children to see what components exist
+    const fs = require('fs');
+    fs.appendFileSync('.cctop/logs/screen-debug.log', `Screen children count: ${this.screen.children.length}\n`);
+    this.screen.children.forEach((child: any, index: number) => {
+      fs.appendFileSync('.cctop/logs/screen-debug.log', `Child ${index}: ${child.constructor.name}, position: ${JSON.stringify({top: child.top, left: child.left, width: child.width, height: child.height})}\n`);
+    });
   }
 
   buildHeaderContent(): string {
