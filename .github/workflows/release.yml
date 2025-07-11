@@ -41,8 +41,13 @@ jobs:
     - name: Check npm publish (dry-run)
       run: npm publish --dry-run
     
-    - name: Publish to npm
-      if: github.event_name == 'push' || github.event.inputs.dry-run == 'false'
-      run: npm publish
-      env:
-        NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+    # IMPORTANT: Automatic npm publish is disabled for safety
+    # To publish manually:
+    # 1. Run npm publish locally with proper authentication
+    # 2. Or enable the section below temporarily
+    
+    # - name: Publish to npm (DISABLED)
+    #   if: false  # Always disabled
+    #   run: npm publish
+    #   env:
+    #     NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
