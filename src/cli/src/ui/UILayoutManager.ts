@@ -303,6 +303,10 @@ export class UILayoutManager {
     
     // Update event table with optimized rendering
     this.eventTable.update(visibleEvents, selectedIndex);
+    
+    // Force refresh to update elapsed times for existing rows
+    this.eventTable.refresh();
+    
     this.updateStatusBar();
     this.screen.render();
   }
