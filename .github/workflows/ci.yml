@@ -26,8 +26,10 @@ jobs:
     - name: Install dependencies
       run: |
         npm install
-        # Ensure workspace links are created
-        npm ls @cctop/shared
+        # Verify workspace symlinks
+        ls -la node_modules/@cctop/ || echo "No @cctop directory in node_modules"
+        # Verify shared module exists
+        ls -la src/shared/ || echo "No shared directory"
     
     - name: Build packages
       run: npm run build

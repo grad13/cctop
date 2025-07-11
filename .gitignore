@@ -12,6 +12,9 @@ coverage/
 dist/
 build/
 
+# TypeScript
+*.tsbuildinfo
+
 # Module builds
 modules/*/dist/
 modules/*/node_modules/
