@@ -21,6 +21,7 @@
     "clean": "rm -rf src/*/node_modules src/*/package-lock.json",
     "clean:all": "rm -rf node_modules package-lock.json src/*/node_modules src/*/package-lock.json src/*/*.tsbuildinfo",
     "clean:dist": "rm -rf src/*/dist",
+    "push": "rsync -av --delete ../../documents/visions/ docs/visions/ && git add docs/visions && (git commit -m 'sync: update visions documentation' || true) && git push && npm run clean:all",
     "prepublishOnly": "npm run build"
   },
   "dependencies": {
