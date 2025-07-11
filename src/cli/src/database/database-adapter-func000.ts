@@ -82,7 +82,7 @@ export class DatabaseAdapterFunc000 {
         JOIN event_types et ON le.event_type_id = et.id
         LEFT JOIN measurements m ON le.id = m.event_id
         WHERE le.rn = 1
-        ORDER BY le.timestamp DESC 
+        ORDER BY le.id DESC 
         LIMIT ? OFFSET ?` :
         `SELECT 
           e.id,
@@ -99,7 +99,7 @@ export class DatabaseAdapterFunc000 {
         JOIN event_types et ON e.event_type_id = et.id
         LEFT JOIN measurements m ON e.id = m.event_id
         ${filterCondition ? `WHERE ${filterCondition.replace('AND ', '')}` : ''}
-        ORDER BY e.timestamp DESC 
+        ORDER BY e.id DESC 
         LIMIT ? OFFSET ?`;
 
       this.db.all(query, [limit, offset], (err, rows) => {
