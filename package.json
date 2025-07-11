@@ -10,7 +10,7 @@
   },
   "scripts": {
     "install:all": "npm install",
-    "build": "npm run build:shared && npm run build:daemon && npm run build:cli",
+    "build": "tsc --build",
     "build:shared": "npm run build -w @cctop/shared",
     "build:daemon": "npm run build -w @cctop/daemon",
     "build:cli": "npm run build -w @cctop/cli",
