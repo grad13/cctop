@@ -3,7 +3,7 @@
  */
 
 import { ColumnConfig, COLUMN_CONFIGS } from '../types';
-import { padOrTruncate, padLeft } from './stringUtils';
+import { normalizeColumn } from './columnNormalizer';
 
 /**
  * Calculate total fixed width of columns
@@ -33,14 +33,8 @@ export function generateHeaderLine(directoryWidth: number = 40): string {
     const headerText = col.headerText || col.name;
     const headerAlign = col.headerAlign || col.align;
     
-    let formattedHeader: string;
-    if (headerAlign === 'right') {
-      formattedHeader = padLeft(headerText, width);
-    } else {
-      // left or center (center not used currently)
-      formattedHeader = padOrTruncate(headerText, width);
-    }
-    
+    // Use unified normalizeColumn function
+    const formattedHeader = normalizeColumn(headerText, width, headerAlign);
     parts.push(formattedHeader);
   }
   

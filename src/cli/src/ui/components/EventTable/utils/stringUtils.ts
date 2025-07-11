@@ -46,22 +46,24 @@ export function truncateWithEllipsis(text: string, maxWidth: number): string {
     const char = chars[i];
     const charWidth = stringWidth(char);
     
-    if (currentWidth + charWidth > targetWidth) {
+    if (currentWidth + charWidth <= targetWidth) {
+      result += char;
+      currentWidth += charWidth;
+    } else {
       break;
     }
-    
-    if (currentWidth + charWidth === targetWidth) {
-      // Check if there are more characters after this one
-      if (i + 1 < chars.length) {
-        break;
-      }
-    }
-    
-    result += char;
-    currentWidth += charWidth;
   }
   
-  return result + ellipsis;
+  // Ensure result + ellipsis equals exactly maxWidth
+  const finalResult = result + ellipsis;
+  const finalWidth = stringWidth(finalResult);
+  
+  // Pad if needed to reach exact width
+  if (finalWidth < maxWidth) {
+    return finalResult + ' '.repeat(maxWidth - finalWidth);
+  }
+  
+  return finalResult;
 }
 
 /**

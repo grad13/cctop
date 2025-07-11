@@ -4,8 +4,9 @@
 
 import { EventRow } from '../../../../types/event-row';
 import { COLUMN_CONFIGS } from '../types';
-import { padOrTruncate, padLeft, truncateDirectoryPath } from '../utils/stringUtils';
+import { normalizeColumn } from '../utils/columnNormalizer';
 import { TimeFormatter, EventTypeFormatter, FileSizeFormatter } from '../formatters';
+import { fg, bg, bold, style } from '../../../utils/styleFormatter';
 
 export class RowRenderer {
   /**
@@ -18,52 +19,47 @@ export class RowRenderer {
     selectedIndex: number,
     directoryWidth: number
   ): string {
-    // Format each column
-    const timestamp = TimeFormatter.formatTimestamp(event.timestamp);               // 19 chars
-    const elapsed = TimeFormatter.formatElapsed(event.timestamp);                   // 5 chars like "03:33"
-    const filename = event.filename || '';                                      
+    // Format column values
+    const timestamp = TimeFormatter.formatTimestamp(event.timestamp);
+    const elapsed = TimeFormatter.formatElapsed(event.timestamp);
+    const filename = event.filename || '';
     const eventTypeRaw = event.event_type || '';
     const lines = (event.lines || 0).toString();
-    const blocks = (event.blocks || 0).toString();  
-    const size = FileSizeFormatter.format(event.size || 0);                       // Size column
+    const blocks = (event.blocks || 0).toString();
+    const size = FileSizeFormatter.format(event.size || 0);
     const directory = event.directory || '';
 
-    // Build exact spacing to match header
-    let resultBeforeEvent = '';
-    let resultAfterEvent = '';
+    // Normalize columns using unified function
+    const columns = [];
     
-    // Part before event type (will be colored green if not selected)
-    resultBeforeEvent += padOrTruncate(timestamp, 19);                            // Event Timestamp (19 chars)
-    resultBeforeEvent += ' ';                                                      // 1 space
-    resultBeforeEvent += padLeft(elapsed, 8);                                      // Elapsed (8 chars, right-aligned)
-    resultBeforeEvent += ' ';                                                      // 1 space
-    resultBeforeEvent += padOrTruncate(filename, 35);                             // File Name (35 chars)
-    resultBeforeEvent += ' ';                                                      // 1 space
+    // Add columns based on COLUMN_CONFIGS
+    columns.push(normalizeColumn(timestamp, 19, 'left'));
+    columns.push(normalizeColumn(elapsed, 8, 'right'));
+    columns.push(normalizeColumn(filename, 35, 'left', 'tail'));
     
-    // Event type (has its own colors)
-    const eventTypeColored = EventTypeFormatter.colorize(eventTypeRaw);            // Event (8 chars, pre-formatted)
+    // Event type needs special handling for color
+    const eventTypeColored = EventTypeFormatter.colorize(eventTypeRaw);
     
-    // Part after event type (will be colored green if not selected)
-    resultAfterEvent += ' ';                                                       // 1 space
-    resultAfterEvent += padLeft(lines, 5);                                        // Lines (5 chars, right-aligned)
-    resultAfterEvent += ' ';                                                       // 1 space
-    resultAfterEvent += padLeft(blocks, 4);                                       // Blocks (4 chars, right-aligned)
-    resultAfterEvent += ' ';                                                       // 1 space
-    resultAfterEvent += padLeft(size, 7);                                         // Size (7 chars, right-aligned)
-    resultAfterEvent += ' ';                                                       // 1 space
-    resultAfterEvent += truncateDirectoryPath(directory, directoryWidth);          // Dynamic width
+    // Continue with remaining columns
+    const afterEventColumns = [];
+    afterEventColumns.push(normalizeColumn(lines, 5, 'right'));
+    afterEventColumns.push(normalizeColumn(blocks, 4, 'right'));
+    afterEventColumns.push(normalizeColumn(size, 7, 'right'));
+    afterEventColumns.push(normalizeColumn(directory, directoryWidth, 'left', 'head'));
     
-    // Combine parts
-    let result = resultBeforeEvent + eventTypeColored + resultAfterEvent;
+    // Build result
+    const beforeEvent = columns.join(' ') + ' ';
+    const afterEvent = ' ' + afterEventColumns.join(' ');
+    let result = beforeEvent + eventTypeColored + afterEvent;
     
     // Apply selection highlight
     if (absoluteIndex === selectedIndex) {
       // Keep blue background for selected row
-      result = `{blue-bg}${result}{/blue-bg}`;
+      result = bg(result, 'blue');
     } else {
       // Apply green text color for non-selected rows (Claude Code style)
       // Only apply green to parts that don't have event type colors
-      result = `{green-fg}${resultBeforeEvent}{/green-fg}${eventTypeColored}{green-fg}${resultAfterEvent}{/green-fg}`;
+      result = fg(beforeEvent, 'green') + eventTypeColored + fg(afterEvent, 'green');
     }
     
     return result;
@@ -75,6 +71,6 @@ export class RowRenderer {
   static renderEndOfData(terminalWidth: number): string {
     const endMessage = '─── end of data ───';
     const padding = Math.max(0, Math.floor((terminalWidth - endMessage.length) / 2));
-    return ' '.repeat(padding) + `{bold}{white-fg}${endMessage}{/white-fg}{/bold}`;
+    return ' '.repeat(padding) + style(endMessage, { fg: 'white', bold: true });
   }
 }
