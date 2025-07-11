@@ -2,7 +2,7 @@
  * File Event Processing
  */
 
-import { Database } from '../database/database';
+import { FileEventRecorder } from '../database/FileEventRecorder';
 import { FileEvent, EventMeasurement } from '../database/types';
 import * as path from 'path';
 import * as fs from 'fs/promises';
@@ -11,13 +11,13 @@ import { MoveDetector } from './MoveDetector';
 import { MeasurementCalculator } from './MeasurementCalculator';
 
 export class FileEventHandler {
-  private db: Database;
+  private db: FileEventRecorder;
   private logger: LogManager;
   private moveDetector: MoveDetector;
   private moveThresholdMs: number;
   private measurementCalculator: MeasurementCalculator;
 
-  constructor(db: Database, logger: LogManager, moveThresholdMs: number = 100) {
+  constructor(db: FileEventRecorder, logger: LogManager, moveThresholdMs: number = 100) {
     this.db = db;
     this.logger = logger;
     this.moveThresholdMs = moveThresholdMs;

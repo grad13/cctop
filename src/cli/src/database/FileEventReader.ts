@@ -1,10 +1,10 @@
 import sqlite3 from 'sqlite3';
 
 /**
- * Database adapter
- * Simple, clean implementation that only supports the correct schema
+ * File Event Reader
+ * Reads file system events from SQLite database for UI display
  */
-export class DatabaseAdapterFunc000 {
+export class FileEventReader {
   private db: sqlite3.Database | null = null;
 
   constructor(private dbPath: string) {}

@@ -5,7 +5,7 @@
  */
 
 import { BlessedFramelessUISimple } from './ui/blessed-frameless-ui-simple';
-import { DatabaseAdapterFunc000 } from './database/database-adapter-func000';
+import { FileEventReader } from './database/FileEventReader';
 import * as path from 'path';
 import * as fs from 'fs';
 
@@ -95,7 +95,7 @@ Examples:
 
 class CCTOPCli {
   private ui?: BlessedFramelessUISimple;
-  private db?: DatabaseAdapterFunc000;
+  private db?: FileEventReader;
   private databasePath: string;
   private args: CLIArguments;
 
@@ -147,7 +147,7 @@ class CCTOPCli {
     try {
 
       // Initialize database adapter
-      this.db = new DatabaseAdapterFunc000(this.databasePath);
+      this.db = new FileEventReader(this.databasePath);
       await this.db.connect();
 
       // Initialize UI - let it load config from files

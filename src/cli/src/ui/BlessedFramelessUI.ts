@@ -8,7 +8,7 @@
 
 import * as path from 'path';
 import { EventRow } from '../types/event-row';
-import { DatabaseAdapterFunc000 } from '../database/database-adapter-func000';
+import { FileEventReader } from '../database/FileEventReader';
 import { CLIConfig } from '../config/cli-config';
 import { ConfigLoader } from '../config/config-loader';
 import { LocalSetupInitializer } from '../config/local-setup-initializer';
@@ -36,13 +36,13 @@ export class BlessedFramelessUISimple {
   private dataManager: UIDataManager;
 
   // Data and configuration
-  private db: DatabaseAdapterFunc000;
+  private db: FileEventReader;
   private cliConfig!: CLIConfig;
   private refreshTimer?: NodeJS.Timeout;
   private daemonStatusMonitor: DaemonStatusMonitor;
   private initConfig?: UIFramelessConfigSimple;
 
-  constructor(db: DatabaseAdapterFunc000, config: UIFramelessConfigSimple = {}) {
+  constructor(db: FileEventReader, config: UIFramelessConfigSimple = {}) {
     this.db = db;
     this.initConfig = config;
     

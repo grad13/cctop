@@ -1,11 +1,11 @@
 /**
- * Database - Main Coordinator
- * Refactored modular architecture with single responsibility principle
+ * FileEventRecorder - Main Event Storage Coordinator
+ * Records file system events to SQLite database with modular architecture
  */
 
 import { FileEvent } from '@cctop/shared';
 import { EventMeasurement, MeasurementResult } from './types';
-import { DatabaseConnection } from './DatabaseConnection';
+import { EventStorageConnection } from './EventStorageConnection';
 import { SchemaManager } from './SchemaManager';
 import { TriggerManager } from './TriggerManager';
 import { EventOperations } from './EventOperations';
@@ -13,8 +13,8 @@ import { AggregateOperations } from './AggregateOperations';
 import { MeasurementOperations } from './MeasurementOperations';
 import sqlite3 from 'sqlite3';
 
-export class Database {
-  private connection: DatabaseConnection;
+export class FileEventRecorder {
+  private connection: EventStorageConnection;
   private schemaManager: SchemaManager | null = null;
   private triggerManager: TriggerManager | null = null;
   private eventOps: EventOperations | null = null;
@@ -22,7 +22,7 @@ export class Database {
   private measurementOps: MeasurementOperations | null = null;
 
   constructor(dbPath: string) {
-    this.connection = new DatabaseConnection(dbPath);
+    this.connection = new EventStorageConnection(dbPath);
   }
 
   async connect(): Promise<void> {

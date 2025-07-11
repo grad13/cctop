@@ -1,10 +1,11 @@
 /**
- * Database Connection Management
+ * Event Storage Connection Management
+ * Manages SQLite connection for file event storage
  */
 
 import sqlite3 from 'sqlite3';
 
-export class DatabaseConnection {
+export class EventStorageConnection {
   private db: sqlite3.Database | null = null;
 
   constructor(private dbPath: string) {}

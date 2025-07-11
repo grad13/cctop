@@ -4,7 +4,7 @@
  */
 
 import chokidar from 'chokidar';
-import { Database } from './database/database';
+import { FileEventRecorder } from './database/FileEventRecorder';
 import { DaemonConfigManager } from './config/DaemonConfig';
 import { LogManager } from './logging/LogManager';
 import { FileEventHandler } from './events/FileEventHandler';
@@ -12,7 +12,7 @@ import { SignalHandler } from './system/SignalHandler';
 import { PidManager } from './system/PidManager';
 
 class DaemonManager {
-  private db: Database;
+  private db: FileEventRecorder;
   private watcher: chokidar.FSWatcher | null = null;
   private configManager: DaemonConfigManager;
   private logger: LogManager;
@@ -31,7 +31,7 @@ class DaemonManager {
     // TODO: Load database path from shared-config.json (FUNC-101)
     // For now, use default path
     const dbPath = '.cctop/data/activity.db';
-    this.db = new Database(dbPath);
+    this.db = new FileEventRecorder(dbPath);
     this.fileEventHandler = new FileEventHandler(this.db, this.logger, config.monitoring.moveThresholdMs);
     
     this.signalHandler = new SignalHandler(

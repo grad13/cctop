@@ -4,11 +4,11 @@
  */
 
 import { EventRow } from '../types/event-row';
-import { DatabaseAdapterFunc000 } from '../database/database-adapter-func000';
+import { FileEventReader } from '../database/FileEventReader';
 import { UIState } from './UIState';
 
 export class UIDataManager {
-  private db: DatabaseAdapterFunc000;
+  private db: FileEventReader;
   private uiState: UIState;
   
   // Data loading state
@@ -16,7 +16,7 @@ export class UIDataManager {
   private isRefreshing: boolean = false;
   private loadMorePromise: Promise<void> | null = null;
 
-  constructor(db: DatabaseAdapterFunc000, uiState: UIState) {
+  constructor(db: FileEventReader, uiState: UIState) {
     this.db = db;
     this.uiState = uiState;
   }

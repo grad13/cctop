@@ -4,7 +4,7 @@
  */
 
 import * as path from 'path';
-import { DatabaseAdapterFunc000 } from '../database/database-adapter-func000';
+import { FileEventReader } from '../database/FileEventReader';
 import { CLIConfig } from '../config/cli-config';
 import { ConfigLoader } from '../config/config-loader';
 import { LocalSetupInitializer } from '../config/local-setup-initializer';
@@ -19,12 +19,12 @@ export interface UIFramelessConfigSimple {
 }
 
 export class UIConfigManager {
-  private db: DatabaseAdapterFunc000;
+  private db: FileEventReader;
   private uiState: UIState;
   private daemonStatusMonitor: DaemonStatusMonitor;
   private cliConfig!: CLIConfig;
 
-  constructor(db: DatabaseAdapterFunc000, uiState: UIState) {
+  constructor(db: FileEventReader, uiState: UIState) {
     this.db = db;
     this.uiState = uiState;
     this.daemonStatusMonitor = new DaemonStatusMonitor();
