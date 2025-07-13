@@ -14,7 +14,7 @@ export class ViewConfigManager {
 
   constructor(configPath: string) {
     this.configPath = configPath;
-    this.configFilePath = path.join(configPath, 'view-config.json');
+    this.configFilePath = path.join(configPath, 'config', 'view-config.json');
     this.viewConfig = defaultViewConfig;
   }
 
