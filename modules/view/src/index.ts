@@ -148,6 +148,7 @@ class CCTOPCli {
 
       // Initialize database adapter
       this.db = new FileEventReader(this.databasePath);
+      await this.db.connect();
 
       // Initialize UI - let it load config from files
       this.ui = new BlessedFramelessUISimple(this.db, {
@@ -165,11 +166,13 @@ class CCTOPCli {
     }
   }
 
-  public stop(): void {
+  public async stop(): Promise<void> {
     if (this.ui) {
       this.ui.stop();
     }
-    // No need to disconnect FileEventReader - it delegates to EventQueryAdapter
+    if (this.db) {
+      await this.db.disconnect();
+    }
   }
 }
 
