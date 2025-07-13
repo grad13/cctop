@@ -5,7 +5,6 @@
 
 import * as path from 'path';
 import { FileEventReader } from '../database/FileEventReader';
-import { CLIConfig, defaultCLIConfig } from '../config/cli-config';
 import { ViewConfig } from '../config/ViewConfig';
 import { ViewConfigManager } from '../config/ViewConfigManager';
 import { DaemonStatusMonitor } from '../utils/daemon-status-monitor';
@@ -15,7 +14,6 @@ export interface UIFramelessConfigSimple {
   refreshInterval?: number;
   maxRows?: number;
   displayMode?: 'all' | 'unique';
-  config?: CLIConfig;
   viewConfig?: ViewConfig;
 }
 
@@ -23,7 +21,6 @@ export class UIConfigManager {
   private db: FileEventReader;
   private uiState: UIState;
   private daemonStatusMonitor: DaemonStatusMonitor;
-  private cliConfig!: CLIConfig;
   private viewConfig!: ViewConfig;
 
   constructor(db: FileEventReader, uiState: UIState) {
@@ -40,13 +37,6 @@ export class UIConfigManager {
       const configPath = process.cwd();
       const viewConfigManager = new ViewConfigManager(configPath);
       this.viewConfig = await viewConfigManager.loadViewConfig();
-      
-      // Set legacy CLIConfig for backward compatibility (use default values)
-      this.cliConfig = {
-        ...defaultCLIConfig,
-        // Override with any compatible ViewConfig values where applicable
-        version: this.viewConfig.version
-      };
     }
     
     return this.viewConfig;
@@ -84,10 +74,6 @@ export class UIConfigManager {
     } catch (error) {
       this.uiState.setDaemonStatus('{red-fg}Daemon: ●ERROR{/red-fg}');
     }
-  }
-
-  getCLIConfig(): CLIConfig {
-    return this.cliConfig;
   }
 
   getViewConfig(): ViewConfig {
