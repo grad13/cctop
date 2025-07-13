@@ -4,8 +4,8 @@
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 **⛔ 更新禁止**: この注意書きの変更・削除は絶対禁止です。
 
-**最終更新**: 2025-07-13 14:25 JST  
-**現在作業**: ✅ view-config.json統合実装完了
+**最終更新**: 2025-07-13 14:55 JST  
+**現在作業**: ✅ ViewConfig連動強化実装完了
 
 ## 🚨 セッション開始時必須確認（P045強制遵守）
 **現在作業判定**: UI開発タスク継続 → **コード関連作業**  
@@ -31,10 +31,21 @@
 
 ---
 
-## 🎯 現在の作業状況（2025-07-13 14:25）
+## 🎯 現在の作業状況（2025-07-13 14:55）
 
-### **view-config.json統合実装完了**
+### **ViewConfig連動強化実装完了**
 - **worktree**: `feature-07-13-view-config-integration`
+- **実装内容**:
+  - EventRowでCOLUMN_CONFIGSを参照しカラム幅を動的取得
+  - EventTableのcalculateDirectoryWidthをCOLUMN_CONFIGSベースに修正
+  - デバッグログ削除（EventTable.ts）
+  - view-config.jsonのカラム幅変更テスト（timestamp:21, elapsed:10, fileName:40）
+- **改善点**:
+  - カラム幅がViewConfigから動的に反映されるように
+  - 固定幅91のハードコーディング除去
+  - ViewConfig変更時に即座に反映
+
+### **view-config.json統合実装完了（前回）**
 - **実装内容**:
   - ViewConfig型定義（ViewConfig.ts）
   - ViewConfigManagerクラス（設定ファイル読み込み・作成・管理）
@@ -42,14 +53,13 @@
   - EventTableをViewConfig対応に変更
   - UILayoutManager、BlessedFramelessUIをViewConfig対応に変更
   - CLIConfig依存を完全除去（view側のコンポーネントから）
-- **動作確認**: view-config.json自動作成・読み込み動作確認済み
-- **テスト**: maxEvents、colors設定変更によるカスタマイズ可能確認
 
 ### **引き継ぎ資料**
 **完了事項**
 - ✅ ViewConfig型定義とViewConfigManager実装
 - ✅ 既存UI componentのViewConfig統合
 - ✅ view-config.json自動作成機能
+- ✅ ViewConfigカラム幅連動強化
 - ✅ ビルド成功・動作確認完了
 
 ---
