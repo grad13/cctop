@@ -73,8 +73,8 @@ export class EventQueryAdapter {
           le.directory,
           et.name as event_type,
           COALESCE(m.file_size, 0) as size,
-          COALESCE(m.line_count, 0) as lines,
-          COALESCE(m.block_count, 0) as blocks,
+          m.line_count as lines,
+          m.block_count as blocks,
           COALESCE(m.inode, 0) as inode,
           0 as elapsed_ms
         FROM latest_events le
@@ -90,8 +90,8 @@ export class EventQueryAdapter {
           e.directory,
           et.name as event_type,
           COALESCE(m.file_size, 0) as size,
-          COALESCE(m.line_count, 0) as lines,
-          COALESCE(m.block_count, 0) as blocks,
+          m.line_count as lines,
+          m.block_count as blocks,
           COALESCE(m.inode, 0) as inode,
           0 as elapsed_ms
         FROM events e
@@ -155,8 +155,8 @@ export class EventQueryAdapter {
           le.directory,
           et.name as event_type,
           COALESCE(m.file_size, 0) as size,
-          COALESCE(m.line_count, 0) as lines,
-          COALESCE(m.block_count, 0) as blocks,
+          m.line_count as lines,
+          m.block_count as blocks,
           COALESCE(m.inode, 0) as inode,
           0 as elapsed_ms
         FROM latest_events le
@@ -174,8 +174,8 @@ export class EventQueryAdapter {
           e.directory,
           et.name as event_type,
           COALESCE(m.file_size, 0) as size,
-          COALESCE(m.line_count, 0) as lines,
-          COALESCE(m.block_count, 0) as blocks,
+          m.line_count as lines,
+          m.block_count as blocks,
           COALESCE(m.inode, 0) as inode,
           0 as elapsed_ms
         FROM events e

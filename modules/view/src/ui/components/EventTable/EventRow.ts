@@ -98,8 +98,8 @@ export class EventRow {
     const elapsed = TimeFormatter.formatElapsed(this.data.timestamp);
     const filename = this.data.filename || '';
     const eventTypeRaw = this.data.event_type || '';
-    const lines = (this.data.lines || 0).toString();
-    const blocks = (this.data.blocks || 0).toString();
+    const lines = this.data.lines === null || this.data.lines === undefined ? '-' : this.data.lines.toString();
+    const blocks = this.data.blocks === null || this.data.blocks === undefined ? '-' : this.data.blocks.toString();
     const size = FileSizeFormatter.format(this.data.size || 0);
     let directory: string = this.data.directory || '';
     
