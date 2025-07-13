@@ -4,7 +4,7 @@
 
 import blessed from 'blessed';
 import { EventRow } from '../../../types/event-row';
-import { CLIConfig } from '../../../config/cli-config';
+import { ViewConfig } from '../../../config/ViewConfig';
 
 export interface EventTableOptions {
   parent: blessed.Widgets.Screen | blessed.Widgets.BoxElement;
@@ -13,7 +13,7 @@ export interface EventTableOptions {
   width?: number | string;
   height?: number | string;
   style?: blessed.Widgets.BoxOptions['style'];
-  config?: CLIConfig;
+  viewConfig?: ViewConfig;
 }
 
 export interface ColumnConfig {
@@ -70,9 +70,9 @@ export const DEFAULT_COLUMN_CONFIGS: ColumnConfig[] = [
 export let COLUMN_CONFIGS: ColumnConfig[] = DEFAULT_COLUMN_CONFIGS;
 
 /**
- * Generate column configurations from CLIConfig
+ * Generate column configurations from ViewConfig
  */
-export function generateColumnConfigs(config: CLIConfig): ColumnConfig[] {
+export function generateColumnConfigsFromView(config: ViewConfig): ColumnConfig[] {
   const columns: ColumnConfig[] = [];
   const columnsConfig = config.display.columns;
   
@@ -80,7 +80,7 @@ export function generateColumnConfigs(config: CLIConfig): ColumnConfig[] {
   if (columnsConfig.timestamp.visible) {
     columns.push({
       name: 'timestamp',
-      width: columnsConfig.timestamp.width,
+      width: columnsConfig.timestamp.width as number,
       align: 'left',
       headerText: 'Event Timestamp',
       headerAlign: 'left'
@@ -90,7 +90,7 @@ export function generateColumnConfigs(config: CLIConfig): ColumnConfig[] {
   if (columnsConfig.elapsed.visible) {
     columns.push({
       name: 'elapsed',
-      width: columnsConfig.elapsed.width,
+      width: columnsConfig.elapsed.width as number,
       align: 'right',
       headerText: 'Elapsed',
       headerAlign: 'right'
@@ -100,7 +100,7 @@ export function generateColumnConfigs(config: CLIConfig): ColumnConfig[] {
   if (columnsConfig.fileName.visible) {
     columns.push({
       name: 'filename',
-      width: columnsConfig.fileName.width,
+      width: columnsConfig.fileName.width as number,
       align: 'left',
       truncate: 'tail',
       headerText: 'File Name',
@@ -111,7 +111,7 @@ export function generateColumnConfigs(config: CLIConfig): ColumnConfig[] {
   if (columnsConfig.event.visible) {
     columns.push({
       name: 'event_type',
-      width: columnsConfig.event.width,
+      width: columnsConfig.event.width as number,
       align: 'left',
       headerText: 'Event',
       headerAlign: 'left'
@@ -121,7 +121,7 @@ export function generateColumnConfigs(config: CLIConfig): ColumnConfig[] {
   if (columnsConfig.lines.visible) {
     columns.push({
       name: 'lines',
-      width: columnsConfig.lines.width,
+      width: columnsConfig.lines.width as number,
       align: 'right',
       headerText: 'Lines',
       headerAlign: 'right'
@@ -131,7 +131,7 @@ export function generateColumnConfigs(config: CLIConfig): ColumnConfig[] {
   if (columnsConfig.blocks.visible) {
     columns.push({
       name: 'blocks',
-      width: columnsConfig.blocks.width,
+      width: columnsConfig.blocks.width as number,
       align: 'right',
       headerText: 'Blks',
       headerAlign: 'right'
@@ -141,7 +141,7 @@ export function generateColumnConfigs(config: CLIConfig): ColumnConfig[] {
   if (columnsConfig.size && columnsConfig.size.visible) {
     columns.push({
       name: 'size',
-      width: columnsConfig.size.width,
+      width: columnsConfig.size.width as number,
       align: 'right',
       headerText: 'Size',
       headerAlign: 'right'
@@ -163,23 +163,23 @@ export function generateColumnConfigs(config: CLIConfig): ColumnConfig[] {
 }
 
 /**
- * Update global COLUMN_CONFIGS
+ * Update global COLUMN_CONFIGS from ViewConfig
  */
-export function updateColumnConfigs(config: CLIConfig): void {
-  COLUMN_CONFIGS = generateColumnConfigs(config);
+export function updateColumnConfigsFromView(config: ViewConfig): void {
+  COLUMN_CONFIGS = generateColumnConfigsFromView(config);
 }
 
 /**
- * Generate colors from CLIConfig
+ * Generate colors from ViewConfig
  */
-export function generateColors(config: CLIConfig): EventTableColors {
+export function generateColorsFromView(config: ViewConfig): EventTableColors {
   return {
     find: config.colors.find || DEFAULT_COLORS.find,
     create: config.colors.create || DEFAULT_COLORS.create,
     modify: config.colors.modify || DEFAULT_COLORS.modify,
     delete: config.colors.delete || DEFAULT_COLORS.delete,
     move: config.colors.move || DEFAULT_COLORS.move,
-    restore: config.colors.restore || DEFAULT_COLORS.restore,
+    restore: config.colors.back || DEFAULT_COLORS.restore,
     selected: DEFAULT_COLORS.selected,
     normal: DEFAULT_COLORS.normal
   };

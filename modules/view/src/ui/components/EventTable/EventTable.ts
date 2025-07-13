@@ -8,11 +8,11 @@
 import blessed from 'blessed';
 import { EventRow as EventRowData } from '../../../types/event-row';
 import { EventRow } from './EventRow';
-import { EventTableOptions, updateColumnConfigs, generateColors, EventTableColors } from './types';
+import { EventTableOptions, EventTableColors, updateColumnConfigsFromView, generateColorsFromView } from './types';
 import { HeaderRenderer } from './renderers';
 import { stripTags } from './utils/stringUtils';
 import { style } from '../../utils/styleFormatter';
-import { defaultCLIConfig } from '../../../config/cli-config';
+import { defaultViewConfig } from '../../../config/ViewConfig';
 
 export class EventTable {
   private box: blessed.Widgets.BoxElement;
@@ -30,10 +30,10 @@ export class EventTable {
     this.screenWidth = screenWidth;
     
     // Update column configurations from config
-    const config = options.config || defaultCLIConfig;
-    updateColumnConfigs(config);
-    this.colors = generateColors(config);
-    this.directoryMutePaths = config.display.directoryMutePaths;
+    const viewConfig = options.viewConfig || defaultViewConfig;
+    updateColumnConfigsFromView(viewConfig);
+    this.colors = generateColorsFromView(viewConfig);
+    this.directoryMutePaths = viewConfig.display.directoryMutePaths;
     
     this.calculateDirectoryWidth();
     

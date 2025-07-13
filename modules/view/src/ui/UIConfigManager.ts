@@ -6,6 +6,7 @@
 import * as path from 'path';
 import { FileEventReader } from '../database/FileEventReader';
 import { CLIConfig } from '../config/cli-config';
+import { ViewConfig } from '../config/ViewConfig';
 import { ConfigLoader } from '../config/config-loader';
 import { LocalSetupInitializer } from '../config/local-setup-initializer';
 import { DaemonStatusMonitor } from '../utils/daemon-status-monitor';
@@ -16,6 +17,7 @@ export interface UIFramelessConfigSimple {
   maxRows?: number;
   displayMode?: 'all' | 'unique';
   config?: CLIConfig;
+  viewConfig?: ViewConfig;
 }
 
 export class UIConfigManager {
@@ -23,6 +25,7 @@ export class UIConfigManager {
   private uiState: UIState;
   private daemonStatusMonitor: DaemonStatusMonitor;
   private cliConfig!: CLIConfig;
+  private viewConfig!: ViewConfig;
 
   constructor(db: FileEventReader, uiState: UIState) {
     this.db = db;
@@ -30,9 +33,9 @@ export class UIConfigManager {
     this.daemonStatusMonitor = new DaemonStatusMonitor();
   }
 
-  async initializeConfig(config: UIFramelessConfigSimple): Promise<CLIConfig> {
-    if (config.config) {
-      this.cliConfig = config.config;
+  async initializeConfig(config: UIFramelessConfigSimple): Promise<ViewConfig> {
+    if (config.viewConfig) {
+      this.viewConfig = config.viewConfig;
     } else {
       // Check if local configuration exists, if not create it
       const initializer = new LocalSetupInitializer();
@@ -43,9 +46,10 @@ export class UIConfigManager {
       const configLoader = new ConfigLoader();
       const mergedConfig = await configLoader.loadConfiguration();
       this.cliConfig = mergedConfig.cli;
+      this.viewConfig = mergedConfig.view;
     }
     
-    return this.cliConfig;
+    return this.viewConfig;
   }
 
   initializeDaemonMonitor(): void {
@@ -84,5 +88,9 @@ export class UIConfigManager {
 
   getCLIConfig(): CLIConfig {
     return this.cliConfig;
+  }
+
+  getViewConfig(): ViewConfig {
+    return this.viewConfig;
   }
 }

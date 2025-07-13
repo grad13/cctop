@@ -7,12 +7,12 @@ import * as blessed from 'blessed';
 import { UIState } from './UIState';
 import { KeywordSearchManager } from '../search';
 import { EventTable } from './components/EventTable';
-import { CLIConfig } from '../config/cli-config';
+import { ViewConfig } from '../config/ViewConfig';
 
 export class UILayoutManager {
   private screen: blessed.Widgets.Screen;
   private uiState: UIState;
-  private config?: CLIConfig;
+  private viewConfig?: ViewConfig;
   
   // UI Components
   private headerPanel: any;
@@ -24,10 +24,10 @@ export class UILayoutManager {
   private eventArea: any;
   private eventTable!: EventTable;
 
-  constructor(screen: blessed.Widgets.Screen, uiState: UIState, config?: CLIConfig) {
+  constructor(screen: blessed.Widgets.Screen, uiState: UIState, viewConfig?: ViewConfig) {
     this.screen = screen;
     this.uiState = uiState;
-    this.config = config;
+    this.viewConfig = viewConfig;
   }
 
   setupFramelessLayout(): void {
@@ -50,7 +50,7 @@ export class UILayoutManager {
       left: 0,
       width: '100%',
       height: '100%',
-      config: this.config,
+      viewConfig: this.viewConfig,
       style: {
         fg: 'white',
         bg: 'transparent'
