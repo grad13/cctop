@@ -12,7 +12,6 @@ export class UIDataManager {
   private uiState: UIState;
   
   // Data loading state
-  private currentOffset: number = 0;
   private isRefreshing: boolean = false;
   private loadMorePromise: Promise<void> | null = null;
 
@@ -94,7 +93,6 @@ export class UIDataManager {
         }).then(searchResults => {
           this.uiState.setHasMoreData(false);
           this.uiState.setEvents(searchResults);
-          this.uiState.setTotalLoaded(searchResults.length);
         }).catch(error => {
           this.uiState.setHasMoreData(false);
           this.uiState.setEvents([]);
@@ -107,12 +105,14 @@ export class UIDataManager {
       // Fetch from database
       const limit = 100;
       
-      // Reset offset for non-append operations
-      if (!append) {
-        this.currentOffset = 0;
+      // Get current offset from UIState (now managed by UIDataState)
+      let currentOffset = 0;
+      // For now, simple offset calculation - could be enhanced later
+      if (append) {
+        currentOffset = this.uiState.getEventsCount();
       }
       
-      const offset = this.currentOffset;
+      const offset = currentOffset;
       
       // Get events from database
       const rawEvents = await this.db.getLatestEvents(
@@ -135,12 +135,8 @@ export class UIDataManager {
         events = filteredNewEvents;
       }
       
-      // Update offset based on raw data fetched from DB
-      if (append) {
-        this.currentOffset += rawEvents.length;
-      } else {
-        this.currentOffset = rawEvents.length;
-      }
+      // Offset management is now handled by UIState/UIDataState
+      // This is managed automatically by setEvents/appendEvents
       
       // Set hasMoreData based on DB result
       if (filteredNewEvents.length === 0 || !hasMoreInDb) {
@@ -151,7 +147,6 @@ export class UIDataManager {
       
       // Update UI state
       this.uiState.setEvents(events);
-      this.uiState.setTotalLoaded(events.length);
       
     } catch (error) {
       // Fallback to empty array to prevent UI crash
@@ -170,10 +165,8 @@ export class UIDataManager {
     
     if (!searchPattern) {
       // No search pattern, just refresh normally
-      this.currentOffset = 0;
       this.uiState.setHasMoreData(true);
       this.uiState.setEvents([]);
-      this.uiState.setTotalLoaded(0);
       return;
     }
     
@@ -188,7 +181,6 @@ export class UIDataManager {
       // DB search results are complete (no pagination for search)
       this.uiState.setHasMoreData(false);
       this.uiState.setEvents(searchResults);
-      this.uiState.setTotalLoaded(searchResults.length);
       
     } catch (error) {
       // Return empty array on error
@@ -201,9 +193,9 @@ export class UIDataManager {
    * Reset data state
    */
   reset(): void {
-    this.currentOffset = 0;
     this.isRefreshing = false;
     this.loadMorePromise = null;
+    // Reset is now delegated to UIState
   }
 
   /**
@@ -211,9 +203,10 @@ export class UIDataManager {
    */
   getState() {
     return {
-      currentOffset: this.currentOffset,
       isRefreshing: this.isRefreshing,
-      hasLoadMore: this.loadMorePromise !== null
+      hasLoadMore: this.loadMorePromise !== null,
+      eventsCount: this.uiState.getEventsCount(),
+      totalLoaded: this.uiState.getTotalLoaded()
     };
   }
 }

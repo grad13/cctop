@@ -100,9 +100,8 @@ export class UIState {
   }
 
   getActiveFilters(): string[] {
-    // Use the existing countActiveFilters method to determine active filters
-    const allTypes = ['find', 'create', 'modify', 'delete', 'move', 'restore'];
-    return allTypes.filter(type => this.eventTypeFilters.isEventTypeEnabled(type));
+    // Delegate to EventTypeFilterFlags which has the correct implementation
+    return this.eventTypeFilters.getActiveFilters();
   }
 
   // Clear all filters and search
