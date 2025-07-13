@@ -27,6 +27,7 @@ export class EventTable implements EventTableViewport {
   private colors: EventTableColors;
   private directoryMutePaths?: string[];
   private viewConfig: ViewConfig;
+  private hasMoreData: boolean = true; // Whether more data is available to load
   
   constructor(options: EventTableOptions, screenWidth: number) {
     this.screenWidth = screenWidth;
@@ -61,7 +62,8 @@ export class EventTable implements EventTableViewport {
   /**
    * Update EventTable with new data and selection (EventTableViewport interface)
    */
-  updateContent(events: EventRowData[], selectedIndex: number): void {
+  updateContent(events: EventRowData[], selectedIndex: number, hasMoreData: boolean = true): void {
+    this.hasMoreData = hasMoreData;
     this.update(events, selectedIndex);
   }
 
@@ -162,9 +164,8 @@ export class EventTable implements EventTableViewport {
    * Should show "end of data" message
    */
   private shouldShowEndOfData(): boolean {
-    // This would need to be passed in or configured
-    // For now, always false since we don't have this info
-    return false;
+    // Show "end of data" when no more data is available to load
+    return !this.hasMoreData;
   }
 
   /**

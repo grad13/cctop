@@ -116,14 +116,14 @@ export class UIDataState {
   }
 
   /**
-   * Check if should load more data based on viewport needs
+   * Check if should load more data based on selection position (FUNC-403/404 spec)
    */
-  shouldLoadMoreData(viewportHeight: number, viewportStart: number): boolean {
-    const availableEvents = this.events.length;
-    const needEvents = viewportStart + viewportHeight;
-    
-    // Load more if we need more events than available and more data exists
-    return needEvents > availableEvents && this.hasMoreData && !this.isLoadingMore;
+  shouldLoadMoreData(selectedIndex: number, totalEvents: number): boolean {
+    // Specification compliance: preload when within 3 rows from bottom
+    const threshold = 3;
+    return selectedIndex >= totalEvents - threshold && 
+           this.hasMoreData && 
+           !this.isLoadingMore;
   }
 
   /**

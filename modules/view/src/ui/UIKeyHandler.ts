@@ -205,23 +205,27 @@ export class UIKeyHandler {
         const currentIndex = this.uiState.getSelectedIndex();
         const eventsCount = this.uiState.getEventsCount();
         
+        // Check if we need to load more data (do this check regardless of position)
+        const checkAndLoadMore = () => {
+          if (this.uiState.shouldLoadMoreData()) {
+            if (this.loadMoreCallback) {
+              // Don't await here to prevent blocking the UI
+              this.loadMoreCallback().catch(err => {
+                // Silently handle error
+              });
+            }
+          }
+        };
+        
         // Extra safety check to prevent wrapping
         if (currentIndex >= eventsCount - 1) {
+          checkAndLoadMore(); // Load more even at the bottom
           return;
         }
         
         this.uiState.moveSelectionDown();
         this.updateDisplayCallback();
-        
-        // Check if we need to load more data
-        if (this.uiState.shouldLoadMoreData()) {
-          if (this.loadMoreCallback) {
-            // Don't await here to prevent blocking the UI
-            this.loadMoreCallback().catch(err => {
-              // Silently handle error
-            });
-          }
-        }
+        checkAndLoadMore();
       }
     });
 

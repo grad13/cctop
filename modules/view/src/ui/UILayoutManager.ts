@@ -306,7 +306,8 @@ export class UILayoutManager {
     const selectedIndex = absoluteSelectedIndex - viewportStart;
     
     // Update event table with optimized rendering (using interface)
-    this.eventTable.updateContent(visibleEvents, selectedIndex);
+    const hasMoreData = this.uiState.hasMoreDataToLoad();
+    this.eventTable.updateContent(visibleEvents, selectedIndex, hasMoreData);
     
     // Force refresh to update elapsed times for existing rows
     this.eventTable.refresh();

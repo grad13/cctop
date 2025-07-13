@@ -195,8 +195,8 @@ export class UIState {
   // Check if should load more data
   shouldLoadMoreData(): boolean {
     return this.dataState.shouldLoadMoreData(
-      this.viewportState.getViewportHeight(),
-      this.viewportState.getViewportStartIndex()
+      this.getSelectedIndex(),      // Current selection index
+      this.dataState.getEventsCount() // Total events count
     );
   }
 

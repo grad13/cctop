@@ -170,6 +170,9 @@ class CCTOPCli {
     if (this.ui) {
       await this.ui.stop();
     }
+    if (this.db) {
+      await this.db.disconnect();
+    }
     process.exit(0);
   }
 }

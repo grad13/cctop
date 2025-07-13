@@ -53,12 +53,27 @@ export class ViewConfigManager {
         fs.mkdirSync(configDir, { recursive: true });
       }
 
+      // Create config with current directory in directoryMutePaths
+      const currentDir = process.cwd();
+      const currentDirWithSlash = currentDir.endsWith('/') ? currentDir : currentDir + '/';
+      
+      const initialConfig = {
+        ...defaultViewConfig,
+        display: {
+          ...defaultViewConfig.display,
+          directoryMutePaths: [currentDirWithSlash] // Add current working directory with trailing slash
+        }
+      };
+
       // Write default configuration
       fs.writeFileSync(
         this.configFilePath,
-        JSON.stringify(defaultViewConfig, null, 2),
+        JSON.stringify(initialConfig, null, 2),
         'utf8'
       );
+      
+      // Update in-memory config as well
+      this.viewConfig = initialConfig;
     } catch (error) {
       console.warn(`Failed to create default view configuration: ${error}`);
     }

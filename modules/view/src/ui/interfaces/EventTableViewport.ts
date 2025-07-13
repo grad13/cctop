@@ -19,7 +19,7 @@ export interface EventTableViewport {
   /**
    * Update EventTable with new data and selection
    */
-  updateContent(events: EventRow[], selectedIndex: number): void;
+  updateContent(events: EventRow[], selectedIndex: number, hasMoreData?: boolean): void;
   
   /**
    * Get column header string for display
