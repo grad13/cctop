@@ -6,6 +6,7 @@
 
 import blessed from 'blessed';
 import { EventRow } from '../../types/event-row';
+import { ViewConfig } from '../../config/ViewConfig';
 
 export interface ViewportInfo {
   selectedIndex: number;
@@ -49,4 +50,9 @@ export interface EventTableViewport {
    * Destroy the event table
    */
   destroy(): void;
+  
+  /**
+   * Update ViewConfig and refresh display
+   */
+  setViewConfig(viewConfig: ViewConfig): void;
 }

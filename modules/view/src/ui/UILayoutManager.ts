@@ -204,6 +204,16 @@ export class UILayoutManager {
     }
   }
 
+  /**
+   * Update ViewConfig and propagate to EventTable
+   */
+  setViewConfig(newViewConfig: ViewConfig): void {
+    this.viewConfig = newViewConfig;
+    if (this.eventTable && typeof this.eventTable.setViewConfig === 'function') {
+      this.eventTable.setViewConfig(newViewConfig);
+    }
+  }
+
   buildDynamicControlContent(): string {
     // Dynamic Control Area - changes based on state
     const displayState = this.uiState.getDisplayState();

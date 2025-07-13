@@ -36,7 +36,7 @@ export class ConfigLoader {
       const daemonConfig = await this.loadDaemonConfig(configPath);
       
       // Use ViewConfigManager for view configuration
-      const viewConfigManager = new ViewConfigManager(targetDir);
+      const viewConfigManager = new ViewConfigManager(configPath);
       const viewConfig = await viewConfigManager.loadViewConfig();
       
       return {

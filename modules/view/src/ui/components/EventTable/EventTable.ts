@@ -119,6 +119,23 @@ export class EventTable implements EventTableViewport {
   }
 
   /**
+   * Update ViewConfig and refresh all rows
+   */
+  setViewConfig(newViewConfig: ViewConfig): void {
+    this.viewConfig = newViewConfig;
+    this.colors = generateColorsFromView(this.viewConfig);
+    this.directoryMutePaths = this.viewConfig.display.directoryMutePaths;
+    
+    // Update all existing rows with new directoryMutePaths
+    for (const row of this.rows.values()) {
+      row.setDirectoryMutePaths(this.directoryMutePaths);
+    }
+    
+    this.calculateDirectoryWidth();
+    this.render();
+  }
+
+  /**
    * Render all rows to the box
    */
   private render(): void {
