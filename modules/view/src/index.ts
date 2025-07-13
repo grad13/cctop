@@ -166,13 +166,11 @@ class CCTOPCli {
     }
   }
 
-  public stop(): void {
+  public async stop(): Promise<void> {
     if (this.ui) {
-      this.ui.stop();
+      await this.ui.stop();
     }
-    if (this.db) {
-      this.db.disconnect();
-    }
+    process.exit(0);
   }
 }
 

@@ -139,23 +139,32 @@ function stopDaemon(silent = false) {
     if (activeDaemon && !activeDaemon.killed) {
       activeDaemon.kill('SIGTERM');
       
-      // Wait for process to exit
-      let attempts = 0;
-      const checkInterval = setInterval(() => {
-        attempts++;
-        if (activeDaemon.killed || attempts > 20) {
-          if (attempts > 20 && !activeDaemon.killed) {
-            // Daemon did not stop gracefully, sending SIGKILL
-            activeDaemon.kill('SIGKILL');
-          }
-          clearInterval(checkInterval);
+      // Event-based exit detection with timeout fallback
+      const exitPromise = new Promise((exitResolve) => {
+        activeDaemon.on('exit', () => {
           activeDaemon = null;
           if (!silent) {
             console.log('Daemon stopped');
           }
-          resolve();
-        }
-      }, 500);
+          exitResolve();
+        });
+      });
+      
+      const timeoutPromise = new Promise((timeoutResolve) => {
+        setTimeout(() => {
+          if (activeDaemon && !activeDaemon.killed) {
+            // Daemon did not stop gracefully, sending SIGKILL
+            activeDaemon.kill('SIGKILL');
+            activeDaemon = null;
+            if (!silent) {
+              console.log('Daemon stopped (forced)');
+            }
+          }
+          timeoutResolve();
+        }, 2000); // 2 second timeout
+      });
+      
+      Promise.race([exitPromise, timeoutPromise]).then(resolve);
       return;
     }
     

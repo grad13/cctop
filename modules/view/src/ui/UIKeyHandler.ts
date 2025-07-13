@@ -14,7 +14,7 @@ export class UIKeyHandler {
   private updateDisplayCallback: () => void;
   private updateDynamicControlCallback: () => void;
   private updateStatusBarCallback: () => void;
-  private stopCallback: () => void;
+  private stopCallback: () => Promise<void>;
   private loadMoreCallback?: () => Promise<void>;
   private searchDebounceTimer?: NodeJS.Timeout;
   private readonly SEARCH_DEBOUNCE_MS = 300; // 300ms delay
@@ -37,7 +37,7 @@ export class UIKeyHandler {
       updateDisplay: () => void;
       updateDynamicControl: () => void;
       updateStatusBar: () => void;
-      stop: () => void;
+      stop: () => Promise<void>;
       loadMore?: () => Promise<void>;
     }
   ) {
@@ -61,16 +61,14 @@ export class UIKeyHandler {
 
   private setupGlobalKeys(): void {
     // Exit - q is disabled in search mode, but C-c always works
-    this.screen.key(['q'], () => {
+    this.screen.key(['q'], async () => {
       if (this.uiState.getDisplayState() !== 'keyword_filter') {
-        this.stopCallback();
-        process.exit(0);
+        await this.stopCallback();
       }
     });
     
-    this.screen.key(['C-c'], () => {
-      this.stopCallback();
-      process.exit(0);
+    this.screen.key(['C-c'], async () => {
+      await this.stopCallback();
     });
 
     // Escape - handle based on current mode

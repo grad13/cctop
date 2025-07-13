@@ -185,7 +185,7 @@ export class BlessedFramelessUISimple {
         updateDisplay: () => this.updateDisplay(),
         updateDynamicControl: () => this.updateDynamicControl(),
         updateStatusBar: () => this.updateStatusBar(),
-        stop: () => this.stop(),
+        stop: async () => await this.stop(),
         loadMore: () => this.loadMore()
       }
     );
@@ -231,10 +231,15 @@ export class BlessedFramelessUISimple {
     screen.render();
   }
 
-  public stop(): void {
+  public async stop(): Promise<void> {
     if (this.refreshTimer) {
       clearInterval(this.refreshTimer);
       this.refreshTimer = undefined;
+    }
+    
+    // Properly disconnect database
+    if (this.db) {
+      await this.db.disconnect();
     }
     
     this.screenManager.destroy();
