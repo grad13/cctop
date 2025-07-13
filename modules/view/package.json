@@ -1,0 +1,42 @@
+{
+  "name": "@cctop/view",
+  "version": "0.3.0",
+  "description": "CCTOP View Module (v0.3.0)",
+  "main": "dist/index.js",
+  "bin": {
+    "cctop": "./bin/cctop"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "npm run build && node dist/index.js",
+    "cctop": "./bin/cctop",
+    "demo:create-db": "npm run build && node dist/demo/create-test-db.js",
+    "demo:config": "npm run build && node dist/demo/demo-config-init.js",
+    "demo:python-data": "npm run build && node dist/test/fixtures/demo-python-dummy-data.js",
+    "test": "echo '⚠️  Direct test execution is disabled due to timeout issues. Please use: npm run test:unit, test:functional:1/2/3, test:integration, or test:quick' && exit 1",
+    "test:unit": "vitest run --reporter=default tests/unit",
+    "test:functional": "echo '⚠️  Direct functional test execution is disabled due to timeout issues. Please use: npm run test:functional:1, test:functional:2, or test:functional:3' && exit 1",
+    "test:functional:1": "vitest run --reporter=default tests/functional/config",
+    "test:functional:2": "vitest run --reporter=default tests/functional/database",
+    "test:functional:3": "vitest run --reporter=default tests/functional/ui tests/functional/data",
+    "test:integration": "vitest run --reporter=default tests/integration tests/interaction",
+    "test:quick": "vitest run --reporter=default tests/unit/cli tests/unit/filters tests/unit/types tests/unit/ui tests/functional/config/config-loader-core.test.ts tests/functional/database/func000-compliance.test.ts tests/functional/database/staged-fetching.test.ts",
+    "test:watch": "vitest",
+    "dev": "tsc --watch"
+  },
+  "dependencies": {
+    "@cctop/shared": "file:../shared",
+    "@types/blessed": "^0.1.25",
+    "@types/string-width": "^2.0.0",
+    "blessed": "^0.1.81",
+    "chalk": "^4.1.2",
+    "sqlite3": "^5.1.6",
+    "string-width": "^5.1.2"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.7",
+    "@types/sqlite3": "^3.1.11",
+    "typescript": "^5.5.3",
+    "vitest": "^2.0.0"
+  }
+}

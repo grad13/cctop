@@ -1,23 +1,27 @@
 {
   "name": "cctop",
-  "version": "0.5.4",
+  "version": "0.6.0",
   "description": "Agent work monitoring with real-time file tracking",
   "workspaces": [
-    "src/*"
+    "modules/*"
   ],
   "bin": {
     "cctop": "bin/cctop"
   },
   "scripts": {
     "install:all": "npm install",
-    "build": "npm run build -w @cctop/shared && npm run build -w @cctop/daemon && npm run build -w @cctop/cli",
+    "build": "npm run build:shared && npm run build:daemon && npm run build:view",
+    "build:shared": "npm run build -w @cctop/shared",
+    "build:daemon": "npm run build -w @cctop/daemon",
+    "build:view": "npm run build -w @cctop/view",
     "test": "npm run test --workspaces",
     "daemon": "node bin/cctop daemon start",
     "cli": "node bin/cctop cli",
     "dev": "npm run daemon & npm run cli",
-    "clean": "rm -rf src/*/node_modules src/*/package-lock.json",
-    "clean:all": "rm -rf node_modules package-lock.json src/*/node_modules src/*/package-lock.json src/*/*.tsbuildinfo",
-    "clean:dist": "rm -rf src/*/dist",
+    "clean": "rm -rf modules/*/node_modules modules/*/package-lock.json",
+    "clean:all": "rm -rf node_modules package-lock.json modules/*/node_modules modules/*/package-lock.json modules/*/*.tsbuildinfo",
+    "clean:dist": "rm -rf modules/*/dist",
+    "push": "rsync -av --delete ../../documents/visions/ docs/visions/ && git add docs/visions && (git commit -m 'sync: update visions documentation' || true) && git push && npm run clean:all",
     "prepublishOnly": "npm run build"
   },
   "dependencies": {
