@@ -31,7 +31,7 @@
 ## 📋 対象FUNC仕様（200-300番台）
 
 ### コア基盤（M1継承）
-**[FUNC-202: CLI Display Integration](../functions/FUNC-202-cli-display-integration.md)**
+**[FUNC-202: View Display Integration](../functions/FUNC-202-view-display-integration.md)**
 - M2での拡張: 4エリア構造による動的フィルタUI
 - Dynamic Control Area: フィルタ状態に応じた3行目切り替え
 - Filter状態表示: ヘッダーでのアクティブフィルタ可視化
@@ -136,7 +136,7 @@
 ```
 M1 (Stream Mode) - 基盤提供
 ├── FUNC-000: Database Foundation → フィルタ対象データの供給源
-├── FUNC-202: CLI Display → 4エリア構造による動的UI  
+├── FUNC-202: View Display → 4エリア構造による動的UI  
 ├── FUNC-300: Key Input Manager → フィルタキー処理の基盤
 └── FUNC-201: Double Buffer → フィルタ結果の滑らかな更新
 

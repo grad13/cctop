@@ -24,7 +24,7 @@ BP-MX-description.md         # マイルストーン別（MX = M1,M2,M3...）
 
 例:
 BP-2-overall-milestones-strategy.md      # 全体戦略
-BP-M2-filter-daemon-cli-architecture.md  # filterのアーキテクチャ
+BP-M2-filter-daemon-view-architecture.md  # filterのアーキテクチャ
 BP-M3-detail-mode-architecture.md        # 詳細モードの設計
 ```
 
@@ -60,8 +60,8 @@ BP-M3-detail-mode-architecture.md        # 詳細モードの設計
 
 ### M2: Filter（進行中）
 
-#### BP-M2-filter-daemon-cli-architecture.md
-- **目標**: filterマイルストーンのためのDaemon-CLI分離アーキテクチャ
+#### BP-M2-filter-daemon-view-architecture.md
+- **目標**: filterマイルストーンのためのDaemon-View分離アーキテクチャ
 - **スコープ**: プロセス分離・堅牢性向上・フィルタ機能基盤
 - **ステータス**: 設計完了、実装準備中
 

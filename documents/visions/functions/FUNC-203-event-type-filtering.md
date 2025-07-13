@@ -108,7 +108,7 @@ All Activities  (4/156)
 ## 🔗 関連仕様
 
 - **イベント定義**: [FUNC-001: ファイルライフサイクル追跡](./FUNC-001-file-lifecycle-tracking.md)
-- **表示システム**: [FUNC-202: CLI表示統合](./FUNC-202-cli-display-integration.md)
+- **表示システム**: [FUNC-202: View表示統合](./FUNC-202-view-display-integration.md)
 
 ---
 

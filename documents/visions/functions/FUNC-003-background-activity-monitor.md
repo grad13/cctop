@@ -8,7 +8,7 @@
 
 ## 📊 機能概要
 
-バックグラウンドでファイル変更を監視し、CLIがDatabaseから情報を取得する2プロセス分離アーキテクチャ
+バックグラウンドでファイル変更を監視し、ViewがDatabaseから情報を取得する2プロセス分離アーキテクチャ
 
 **ユーザー価値**: 
 - 継続的なファイル監視によるバックグラウンド活動の完全把握
@@ -18,9 +18,9 @@
 ## 🎯 機能境界
 
 ### ✅ **実行する**
-- バックグラウンド監視プロセス（Daemon）とユーザー表示プロセス（CLI）の完全分離
+- バックグラウンド監視プロセス（Daemon）とユーザー表示プロセス（View）の完全分離
 - Daemon Process: ファイル変更イベントをDatabaseに記録
-- CLI Process: Databaseから情報を取得して表示
+- View Process: Databaseから情報を取得して表示
 - SQLite Database: プロセス間通信の中心
 - Process Management: `cctop`実行時のMonitor自動起動・管理
 - PIDファイル・ログ管理・自動復旧機能
@@ -36,7 +36,7 @@
 ### **プロセス分離アーキテクチャ**
 - **Daemon**: 独立プロセスによる24/7監視
 - **Database**: SQLite WAL modeによる並行アクセス
-- **CLI**: リアルタイム表示（60ms遅延）
+- **View**: リアルタイム表示（60ms遅延）
 - **Process Control**: PIDファイル・ログ管理・自動復旧
 
 ### **Process State Management**
@@ -51,11 +51,11 @@
 - **自動起動**: `cctop`コマンド実行時にDaemon状態確認・起動
 - **手動起動**: `cctop --daemon --start`でDaemon単独起動
 - **停止制御**: `cctop --daemon --stop`でDaemon停止
-- **起動者記録**: Daemon起動時に起動者（独立起動 or CLI起動）を記録
+- **起動者記録**: Daemon起動時に起動者（独立起動 or View起動）を記録
 - **終了制御**: 起動者に応じた適切な終了処理
 
-### **CLI統合仕様**
-Daemon制御の具体的なCLIオプションは **[FUNC-104: CLIインターフェース統合仕様](./FUNC-104-cli-interface-specification.md)** で定義されています：
+### **View統合仕様**
+Daemon制御の具体的なViewオプションは **[FUNC-104: Viewインターフェース統合仕様](./FUNC-104-view-interface-specification.md)** で定義されています：
 - `cctop --daemon --start`: Daemon単独起動（背景監視開始）
 - `cctop --daemon --stop`: Daemon停止（背景監視停止）
 - `cctop --view`: Daemon起動なし、既存DBから表示のみ
@@ -65,17 +65,17 @@ Daemon制御の具体的なCLIオプションは **[FUNC-104: CLIインターフ
 ### **FUNC-000: Database Foundation**
 - FUNC-000準拠の5テーブル構成（event_types, files, events, measurements, aggregates）を使用
 - SQLite WAL/SHM設定による並行読み書きアクセス対応
-- Daemon（書き込み）とCLI（読み取り）の同時データベースアクセス
+- Daemon（書き込み）とView（読み取り）の同時データベースアクセス
 
 ### **FUNC-101: Configuration Management**
 - `.cctop/config.json`の監視設定を利用
 - excludePatterns等のフィルタ設定を継承
 
 ### **FUNC-200-205: View & Display Functions**
-- **CLI Process実装**: 既存View機能群（FUNC-200-205）を統合利用
-- **FUNC-202依存**: CLI表示統合機能をCLI Processで実行
+- **View Process実装**: 既存View機能群（FUNC-200-205）を統合利用
+- **FUNC-202依存**: View表示統合機能をView Processで実行
 - **表示エンジン**: FUNC-200(East Asian Width)、FUNC-201(二重バッファ)等を継承
-- **責務分離**: Daemon=データ書き込み、CLI=FUNC-202ベース表示
+- **責務分離**: Daemon=データ書き込み、View=FUNC-202ベース表示
 
 ## 🚀 実装仕様
 
@@ -83,13 +83,13 @@ Daemon制御の具体的なCLIオプションは **[FUNC-104: CLIインターフ
 1. `cctop`実行時にPIDファイル確認
 2. Daemon未起動の場合は自動起動（起動者="cli"として記録）
 3. Daemon既起動の場合は起動者記録を確認（起動者="standalone"として維持）
-4. CLI起動してDatabase接続
+4. View起動してDatabase接続
 5. リアルタイム表示開始
 
 ### **終了フロー**
-#### **CLI終了時のDaemon制御**
-- **起動者="cli"**: CLI終了時にDaemonも停止
-- **起動者="standalone"**: CLI終了時もDaemonは継続実行
+#### **View終了時のDaemon制御**
+- **起動者="cli"**: View終了時にDaemonも停止
+- **起動者="standalone"**: View終了時もDaemonは継続実行
 - **起動者判定**: `.cctop/daemon.pid`ファイル内に起動者情報を記録
 
 ### **PIDファイル仕様**
@@ -132,14 +132,14 @@ Daemon制御の具体的なCLIオプションは **[FUNC-104: CLIインターフ
 ## 🧪 テスト要件
 
 ### **基本機能テスト**
-- Daemon/CLI独立テスト
+- Daemon/View独立テスト
 - プロセス間通信テスト
 - 異常終了時の復旧テスト
 - 長時間運用テスト
 
 ### **終了制御テスト**
-- CLI起動DaemonのCLI終了時停止確認
-- Standalone DaemonのCLI終了時継続確認
+- View起動DaemonのView終了時停止確認
+- Standalone DaemonのView終了時継続確認
 - PIDファイルの起動者情報正確性確認
 
 ## 📊 期待効果

@@ -82,10 +82,10 @@ FUNC-003-configuration-management.md
 |---------|------|---------|
 | FUNC-101-hierarchical-config-management.md | 共通設定管理機能 | 🟥 必須 |
 | FUNC-102-file-watch-limit-management.md | ファイル監視上限管理 | 🟦 拡張 |
-| FUNC-104-cli-interface-specification.md | CLI引数・起動挙動仕様 | 🟨 基本 |
+| FUNC-104-view-interface-specification.md | View引数・起動挙動仕様 | 🟨 基本 |
 | FUNC-105-local-setup-initialization.md | ローカル設定・初期化 | 🟨 基本 |
 | FUNC-106-daemon-configuration-management.md | Daemon設定管理 | 🟥 必須 |
-| FUNC-107-cli-configuration-management.md | CLI設定管理 | 🟥 必須 |
+| FUNC-107-view-configuration-management.md | View設定管理 | 🟥 必須 |
 | FUNC-108-color-theme-configuration.md | Color Theme Configuration | 🟦 拡張 |
 
 ### 200番台 - UI表示層（Display Layer）
@@ -96,7 +96,7 @@ FUNC-003-configuration-management.md
 |---------|------|---------|
 | FUNC-200-east-asian-width-display.md | East Asian Width対応表示 | 🟥 必須 |
 | FUNC-201-double-buffer-rendering.md | 二重バッファ描画 | 🟥 必須 |
-| FUNC-202-cli-display-integration.md | CLI表示統合 | 🟥 必須 |
+| FUNC-202-view-display-integration.md | View表示統合 | 🟥 必須 |
 | FUNC-203-event-type-filtering.md | イベントタイプフィルタリング | 🟨 基本 |
 | FUNC-204-responsive-directory-display.md | レスポンシブディレクトリ表示 | 🟨 基本 |
 | FUNC-206-instant-view-progressive-loading.md | 即時表示・プログレッシブローディング | 🟦 拡張 |

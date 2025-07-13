@@ -248,7 +248,7 @@ interface FilterStateEvents {
 
 ## 🔗 関連仕様
 
-- **表示統合**: [FUNC-202: CLI表示統合](./FUNC-202-cli-display-integration.md)
+- **表示統合**: [FUNC-202: View表示統合](./FUNC-202-view-display-integration.md)
 - **イベントフィルタ**: [FUNC-203: イベントタイプフィルタリング](./FUNC-203-event-type-filtering.md)
 - **UIフィルタ統合**: [FUNC-208: UI統合フィルタ](./FUNC-208-ui-filter-integration.md)
 - **キー入力管理**: [FUNC-300: キー入力管理システム](./FUNC-300-key-input-manager.md)

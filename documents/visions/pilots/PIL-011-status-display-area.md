@@ -322,7 +322,7 @@ LIMIT 1;
 
 ## 🔗 関連仕様
 
-- **表示基盤**: [FUNC-202: CLI表示統合](./FUNC-202-cli-display-integration.md)
+- **表示基盤**: [FUNC-202: View表示統合](../functions/FUNC-202-view-display-integration.md)
 - **データベース**: [FUNC-000: SQLiteデータベース基盤](./FUNC-000-sqlite-database-foundation.md)
 - **監視制限**: [FUNC-102: ファイル監視上限管理](./FUNC-102-file-watch-limit-management.md)
 

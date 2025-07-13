@@ -110,7 +110,7 @@ cctop --check-limits
 
 ### **2. 統合ポイント**
 
-**CLI仕様統合**: `--check-limits`オプションの詳細は **[FUNC-104: CLIインターフェース統合仕様](./FUNC-104-cli-interface-specification.md)** を参照
+**View仕様統合**: `--check-limits`オプションの詳細は **[FUNC-104: Viewインターフェース統合仕様](./FUNC-104-view-interface-specification.md)** を参照
 
 - 既存ConfigManagerクラスに`checkSystemLimits()`メソッド追加
 - 起動時の自動チェック統合

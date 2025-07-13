@@ -1,14 +1,14 @@
-# FUNC-202: CLI表示統合機能
+# FUNC-202: View表示統合機能
 
 **作成日**: 2025年6月24日 10:00  
-**更新日**: 2025年7月6日  
+**更新日**: 2025年7月9日  
 **作成者**: Architect Agent  
-**Version**: 0.3.4.0  
-**関連仕様**: FUNC-000, FUNC-200, FUNC-201, FUNC-203, FUNC-204, FUNC-205, FUNC-300, FUNC-301  
+**Version**: 0.3.5.0  
+**関連仕様**: FUNC-000, FUNC-200, FUNC-201, FUNC-203, FUNC-204, FUNC-205, FUNC-209, FUNC-210, FUNC-300, FUNC-301  
 
 ## 📊 機能概要
 
-FUNC-000のデータベースから取得したファイルイベントを、リアルタイムで表示するCLIインターフェース。All/Uniqueモード切り替えにより、用途に応じた最適な表示を提供する。
+FUNC-000のデータベースから取得したファイルイベントを、リアルタイムで表示するViewインターフェース。All/Uniqueモード切り替えにより、用途に応じた最適な表示を提供する。
 
 **ユーザー価値**:
 - 直感的なファイル変更監視
@@ -64,7 +64,8 @@ FUNC-000のデータベースから取得したファイルイベントを、リ
 | 経過時間 | 表示形式 | 表示例 | 説明 |
 |----------|----------|--------|------|
 | 0〜60分 | mm:ss | 00:04 | 分:秒形式（最大59:59） |
-| 60分〜72時間 | hh:mm:ss | 01:00:04 | 時:分:秒形式（最大71:59:59） |
+| 60分〜10時間 | h:mm:ss | 1:00:04 | 時:分:秒形式（1桁時間） |
+| 10時間〜72時間 | hh:mm:ss | 10:00:04 | 時:分:秒形式（2桁時間、最大71:59:59） |
 | 72時間〜90日 | n days | 3 days | 日数表示（最大89 days） |
 | 90日以上 | n months | 3 months | 月数表示（30日=1ヶ月で計算） |
 
@@ -108,9 +109,9 @@ Event Timestamp      Elapsed  File Name                     Event   Lines  Block
 2025-06-25 19:07:13     00:42  FUNC-112-cli-display-inte...  modify    233     24   18.7K documents/visions/functions
 2025-06-25 19:06:49  01:01:07  FUNC-112-cli-display-inte...  modify    235     16   19.2K documents/visions/functions
 ────────────────────────────────────────────────────
-[q] Exit [space] Pause  [x] Refresh [a] All  [u] Unique  
-[↑↓] Select an event　[Enter] Show Details
-[f] Filter Events　[/] Quick search　[ESC] Clear
+[q] Exit [space] Pause [x] Refresh [a] All [u] Unique  
+[ESC] Reset All Filters [↑↓] Select an Event 
+[f] Filter Events　[/] Quick Search
 ```
 
 ##### **2. イベントフィルタモード（fキー押下後）**
@@ -120,9 +121,9 @@ Event Timestamp      Elapsed  File Name                           Event    Lines
 ────────────────────────────────────────────────────
 [Event rows with filters applied]
 ────────────────────────────────────────────────────
-[q] Exit [space] Pause  [x] Refresh [a] All  [u] Unique  
-[↑↓] Select an event　[Enter] Show Details
-[f] Find [c] Create [m] Modify [d] Delete [v] Move [r] Restore [ESC] Back
+[q] Exit [space] Pause [x] Refresh [a] All [u] Unique  
+[Enter] Confirm Filter [ESC] Cancel Back [↑↓] Select an Event 
+[f] Find [c] Create [m] Modify [d] Delete [v] Move [r] Restore
 ```
 
 ##### **3. クイックサーチモード（/キー押下後）**
@@ -132,9 +133,9 @@ Event Timestamp      Elapsed  File Name                           Event    Lines
 ────────────────────────────────────────────────────
 [Filtered event rows based on search]
 ────────────────────────────────────────────────────
-[q] Exit [space] Pause  [x] Refresh [a] All  [u] Unique  
-[↑↓] Select an event　[Enter] Show Details
-Search: [_________________________________] [Enter] Search DB [ESC] Cancel
+[q] Exit [space] Pause [x] Refresh [a] All [u] Unique  
+[Enter] Confirm Filter [ESC] Cancel Back [↑↓] Select an Event
+Search: [____________________________________] [Shift+Enter] Search DB 
 ```
 
 ##### **4. Stream一時停止状態（spaceキー押下後）**
@@ -144,11 +145,12 @@ Event Timestamp      Elapsed  File Name                           Event    Lines
 ────────────────────────────────────────────────────
 [Frozen event rows - stream display paused]
 ────────────────────────────────────────────────────
-[q] Exit [space] Resume  [x] Refresh [a] All  [u] Unique  
-[↑↓] Select an event　[Enter] Show Details
-[f] Filter Events　[/] Quick search　[ESC] Clear
+[q] Exit [space] Resume [x] Refresh [a] All [u] Unique  
+[ESC] Reset All Filters [↑↓] Select an Event 
+[f] Filter Events　[/] Quick search
 ```
 注：Daemon状態は変わらず、Stream表示のみ一時停止
+注：[Enter] Show Detailsは実装された場合に元に戻す
 
 ### **表示モード仕様**
 
@@ -212,14 +214,16 @@ FUNC-202の表示状態はFUNC-300の入力状態と連動：
 | `d` | FUNC-203呼び出し | フィルタ表示更新 |
 | `v` | FUNC-203呼び出し | フィルタ表示更新 |
 | `r` | FUNC-203呼び出し | フィルタ表示更新 |
-| `ESC` | `waiting`状態へ遷移 | Dynamic Area更新 |
+| `ESC` | `waiting`状態へ遷移（編集破棄） | フィルタ設定前の状態を保持 |
+| `Enter` | `waiting`状態へ遷移（編集保持） | フィルタ設定を上書き |
 
 ##### **Searching Mode（/キー押下後）**
 | キー | FUNC-300処理 | FUNC-202処理 |
 |------|-------------|-------------|
 | `[text]` | 文字入力バッファ管理 | リアルタイム検索（ローカル） |
-| `Enter` | DB検索実行 | データベース検索結果表示 |
-| `ESC` | `waiting`状態へ遷移 | Dynamic Area更新 |
+| `Enter` | `waiting`状態へ遷移（編集保持） | 検索設定を上書き |
+| `Shift+Enter` | DB検索実行 | データベース検索結果表示 |
+| `ESC` | `waiting`状態へ遷移（編集破棄） | 検索設定前の状態を保持 |
 
 ##### **Paused Mode（spaceキー押下後）**
 | キー | FUNC-300処理 | FUNC-202処理 |
@@ -258,16 +262,24 @@ KeyInputManager.initializeStateMaps() {
   });
   this.registerToState('filtering', 'Escape', () => {
     this.setState('waiting');
-    FUNC202.updateDisplayState({ mode: 'normal' });
+    FUNC202.discardEditsAndRestorePrevious(); // 編集破棄、前の状態を保持
+  });
+  this.registerToState('filtering', 'Enter', () => {
+    this.setState('waiting');
+    FUNC202.applyEditsAndUpdateState(); // 編集保持、設定を上書き
   });
   
   // Searching Modeのキー登録
   this.registerToState('searching', 'Enter', () => {
-    FUNC202.applySearch(this.getInputBuffer());
+    this.setState('waiting');
+    FUNC202.applySearchAndUpdateState(); // 検索保持、設定を上書き
+  });
+  this.registerToState('searching', 'Shift+Enter', () => {
+    FUNC202.applySearch(this.getInputBuffer()); // DB検索実行
   });
   this.registerToState('searching', 'Escape', () => {
     this.setState('waiting');
-    FUNC202.updateDisplayState({ mode: 'normal' });
+    FUNC202.discardSearchAndRestorePrevious(); // 検索破棄、前の状態を保持
   });
 }
 
@@ -281,7 +293,232 @@ FUNC202.updateDisplayState = function(displayState) {
 };
 ```
 
+### **Runtime Control仕様**
+
+#### **Pause/Resume機能**
+
+##### **基本動作**
+- **キーバインド**: `[space]`キー
+- **機能**: リアルタイム更新の一時停止/再開制御
+- **状態管理**: RUNNING ↔ PAUSED の双方向切り替え
+- **制御レベル**: 表示更新のみ停止（データ収集は継続）
+
+##### **動作詳細**
+```javascript
+// Pause/Resume状態管理
+let isPaused = false;
+
+function togglePauseResume() {
+  isPaused = !isPaused;
+  updateStatusDisplay();
+  
+  if (isPaused) {
+    // 表示更新タイマー停止
+    clearInterval(displayUpdateTimer);
+  } else {
+    // 表示更新タイマー再開
+    startDisplayUpdate();
+  }
+}
+```
+
+##### **UI状態表示**
+| 状態 | Header表示例 | 説明 |
+|------|-------------|------|
+| RUNNING | `cctop v1.0.0.0 Daemon: ●RUNNING (PID: 43262)` | 通常動作中 |
+| PAUSED | `cctop v1.0.0.0 Daemon: ●PAUSED (PID: 43262)` | 一時停止中 |
+
+##### **Pause中の制限事項**
+- **更新停止**: 新規イベントの画面表示更新なし
+- **操作継続**: フィルタ・検索・選択操作は引き続き可能
+- **データ収集**: バックグラウンドでのデータ収集は継続
+- **手動更新**: `[x]`キーによる手動リフレッシュは動作
+
+#### **Manual Refresh機能**
+
+##### **基本動作**
+- **キーバインド**: `[x]`キー（従来の`[r]`から変更）
+- **機能**: 表示データの即座更新・再取得
+- **実行タイミング**: RUNNING/PAUSED状態に関わらず実行可能
+- **更新範囲**: 表示中のイベントリスト全体
+
+##### **動作詳細**
+```javascript
+function manualRefresh() {
+  // 現在の表示設定を保持
+  const currentFilters = getCurrentFilters();
+  const currentMode = getCurrentMode();
+  
+  // データ再取得
+  const freshEvents = fetchLatestEvents(currentFilters, currentMode);
+  
+  // 表示更新
+  updateEventDisplay(freshEvents);
+  
+  // 状態表示更新
+  updateStatusDisplay();
+}
+```
+
+##### **実行環境による動作**
+| 環境 | 動作内容 | 対象データ |
+|------|----------|------------|
+| 開発・テスト | ダミーデータ再生成 | generateDummyEvents() |
+| 本番・実データ | 最新データ再取得 | データベースから最新取得 |
+| デモ・プレゼン | サンプルデータ更新 | 設定に応じたサンプル生成 |
+
+#### **Runtime Control連携**
+
+##### **FUNC-300連携（キー処理）**
+```javascript
+// Waiting Mode での Runtime Control キー登録
+KeyInputManager.registerToState('waiting', 'space', () => {
+  FUNC202.togglePauseResume();
+});
+
+KeyInputManager.registerToState('waiting', 'x', () => {
+  FUNC202.manualRefresh();
+});
+
+// Paused Mode での継続操作
+KeyInputManager.registerToState('paused', 'f', () => {
+  // フィルタ操作は pause 中も継続
+  FUNC202.enterFilterMode();
+});
+```
+
+##### **状態遷移管理**
+```javascript
+// Runtime Control 状態の管理
+const RuntimeState = {
+  RUNNING: 'running',
+  PAUSED: 'paused'
+};
+
+function updateRuntimeState(newState) {
+  this.runtimeState = newState;
+  
+  // FUNC-300 に状態変更を通知
+  KeyInputManager.setRuntimeState(newState);
+  
+  // 表示更新
+  this.updateStatusDisplay();
+}
+```
+
+#### **Command Keys Area表示**
+
+##### **通常状態（RUNNING）**
+```
+[q] Exit [space] Pause [x] Refresh [a] All [u] Unique  
+[ESC] Reset All Filters [↑↓] Select an Event 
+[f] Filter Events　[/] Quick Search
+```
+
+##### **一時停止状態（PAUSED）** 
+```
+[q] Exit [space] Resume [x] Refresh [a] All [u] Unique  
+[ESC] Reset All Filters [↑↓] Select an Event 
+[f] Filter Events　[/] Quick Search
+```
+
+**変更点**: `Pause` ↔ `Resume` の動的表示切り替え
+
+#### **使用シナリオ**
+
+##### **開発・デバッグ時**
+1. **高頻度更新時の詳細確認**:
+   - 大量ファイル変更中に `[space]` で一時停止
+   - 特定イベントを詳細に分析
+   - 確認完了後 `[space]` で再開
+
+2. **状態リセット・テスト**:
+   - `[x]` でデータリフレッシュ
+   - 新しいテストケースでの動作確認
+   - デバッグ用のクリーンな状態作成
+
+##### **プレゼンテーション・デモ時**
+1. **タイミング制御**:
+   - デモのポイントで `[space]` 一時停止
+   - 説明中の画面固定
+   - 適切なタイミングで再開
+
+2. **データリフレッシュ**:
+   - `[x]` で新鮮なデモデータ表示
+   - プレゼンテーション用サンプル更新
+
+#### **パフォーマンス考慮事項**
+
+##### **Pause機能**
+- **メモリ使用量**: 一時停止中も最小限のメモリ使用
+- **レスポンス**: Pause/Resume切り替えは即座実行（<50ms）
+- **バックグラウンド**: データ収集は継続、表示更新のみ停止
+
+##### **Refresh機能**
+- **実行時間**: 手動リフレッシュは500ms以内で完了
+- **データ量**: 現在の表示設定に応じた必要最小限のデータ取得
+- **UI応答性**: リフレッシュ中もキー入力受付継続
+
 ### **キーワード検索仕様（2段階検索）**
+
+#### **入力文字正規化仕様**
+
+##### **正規化処理の段階**
+1. **制御文字処理**: ASCII制御文字（0x00-0x1F, 0x7F）をスペースに変換
+2. **空白正規化**: 前後trim + 連続スペース→単一スペース
+3. **多言語対応**: UTF-8文字（日本語・絵文字等）を完全サポート
+
+##### **処理例**
+| 入力 | 処理後 | 説明 |
+|------|--------|------|
+| `test\n` | `test` | 改行文字をスペース化後trim |
+| `hello\tworld` | `hello world` | タブ文字をスペース化 |
+| `  test   debug  ` | `test debug` | 前後trim + 連続スペース正規化 |
+| `日本語　テスト` | `日本語 テスト` | 全角スペースも正規化対象 |
+
+##### **実装関数例**
+```javascript
+function normalizeSearchText(text: string): string {
+  // a. 制御文字をspaceに変換
+  let normalized = text.replace(/[\x00-\x1F\x7F]/g, ' ');
+  
+  // b. 前後の空白を削除
+  normalized = normalized.trim();
+  
+  // c. 連続するspaceを単一にする
+  normalized = normalized.replace(/\s+/g, ' ');
+  
+  return normalized;
+}
+```
+
+#### **複数キーワード検索仕様**
+
+##### **キーワード分離**
+- **区切り文字**: スペース区切りで複数キーワードを分離
+- **検索方式**: AND検索（全キーワードが含まれる必要がある）
+- **対象フィールド**: ファイル名・ディレクトリパスの両方
+
+##### **検索ロジック**
+```javascript
+// ローカル検索での複数キーワード対応
+const keywords = normalizedText.split(' ').filter(k => k.length > 0);
+filteredEvents = filteredEvents.filter(event => 
+  keywords.every(keyword => {
+    const lowerKeyword = keyword.toLowerCase();
+    return (event.filename || '').toLowerCase().includes(lowerKeyword) ||
+           (event.directory || '').toLowerCase().includes(lowerKeyword);
+  })
+);
+```
+
+##### **検索例**
+| 検索文字列 | 分離結果 | 検索動作 |
+|------------|----------|----------|
+| `test` | `["test"]` | 単一キーワード検索 |
+| `test debug` | `["test", "debug"]` | AND検索（両方含む） |
+| `日本語 テスト` | `["日本語", "テスト"]` | 多言語AND検索 |
+| `🔍 file.md` | `["🔍", "file.md"]` | 絵文字も対応 |
 
 #### **検索の2段階処理**
 
@@ -290,11 +527,13 @@ FUNC202.updateDisplayState = function(displayState) {
 - **対象**: 画面に表示されているイベント（メモリ上のデータ）
 - **フィードバック**: 即座に該当行をハイライト表示
 - **検索対象フィールド**: ファイル名、ディレクトリパス
+- **複数キーワード**: 正規化後のキーワード配列でAND検索実行
 
 ##### **第2段階: データベース検索（Enterキー）**
 - **処理**: SQLiteデータベースから包括的に検索
 - **トリガー**: Enterキー押下時
 - **取得戦略**: フィルタを考慮した段階的取得
+- **複数キーワード**: 各キーワードをAND条件でSQLクエリに適用
 
 #### **検索データのライフサイクル管理**
 
@@ -342,8 +581,8 @@ class SearchResultCache {
 #### **フィルタ連携の段階的取得アルゴリズム**
 
 ```javascript
-// 段階的取得戦略
-async function searchWithFilterConsideration(keyword, activeFilters) {
+// 段階的取得戦略（複数キーワード対応）
+async function searchWithFilterConsideration(keywords, activeFilters) {
   const INITIAL_FETCH = 100;    // 初回取得数
   const MAX_FETCH = 1000;       // 最大取得数
   const TARGET_DISPLAY = 50;    // 表示目標数
@@ -354,7 +593,7 @@ async function searchWithFilterConsideration(keyword, activeFilters) {
   while (displayableEvents.length < TARGET_DISPLAY && offset < MAX_FETCH) {
     // フィルタをSQL条件に含めて検索
     const events = await db.searchEvents({
-      keyword: keyword,
+      keywords: keywords,  // 配列対応
       filters: activeFilters,
       limit: INITIAL_FETCH,
       offset: offset
@@ -377,14 +616,16 @@ async function searchWithFilterConsideration(keyword, activeFilters) {
 #### **検索クエリ最適化**
 
 ```sql
--- フィルタを考慮したDB検索クエリ例
+-- フィルタを考慮したDB検索クエリ例（複数キーワード対応）
 SELECT e.*, f.file_path, f.file_name, m.*
 FROM events e
 JOIN files f ON e.file_id = f.file_id
 LEFT JOIN measurements m ON e.event_id = m.event_id
 WHERE 
-  -- キーワード検索条件
-  (f.file_name LIKE '%keyword%' OR f.file_path LIKE '%keyword%')
+  -- 複数キーワード検索条件（AND検索）
+  (f.file_name LIKE '%keyword1%' OR f.file_path LIKE '%keyword1%')
+  AND (f.file_name LIKE '%keyword2%' OR f.file_path LIKE '%keyword2%')
+  -- 各キーワードに対してAND条件
   -- アクティブフィルタ条件
   AND e.event_type IN ('find', 'create', 'modify')  -- 例
   -- 削除済みファイル条件（Uniqueモード時）
@@ -523,7 +764,7 @@ cctop ./logs
 ### 任意連携機能
 
 #### FUNC-003: Background Activity Monitor
-- **標準モード**: FUNC-202単独でCLI表示実行
+- **標準モード**: FUNC-202単独でView表示実行
 - **バックグラウンド監視モード**: FUNC-202をViewer Process内で実行
 - **責務継承**: Viewer ProcessはFUNC-202の表示機能を完全継承
 - **プロセス分離**: Monitor（データ書き込み）とViewer（FUNC-202ベース表示）の分離
@@ -556,6 +797,14 @@ cctop ./logs
    - エラー時の適切なフォールバック
 
 ## 📝 変更履歴
+
+### v0.3.5.0 (2025-07-09)
+- **入力文字正規化仕様**: 制御文字処理・空白正規化・多言語対応
+- **複数キーワード検索**: スペース区切りでのAND検索機能
+- **制御文字混入問題解決**: Enterキーが検索文字として認識される問題を修正
+- **段階的取得アルゴリズム拡張**: 複数キーワード対応の検索処理
+- **SQL検索クエリ強化**: 複数キーワードに対応したAND検索クエリ
+- **下位互換性保証**: 単一キーワード検索は引き続き動作
 
 ### v0.3.4.0 (2025-07-06)
 - **キーワード検索の2段階化**: ローカル検索とDB検索の分離
