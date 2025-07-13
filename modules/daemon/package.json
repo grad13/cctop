@@ -24,11 +24,11 @@
   "dependencies": {
     "@cctop/shared": "file:../shared",
     "@types/chokidar": "^1.7.5",
-    "@types/sqlite3": "^3.1.11",
     "chokidar": "^3.6.0"
   },
   "devDependencies": {
-    "@types/node": "^20.14.9",
+    "@types/node": "^20.19.7",
+    "@types/sqlite3": "^3.1.11",
     "better-sqlite3": "^12.2.0",
     "sqlite3": "^5.1.7",
     "typescript": "^5.5.3",
