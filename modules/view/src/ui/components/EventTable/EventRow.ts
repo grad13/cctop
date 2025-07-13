@@ -6,7 +6,8 @@ import { EventRow as EventRowData } from '../../../types/event-row';
 import { normalizeColumn } from './utils/columnNormalizer';
 import { TimeFormatter, EventTypeFormatter, FileSizeFormatter } from './formatters';
 import { fg, bg } from '../../utils/styleFormatter';
-import { EventTableColors, COLUMN_CONFIGS } from './types';
+import { EventTableColors } from './types';
+import { ViewConfig } from '../../../config/ViewConfig';
 
 export class EventRow {
   private data: EventRowData;
@@ -16,9 +17,11 @@ export class EventRow {
   private isDirty: boolean = true;
   private colors?: EventTableColors;
   private directoryMutePaths?: string[];
+  private viewConfig: ViewConfig;
 
-  constructor(data: EventRowData, directoryWidth: number = 40, colors?: EventTableColors, directoryMutePaths?: string[]) {
+  constructor(data: EventRowData, viewConfig: ViewConfig, directoryWidth: number = 40, colors?: EventTableColors, directoryMutePaths?: string[]) {
     this.data = data;
+    this.viewConfig = viewConfig;
     this.directoryWidth = directoryWidth;
     this.colors = colors;
     this.directoryMutePaths = directoryMutePaths;
@@ -110,71 +113,70 @@ export class EventRow {
       }
     }
 
-    // Get column configurations
+    // Get column configurations from ViewConfig
     const getColumnConfig = (name: string) => {
-      return COLUMN_CONFIGS.find(col => col.name === name);
+      const columnConfig = this.viewConfig.display.columns[name];
+      return columnConfig && columnConfig.visible ? columnConfig : null;
     };
 
-    // Normalize columns using column configurations
+    // Build columns according to columns-order from ViewConfig
     const columns = [];
+    const columnsOrder = this.viewConfig.display['columns-order'] || [];
     
-    const timestampConfig = getColumnConfig('timestamp');
-    if (timestampConfig) {
-      columns.push(normalizeColumn(timestamp, timestampConfig.width, timestampConfig.align));
+    // Process columns in the order specified by columns-order
+    for (const columnName of columnsOrder) {
+      const columnConfig = getColumnConfig(columnName);
+      if (!columnConfig) continue;
+      
+      const width = columnConfig.width === 'auto' ? this.directoryWidth : columnConfig.width as number;
+      const align = columnConfig.align === 'right' ? 'right' : 'left';
+      
+      switch (columnName) {
+        case 'timestamp':
+          columns.push(normalizeColumn(timestamp, width, align));
+          break;
+        case 'elapsed':
+          columns.push(normalizeColumn(elapsed, width, align));
+          break;
+        case 'fileName':
+          columns.push(normalizeColumn(filename, width, align, 'middle'));
+          break;
+        case 'event':
+          const eventTypeColored = this.colorizeEventType(eventTypeRaw);
+          columns.push(normalizeColumn(eventTypeColored, width, align));
+          break;
+        case 'lines':
+          columns.push(normalizeColumn(lines, width, align));
+          break;
+        case 'blocks':
+          columns.push(normalizeColumn(blocks, width, align));
+          break;
+        case 'size':
+          columns.push(normalizeColumn(size, width, align));
+          break;
+      }
     }
     
-    const elapsedConfig = getColumnConfig('elapsed');
-    if (elapsedConfig) {
-      columns.push(normalizeColumn(elapsed, elapsedConfig.width, elapsedConfig.align));
-    }
-    
-    const filenameConfig = getColumnConfig('filename');
-    if (filenameConfig) {
-      columns.push(normalizeColumn(filename, filenameConfig.width, filenameConfig.align, filenameConfig.truncate));
-    }
-    
-    // Event type with color
-    const eventTypeColored = this.colorizeEventType(eventTypeRaw);
-    
-    // Remaining columns
-    const afterEventColumns = [];
-    
-    const linesConfig = getColumnConfig('lines');
-    if (linesConfig) {
-      afterEventColumns.push(normalizeColumn(lines, linesConfig.width, linesConfig.align));
-    }
-    
-    const blocksConfig = getColumnConfig('blocks');
-    if (blocksConfig) {
-      afterEventColumns.push(normalizeColumn(blocks, blocksConfig.width, blocksConfig.align));
-    }
-    
-    const sizeConfig = getColumnConfig('size');
-    if (sizeConfig) {
-      afterEventColumns.push(normalizeColumn(size, sizeConfig.width, sizeConfig.align));
-    }
-    
+    // Add directory column if visible
     const directoryConfig = getColumnConfig('directory');
     if (directoryConfig) {
       // If directory was muted (doesn't start with /), show from beginning
       const wasMuted = !directory.startsWith('/');
       const truncateMode = wasMuted ? 'tail' : 'head';  // tail = truncate end, head = truncate beginning
-      const dirWidth = directoryConfig.width === -1 ? this.directoryWidth : directoryConfig.width;
-      afterEventColumns.push(normalizeColumn(directory, dirWidth, directoryConfig.align, truncateMode));
+      const dirWidth = directoryConfig.width === 'auto' ? this.directoryWidth : directoryConfig.width as number;
+      const align = directoryConfig.align === 'right' ? 'right' : 'left';
+      columns.push(normalizeColumn(directory, dirWidth, align, truncateMode));
     }
     
-    // Build result
-    const beforeEvent = columns.join(' ') + ' ';
-    const afterEvent = ' ' + afterEventColumns.join(' ');
-    let result = beforeEvent + eventTypeColored + afterEvent;
+    // Build result from all columns (including event in the correct position)
+    let result = columns.join(' ');
     
     // Apply selection highlight
     if (this.selected) {
       result = bg(result, 'blue');
     } else {
       // Apply green text color for non-selected rows (Claude Code style)
-      // Only apply green to parts that don't have event type colors
-      result = fg(beforeEvent, 'green') + eventTypeColored + fg(afterEvent, 'green');
+      result = fg(result, 'green');
     }
     
     // Cache the result

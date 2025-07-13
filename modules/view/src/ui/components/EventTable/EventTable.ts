@@ -8,11 +8,11 @@
 import blessed from 'blessed';
 import { EventRow as EventRowData } from '../../../types/event-row';
 import { EventRow } from './EventRow';
-import { EventTableOptions, EventTableColors, updateColumnConfigsFromView, generateColorsFromView, COLUMN_CONFIGS } from './types';
+import { EventTableOptions, EventTableColors, generateColorsFromView } from './types';
 import { HeaderRenderer } from './renderers';
 import { stripTags } from './utils/stringUtils';
 import { style } from '../../utils/styleFormatter';
-import { defaultViewConfig } from '../../../config/ViewConfig';
+import { ViewConfig, defaultViewConfig } from '../../../config/ViewConfig';
 
 export class EventTable {
   private box: blessed.Widgets.BoxElement;
@@ -25,15 +25,16 @@ export class EventTable {
   private directoryWidth: number = 40; // Will be calculated dynamically
   private colors: EventTableColors;
   private directoryMutePaths?: string[];
+  private viewConfig: ViewConfig;
   
   constructor(options: EventTableOptions, screenWidth: number) {
     this.screenWidth = screenWidth;
     
-    // Update column configurations from config
-    const viewConfig = options.viewConfig || defaultViewConfig;
-    updateColumnConfigsFromView(viewConfig);
-    this.colors = generateColorsFromView(viewConfig);
-    this.directoryMutePaths = viewConfig.display.directoryMutePaths;
+    // Store ViewConfig reference
+    this.viewConfig = options.viewConfig || defaultViewConfig;
+    
+    this.colors = generateColorsFromView(this.viewConfig);
+    this.directoryMutePaths = this.viewConfig.display.directoryMutePaths;
     
     this.calculateDirectoryWidth();
     
@@ -96,7 +97,7 @@ export class EventTable {
         row.update(event);
       } else {
         // Create new row
-        row = new EventRow(event, this.directoryWidth, this.colors, this.directoryMutePaths);
+        row = new EventRow(event, this.viewConfig, this.directoryWidth, this.colors, this.directoryMutePaths);
         this.rows.set(event.id, row);
       }
       
@@ -168,19 +169,23 @@ export class EventTable {
    * Calculate dynamic directory column width
    */
   private calculateDirectoryWidth(): void {
-    // Calculate fixed width from COLUMN_CONFIGS
+    // Calculate fixed width from ViewConfig
     let fixedWidth = 0;
     let columnCount = 0;
     
-    for (const col of COLUMN_CONFIGS) {
-      if (col.width > 0) { // Skip directory column which has width -1
-        fixedWidth += col.width;
+    const columns = this.viewConfig.display.columns;
+    const columnsOrder = this.viewConfig.display['columns-order'] || [];
+    
+    for (const columnName of columnsOrder) {
+      const columnConfig = columns[columnName];
+      if (columnConfig && columnConfig.visible && columnConfig.width !== 'auto') {
+        fixedWidth += columnConfig.width as number;
         columnCount++;
       }
     }
     
     // Add spacing between columns (1 space between each column)
-    const spacing = Math.max(0, COLUMN_CONFIGS.length - 1);
+    const spacing = Math.max(0, columnCount);
     fixedWidth += spacing;
     
     this.directoryWidth = Math.max(20, this.screenWidth - fixedWidth);
@@ -190,14 +195,14 @@ export class EventTable {
    * Get table header
    */
   getHeader(): string {
-    return HeaderRenderer.renderHeader(this.screenWidth, this.directoryWidth);
+    return HeaderRenderer.renderHeader(this.viewConfig, this.screenWidth, this.directoryWidth);
   }
 
   /**
    * Get column header line only
    */
   getColumnHeader(): string {
-    return HeaderRenderer.renderColumnLine(this.directoryWidth);
+    return HeaderRenderer.renderColumnLine(this.viewConfig, this.directoryWidth);
   }
 
   /**
