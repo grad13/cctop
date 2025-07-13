@@ -4,8 +4,8 @@
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 **⛔ 更新禁止**: この注意書きの変更・削除は絶対禁止です。
 
-**最終更新**: 2025-07-13 14:55 JST  
-**現在作業**: ✅ ViewConfig連動強化実装完了
+**最終更新**: 2025-07-13 18:15 JST  
+**現在作業**: ✅ Lines/Blocks NULL値表示改善完了・v0.5.4.1リリース
 
 ## 🚨 セッション開始時必須確認（P045強制遵守）
 **現在作業判定**: UI開発タスク継続 → **コード関連作業**  
@@ -32,6 +32,41 @@
 ---
 
 ## 🎯 現在の作業状況（2025-07-13 14:55）
+
+### **ViewConfig直接参照実装完了（2025-07-13 17:19）**
+- **worktree**: `feature-07-13-view-config-integration`
+- **実装内容**:
+  - COLUMN_CONFIGS完全廃止（types.ts）
+  - EventRow.tsをViewConfig直接参照に変更（コンストラクタ変更）
+  - EventTable.tsでCOLUMN_CONFIGS参照を全削除、ViewConfig直接参照に変更
+  - calculateDirectoryWidth()をViewConfig.display.columnsから計算に変更
+  - HeaderRenderer.ts、columnConfig.ts（既に修正済み）
+  - RowRenderer.ts一時的修正（廃止クラス）
+- **ユーザー要求**:
+  - 「デフォルト値は全て削除しろ」
+  - 「view-configしかないんでしょ」
+  - 例外は初期化時にview-config.jsonを作成するためのdefaultViewConfigのみ
+- **結果**:
+  - ビルド成功
+  - view-config.jsonが唯一の情報源として機能
+  - 中間的なCOLUMN_CONFIGSグローバル変数を完全除去
+  - event列表示問題修正（switch文にeventケース追加）
+  - git commit完了: `d2e52d2` "refactor: implement direct ViewConfig reference by eliminating all default values"
+
+### **Lines/Blocks NULL値表示改善完了（2025-07-13 18:15）**
+- **実装内容**:
+  - PLAN-20250713-038の実行完了
+  - EventQueryAdapter.tsのCOALESCE削除（null値保持）
+  - EventRow.tsでnull/undefined値を"-"表示に変更
+  - Database層からView層まで一貫した改善
+- **ユーザー体験向上**:
+  - null値と0値の明確な区別
+  - バイナリファイル等での未測定データを"-"で表示
+  - より直感的なUI表示
+- **技術的成果**:
+  - git commit: `3141764` "feat: display null values as '-' for Lines and Blocks columns"
+  - v0.5.4.1タグ作成完了
+  - リリースノート付きでバージョン管理
 
 ### **ViewConfig連動強化実装完了**
 - **worktree**: `feature-07-13-view-config-integration`
