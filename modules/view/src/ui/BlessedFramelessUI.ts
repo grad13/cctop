@@ -9,7 +9,7 @@
 import * as path from 'path';
 import { EventRow } from '../types/event-row';
 import { FileEventReader } from '../database/FileEventReader';
-import { CLIConfig } from '../config/cli-config';
+import { ViewConfig } from '../config/ViewConfig';
 import { ConfigLoader } from '../config/config-loader';
 import { LocalSetupInitializer } from '../config/local-setup-initializer';
 import { DaemonStatusMonitor } from '../utils/daemon-status-monitor';
@@ -24,7 +24,7 @@ export interface UIFramelessConfigSimple {
   refreshInterval?: number;
   maxRows?: number;
   displayMode?: DisplayMode;
-  config?: CLIConfig;
+  viewConfig?: ViewConfig;
 }
 
 export class BlessedFramelessUISimple {
@@ -37,7 +37,7 @@ export class BlessedFramelessUISimple {
 
   // Data and configuration
   private db: FileEventReader;
-  private cliConfig!: CLIConfig;
+  private viewConfig!: ViewConfig;
   private refreshTimer?: NodeJS.Timeout;
   private daemonStatusMonitor: DaemonStatusMonitor;
   private initConfig?: UIFramelessConfigSimple;
@@ -63,23 +63,23 @@ export class BlessedFramelessUISimple {
 
   private async initializeConfig(config: UIFramelessConfigSimple): Promise<void> {
     try {
-      if (config.config) {
-        this.cliConfig = config.config;
+      if (config.viewConfig) {
+        this.viewConfig = config.viewConfig;
       } else {
         // Create config loader and load configuration
         const configLoader = new ConfigLoader();
         const mergedConfig = await configLoader.loadConfiguration();
-        this.cliConfig = mergedConfig.cli;
+        this.viewConfig = mergedConfig.view;
       }
       
       // Set maxRows from config if provided
-      if (this.cliConfig.display?.maxRows) {
-        this.uiState.setViewportHeight(this.cliConfig.display.maxRows);
+      if (this.viewConfig.display?.maxEvents) {
+        this.uiState.setViewportHeight(this.viewConfig.display.maxEvents);
       }
     } catch (error) {
-      // Use default CLIConfig object (import default)
-      const { defaultCLIConfig } = require('../config/cli-config');
-      this.cliConfig = defaultCLIConfig;
+      // Use default ViewConfig object (import default)
+      const { defaultViewConfig } = require('../config/ViewConfig');
+      this.viewConfig = defaultViewConfig;
     }
   }
 
@@ -172,7 +172,7 @@ export class BlessedFramelessUISimple {
     const screen = this.screenManager.initializeScreen();
     
     // Initialize layout manager
-    this.layoutManager = new UILayoutManager(screen, this.uiState, this.cliConfig);
+    this.layoutManager = new UILayoutManager(screen, this.uiState, this.viewConfig);
     this.layoutManager.setupFramelessLayout();
     
     // Initialize key handler

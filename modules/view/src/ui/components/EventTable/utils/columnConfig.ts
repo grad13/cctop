@@ -2,43 +2,55 @@
  * Column configuration utilities for EventTable
  */
 
-import { ColumnConfig, COLUMN_CONFIGS } from '../types';
+import { ViewConfig } from '../../../../config/ViewConfig';
 import { normalizeColumn } from './columnNormalizer';
 
 /**
- * Calculate total fixed width of columns
+ * Generate header line directly from ViewConfig
  */
-export function calculateFixedWidth(columns: ColumnConfig[]): number {
-  return columns
-    .filter(col => col.width > 0)
-    .reduce((sum, col) => sum + col.width, 0);
-}
-
-/**
- * Calculate spacing between columns
- */
-export function calculateColumnSpacing(columns: ColumnConfig[]): number {
-  // 1 space between each column
-  return Math.max(0, columns.length - 1);
-}
-
-/**
- * Generate header line with proper alignment for each column
- */
-export function generateHeaderLine(directoryWidth: number = 40): string {
+export function generateHeaderLine(viewConfig: ViewConfig, directoryWidth: number = 40): string {
   const parts: string[] = [];
+  const columns = viewConfig.display.columns;
+  const columnsOrder = viewConfig.display['columns-order'] || [];
   
-  for (const col of COLUMN_CONFIGS) {
-    const width = col.width === -1 ? directoryWidth : col.width;
-    const headerText = col.headerText || col.name;
-    const headerAlign = col.headerAlign || col.align;
-    
-    // Use unified normalizeColumn function
-    const formattedHeader = normalizeColumn(headerText, width, headerAlign);
+  // Generate headers in the order specified by columns-order
+  for (const columnName of columnsOrder) {
+    const columnConfig = columns[columnName];
+    if (columnConfig && columnConfig.visible) {
+      const width = columnConfig.width === 'auto' ? directoryWidth : columnConfig.width as number;
+      const headerText = getHeaderText(columnName);
+      const headerAlign = columnConfig.align === 'right' ? 'right' : 'left';
+      
+      const formattedHeader = normalizeColumn(headerText, width, headerAlign);
+      parts.push(formattedHeader);
+    }
+  }
+  
+  // Always add directory column at the end if visible
+  if (columns.directory && columns.directory.visible) {
+    const headerText = 'Directory';
+    const formattedHeader = normalizeColumn(headerText, directoryWidth, 'left');
     parts.push(formattedHeader);
   }
   
   return parts.join(' ');
+}
+
+/**
+ * Get header text for column name
+ */
+function getHeaderText(columnName: string): string {
+  const headerMap: Record<string, string> = {
+    timestamp: 'Event Timestamp',
+    elapsed: 'Elapsed',
+    fileName: 'File Name',
+    event: 'Event',
+    lines: 'Lines',
+    blocks: 'Blks',
+    size: 'Size',
+    directory: 'Directory'
+  };
+  return headerMap[columnName] || columnName;
 }
 
 /**

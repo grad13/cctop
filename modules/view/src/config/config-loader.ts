@@ -5,12 +5,15 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { CLIConfig, defaultCLIConfig, SharedConfig, defaultSharedConfig, DaemonConfig, defaultDaemonConfig, LocalSetupInitializer } from '@cctop/shared';
+import { ViewConfig } from './ViewConfig';
+import { ViewConfigManager } from './ViewConfigManager';
 
 
 export interface MergedConfig {
   cli: CLIConfig;
   shared: SharedConfig;
   daemon: DaemonConfig;
+  view: ViewConfig;
   configPath: string;
 }
 
@@ -37,21 +40,25 @@ export class ConfigLoader {
       const sharedConfig = await this.loadSharedConfig(configPath);
       const daemonConfig = await this.loadDaemonConfig(configPath);
       const cliConfig = await this.loadCLIConfig(configPath);
+      const viewConfig = await this.loadViewConfig(configPath);
       
       return {
         cli: cliConfig,
         shared: sharedConfig,
         daemon: daemonConfig,
+        view: viewConfig,
         configPath
       };
     } catch (error) {
       // Fallback to defaults if config loading fails
       const errorMessage = error instanceof Error ? error.message : String(error);
       console.warn(`Failed to load configuration: ${errorMessage}. Using defaults.`);
+      const viewConfigManager = new ViewConfigManager(configPath);
       return {
         cli: defaultCLIConfig,
         shared: defaultSharedConfig,
         daemon: defaultDaemonConfig,
+        view: viewConfigManager.getViewConfig(),
         configPath
       };
     }
@@ -97,6 +104,14 @@ export class ConfigLoader {
     
     // Deep merge with defaults to ensure all required fields
     return this.deepMerge(defaultCLIConfig, config);
+  }
+  
+  /**
+   * Load view configuration
+   */
+  private async loadViewConfig(configPath: string): Promise<ViewConfig> {
+    const viewConfigManager = new ViewConfigManager(configPath);
+    return await viewConfigManager.loadViewConfig();
   }
   
   /**
