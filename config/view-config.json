@@ -1,0 +1,47 @@
+{
+  "version": "0.3.0.0",
+  "display": {
+    "maxEvents": 20,
+    "refreshRateMs": 100,
+    "dateFormat": "YYYY-MM-DD HH:mm:ss",
+    "columns": {
+      "timestamp": {
+        "label": "Event Timestamp",
+        "width": 19,
+        "visible": true,
+        "align": "left"
+      },
+      "elapsed": {
+        "label": "Elapsed",
+        "width": 9,
+        "visible": true,
+        "align": "right"
+      },
+      "fileName": {
+        "label": "File Name",
+        "width": 35,
+        "visible": true,
+        "align": "left"
+      }
+    },
+    "directoryMutePaths": [],
+    "columns-order": []
+  },
+  "colors": {
+    "find": "#00ff00",
+    "create": "#ffff00",
+    "modify": "#ff8800",
+    "delete": "#ff0000",
+    "move": "#00ffff",
+    "back": "#888888"
+  },
+  "interactive": {
+    "keyRepeatDelay": 500,
+    "keyRepeatInterval": 50,
+    "selectionHighlight": "#ffffff"
+  },
+  "locale": {
+    "language": "en",
+    "timezone": "UTC"
+  }
+}
