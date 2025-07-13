@@ -8,7 +8,7 @@
 import blessed from 'blessed';
 import { EventRow as EventRowData } from '../../../types/event-row';
 import { EventRow } from './EventRow';
-import { EventTableOptions, EventTableColors, updateColumnConfigsFromView, generateColorsFromView } from './types';
+import { EventTableOptions, EventTableColors, updateColumnConfigsFromView, generateColorsFromView, COLUMN_CONFIGS } from './types';
 import { HeaderRenderer } from './renderers';
 import { stripTags } from './utils/stringUtils';
 import { style } from '../../utils/styleFormatter';
@@ -154,10 +154,6 @@ export class EventTable {
    * Update box content with minimal re-render
    */
   private updateContent(content: string): void {
-    // Debug - log what content is being set
-    const fs = require('fs');
-    fs.appendFileSync('.cctop/logs/eventtable-debug.log', `EventTable updateContent: content="${content.substring(0, 500)}"\n`);
-    
     const currentContent = this.box.getContent();
     const currentStripped = stripTags(currentContent);
     const newStripped = stripTags(content);
@@ -172,8 +168,21 @@ export class EventTable {
    * Calculate dynamic directory column width
    */
   private calculateDirectoryWidth(): void {
-    // Fixed columns total: 19 + 1 + 8 + 1 + 35 + 1 + 6 + 1 + 5 + 1 + 4 + 1 + 7 + 1 = 91
-    const fixedWidth = 91;
+    // Calculate fixed width from COLUMN_CONFIGS
+    let fixedWidth = 0;
+    let columnCount = 0;
+    
+    for (const col of COLUMN_CONFIGS) {
+      if (col.width > 0) { // Skip directory column which has width -1
+        fixedWidth += col.width;
+        columnCount++;
+      }
+    }
+    
+    // Add spacing between columns (1 space between each column)
+    const spacing = Math.max(0, COLUMN_CONFIGS.length - 1);
+    fixedWidth += spacing;
+    
     this.directoryWidth = Math.max(20, this.screenWidth - fixedWidth);
   }
 

@@ -6,7 +6,7 @@ import { EventRow as EventRowData } from '../../../types/event-row';
 import { normalizeColumn } from './utils/columnNormalizer';
 import { TimeFormatter, EventTypeFormatter, FileSizeFormatter } from './formatters';
 import { fg, bg } from '../../utils/styleFormatter';
-import { EventTableColors } from './types';
+import { EventTableColors, COLUMN_CONFIGS } from './types';
 
 export class EventRow {
   private data: EventRowData;
@@ -110,25 +110,58 @@ export class EventRow {
       }
     }
 
-    // Normalize columns using unified function
+    // Get column configurations
+    const getColumnConfig = (name: string) => {
+      return COLUMN_CONFIGS.find(col => col.name === name);
+    };
+
+    // Normalize columns using column configurations
     const columns = [];
-    columns.push(normalizeColumn(timestamp, 19, 'left'));
-    columns.push(normalizeColumn(elapsed, 8, 'right'));
-    columns.push(normalizeColumn(filename, 35, 'left', 'tail'));
+    
+    const timestampConfig = getColumnConfig('timestamp');
+    if (timestampConfig) {
+      columns.push(normalizeColumn(timestamp, timestampConfig.width, timestampConfig.align));
+    }
+    
+    const elapsedConfig = getColumnConfig('elapsed');
+    if (elapsedConfig) {
+      columns.push(normalizeColumn(elapsed, elapsedConfig.width, elapsedConfig.align));
+    }
+    
+    const filenameConfig = getColumnConfig('filename');
+    if (filenameConfig) {
+      columns.push(normalizeColumn(filename, filenameConfig.width, filenameConfig.align, filenameConfig.truncate));
+    }
     
     // Event type with color
     const eventTypeColored = this.colorizeEventType(eventTypeRaw);
     
     // Remaining columns
     const afterEventColumns = [];
-    afterEventColumns.push(normalizeColumn(lines, 5, 'right'));
-    afterEventColumns.push(normalizeColumn(blocks, 4, 'right'));
-    afterEventColumns.push(normalizeColumn(size, 7, 'right'));
     
-    // If directory was muted (doesn't start with /), show from beginning
-    const wasMuted = !directory.startsWith('/');
-    const truncateMode = wasMuted ? 'tail' : 'head';  // tail = truncate end, head = truncate beginning
-    afterEventColumns.push(normalizeColumn(directory, this.directoryWidth, 'left', truncateMode));
+    const linesConfig = getColumnConfig('lines');
+    if (linesConfig) {
+      afterEventColumns.push(normalizeColumn(lines, linesConfig.width, linesConfig.align));
+    }
+    
+    const blocksConfig = getColumnConfig('blocks');
+    if (blocksConfig) {
+      afterEventColumns.push(normalizeColumn(blocks, blocksConfig.width, blocksConfig.align));
+    }
+    
+    const sizeConfig = getColumnConfig('size');
+    if (sizeConfig) {
+      afterEventColumns.push(normalizeColumn(size, sizeConfig.width, sizeConfig.align));
+    }
+    
+    const directoryConfig = getColumnConfig('directory');
+    if (directoryConfig) {
+      // If directory was muted (doesn't start with /), show from beginning
+      const wasMuted = !directory.startsWith('/');
+      const truncateMode = wasMuted ? 'tail' : 'head';  // tail = truncate end, head = truncate beginning
+      const dirWidth = directoryConfig.width === -1 ? this.directoryWidth : directoryConfig.width;
+      afterEventColumns.push(normalizeColumn(directory, dirWidth, directoryConfig.align, truncateMode));
+    }
     
     // Build result
     const beforeEvent = columns.join(' ') + ' ';
