@@ -3,7 +3,7 @@
  * Records file system events to SQLite database with modular architecture
  */
 
-import { FileEvent } from '@cctop/shared';
+import { FileEvent } from '../../../shared/dist';
 import { EventMeasurement, MeasurementResult } from './types';
 import { EventStorageConnection } from './EventStorageConnection';
 import { SchemaManager } from './SchemaManager';

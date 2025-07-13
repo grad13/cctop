@@ -4,7 +4,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import { SharedConfig, defaultSharedConfig, DaemonConfig, defaultDaemonConfig } from '@cctop/shared';
+import { SharedConfig, defaultSharedConfig, DaemonConfig, defaultDaemonConfig } from '../../../shared/dist';
 import { ViewConfig } from './ViewConfig';
 import { ViewConfigManager } from './ViewConfigManager';
 

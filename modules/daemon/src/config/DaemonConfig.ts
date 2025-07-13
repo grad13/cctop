@@ -3,7 +3,7 @@
  * 3-Layer Configuration Architecture Implementation
  */
 
-import { DaemonConfig } from '@cctop/shared';
+import { DaemonConfig } from '../../../shared/dist';
 import * as path from 'path';
 import * as fs from 'fs/promises';
 
