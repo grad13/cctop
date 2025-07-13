@@ -148,13 +148,6 @@ export class UILayoutManager {
     this.screen.append(this.statusBar);
     this.screen.append(this.keyGuideBar);
     this.screen.append(this.dynamicControlBar);
-    
-    // Debug - log screen children to see what components exist
-    const fs = require('fs');
-    fs.appendFileSync('.cctop/logs/screen-debug.log', `Screen children count: ${this.screen.children.length}\n`);
-    this.screen.children.forEach((child: any, index: number) => {
-      fs.appendFileSync('.cctop/logs/screen-debug.log', `Child ${index}: ${child.constructor.name}, position: ${JSON.stringify({top: child.top, left: child.left, width: child.width, height: child.height})}\n`);
-    });
   }
 
   buildHeaderContent(): string {
