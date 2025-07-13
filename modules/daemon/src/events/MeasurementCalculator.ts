@@ -4,6 +4,7 @@
  */
 
 import * as fs from 'fs/promises';
+import * as path from 'path';
 import { LogManager } from '../logging/LogManager';
 import { MeasurementResult } from '../database/types';
 
@@ -27,25 +28,24 @@ export class MeasurementCalculator {
       const isBinary = await this.isBinaryFile(filePath);
       
       if (isBinary) {
-        // For binary files, only calculate block count
-        const blockCount = this.calculateBlockCount(stats.size);
+        // For binary files, no structure analysis
         return {
           inode: inode,
           fileSize: stats.size,
           lineCount: 0,
-          blockCount: blockCount
+          blockCount: null
         };
       }
 
-      // For text files, calculate both line count and block count
+      // For text files, calculate both line count and structure count
       const lineCount = await this.calculateLineCount(filePath);
-      const blockCount = this.calculateBlockCount(stats.size);
+      const structureCount = await this.calculateStructureCount(filePath, stats.size);
 
       return {
         inode: inode,
         fileSize: stats.size,
         lineCount: lineCount,
-        blockCount: blockCount
+        blockCount: structureCount
       };
 
     } catch (error) {
@@ -54,7 +54,7 @@ export class MeasurementCalculator {
         inode: inode,
         fileSize: 0,
         lineCount: 0,
-        blockCount: 0
+        blockCount: null
       };
     }
   }
@@ -128,10 +128,37 @@ export class MeasurementCalculator {
   }
 
   /**
-   * Calculate block count based on file size
+   * Calculate structure count based on file content and type
+   * Returns semantic structure elements count (sections, functions, classes)
+   */
+  private async calculateStructureCount(filePath: string, fileSize: number): Promise<number | null> {
+    const ext = path.extname(filePath).toLowerCase();
+    
+    try {
+      switch (ext) {
+        case '.md':
+          return await this.countMarkdownSections(filePath);
+        case '.py':
+          return await this.countPythonStructures(filePath);
+        case '.js':
+        case '.ts':
+        case '.jsx':
+        case '.tsx':
+          return await this.countJavaScriptFunctions(filePath);
+        default:
+          return null; // Unsupported file types
+      }
+    } catch (error) {
+      this.logger.log('warn', `Failed to analyze structure for ${filePath}: ${error}`);
+      return null;
+    }
+  }
+
+  /**
+   * Calculate physical block count (fallback for binary files)
    * Using 512-byte blocks (traditional Unix block size)
    */
-  private calculateBlockCount(fileSize: number): number {
+  private calculatePhysicalBlocks(fileSize: number): number {
     const BLOCK_SIZE = 512;
     return Math.ceil(fileSize / BLOCK_SIZE);
   }
@@ -177,5 +204,85 @@ export class MeasurementCalculator {
       binaryFiles,
       textFiles
     };
+  }
+
+  /**
+   * Count Markdown sections (# headers)
+   */
+  private async countMarkdownSections(filePath: string): Promise<number> {
+    try {
+      const content = await fs.readFile(filePath, 'utf-8');
+      const lines = content.split('\n');
+      let sectionCount = 0;
+
+      for (const line of lines) {
+        const trimmed = line.trim();
+        // Count lines that start with # (excluding code blocks)
+        if (trimmed.match(/^#+\s+/)) {
+          sectionCount++;
+        }
+      }
+
+      return sectionCount;
+    } catch (error) {
+      this.logger.log('warn', `Error counting Markdown sections for ${filePath}: ${error}`);
+      return 0;
+    }
+  }
+
+  /**
+   * Count Python structures (class and def declarations)
+   */
+  private async countPythonStructures(filePath: string): Promise<number> {
+    try {
+      const content = await fs.readFile(filePath, 'utf-8');
+      const lines = content.split('\n');
+      let structureCount = 0;
+
+      for (const line of lines) {
+        const trimmed = line.trim();
+        // Count class and def declarations (excluding comments and strings)
+        if (trimmed.match(/^(class|def)\s+\w+/) && !trimmed.startsWith('#')) {
+          structureCount++;
+        }
+      }
+
+      return structureCount;
+    } catch (error) {
+      this.logger.log('warn', `Error counting Python structures for ${filePath}: ${error}`);
+      return 0;
+    }
+  }
+
+  /**
+   * Count JavaScript/TypeScript functions
+   */
+  private async countJavaScriptFunctions(filePath: string): Promise<number> {
+    try {
+      const content = await fs.readFile(filePath, 'utf-8');
+      let functionCount = 0;
+
+      // Match various function declarations
+      const functionPatterns = [
+        /function\s+\w+\s*\(/g,           // function name()
+        /\w+\s*:\s*function\s*\(/g,      // name: function()
+        /\w+\s*=\s*function\s*\(/g,      // name = function()
+        /\w+\s*=\s*\([^)]*\)\s*=>/g,     // name = () =>
+        /\w+\s*:\s*\([^)]*\)\s*=>/g,     // name: () =>
+        /^\s*\w+\s*\([^)]*\)\s*\{/gm,    // name() { (method declaration)
+      ];
+
+      for (const pattern of functionPatterns) {
+        const matches = content.match(pattern);
+        if (matches) {
+          functionCount += matches.length;
+        }
+      }
+
+      return functionCount;
+    } catch (error) {
+      this.logger.log('warn', `Error counting JavaScript functions for ${filePath}: ${error}`);
+      return 0;
+    }
   }
 }

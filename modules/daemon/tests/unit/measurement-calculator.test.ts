@@ -55,7 +55,7 @@ describe('MeasurementCalculator', () => {
       
       expect(result.inode).toBe(12345);
       expect(result.lineCount).toBe(1);
-      expect(result.blockCount).toBeGreaterThan(0);
+      expect(result.blockCount).toBeNull(); // .txt files are not supported for structure analysis
     });
 
     it('should calculate line count correctly for multiple lines', async () => {
@@ -64,6 +64,7 @@ describe('MeasurementCalculator', () => {
       const result = await calculator.calculateMeasurements(filePath, 12345);
       
       expect(result.lineCount).toBe(4);
+      expect(result.blockCount).toBeNull(); // .txt files are not supported for structure analysis
     });
 
     it('should calculate line count correctly for empty file', async () => {
@@ -71,7 +72,7 @@ describe('MeasurementCalculator', () => {
       const result = await calculator.calculateMeasurements(filePath, 12345);
       
       expect(result.lineCount).toBe(1);
-      expect(result.blockCount).toBe(0);
+      expect(result.blockCount).toBeNull(); // .txt files are not supported for structure analysis
     });
 
     it('should calculate line count correctly for file with trailing newline', async () => {
@@ -80,22 +81,93 @@ describe('MeasurementCalculator', () => {
       const result = await calculator.calculateMeasurements(filePath, 12345);
       
       expect(result.lineCount).toBe(4); // 3 newlines + 1 = 4 lines
+      expect(result.blockCount).toBeNull(); // .txt files are not supported for structure analysis
     });
+  });
 
-    it('should calculate block count correctly for small file', async () => {
-      const content = 'A'.repeat(100); // 100 bytes
-      const filePath = await createTempFile(content);
+  describe('Structure Analysis', () => {
+    it('should count Markdown sections correctly', async () => {
+      const content = `# Main Title
+## Section 1
+Some content here
+### Subsection 1.1
+More content
+## Section 2
+Final content`;
+      const filePath = path.join(tempDir, 'test.md');
+      await fs.writeFile(filePath, content);
+      tempFiles.push(filePath);
+      
       const result = await calculator.calculateMeasurements(filePath, 12345);
       
-      expect(result.blockCount).toBe(1); // 100 bytes = 1 block (512 bytes per block)
+      expect(result.lineCount).toBe(7);
+      expect(result.blockCount).toBe(4); // # ## ### ## = 4 sections
     });
 
-    it('should calculate block count correctly for large file', async () => {
-      const content = 'A'.repeat(1024); // 1024 bytes
-      const filePath = await createTempFile(content);
+    it('should count Python structures correctly', async () => {
+      const content = `class MyClass:
+    def __init__(self):
+        pass
+    
+    def method1(self):
+        return "hello"
+
+def standalone_function():
+    pass
+
+class AnotherClass:
+    def method2(self):
+        pass`;
+      const filePath = path.join(tempDir, 'test.py');
+      await fs.writeFile(filePath, content);
+      tempFiles.push(filePath);
+      
       const result = await calculator.calculateMeasurements(filePath, 12345);
       
-      expect(result.blockCount).toBe(2); // 1024 bytes = 2 blocks
+      expect(result.lineCount).toBe(13);
+      expect(result.blockCount).toBe(6); // 2 classes + 4 functions (__init__, method1, standalone_function, method2) = 6 structures
+    });
+
+    it('should count JavaScript functions correctly', async () => {
+      const content = `function regularFunction() {
+    return "hello";
+}
+
+const arrowFunction = () => {
+    return "world";
+};
+
+class MyClass {
+    methodFunction() {
+        return "method";
+    }
+}
+
+const objectMethod = {
+    myMethod: function() {
+        return "object";
+    }
+};`;
+      const filePath = path.join(tempDir, 'test.js');
+      await fs.writeFile(filePath, content);
+      tempFiles.push(filePath);
+      
+      const result = await calculator.calculateMeasurements(filePath, 12345);
+      
+      expect(result.lineCount).toBe(19);
+      expect(result.blockCount).toBeGreaterThan(0); // At least some functions should be detected
+    });
+
+    it('should return null for unsupported file types', async () => {
+      const content = 'Some content';
+      const filePath = path.join(tempDir, 'test.xyz');
+      await fs.writeFile(filePath, content);
+      tempFiles.push(filePath);
+      
+      const result = await calculator.calculateMeasurements(filePath, 12345);
+      
+      expect(result.lineCount).toBe(1);
+      expect(result.blockCount).toBeNull(); // Unsupported file type
     });
   });
 
@@ -109,7 +181,7 @@ describe('MeasurementCalculator', () => {
       const result = await calculator.calculateMeasurements(filePath, 12345);
       
       expect(result.lineCount).toBe(0); // Binary files should have 0 line count
-      expect(result.blockCount).toBe(1);
+      expect(result.blockCount).toBeNull(); // Binary files have no structure analysis
     });
 
     it('should detect binary file with high non-printable character ratio', async () => {
@@ -126,7 +198,7 @@ describe('MeasurementCalculator', () => {
       const result = await calculator.calculateMeasurements(filePath, 12345);
       
       expect(result.lineCount).toBe(0);
-      expect(result.blockCount).toBe(1);
+      expect(result.blockCount).toBeNull(); // Binary files have no structure analysis
     });
 
     it('should treat text file with some non-printable characters as text', async () => {
@@ -137,7 +209,7 @@ describe('MeasurementCalculator', () => {
       const result = await calculator.calculateMeasurements(filePath, 12345);
       
       expect(result.lineCount).toBeGreaterThan(0);
-      expect(result.blockCount).toBe(1);
+      expect(result.blockCount).toBeNull(); // .txt files are not supported for structure analysis
     });
   });
 
@@ -148,7 +220,7 @@ describe('MeasurementCalculator', () => {
       
       expect(result.inode).toBe(12345);
       expect(result.lineCount).toBe(0);
-      expect(result.blockCount).toBe(0);
+      expect(result.blockCount).toBeNull(); // Error case returns null
     });
 
     it('should handle file with only newlines', async () => {

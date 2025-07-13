@@ -25,7 +25,7 @@ export interface MeasurementResult {
   inode: number;
   fileSize: number;
   lineCount: number;
-  blockCount: number;
+  blockCount: number | null;
 }
 
 export interface EventRow {

@@ -70,7 +70,7 @@ export class FileEventHandler {
             inode: result.inode,
             fileSize: stats?.size || 0,
             lineCount: result.lineCount,
-            blockCount: result.blockCount
+            blockCount: result.blockCount ?? undefined
           };
           this.logger.debugLog(`DEBUG: measurement created`, { filePath, measurement });
         } else {
@@ -80,7 +80,7 @@ export class FileEventHandler {
             inode: inode,
             fileSize: 0,
             lineCount: 0,
-            blockCount: 0
+            blockCount: undefined
           };
           this.logger.debugLog(`DEBUG: delete/move measurement created`, { filePath, measurement });
         }
@@ -92,7 +92,7 @@ export class FileEventHandler {
           inode: inode,
           fileSize: 0,
           lineCount: 0,
-          blockCount: 0
+          blockCount: undefined
         };
         this.logger.debugLog(`DEBUG: error measurement created`, { filePath, measurement });
       }
@@ -195,7 +195,7 @@ export class FileEventHandler {
           inode: result.inode,
           fileSize: result.fileSize,
           lineCount: result.lineCount,
-          blockCount: result.blockCount
+          blockCount: result.blockCount ?? undefined
         };
         await this.db.insertEvent(event, measurement);
         this.logger.debugLog(`Move detected (unlink→add)`, { from: pendingUnlink.filePath, to: filePath });
@@ -269,7 +269,7 @@ export class FileEventHandler {
             inode: result.inode,
             fileSize: result.fileSize,
             lineCount: result.lineCount,
-            blockCount: result.blockCount
+            blockCount: result.blockCount ?? undefined
           };
           await this.db.insertEvent(moveEvent, measurement);
           this.logger.debugLog(`Move detected (create→add same inode)`, { from: createEvent.filePath, to: filePath });
