@@ -52,13 +52,17 @@ PLAN-YYYYMMDD-XXX-brief-description.md
 | 032 | [`PLAN-20250701-032`](PLAN-20250701-032-v030-module-integration.md) | v0.3.0モジュール統合・実行可能環境構築計画 | Builder | 計画書作成完了・実行承認待ち | 🏗️ システム移行 |
 | 033 | [`PLAN-20250701-033`](PLAN-20250701-033-code-directory-restructure.md) | Code Directory Restructure Plan | Clerk | 計画書作成完了・実行承認待ち | 🏗️ システム移行 |
 | 034 | [`PLAN-20250703-034`](PLAN-20250703-034-runner-role-introduction.md) | Runner Role導入計画 | Clerk | 計画書作成完了・実行承認待ち | 🏗️ システム移行 |
+| 035 | [`PLAN-20250708-035`](PLAN-20250708-035-cctop-v030-release-preparation.md) | cctop v0.5.0.0 リリース準備計画 | Clerk | 計画書作成中・議論調整中 | 🚀 プロダクトリリース |
+| 036 | [`PLAN-20250709-036`](PLAN-20250709-036-ui-state-simplification.md) | UI状態管理簡素化計画 | Builder | 計画書作成完了・実行承認待ち | 🔧 開発プロセス改善 |
+| 037 | [`PLAN-20250709-037`](PLAN-20250709-037-simple-ui-state-fix.md) | シンプルUI状態管理修正計画 | Builder | 計画書作成完了・実行承認待ち | 🔧 開発プロセス改善 |
+| 038 | [`PLAN-20250713-038`](PLAN-20250713-038-lines-blocks-null-display-fix.md) | Lines/Blocks NULL値表示改善計画 | Builder | 実行完了 ✅ | 🔧 開発プロセス改善 |
 
 ### 📝 アーカイブされた計画書
 
 2025-06-29のL2→L3移行により、以下の計画書がアーカイブされました：
 - PLAN-20250622-001 〜 PLAN-20250626-003（計18ファイル）
 - 検索は `patterns "計画書名" archives/2025/0623-0629/` で可能です
-- 番号は欠番となりますが、新規計画書は連番を継続します（次は035から）
+- 番号は欠番となりますが、新規計画書は連番を継続します（次は037から）
 
 ## 🔄 計画書のライフサイクル
 
