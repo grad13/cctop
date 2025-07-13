@@ -1,10 +1,12 @@
 /**
  * UI State Management
  * Simplified state management for display, filters, and search
+ * Updated for Phase 3: Uses separated state management classes
  */
 
 import { EventRow } from '../types/event-row';
 import { EventTypeFilterFlags } from './EventTypeFilterFlags';
+import { UIViewportState, UIDataState } from './state';
 
 // Display States
 export type DisplayState = 'stream_live' | 'event_type_filter' | 'keyword_filter' | 'stream_paused' | 'detail';
@@ -26,22 +28,12 @@ export class UIState {
     searchPattern: string;
   };
   
-  // Current event data (after filtering)
-  events: EventRow[] = [];
+  // Separated state management (Phase 3)
+  private viewportState = new UIViewportState();
+  private dataState = new UIDataState();
   
   // UI state
-  private selectedIndex: number = 0;
   private daemonStatus: string = '{yellow-fg}Daemon: ●CHECKING{/yellow-fg}';
-  
-  
-  // Viewport management for scrolling
-  private viewportStartIndex: number = 0;
-  private viewportHeight: number = 20;  // Will be updated based on terminal size
-  
-  // Dynamic loading state
-  private hasMoreData: boolean = true;
-  private isLoadingMore: boolean = false;
-  private totalLoaded: number = 0;
 
   constructor(displayMode: DisplayMode = 'all') {
     this.displayMode = displayMode;
@@ -56,15 +48,6 @@ export class UIState {
     this.displayState = state;
   }
 
-  // Pause State
-  isPausedState(): boolean {
-    return this.displayState === 'stream_paused';
-  }
-
-  togglePause(): void {
-    this.displayState = this.displayState === 'stream_paused' ? 'stream_live' : 'stream_paused';
-  }
-
   // Display Mode
   getDisplayMode(): DisplayMode {
     return this.displayMode;
@@ -72,10 +55,9 @@ export class UIState {
 
   setDisplayMode(mode: DisplayMode): void {
     this.displayMode = mode;
-    // Reset UI state for clean mode transition
-    this.selectedIndex = 0;
-    this.viewportStartIndex = 0;
-    this.hasMoreData = true; // Allow fresh data loading
+    // Reset UI state for clean mode transition (using separated states)
+    this.viewportState.resetViewport();
+    this.dataState.setHasMoreData(true); // Allow fresh data loading
   }
 
   // Search Pattern
@@ -116,66 +98,112 @@ export class UIState {
   resetEventFilters(): void {
     this.eventTypeFilters.resetAll();
   }
-  
-  // For backward compatibility
-  hasEventFilter(eventType: string): boolean {
-    return this.eventTypeFilters.isEventTypeEnabled(eventType);
+
+  getActiveFilters(): string[] {
+    // Use the existing countActiveFilters method to determine active filters
+    const allTypes = ['find', 'create', 'modify', 'delete', 'move', 'restore'];
+    return allTypes.filter(type => this.eventTypeFilters.isEventTypeEnabled(type));
   }
 
-  // Reset all filters
-  resetAllFilters(): void {
-    this.displayMode = 'all';
+  // Clear all filters and search
+  clearAllFilters(): void {
     this.eventTypeFilters.resetAll();
     this.searchPattern = '';
   }
 
-  // Events
+  // Events (delegated to data state)
   getEvents(): EventRow[] {
-    return this.events;
+    return this.dataState.getEvents();
   }
 
   setEvents(events: EventRow[]): void {
-    const previousEventCount = this.events.length;
-    this.events = events;
+    this.dataState.setEvents(events);
     
-    // Only reset selection if it's out of bounds
-    if (this.selectedIndex >= events.length && events.length > 0) {
-      this.selectedIndex = events.length - 1;
-    } else if (events.length === 0) {
-      this.selectedIndex = -1;
+    // Adjust viewport for new events
+    const eventsCount = this.dataState.getEventsCount();
+    if (this.viewportState.getSelectedIndex() >= eventsCount && eventsCount > 0) {
+      this.viewportState.setSelectedIndex(eventsCount - 1, eventsCount);
+    } else if (eventsCount === 0) {
+      this.viewportState.setSelectedIndex(-1, eventsCount);
     }
-    
-    // Preserve viewport position unless we're starting fresh
-    if (previousEventCount === 0 || events.length === 0) {
-      this.viewportStartIndex = 0;
-    }
-    
-    this.adjustViewport();
   }
 
   getEventsCount(): number {
-    return this.events.length;
+    return this.dataState.getEventsCount();
   }
 
-  // Selected Index
+  // Selected Index (delegated to viewport state)
   getSelectedIndex(): number {
-    return this.selectedIndex;
+    return this.viewportState.getSelectedIndex();
   }
 
   setSelectedIndex(index: number): void {
-    this.selectedIndex = index;
+    this.viewportState.setSelectedIndex(index, this.dataState.getEventsCount());
   }
 
   moveSelectionUp(): void {
-    this.selectedIndex = Math.max(0, this.selectedIndex - 1);
-    this.adjustViewport();
+    this.viewportState.moveSelectionUp(this.dataState.getEventsCount());
   }
 
   moveSelectionDown(): void {
-    if (this.selectedIndex < this.events.length - 1) {
-      this.selectedIndex++;
-      this.adjustViewport();
-    }
+    this.viewportState.moveSelectionDown(this.dataState.getEventsCount());
+  }
+
+  // Viewport management (delegated to viewport state)
+  getViewportStartIndex(): number {
+    return this.viewportState.getViewportStartIndex();
+  }
+
+  getViewportHeight(): number {
+    return this.viewportState.getViewportHeight();
+  }
+
+  setViewportHeight(height: number): void {
+    this.viewportState.setViewportHeight(height);
+  }
+
+  // Get visible events for current viewport
+  getVisibleEvents(): EventRow[] {
+    return this.viewportState.getVisibleSlice(this.dataState.getEvents());
+  }
+
+  // Data loading state (delegated to data state)
+  hasMoreDataToLoad(): boolean {
+    return this.dataState.hasMoreDataToLoad();
+  }
+
+  setHasMoreData(hasMore: boolean): void {
+    this.dataState.setHasMoreData(hasMore);
+  }
+
+  isLoadingMoreData(): boolean {
+    return this.dataState.isLoadingMoreData();
+  }
+
+  setLoadingMore(loading: boolean): void {
+    this.dataState.setLoadingMore(loading);
+  }
+
+  getTotalLoaded(): number {
+    return this.dataState.getTotalLoaded();
+  }
+
+  setTotalLoaded(total: number): void {
+    // This is handled automatically by dataState.setEvents()
+    // Kept for backward compatibility
+  }
+
+  // Check if should load more data
+  shouldLoadMoreData(): boolean {
+    return this.dataState.shouldLoadMoreData(
+      this.viewportState.getViewportHeight(),
+      this.viewportState.getViewportStartIndex()
+    );
+  }
+
+  // Check if top row is visible
+  isTopRowVisible(): boolean {
+    return this.viewportState.isTopRowVisible();
   }
 
   // Daemon Status
@@ -187,155 +215,94 @@ export class UIState {
     this.daemonStatus = status;
   }
 
+  // Display state management
+  isPausedState(): boolean {
+    return this.displayState === 'stream_paused';
+  }
 
-  // Filter editing start
-  startEditing(mode: 'event_type_filter' | 'keyword_filter'): void {
+  // Dynamic width calculation
+  calculateDynamicWidth(): void {
+    // This might need to be handled elsewhere or removed
+    // For now, just update viewport height based on terminal size
+    const terminalHeight = process.stdout.rows || 24;
+    const headerHeight = 3; // Header lines
+    const controlHeight = 4; // Control area lines
+    const availableHeight = Math.max(1, terminalHeight - headerHeight - controlHeight);
+    this.viewportState.setViewportHeight(availableHeight);
+  }
+
+  // ESC operation support
+  saveCurrentState(): void {
     this.savedState = {
       displayMode: this.displayMode,
       eventTypeFilters: this.eventTypeFilters.clone(),
       searchPattern: this.searchPattern
     };
-    this.displayState = mode;
   }
 
-  // ESC: Cancel editing and restore saved state
-  cancelEditing(): void {
+  restoreFromSaved(): void {
     if (this.savedState) {
       this.displayMode = this.savedState.displayMode;
       this.eventTypeFilters = this.savedState.eventTypeFilters;
       this.searchPattern = this.savedState.searchPattern;
       this.savedState = undefined;
     }
-    this.displayState = 'stream_live';
   }
 
-  // Enter: Confirm editing
-  confirmEditing(): void {
+  clearSavedState(): void {
     this.savedState = undefined;
-    this.displayState = 'stream_live';
   }
 
-  // Dynamic loading state
-  hasMoreDataToLoad(): boolean {
-    return this.hasMoreData;
+  hasSavedState(): boolean {
+    return this.savedState !== undefined;
   }
 
-  setHasMoreData(hasMore: boolean): void {
-    this.hasMoreData = hasMore;
+  // Debug information
+  getStateInfo() {
+    return {
+      displayMode: this.displayMode,
+      displayState: this.displayState,
+      searchPattern: this.searchPattern,
+      viewport: this.viewportState.getViewportInfo(),
+      data: this.dataState.getDataInfo(),
+      daemonStatus: this.daemonStatus
+    };
   }
 
-  isLoadingMoreData(): boolean {
-    return this.isLoadingMore;
-  }
-
-  setLoadingMore(loading: boolean): void {
-    this.isLoadingMore = loading;
-  }
-
-  getTotalLoaded(): number {
-    return this.totalLoaded;
-  }
-
-  setTotalLoaded(total: number): void {
-    this.totalLoaded = total;
-  }
-
-  isNearBottom(): boolean {
-    // Check if user is near the bottom (within last 5 items)
-    const buffer = 5;
-    return this.selectedIndex >= this.events.length - buffer;
-  }
-
-  isScreenFilled(): boolean {
-    return this.events.length >= this.viewportHeight;
-  }
-
-  shouldLoadMoreData(): boolean {
-    // Don't load in filter/search modes
-    if (this.displayState === 'event_type_filter' || this.displayState === 'keyword_filter') {
-      return false;
-    }
-
-    // Must have more data available and not currently loading
-    if (!this.hasMoreData || this.isLoadingMore) {
-      return false;
-    }
-
-    // If screen is not filled, always load more
-    if (!this.isScreenFilled()) {
-      return true;
-    }
-
-    // If screen is filled, only load when near bottom
-    return this.isNearBottom();
-  }
-
-  // Update viewport dimensions based on terminal size
-  calculateDynamicWidth(): void {
-    // Update viewport height based on terminal size
-    const terminalHeight = process.stdout.rows || 24;
-    this.viewportHeight = Math.max(1, terminalHeight - 7);
-  }
-
-  // Viewport management
-  getViewportStartIndex(): number {
-    return this.viewportStartIndex;
-  }
-
-  getViewportHeight(): number {
-    return this.viewportHeight;
-  }
-
-  setViewportHeight(height: number): void {
-    this.viewportHeight = height;
-    this.adjustViewport();
-  }
-
+  // Methods needed by UIKeyHandler (backward compatibility)
   adjustViewport(): void {
-    // Ensure selected item is visible in viewport
-    if (this.selectedIndex < this.viewportStartIndex) {
-      // Selected item is above viewport - scroll up
-      this.viewportStartIndex = this.selectedIndex;
-    } else if (this.selectedIndex >= this.viewportStartIndex + this.viewportHeight) {
-      // Selected item is below viewport - scroll down
-      this.viewportStartIndex = Math.max(0, this.selectedIndex - this.viewportHeight + 1);
+    // This is now handled automatically by viewportState
+    // Kept for backward compatibility with UIKeyHandler
+  }
+
+  startEditing(type: 'filter' | 'search' | 'event_type_filter' | 'keyword_filter'): void {
+    if (type === 'filter' || type === 'event_type_filter') {
+      this.setDisplayState('event_type_filter');
+    } else if (type === 'search' || type === 'keyword_filter') {
+      this.setDisplayState('keyword_filter');
     }
   }
 
-  getVisibleEvents(): EventRow[] {
-    return this.events.slice(
-      this.viewportStartIndex, 
-      this.viewportStartIndex + this.viewportHeight
-    );
-  }
-  
-  isTopRowVisible(): boolean {
-    return this.viewportStartIndex === 0;
+  cancelEditing(): void {
+    this.restoreFromSaved();
+    this.setDisplayState('stream_live');
   }
 
-  getRelativeSelectedIndex(): number {
-    return this.selectedIndex - this.viewportStartIndex;
+  confirmEditing(): void {
+    this.clearSavedState();
+    this.setDisplayState('stream_live');
   }
 
-  // Apply filters to events (for UI display)
-  applyFilters(events: EventRow[]): EventRow[] {
-    let filteredEvents = events;
+  resetAllFilters(): void {
+    this.clearAllFilters();
+    this.setDisplayState('stream_live');
+  }
 
-    // Apply event type filters
-    if (this.eventTypeFilters.countActiveFilters() < 6) {
-      filteredEvents = filteredEvents.filter(event => 
-        this.eventTypeFilters.isEventTypeEnabled(event.event_type)
-      );
+  togglePause(): void {
+    if (this.displayState === 'stream_paused') {
+      this.setDisplayState('stream_live');
+    } else {
+      this.setDisplayState('stream_paused');
     }
-
-    // Note: regex pattern filter is now handled by database search
-    // This method only applies event type filters
-
-    return filteredEvents;
-  }
-
-  // Get active filters for database query
-  getActiveFilters(): string[] {
-    return this.eventTypeFilters.getActiveFilters();
   }
 }

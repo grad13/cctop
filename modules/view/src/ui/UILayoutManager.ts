@@ -8,6 +8,7 @@ import { UIState } from './UIState';
 import { KeywordSearchManager } from '../search';
 import { EventTable } from './components/EventTable';
 import { ViewConfig } from '../config/ViewConfig';
+import { EventTableViewport } from './interfaces/EventTableViewport';
 
 export class UILayoutManager {
   private screen: blessed.Widgets.Screen;
@@ -22,7 +23,7 @@ export class UILayoutManager {
   private dynamicControlBar: any;
   private separatorLine: any;
   private eventArea: any;
-  private eventTable!: EventTable;
+  private eventTable!: EventTableViewport;
 
   constructor(screen: blessed.Widgets.Screen, uiState: UIState, viewConfig?: ViewConfig) {
     this.screen = screen;
@@ -294,8 +295,8 @@ export class UILayoutManager {
     // Calculate relative selected index within viewport
     const selectedIndex = absoluteSelectedIndex - viewportStart;
     
-    // Update event table with optimized rendering
-    this.eventTable.update(visibleEvents, selectedIndex);
+    // Update event table with optimized rendering (using interface)
+    this.eventTable.updateContent(visibleEvents, selectedIndex);
     
     // Force refresh to update elapsed times for existing rows
     this.eventTable.refresh();

@@ -13,8 +13,9 @@ import { HeaderRenderer } from './renderers';
 import { stripTags } from './utils/stringUtils';
 import { style } from '../../utils/styleFormatter';
 import { ViewConfig, defaultViewConfig } from '../../../config/ViewConfig';
+import { EventTableViewport, ViewportInfo } from '../../interfaces/EventTableViewport';
 
-export class EventTable {
+export class EventTable implements EventTableViewport {
   private box: blessed.Widgets.BoxElement;
   private screenWidth: number;
   
@@ -58,9 +59,16 @@ export class EventTable {
   }
 
   /**
-   * Main update method - handles event list changes
+   * Update EventTable with new data and selection (EventTableViewport interface)
    */
-  update(events: EventRowData[], selectedIndex: number): void {
+  updateContent(events: EventRowData[], selectedIndex: number): void {
+    this.update(events, selectedIndex);
+  }
+
+  /**
+   * Main update method - handles event list changes (private implementation)
+   */
+  private update(events: EventRowData[], selectedIndex: number): void {
     // Determine selected event ID
     const newSelectedId = selectedIndex >= 0 && selectedIndex < events.length 
       ? events[selectedIndex].id 
@@ -130,7 +138,7 @@ export class EventTable {
     }
     
     // Update display
-    this.updateContent(formattedRows.join('\n'));
+    this.updateBoxContent(formattedRows.join('\n'));
   }
 
   /**
@@ -154,7 +162,7 @@ export class EventTable {
   /**
    * Update box content with minimal re-render
    */
-  private updateContent(content: string): void {
+  private updateBoxContent(content: string): void {
     const currentContent = this.box.getContent();
     const currentStripped = stripTags(currentContent);
     const newStripped = stripTags(content);
@@ -233,6 +241,18 @@ export class EventTable {
       row.invalidate();
     }
     this.render();
+  }
+
+  /**
+   * Get current viewport information (EventTableViewport interface)
+   */
+  getViewportInfo(): ViewportInfo {
+    return {
+      selectedIndex: this.selectedId || -1,
+      totalEvents: this.rowOrder.length,
+      viewportStart: 0, // EventTable manages all visible events
+      viewportEnd: this.rowOrder.length
+    };
   }
 
   /**
