@@ -8,6 +8,7 @@ import { UIState } from './UIState';
 import { KeywordSearchManager } from '../search';
 import { EventTable } from './components/EventTable';
 import { ViewConfig } from '../config/ViewConfig';
+import { EventTableViewport } from './interfaces/EventTableViewport';
 
 export class UILayoutManager {
   private screen: blessed.Widgets.Screen;
@@ -22,7 +23,7 @@ export class UILayoutManager {
   private dynamicControlBar: any;
   private separatorLine: any;
   private eventArea: any;
-  private eventTable!: EventTable;
+  private eventTable!: EventTableViewport;
 
   constructor(screen: blessed.Widgets.Screen, uiState: UIState, viewConfig?: ViewConfig) {
     this.screen = screen;
@@ -148,13 +149,6 @@ export class UILayoutManager {
     this.screen.append(this.statusBar);
     this.screen.append(this.keyGuideBar);
     this.screen.append(this.dynamicControlBar);
-    
-    // Debug - log screen children to see what components exist
-    const fs = require('fs');
-    fs.appendFileSync('.cctop/logs/screen-debug.log', `Screen children count: ${this.screen.children.length}\n`);
-    this.screen.children.forEach((child: any, index: number) => {
-      fs.appendFileSync('.cctop/logs/screen-debug.log', `Child ${index}: ${child.constructor.name}, position: ${JSON.stringify({top: child.top, left: child.left, width: child.width, height: child.height})}\n`);
-    });
   }
 
   buildHeaderContent(): string {
@@ -207,6 +201,16 @@ export class UILayoutManager {
       case 'stream_paused':
       default:
         return '[ESC] Reset All Filters [↑↓] Select an Event';
+    }
+  }
+
+  /**
+   * Update ViewConfig and propagate to EventTable
+   */
+  setViewConfig(newViewConfig: ViewConfig): void {
+    this.viewConfig = newViewConfig;
+    if (this.eventTable && typeof this.eventTable.setViewConfig === 'function') {
+      this.eventTable.setViewConfig(newViewConfig);
     }
   }
 
@@ -301,8 +305,8 @@ export class UILayoutManager {
     // Calculate relative selected index within viewport
     const selectedIndex = absoluteSelectedIndex - viewportStart;
     
-    // Update event table with optimized rendering
-    this.eventTable.update(visibleEvents, selectedIndex);
+    // Update event table with optimized rendering (using interface)
+    this.eventTable.updateContent(visibleEvents, selectedIndex);
     
     // Force refresh to update elapsed times for existing rows
     this.eventTable.refresh();

@@ -4,13 +4,12 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import { CLIConfig, defaultCLIConfig, SharedConfig, defaultSharedConfig, DaemonConfig, defaultDaemonConfig, LocalSetupInitializer } from '@cctop/shared';
+import { SharedConfig, defaultSharedConfig, DaemonConfig, defaultDaemonConfig } from '@cctop/shared';
 import { ViewConfig } from './ViewConfig';
 import { ViewConfigManager } from './ViewConfigManager';
 
 
 export interface MergedConfig {
-  cli: CLIConfig;
   shared: SharedConfig;
   daemon: DaemonConfig;
   view: ViewConfig;
@@ -18,7 +17,6 @@ export interface MergedConfig {
 }
 
 export class ConfigLoader {
-  private initializer = new LocalSetupInitializer();
   private readonly CONFIG_DIR = '.cctop';
   
   /**
@@ -29,21 +27,19 @@ export class ConfigLoader {
     const configPath = path.join(targetDir, this.CONFIG_DIR);
     
     try {
-      // Auto-initialize if not exists
-      if (!this.initializer.isInitialized(targetDir)) {
-        const result = await this.initializer.initialize({ targetDirectory: targetDir });
-        if (result.created) {
-          console.log(result.message);
-        }
+      // Ensure config directory exists
+      if (!fs.existsSync(configPath)) {
+        fs.mkdirSync(configPath, { recursive: true });
       }
       
       const sharedConfig = await this.loadSharedConfig(configPath);
       const daemonConfig = await this.loadDaemonConfig(configPath);
-      const cliConfig = await this.loadCLIConfig(configPath);
-      const viewConfig = await this.loadViewConfig(configPath);
+      
+      // Use ViewConfigManager for view configuration
+      const viewConfigManager = new ViewConfigManager(configPath);
+      const viewConfig = await viewConfigManager.loadViewConfig();
       
       return {
-        cli: cliConfig,
         shared: sharedConfig,
         daemon: daemonConfig,
         view: viewConfig,
@@ -55,7 +51,6 @@ export class ConfigLoader {
       console.warn(`Failed to load configuration: ${errorMessage}. Using defaults.`);
       const viewConfigManager = new ViewConfigManager(configPath);
       return {
-        cli: defaultCLIConfig,
         shared: defaultSharedConfig,
         daemon: defaultDaemonConfig,
         view: viewConfigManager.getViewConfig(),
@@ -90,21 +85,6 @@ export class ConfigLoader {
     return JSON.parse(content);
   }
   
-  /**
-   * Load CLI configuration
-   */
-  private async loadCLIConfig(configPath: string): Promise<CLIConfig> {
-    const configFile = path.join(configPath, 'config', 'cli-config.json');
-    if (!fs.existsSync(configFile)) {
-      return defaultCLIConfig;
-    }
-    
-    const content = fs.readFileSync(configFile, 'utf8');
-    const config = JSON.parse(content);
-    
-    // Deep merge with defaults to ensure all required fields
-    return this.deepMerge(defaultCLIConfig, config);
-  }
   
   /**
    * Load view configuration
@@ -142,23 +122,6 @@ export class ConfigLoader {
     }
   }
   
-  /**
-   * Manual initialization command
-   */
-  async initializeManually(options: { 
-    targetDirectory?: string; 
-    dryRun?: boolean; 
-    force?: boolean; 
-  } = {}) {
-    return await this.initializer.initialize(options);
-  }
-  
-  /**
-   * Check if configuration is initialized
-   */
-  isInitialized(targetDirectory?: string): boolean {
-    return this.initializer.isInitialized(targetDirectory);
-  }
   
 
 

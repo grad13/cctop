@@ -4,7 +4,7 @@
  * Command-line argument processing
  */
 
-import { BlessedFramelessUISimple } from './ui/blessed-frameless-ui-simple';
+import { BlessedFramelessUISimple } from './ui/BlessedFramelessUI';
 import { FileEventReader } from './database/FileEventReader';
 import * as path from 'path';
 import * as fs from 'fs';

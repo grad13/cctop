@@ -183,10 +183,6 @@ export class EventRow {
     this.cachedRender = result;
     this.isDirty = false;
     
-    // Debug - log muted directory and result
-    const fs = require('fs');
-    fs.appendFileSync('.cctop/logs/render-debug.log', `EventRow render: mutedDirectory="${directory}", result="${result}"\n`);
-    
     return result;
   }
 

@@ -2,7 +2,6 @@
  * Configuration module exports
  */
 
-export * from './cli-config';
 export * from './config-loader';
 export * from './local-setup-initializer';
 export * from './ViewConfig';

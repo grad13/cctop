@@ -103,12 +103,12 @@ function startDaemon() {
  * Start CLI
  */
 async function startCLI() {
-  // Check if config exists, create if not
-  const { LocalSetupInitializer } = require('../modules/shared/dist/config/LocalSetupInitializer');
-  const initializer = new LocalSetupInitializer();
+  // Basic config directory check only (no longer creates cli-config.json)
+  const fs = require('fs');
+  const configDir = path.join(process.cwd(), '.cctop', 'config');
   
-  if (!initializer.isInitialized()) {
-    await initializer.initialize();
+  if (!fs.existsSync(configDir)) {
+    fs.mkdirSync(configDir, { recursive: true });
   }
   
   return new Promise((resolve, reject) => {
