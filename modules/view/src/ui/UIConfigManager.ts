@@ -5,10 +5,9 @@
 
 import * as path from 'path';
 import { FileEventReader } from '../database/FileEventReader';
-import { CLIConfig } from '../config/cli-config';
+import { CLIConfig, defaultCLIConfig } from '../config/cli-config';
 import { ViewConfig } from '../config/ViewConfig';
-import { ConfigLoader } from '../config/config-loader';
-import { LocalSetupInitializer } from '../config/local-setup-initializer';
+import { ViewConfigManager } from '../config/ViewConfigManager';
 import { DaemonStatusMonitor } from '../utils/daemon-status-monitor';
 import { UIState } from './UIState';
 
@@ -37,16 +36,17 @@ export class UIConfigManager {
     if (config.viewConfig) {
       this.viewConfig = config.viewConfig;
     } else {
-      // Check if local configuration exists, if not create it
-      const initializer = new LocalSetupInitializer();
-      if (!initializer.isInitialized()) {
-        const result = await initializer.initialize();
-      }
+      // Use ViewConfigManager for view-config.json only initialization
+      const configPath = process.cwd();
+      const viewConfigManager = new ViewConfigManager(configPath);
+      this.viewConfig = await viewConfigManager.loadViewConfig();
       
-      const configLoader = new ConfigLoader();
-      const mergedConfig = await configLoader.loadConfiguration();
-      this.cliConfig = mergedConfig.cli;
-      this.viewConfig = mergedConfig.view;
+      // Set legacy CLIConfig for backward compatibility (use default values)
+      this.cliConfig = {
+        ...defaultCLIConfig,
+        // Override with any compatible ViewConfig values where applicable
+        version: this.viewConfig.version
+      };
     }
     
     return this.viewConfig;
