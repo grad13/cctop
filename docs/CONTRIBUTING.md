@@ -19,7 +19,7 @@ Thank you for your interest in contributing to cctop!
 ```bash
 # Clone the repository
 git clone https://github.com/grad13/cctop.git
-cd cctop/code/main
+cd cctop
 
 # Install dependencies
 npm install

@@ -29,7 +29,7 @@ jobs:
         # Verify workspace symlinks
         ls -la node_modules/@cctop/ || echo "No @cctop directory in node_modules"
         # Verify shared module exists
-        ls -la src/shared/ || echo "No shared directory"
+        ls -la code/shared/ || echo "No shared directory"
     
     - name: Build packages
       run: npm run build
@@ -40,7 +40,7 @@ jobs:
         # TODO: Enable tests once test infrastructure is set up
         # npm run test:unit -w @cctop/shared
         # npm run test:unit -w @cctop/daemon  
-        # npm run test:unit -w @cctop/cli
+        # npm run test:unit -w @cctop/view
     
     - name: Check package
       run: |
