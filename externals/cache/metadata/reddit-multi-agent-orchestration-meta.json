@@ -1,0 +1,36 @@
+{
+  "file_info": {
+    "original_path": "inputs/articles/reddit-multi-agent-orchestration.html",
+    "size_bytes": 45162074,
+    "size_readable": "43MB",
+    "mime_type": "text/html",
+    "created_at": "2025-06-17T04:23:00Z",
+    "last_modified": "2025-06-17T04:23:00Z"
+  },
+  "access_history": [
+    {
+      "timestamp": "2025-06-16T06:40:00Z",
+      "agent": "Clerk",
+      "action": "initial_scan",
+      "duration_ms": 5000,
+      "notes": "File too large for direct processing"
+    }
+  ],
+  "cache_files": {
+    "summary": "cache/summaries/reddit-multi-agent-orchestration-summary.md",
+    "extract": null,
+    "last_updated": "2025-06-16T06:40:00Z"
+  },
+  "key_findings": {
+    "topics": ["multi-agent", "orchestration", "claude-code", "guide"],
+    "has_mcp_reference": "unknown",
+    "file_type": "reddit_post",
+    "processing_status": "partial",
+    "notes": "File size (43MB) suggests heavy media content or extensive comments"
+  },
+  "recommendations": {
+    "access_method": "browser",
+    "reason": "HTML file too large for efficient text processing",
+    "alternative": "Request user to extract relevant text sections"
+  }
+}

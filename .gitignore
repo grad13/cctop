@@ -5,7 +5,11 @@ dist/
 
 # Build artifacts
 coverage/
+build/
 *.log
+*.pid
+*.seed
+*.pid.lock
 
 # OS
 .DS_Store
@@ -28,8 +32,3 @@ _externals/
 
 # Package files
 *.tgz
-
-# Legacy (deleted)
-releases
-GARAGEs
-VERSIONs

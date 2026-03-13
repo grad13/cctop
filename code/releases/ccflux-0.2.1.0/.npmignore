@@ -1,0 +1,15 @@
+# Test files
+test/
+*.test.js
+vitest.config.js
+
+# Development files
+.git/
+.gitignore
+node_modules/
+
+# Documentation
+docs/
+
+# Coverage
+coverage/

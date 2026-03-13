@@ -1,0 +1,38 @@
+{
+  "file_info": {
+    "original_path": "inputs/articles/reddit-kiss-yagni-solid-principles.html",
+    "size_bytes": 39845120,
+    "size_readable": "38MB",
+    "mime_type": "text/html",
+    "created_at": "2025-06-26T06:00:00Z",
+    "last_modified": "2025-06-26T06:00:00Z"
+  },
+  "access_history": [
+    {
+      "timestamp": "2025-06-26T15:00:00Z",
+      "agent": "Clerk",
+      "action": "content_extraction",
+      "duration_ms": 8000,
+      "notes": "Extracted key principles and protocols from Reddit article"
+    }
+  ],
+  "cache_files": {
+    "summary": "cache/summaries/reddit-kiss-yagni-solid-summary.md",
+    "extract": "cache/extracts/reddit-kiss-yagni-solid-extract.md",
+    "last_updated": "2025-06-26T15:00:00Z"
+  },
+  "key_findings": {
+    "topics": ["KISS", "YAGNI", "SOLID", "claude-prompting", "development-principles", "code-optimization"],
+    "has_practical_examples": true,
+    "file_type": "reddit_post",
+    "processing_status": "complete",
+    "effectiveness": "50% code size reduction proven",
+    "protocols_included": ["requirement-validation", "solution-generation", "quality-management"]
+  },
+  "recommendations": {
+    "access_method": "cache_first",
+    "reason": "Large HTML file with extracted structured content available",
+    "primary_use": "Development workflow improvement and prompt optimization",
+    "integration_target": "CLAUDE.md and development protocols"
+  }
+}

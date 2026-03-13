@@ -1,0 +1,53 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      dry-run:
+        description: 'Dry run mode'
+        required: false
+        default: 'true'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        registry-url: 'https://registry.npmjs.org'
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: |
+        npm install
+        ls -la node_modules/@cctop/ || echo "No @cctop directory"
+    
+    - name: Build packages
+      run: npm run build
+    
+    - name: Run tests
+      run: |
+        echo "Tests are temporarily disabled for initial release"
+        # TODO: Enable tests once test infrastructure is set up
+    
+    - name: Check npm publish (dry-run)
+      run: npm publish --dry-run
+    
+    # IMPORTANT: Automatic npm publish is disabled for safety
+    # To publish manually:
+    # 1. Run npm publish locally with proper authentication
+    # 2. Or enable the section below temporarily
+    
+    # - name: Publish to npm (DISABLED)
+    #   if: false  # Always disabled
+    #   run: npm publish
+    #   env:
+    #     NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

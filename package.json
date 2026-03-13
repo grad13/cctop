@@ -1,0 +1,62 @@
+{
+  "name": "cctop",
+  "version": "0.6.7",
+  "description": "Agent work monitoring with real-time file tracking",
+  "workspaces": [
+    "code/shared",
+    "code/daemon",
+    "code/view"
+  ],
+  "bin": {
+    "cctop": "code/bin/cctop"
+  },
+  "scripts": {
+    "install:all": "npm install",
+    "build": "npm run build:shared && npm run build:daemon && npm run build:view",
+    "build:shared": "npm run build -w @cctop/shared",
+    "build:daemon": "npm run build -w @cctop/daemon",
+    "build:view": "npm run build -w @cctop/view",
+    "test": "npm run test --workspaces",
+    "daemon": "node code/bin/cctop daemon start",
+    "cli": "node code/bin/cctop cli",
+    "dev": "npm run daemon & npm run cli",
+    "clean": "rm -rf code/*/node_modules code/*/package-lock.json",
+    "clean:all": "rm -rf node_modules package-lock.json code/*/node_modules code/*/package-lock.json code/*/*.tsbuildinfo",
+    "clean:dist": "rm -rf code/*/dist",
+    "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+    "blessed": "^0.1.81",
+    "chalk": "^4.1.2",
+    "chokidar": "^3.5.3",
+    "sqlite3": "^5.1.6",
+    "string-width": "^5.1.2"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.2",
+    "typescript": "^5.5.3"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "monitoring",
+    "files",
+    "real-time",
+    "agent",
+    "development",
+    "cli",
+    "filesystem",
+    "watch"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/grad13/cctop.git"
+  },
+  "bugs": {
+    "url": "https://github.com/grad13/cctop/issues"
+  },
+  "homepage": "https://github.com/grad13/cctop#readme",
+  "license": "MIT",
+  "author": "grad13"
+}

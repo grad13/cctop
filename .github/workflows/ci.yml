@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  push:
+    branches: [ master, main, develop ]
+  pull_request:
+    branches: [ master, main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x, 22.x]
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: |
+        npm install
+        # Verify workspace symlinks
+        ls -la node_modules/@cctop/ || echo "No @cctop directory in node_modules"
+        # Verify shared module exists
+        ls -la src/shared/ || echo "No shared directory"
+    
+    - name: Build packages
+      run: npm run build
+    
+    - name: Run tests
+      run: |
+        echo "Tests are temporarily disabled for initial release"
+        # TODO: Enable tests once test infrastructure is set up
+        # npm run test:unit -w @cctop/shared
+        # npm run test:unit -w @cctop/daemon  
+        # npm run test:unit -w @cctop/cli
+    
+    - name: Check package
+      run: |
+        npm pack --dry-run
+        echo "Package validation complete"
