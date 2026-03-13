@@ -1,6 +1,6 @@
 # Documents ディレクトリ
 
-**最終更新**: 2025年7月7日  
+**最終更新**: 2026年3月13日
 **管理者**: Clerk Agent  
 **目的**: cctopプロジェクトの全文書管理
 
@@ -66,6 +66,12 @@ documents/
 │       │   └── README.md  # プロトコル管理
 │       └── checklists/    # 各種チェックリスト
 │           └── README.md  # チェックリスト管理
+├── spec/                  # 仕様ドキュメント（spec-v2.1形式）
+│   └── README.md          # spec管理概要
+├── plan/                  # 計画書
+│   └── README.md          # 計画管理概要
+├── reference/             # 参考資料・リファレンス文書
+│   └── README.md          # リファレンス管理概要
 ├── records/               # L2記録系文書（全Agent編集可）
 │   ├── README.md          # 記録管理概要
 │   ├── bugs/              # バグ対応記録

@@ -1,6 +1,35 @@
 # Dependencies
+node_modules/
+dist/
+*.tsbuildinfo
+
+# Build artifacts
+coverage/
+*.log
+
+# OS
 .DS_Store
-code
+Thumbs.db
+
+# Editor
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Environment
+.env
+.env.*
+
+# Internal documents (not tracked)
+_documents/
+_externals/
+
+# Package files
+*.tgz
+
+# Legacy (deleted)
 releases
 GARAGEs
 VERSIONs
