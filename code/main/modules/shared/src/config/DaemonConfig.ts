@@ -11,6 +11,10 @@ export interface DaemonConfig {
     debounceMs: number;
     maxDepth: number;
     moveThresholdMs: number;
+    useFsEvents?: boolean;  // macOS FSEvents (default: true). Set false to reduce disk writes
+    usePolling?: boolean;   // Polling mode (default: false). Use if FSEvents causes issues
+    ignoreInitial?: boolean; // Skip initial scan (default: false). Set true to reduce startup disk I/O
+    startupDelayMs?: number; // Delay before starting watcher (default: 0). Set 3000-5000 to wait for FSEvents cache
     systemLimits: {
       requiredLimit: number;
       checkOnStartup: boolean;

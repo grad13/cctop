@@ -6,7 +6,7 @@
 import chokidar from 'chokidar';
 import { FileEventRecorder } from './database/FileEventRecorder';
 import { DaemonConfigManager } from './config/DaemonConfig';
-import { LogManager } from './logging/LogManager';
+import { LogManager, LogLevel } from './logging/LogManager';
 import { FileEventHandler } from './events/FileEventHandler';
 import { SignalHandler } from './system/SignalHandler';
 import { PidManager } from './system/PidManager';
@@ -25,7 +25,8 @@ class DaemonManager {
     this.configManager = new DaemonConfigManager();
     
     const config = this.configManager.getConfig();
-    this.logger = new LogManager(config.daemon.logFile);
+    const logLevel = (config.daemon.logLevel || 'info') as LogLevel;
+    this.logger = new LogManager(config.daemon.logFile, logLevel);
     this.pidManager = new PidManager(config.daemon.pidFile, this.logger, this.configManager);
     
     // TODO: Load database path from shared-config.json (FUNC-101)
@@ -187,12 +188,22 @@ class DaemonManager {
       await this.db.connect();
       this.logger.log('info', 'Database connected');
 
+      // Optional startup delay to wait for FSEvents cache
+      const startupDelay = config.monitoring.startupDelayMs ?? 0;
+      if (startupDelay > 0) {
+        this.logger.log('info', `Waiting ${startupDelay}ms for FSEvents cache...`);
+        await new Promise(resolve => setTimeout(resolve, startupDelay));
+      }
+
       // Initialize file watcher with initial scan
+      const ignoreInitial = config.monitoring.ignoreInitial ?? false;
       this.watcher = chokidar.watch(config.monitoring.watchPaths, {
         persistent: true,
-        ignoreInitial: false,
+        ignoreInitial: ignoreInitial,
         ignored: config.monitoring.excludePatterns,
-        depth: config.monitoring.maxDepth
+        depth: config.monitoring.maxDepth,
+        useFsEvents: config.monitoring.useFsEvents ?? true,
+        usePolling: config.monitoring.usePolling ?? false
       });
 
       let isInitialScan = true;

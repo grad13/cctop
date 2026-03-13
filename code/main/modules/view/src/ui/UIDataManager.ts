@@ -1,23 +1,36 @@
 /**
  * UI Data Manager
  * Simplified data loading and filtering operations
+ *
+ * Uses UniqueFileCacheManager for efficient unique mode display
  */
 
 import { EventRow } from '../types/event-row';
 import { FileEventReader } from '../database/FileEventReader';
 import { UIState } from './UIState';
+import { UniqueFileCacheManager } from '../cache/UniqueFileCacheManager';
 
 export class UIDataManager {
   private db: FileEventReader;
   private uiState: UIState;
-  
+
   // Data loading state
   private isRefreshing: boolean = false;
   private loadMorePromise: Promise<void> | null = null;
 
+  // Cache for unique mode
+  private uniqueCache: UniqueFileCacheManager = new UniqueFileCacheManager();
+
   constructor(db: FileEventReader, uiState: UIState) {
     this.db = db;
     this.uiState = uiState;
+  }
+
+  /**
+   * Clear unique cache (call when switching modes or filters)
+   */
+  clearUniqueCache(): void {
+    this.uniqueCache.clear();
   }
 
   /**
@@ -67,19 +80,19 @@ export class UIDataManager {
 
   /**
    * Refreshes event data from database
-   * Simple approach: fetch from DB and apply filters
+   * Uses cache for unique mode, direct query for all mode
    */
   async refreshData(append: boolean = false): Promise<void> {
     // Prevent concurrent refreshes
     if (this.isRefreshing) {
       return;
     }
-    
+
     // Skip auto-refresh if we're loading more data
     if (!append && this.uiState.isLoadingMoreData()) {
       return;
     }
-    
+
     this.isRefreshing = true;
     try {
       // Check if we have a search pattern
@@ -99,61 +112,127 @@ export class UIDataManager {
         });
         return;
       }
-      
-      let events: EventRow[];
-      
-      // Fetch from database
-      const limit = 100;
-      
-      // Get current offset from UIState (now managed by UIDataState)
-      let currentOffset = 0;
-      // For now, simple offset calculation - could be enhanced later
-      if (append) {
-        currentOffset = this.uiState.getEventsCount();
+
+      const mode = this.uiState.getDisplayMode();
+
+      // Use cache-based refresh for unique mode
+      if (mode === 'unique') {
+        await this.refreshUniqueMode(append);
+        return;
       }
-      
-      const offset = currentOffset;
-      
-      // Get events from database
-      const rawEvents = await this.db.getLatestEvents(
-        limit, 
-        this.uiState.getDisplayMode(), 
-        offset, 
-        this.uiState.getActiveFilters()
-      );
-      
-      // Check if we have more data
-      const hasMoreInDb = rawEvents.length === limit;
-      
-      // Don't apply client-side regex filter - DB should handle it
-      const filteredNewEvents = rawEvents;
-      
-      if (append && this.uiState.getEvents().length > 0) {
-        // Append to existing events
-        events = [...this.uiState.getEvents(), ...filteredNewEvents];
-      } else {
-        events = filteredNewEvents;
-      }
-      
-      // Offset management is now handled by UIState/UIDataState
-      // This is managed automatically by setEvents/appendEvents
-      
-      // Set hasMoreData based on DB result
-      if (filteredNewEvents.length === 0 || !hasMoreInDb) {
-        this.uiState.setHasMoreData(false);
-      } else {
-        this.uiState.setHasMoreData(true);
-      }
-      
-      // Update UI state
-      this.uiState.setEvents(events);
-      
+
+      // All mode: direct database query
+      await this.refreshAllMode(append);
+
     } catch (error) {
       // Fallback to empty array to prevent UI crash
       this.uiState.setEvents([]);
     } finally {
       this.isRefreshing = false;
     }
+  }
+
+  /**
+   * Refresh for unique mode using cache
+   */
+  private async refreshUniqueMode(append: boolean): Promise<void> {
+    if (!this.uniqueCache.isInitialized()) {
+      // First time: initialize cache with initial data
+      // Fetch more events than needed to build a good unique set
+      const initialEvents = await this.db.getLatestEvents(
+        500,  // Fetch enough to build unique list
+        'all', // Use 'all' mode to get raw events
+        0,
+        this.uiState.getActiveFilters()
+      );
+
+      this.uniqueCache.initialize(initialEvents);
+
+      // Get display data from cache
+      const events = this.uniqueCache.getDisplayData(0, 100);
+      this.uiState.setEvents(events);
+      this.uiState.setHasMoreData(this.uniqueCache.hasMoreData(events.length));
+      return;
+    }
+
+    // Cache already initialized: check for new events
+    const lastId = this.uniqueCache.getLastProcessedEventId();
+    const newEvents = await this.db.getEventsAfterId(lastId, 100);
+
+    if (newEvents.length > 0) {
+      // Update cache with new events
+      this.uniqueCache.updateWithNewEvents(newEvents);
+
+      // Get display data from cache
+      const currentOffset = append ? this.uiState.getEventsCount() : 0;
+      const events = append
+        ? this.uniqueCache.getDisplayData(0, currentOffset + 100)
+        : this.uniqueCache.getDisplayData(0, 100);
+
+      this.uiState.setEvents(events);
+      this.uiState.setHasMoreData(this.uniqueCache.hasMoreData(events.length));
+    } else if (append) {
+      // No new events but loading more: get more from cache
+      const currentOffset = this.uiState.getEventsCount();
+      const moreEvents = this.uniqueCache.getDisplayData(currentOffset, 100);
+
+      if (moreEvents.length > 0) {
+        const events = [...this.uiState.getEvents(), ...moreEvents];
+        this.uiState.setEvents(events);
+        this.uiState.setHasMoreData(this.uniqueCache.hasMoreData(events.length));
+      } else {
+        this.uiState.setHasMoreData(false);
+      }
+    }
+    // If no new events and not appending, just keep current display (no update needed)
+  }
+
+  /**
+   * Refresh for all mode (original behavior)
+   */
+  private async refreshAllMode(append: boolean): Promise<void> {
+    let events: EventRow[];
+
+    // Fetch from database
+    const limit = 100;
+
+    // Get current offset from UIState
+    let currentOffset = 0;
+    if (append) {
+      currentOffset = this.uiState.getEventsCount();
+    }
+
+    const offset = currentOffset;
+
+    // Get events from database
+    const rawEvents = await this.db.getLatestEvents(
+      limit,
+      'all',
+      offset,
+      this.uiState.getActiveFilters()
+    );
+
+    // Check if we have more data
+    const hasMoreInDb = rawEvents.length === limit;
+
+    const filteredNewEvents = rawEvents;
+
+    if (append && this.uiState.getEvents().length > 0) {
+      // Append to existing events
+      events = [...this.uiState.getEvents(), ...filteredNewEvents];
+    } else {
+      events = filteredNewEvents;
+    }
+
+    // Set hasMoreData based on DB result
+    if (filteredNewEvents.length === 0 || !hasMoreInDb) {
+      this.uiState.setHasMoreData(false);
+    } else {
+      this.uiState.setHasMoreData(true);
+    }
+
+    // Update UI state
+    this.uiState.setEvents(events);
   }
 
   /**
@@ -195,6 +274,7 @@ export class UIDataManager {
   reset(): void {
     this.isRefreshing = false;
     this.loadMorePromise = null;
+    this.uniqueCache.clear();
     // Reset is now delegated to UIState
   }
 

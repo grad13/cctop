@@ -197,4 +197,44 @@ export class FileEventReader {
       });
     });
   }
+
+  /**
+   * Get events after a specific event ID (for incremental updates)
+   * Returns events ordered by id ASC (oldest first for proper cache update order)
+   */
+  async getEventsAfterId(lastEventId: number, limit: number = 100): Promise<any[]> {
+    return new Promise((resolve, reject) => {
+      if (!this.db) {
+        reject(new Error('Database not connected'));
+        return;
+      }
+
+      const query = `
+        SELECT
+          e.id,
+          e.timestamp,
+          e.file_name as filename,
+          e.directory,
+          et.name as event_type,
+          COALESCE(m.file_size, 0) as size,
+          m.line_count as lines,
+          m.block_count as blocks,
+          COALESCE(m.inode, 0) as inode,
+          0 as elapsed_ms
+        FROM events e
+        JOIN event_types et ON e.event_type_id = et.id
+        LEFT JOIN measurements m ON e.id = m.event_id
+        WHERE e.id > ?
+        ORDER BY e.id ASC
+        LIMIT ?`;
+
+      this.db.all(query, [lastEventId, limit], (err, rows) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(rows || []);
+        }
+      });
+    });
+  }
 }

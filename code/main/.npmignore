@@ -13,6 +13,9 @@ passage/
 *.bak
 *.log
 
+# Node modules in subpackages
+modules/*/node_modules/
+
 # CI/CD files
 .github/
 scripts/

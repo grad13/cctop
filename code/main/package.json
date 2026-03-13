@@ -1,6 +1,6 @@
 {
   "name": "cctop",
-  "version": "0.6.0",
+  "version": "0.6.7",
   "description": "Agent work monitoring with real-time file tracking",
   "workspaces": [
     "modules/*"

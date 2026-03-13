@@ -226,7 +226,7 @@ export class BlessedFramelessUISimple {
           // Silently handle auto-fill errors
         });
       }
-    }, 100); // 100ms refresh interval
+    }, this.viewConfig?.display?.refreshRateMs || 1000); // Use config or default 1000ms
 
     screen.render();
   }
