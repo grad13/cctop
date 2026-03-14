@@ -211,7 +211,7 @@ export class UIKeyHandler {
             if (this.loadMoreCallback) {
               // Don't await here to prevent blocking the UI
               this.loadMoreCallback().catch(err => {
-                // Silently handle error
+                process.stderr.write(`UIKeyHandler: loadMore error: ${err}\n`);
               });
             }
           }
