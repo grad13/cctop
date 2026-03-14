@@ -26,8 +26,8 @@ Thumbs.db
 .env
 .env.*
 
-# Internal documents (not tracked)
-_documents/
+# Internal (not tracked)
+documents/archive/
 _externals/
 
 # Package files

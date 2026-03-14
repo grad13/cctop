@@ -9,40 +9,45 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    
+
     strategy:
       matrix:
         node-version: [18.x, 20.x, 22.x]
-    
+
     steps:
     - uses: actions/checkout@v4
-    
+
     - name: Use Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
         cache: 'npm'
-    
+        cache-dependency-path: 'code/package-lock.json'
+
     - name: Install dependencies
+      working-directory: code
       run: |
         npm install
         # Verify workspace symlinks
         ls -la node_modules/@cctop/ || echo "No @cctop directory in node_modules"
         # Verify shared module exists
-        ls -la code/shared/ || echo "No shared directory"
-    
+        ls -la shared/ || echo "No shared directory"
+
     - name: Build packages
+      working-directory: code
       run: npm run build
-    
+
     - name: Run tests
+      working-directory: code
       run: |
         echo "Tests are temporarily disabled for initial release"
         # TODO: Enable tests once test infrastructure is set up
         # npm run test:unit -w @cctop/shared
-        # npm run test:unit -w @cctop/daemon  
+        # npm run test:unit -w @cctop/daemon
         # npm run test:unit -w @cctop/view
-    
+
     - name: Check package
+      working-directory: code
       run: |
         npm pack --dry-run
         echo "Package validation complete"

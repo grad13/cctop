@@ -1,0 +1,31 @@
+# Source files (TypeScript)
+*/src/
+*/tests/
+*/*.ts
+*/tsconfig.json
+*/vitest.config.ts
+
+# Development files
+*.tsbuildinfo
+*.bak
+*.log
+
+# Node modules in subpackages
+*/node_modules/
+
+# CI/CD files
+scripts/
+
+# macOS
+.DS_Store
+
+# Editor
+.vscode/
+.idea/
+
+# Keep these
+!bin/
+!*/dist/
+!*/package.json
+!LICENSE
+!README.md
