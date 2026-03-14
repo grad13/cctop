@@ -9,11 +9,16 @@ export class UIScreenManager {
   private screen!: blessed.Widgets.Screen;
 
   initializeScreen(): blessed.Widgets.Screen {
-    // Suppress terminal compatibility warnings
+    // Suppress terminal compatibility warnings (consolidated from index.ts)
     const originalStderr = process.stderr.write.bind(process.stderr);
     (process.stderr as any).write = function(chunk: any, encoding?: any, callback?: any): boolean {
       const str = chunk.toString();
-      if (str.includes('Error on xterm') || str.includes('Setulc')) {
+      if (str.includes('Error on xterm') ||
+          str.includes('Setulc') ||
+          str.includes('\u001b[58') ||
+          str.includes('var v,') ||
+          str.includes('stack = []') ||
+          str.includes('out = [')) {
         return true;
       }
       return originalStderr(chunk, encoding, callback);
@@ -65,7 +70,8 @@ export class UIScreenManager {
       try {
         this.screen.destroy();
       } catch (error) {
-        // Ignore cleanup errors
+        // Log cleanup errors but do not propagate (terminal may already be detached)
+        process.stderr.write(`UIScreenManager: destroy error: ${error}\n`);
       }
     }
   }
