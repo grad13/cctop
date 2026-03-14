@@ -155,15 +155,6 @@ export class MeasurementCalculator {
   }
 
   /**
-   * Calculate physical block count (fallback for binary files)
-   * Using 512-byte blocks (traditional Unix block size)
-   */
-  private calculatePhysicalBlocks(fileSize: number): number {
-    const BLOCK_SIZE = 512;
-    return Math.ceil(fileSize / BLOCK_SIZE);
-  }
-
-  /**
    * Batch calculate measurements for multiple files
    */
   async batchCalculate(files: Array<{ filePath: string; inode: number }>): Promise<MeasurementResult[]> {
