@@ -107,6 +107,7 @@ export class UIDataManager {
           this.uiState.setHasMoreData(false);
           this.uiState.setEvents(searchResults);
         }).catch(error => {
+          process.stderr.write(`UIDataManager: search error: ${error}\n`);
           this.uiState.setHasMoreData(false);
           this.uiState.setEvents([]);
         });
@@ -125,7 +126,7 @@ export class UIDataManager {
       await this.refreshAllMode(append);
 
     } catch (error) {
-      // Fallback to empty array to prevent UI crash
+      process.stderr.write(`UIDataManager: refresh error: ${error}\n`);
       this.uiState.setEvents([]);
     } finally {
       this.isRefreshing = false;
@@ -262,7 +263,7 @@ export class UIDataManager {
       this.uiState.setEvents(searchResults);
       
     } catch (error) {
-      // Return empty array on error
+      process.stderr.write(`UIDataManager: performDatabaseSearch error: ${error}\n`);
       this.uiState.setHasMoreData(false);
       this.uiState.setEvents([]);
     }
