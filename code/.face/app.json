@@ -1,5 +1,6 @@
 {
   "name": "cctop",
   "description": "ファイル変更監視ツール",
-  "url": "https://github.com/grad13/cctop"
+  "url": "https://github.com/grad13/cctop",
+  "thumbnail": "thumbnail.png"
 }
