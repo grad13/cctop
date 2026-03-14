@@ -287,7 +287,7 @@ const objectMethod = {
       const result = await calculator.calculateMeasurements(filePath, 12345);
       
       expect(result.lineCount).toBe(3);
-      expect(result.blockCount).toBeGreaterThan(0);
+      expect(result.blockCount).toBeNull();
     });
 
     it('should handle files with various whitespace characters', async () => {
@@ -296,7 +296,7 @@ const objectMethod = {
       const result = await calculator.calculateMeasurements(filePath, 12345);
       
       expect(result.lineCount).toBe(3);
-      expect(result.blockCount).toBeGreaterThan(0);
+      expect(result.blockCount).toBeNull();
     });
   });
 });

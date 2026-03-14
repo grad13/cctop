@@ -7,13 +7,13 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { Database } from '@cctop/shared';
+import { FileEventRecorder } from '../../src/database/FileEventRecorder';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import * as os from 'os';
 
 describe('MeasurementOperations', () => {
-  let db: Database;
+  let db: FileEventRecorder;
   let tempDbPath: string;
 
   beforeEach(async () => {
@@ -21,7 +21,7 @@ describe('MeasurementOperations', () => {
     const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'measurement-ops-test-'));
     tempDbPath = path.join(tempDir, 'test.db');
     
-    db = new Database(tempDbPath);
+    db = new FileEventRecorder(tempDbPath);
     await db.connect();
     
     // Insert test events with measurements
@@ -175,7 +175,7 @@ describe('MeasurementOperations', () => {
       const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'empty-test-'));
       const emptyDbPath = path.join(tempDir, 'empty.db');
       
-      const emptyDb = new Database(emptyDbPath);
+      const emptyDb = new FileEventRecorder(emptyDbPath);
       await emptyDb.connect();
       
       const stats = await emptyDb.getMeasurementStatistics();

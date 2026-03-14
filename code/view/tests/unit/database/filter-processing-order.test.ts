@@ -5,15 +5,15 @@
  * @updated 2026-03-13
  */
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { DatabaseAdapterFunc000 } from '../../../src/database/database-adapter-func000';
-import { Database } from '../../../../daemon/src/database/database';
+import { EventQueryAdapter } from '../../../src/database/EventQueryAdapter';
+import { FileEventRecorder } from '../../../../daemon/src/database/FileEventRecorder';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 
 describe('Filter Processing Order', () => {
-  let adapter: DatabaseAdapterFunc000;
-  let daemonDb: Database;
+  let adapter: EventQueryAdapter;
+  let daemonDb: FileEventRecorder;
   let dbPath: string;
   let testDir: string;
 
@@ -22,12 +22,12 @@ describe('Filter Processing Order', () => {
     testDir = fs.mkdtempSync(path.join(os.tmpdir(), 'cctop-filter-test-'));
     dbPath = path.join(testDir, 'test-activity.db');
     
-    // Create FUNC-000 compliant database using daemon Database class
-    daemonDb = new Database(dbPath);
+    // Create FUNC-000 compliant database using daemon FileEventRecorder class
+    daemonDb = new FileEventRecorder(dbPath);
     await daemonDb.connect();
     
     // Now create CLI adapter for read-only access
-    adapter = new DatabaseAdapterFunc000(dbPath);
+    adapter = new EventQueryAdapter(dbPath);
     await adapter.connect();
   });
 
@@ -158,7 +158,7 @@ describe('Filter Processing Order', () => {
 
 
 // テストデータ挿入ヘルパー関数
-async function insertTestEvents(daemonDb: Database, events: any[]): Promise<void> {
+async function insertTestEvents(daemonDb: FileEventRecorder, events: any[]): Promise<void> {
   for (const event of events) {
     await daemonDb.insertEvent({
       // Convert to FileEvent format

@@ -7,18 +7,18 @@
 
 import { describe, test, expect, beforeEach, afterEach } from 'vitest';
 import sqlite3 from 'sqlite3';
-import { Database } from '@cctop/shared';
+import { FileEventRecorder } from '../../src/database/FileEventRecorder';
 import * as path from 'path';
 import * as fs from 'fs/promises';
 
 describe('Event Types (FUNC-000)', () => {
-  let database: Database;
+  let database: FileEventRecorder;
   let testDbPath: string;
 
   beforeEach(async () => {
     // Create unique test database
     testDbPath = path.join(__dirname, `test-event-types-${Date.now()}.db`);
-    database = new Database(testDbPath);
+    database = new FileEventRecorder(testDbPath);
     await database.connect();
   });
 

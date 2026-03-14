@@ -6,19 +6,19 @@
  * @updated 2026-03-13
  */
 
-import { Database } from '../../src/database/database';
+import { FileEventRecorder } from '../../src/database/FileEventRecorder';
 import type { DbEvent, AggregateData, GlobalStatistics } from './types';
 import sqlite3 from 'sqlite3';
 import { promisify } from 'util';
 
 export class DatabaseQueries {
-  private database: Database;
+  private database: FileEventRecorder;
   private db: sqlite3.Database | null = null;
   private dbPath: string;
 
   constructor(dbPath: string) {
     this.dbPath = dbPath;
-    this.database = new Database(dbPath);
+    this.database = new FileEventRecorder(dbPath);
   }
 
   async connect(): Promise<void> {

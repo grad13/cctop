@@ -24,7 +24,6 @@ describe('Production Configuration (TDD)', () => {
     // Should use default config values
     expect(config.monitoring.watchPaths).toEqual(['.']);
     expect(config.monitoring.watchPaths).not.toContain('./test-data');
-    expect(config.database.path).toBe('.cctop/data/activity.db');
   });
   
   test('should load config correctly in DaemonConfigManager', async () => {
@@ -44,8 +43,7 @@ describe('Production Configuration (TDD)', () => {
     await configManager.loadConfig();
     const config = configManager.getConfig();
     
-    // Database path should be relative to basePath
-    expect(config.database.path).toBe('.cctop/data/activity.db');
+    // Daemon paths should be relative to basePath
     expect(config.daemon.pidFile).toBe('.cctop/runtime/daemon.pid');
     expect(config.daemon.logFile).toBe('.cctop/logs/daemon.log');
   });

@@ -23,7 +23,7 @@ export class DaemonConfigManager {
     return {
       version: '0.3.0.0',
       monitoring: {
-        watchPaths: [this.basePath],
+        watchPaths: ['.'],
         excludePatterns: [
           '**/node_modules/**',
           '**/.git/**',
@@ -151,7 +151,7 @@ export class DaemonConfigManager {
     } catch {
       const daemonConfig = {
         monitoring: {
-          watchPaths: [this.basePath],
+          watchPaths: ['.'],
           excludePatterns: [
             '**/node_modules/**',
             '**/.git/**',
