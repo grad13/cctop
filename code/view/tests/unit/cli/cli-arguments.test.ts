@@ -4,45 +4,9 @@
  */
 
 import { describe, it, expect } from 'vitest';
-
-// Import the parseArguments function (we need to export it first)
-// For now, we'll test the expected behavior
+import { parseArguments } from '../../../src/cli/argument-parser.js';
 
 describe('CLI Arguments Processing (FUNC-104)', () => {
-  // Mock parseArguments function for testing
-  function parseArguments(args: string[]) {
-    const result: any = {};
-    
-    for (let i = 0; i < args.length; i++) {
-      const arg = args[i];
-      
-      switch (arg) {
-        case '--view':
-          result.view = true;
-          break;
-        case '-h':
-        case '--help':
-          result.help = true;
-          break;
-        case '--verbose':
-          result.verbose = true;
-          break;
-        case '--timeout':
-          if (i + 1 < args.length) {
-            result.timeout = parseInt(args[++i], 10);
-          }
-          break;
-        default:
-          if (!arg.startsWith('-') && !result.directory) {
-            result.directory = arg;
-          }
-          break;
-      }
-    }
-    
-    return result;
-  }
-
   describe('Basic Option Parsing', () => {
     it('should parse --view option', () => {
       const args = parseArguments(['--view']);
@@ -106,7 +70,7 @@ describe('CLI Arguments Processing (FUNC-104)', () => {
     it('should ignore unknown options', () => {
       const args = parseArguments(['--unknown', '--view']);
       expect(args.view).toBe(true);
-      expect(args.unknown).toBeUndefined();
+      expect((args as any).unknown).toBeUndefined();
     });
 
     it('should handle --timeout without value', () => {
