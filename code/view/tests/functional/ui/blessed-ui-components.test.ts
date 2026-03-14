@@ -6,7 +6,7 @@
  * - blessed-ui-core.test.ts: Component initialization and data processing tests
  * - blessed-ui-display-modes.test.ts: Display mode functionality tests
  * @created 2026-03-13
- * @checked 2026-03-14
+ * @checked -
  * @updated 2026-03-13
  */
 

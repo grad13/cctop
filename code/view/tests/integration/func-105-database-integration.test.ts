@@ -6,7 +6,7 @@
  * - func-105-setup-flow.test.ts: Setup and initialization flow tests
  * - func-105-config-loading.test.ts: Configuration loading and hierarchy tests
  * @created 2026-03-13
- * @checked 2026-03-14
+ * @checked -
  * @updated 2026-03-13
  */
 

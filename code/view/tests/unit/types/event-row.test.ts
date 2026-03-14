@@ -2,7 +2,7 @@
  * EventRow Type Tests
  * Tests for event row type definitions and utilities
  * @created 2026-03-13
- * @checked 2026-03-14
+ * @checked -
  * @updated 2026-03-13
  */
 

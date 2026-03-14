@@ -2,7 +2,7 @@
  * Database-specific type definitions
  * Moved from shared module per database specification
  * @created 2026-03-13
- * @checked 2026-03-14
+ * @checked -
  * @updated 2026-03-13
  */
 

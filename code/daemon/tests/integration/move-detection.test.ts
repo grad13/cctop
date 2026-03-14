@@ -2,7 +2,7 @@
  * Move Detection Tests - FUNC-003 File Movement Tracking
  * Tests for proper 'move' event detection when files are renamed/moved
  * @created 2026-03-13
- * @checked 2026-03-14
+ * @checked -
  * @updated 2026-03-13
  */
 

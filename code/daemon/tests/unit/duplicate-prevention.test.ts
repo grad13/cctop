@@ -2,7 +2,7 @@
  * Duplicate Daemon Prevention Tests
  * Tests for preventing multiple daemon instances on the same directory
  * @created 2026-03-13
- * @checked 2026-03-14
+ * @checked -
  * @updated 2026-03-13
  */
 

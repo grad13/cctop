@@ -2,7 +2,7 @@
  * Restore Detection Tests - FUNC-001 File Restoration Implementation
  * Tests for proper 'restore' event detection when deleted files reappear
  * @created 2026-03-13
- * @checked 2026-03-14
+ * @checked -
  * @updated 2026-03-13
  */
 
