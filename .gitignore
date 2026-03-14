@@ -27,12 +27,7 @@ Thumbs.db
 .env.*
 
 # Internal (not tracked)
-CLAUDE.md
 documents/archive/
-documents/plan/
-documents/handoff/
-documents/reference/
-documents/spec/
 _externals/
 
 # Package files
