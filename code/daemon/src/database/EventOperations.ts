@@ -23,25 +23,20 @@ export class EventOperations {
       return;
     }
 
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       this.db.all('SELECT id, code FROM event_types ORDER BY code', (err, rows: any[]) => {
-        if (err || !rows || rows.length === 0) {
-          // Use specified order as fallback
-          this.eventTypeMap = new Map([
-            ['find', 1],
-            ['create', 2],
-            ['modify', 3],
-            ['delete', 4],
-            ['move', 5],
-            ['restore', 6]
-          ]);
-        } else {
-          // Build map based on actual DB content
-          this.eventTypeMap = new Map();
-          rows.forEach(row => {
-            this.eventTypeMap!.set(row.code, row.id);
-          });
+        if (err) {
+          reject(new Error(`Failed to load event types: ${err.message}`));
+          return;
         }
+        if (!rows || rows.length === 0) {
+          reject(new Error('No event types found in database. Schema may not be initialized.'));
+          return;
+        }
+        this.eventTypeMap = new Map();
+        rows.forEach(row => {
+          this.eventTypeMap!.set(row.code, row.id);
+        });
         resolve();
       });
     });
@@ -49,165 +44,157 @@ export class EventOperations {
 
   async insertEvent(event: FileEvent, measurement?: EventMeasurement): Promise<number> {
     await this.ensureEventTypesLoaded();
-    
-    return new Promise((resolve, reject) => {
-      let fileId: number;
-      let eventId: number;
-      
-      // delete/move events don't require measurements
-      if (['delete', 'move'].includes(event.eventType)) {
-        // For delete/move events, inode can be provided without full measurement
-        if (!measurement || !measurement.inode) {
-          reject(new Error('inode is required for delete/move events'));
-          return;
-        }
-      } else {
-        // For create/modify/find/restore events, full measurement is required
-        if (!measurement || !measurement.inode) {
-          reject(new Error('Measurement with inode is required for database compliance'));
-          return;
-        }
-      }
 
-      // Start transaction
+    this.validateEventInput(event, measurement);
+
+    return new Promise((resolve, reject) => {
       this.db.run('BEGIN TRANSACTION', (err) => {
         if (err) {
           reject(err);
           return;
         }
 
-        // First, handle file tracking
-        this.db.get('SELECT id FROM files WHERE inode = ?', [measurement.inode], (err, row: any) => {
+        this.upsertFileRecord(event, measurement!.inode, (err, fileId, skipEvent) => {
           if (err) {
-            this.db.run('ROLLBACK', () => {});
+            this.rollback();
             reject(err);
             return;
           }
-          
-          if (row) {
-            // File exists in files table
-            fileId = row.id;
-            
-            // For find events, skip insertion since file already exists
-            if (event.eventType === 'find') {
-              this.db.run('COMMIT', () => {});
-              resolve(fileId); // Return existing file_id (not event_id since no event was created)
-              return;
-            }
-            
-            // For non-find events, proceed normally
-            this.db.run('UPDATE files SET is_active = ? WHERE id = ?', 
-              [event.eventType !== 'delete' ? 1 : 0, fileId], 
-              (updateErr) => {
-                if (updateErr) {
-                  this.db.run('ROLLBACK', () => {});
-                  reject(updateErr);
-                  return;
-                }
-                insertEventAndMeasurement();
-              }
-            );
-          } else {
-            // File doesn't exist, insert it
-            const db = this.db;
-            db.run('INSERT INTO files (inode, is_active) VALUES (?, ?)', 
-              [measurement.inode, event.eventType !== 'delete' ? 1 : 0], 
-              function(insertErr) {
-                if (insertErr) {
-                  db.run('ROLLBACK', () => {});
-                  reject(insertErr);
-                  return;
-                }
-                fileId = this.lastID;
-                insertEventAndMeasurement();
-              }
-            );
-          }
-        });
-
-        // Function to insert event and measurement
-        const insertEventAndMeasurement = () => {
-          const insertEventSql = `
-            INSERT INTO events (timestamp, event_type_id, file_id, file_path, file_name, directory)
-            VALUES (?, ?, ?, ?, ?, ?)
-          `;
-          
-          const eventTypeId = this.eventTypeMap!.get(event.eventType);
-          if (!eventTypeId) {
-            reject(new Error(`Unknown event type: ${event.eventType}`));
+          if (skipEvent) {
+            this.db.run('COMMIT', () => {});
+            resolve(fileId!);
             return;
           }
-          const timestamp = Math.floor(event.timestamp.getTime() / 1000);
-          
-          const eventParams = [
-            timestamp,
-            eventTypeId,
-            fileId,
-            event.filePath,
-            event.fileName,
-            event.directory
-          ];
-          
-          const db = this.db;
-          db.run(insertEventSql, eventParams, function(err) {
+
+          this.insertEventRecord(event, fileId!, (err, eventId) => {
             if (err) {
-              db.run('ROLLBACK', () => {});
+              this.rollback();
               reject(err);
               return;
             }
-            
-            eventId = this.lastID;
-            
-            // Check if measurement should be saved (no measurements for delete/move)
+
             if (event.eventType === 'delete' || event.eventType === 'move') {
-              // Commit without saving measurement
-              db.run('COMMIT', (commitErr: any) => {
-                if (commitErr) {
-                  reject(commitErr);
-                } else {
-                  resolve(eventId);
-                }
-              });
+              this.commit(eventId!, resolve, reject);
             } else {
-              // Insert measurement for create/modify/find/restore events
-              const measurementSql = `
-                INSERT INTO measurements (event_id, inode, file_size, line_count, block_count)
-                VALUES (?, ?, ?, ?, ?)
-              `;
-              
-              const measurementParams = [
-                eventId,
-                measurement.inode,
-                measurement.fileSize,
-                measurement.lineCount || null,
-                measurement.blockCount || null
-              ];
-              
-              db.run(measurementSql, measurementParams, (measurementErr: any) => {
-                if (measurementErr) {
-                  db.run('ROLLBACK', () => {});
-                  reject(measurementErr);
-                } else {
-                  db.run('COMMIT', (commitErr: any) => {
-                    if (commitErr) {
-                      reject(commitErr);
-                    } else {
-                      resolve(eventId);
-                    }
-                  });
+              this.insertMeasurementRecord(eventId!, measurement!, (err) => {
+                if (err) {
+                  this.rollback();
+                  reject(err);
+                  return;
                 }
+                this.commit(eventId!, resolve, reject);
               });
             }
           });
-        };
+        });
       });
+    });
+  }
+
+  private validateEventInput(event: FileEvent, measurement?: EventMeasurement): void {
+    if (['delete', 'move'].includes(event.eventType)) {
+      if (!measurement || !measurement.inode) {
+        throw new Error('inode is required for delete/move events');
+      }
+    } else {
+      if (!measurement || !measurement.inode) {
+        throw new Error('Measurement with inode is required for database compliance');
+      }
+    }
+  }
+
+  private upsertFileRecord(
+    event: FileEvent,
+    inode: number,
+    callback: (err: Error | null, fileId?: number, skipEvent?: boolean) => void
+  ): void {
+    this.db.get('SELECT id FROM files WHERE inode = ?', [inode], (err, row: any) => {
+      if (err) {
+        callback(err);
+        return;
+      }
+
+      if (row) {
+        const fileId = row.id;
+        if (event.eventType === 'find') {
+          callback(null, fileId, true);
+          return;
+        }
+        const isActive = event.eventType !== 'delete' ? 1 : 0;
+        this.db.run('UPDATE files SET is_active = ? WHERE id = ?', [isActive, fileId], (err) => {
+          callback(err, fileId);
+        });
+      } else {
+        const isActive = event.eventType !== 'delete' ? 1 : 0;
+        const db = this.db;
+        db.run('INSERT INTO files (inode, is_active) VALUES (?, ?)', [inode, isActive], function(err) {
+          callback(err, err ? undefined : this.lastID);
+        });
+      }
+    });
+  }
+
+  private insertEventRecord(
+    event: FileEvent,
+    fileId: number,
+    callback: (err: Error | null, eventId?: number) => void
+  ): void {
+    const eventTypeId = this.eventTypeMap!.get(event.eventType);
+    if (!eventTypeId) {
+      callback(new Error(`Unknown event type: ${event.eventType}`));
+      return;
+    }
+
+    const timestamp = Math.floor(event.timestamp.getTime() / 1000);
+    const sql = `
+      INSERT INTO events (timestamp, event_type_id, file_id, file_path, file_name, directory)
+      VALUES (?, ?, ?, ?, ?, ?)
+    `;
+    const params = [timestamp, eventTypeId, fileId, event.filePath, event.fileName, event.directory];
+
+    const db = this.db;
+    db.run(sql, params, function(err) {
+      callback(err, err ? undefined : this.lastID);
+    });
+  }
+
+  private insertMeasurementRecord(
+    eventId: number,
+    measurement: EventMeasurement,
+    callback: (err: Error | null) => void
+  ): void {
+    const sql = `
+      INSERT INTO measurements (event_id, inode, file_size, line_count, block_count)
+      VALUES (?, ?, ?, ?, ?)
+    `;
+    const params = [
+      eventId,
+      measurement.inode,
+      measurement.fileSize,
+      measurement.lineCount || null,
+      measurement.blockCount || null
+    ];
+    this.db.run(sql, params, callback);
+  }
+
+  private rollback(): void {
+    this.db.run('ROLLBACK', () => {});
+  }
+
+  private commit(eventId: number, resolve: (id: number) => void, reject: (err: Error) => void): void {
+    this.db.run('COMMIT', (err: any) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(eventId);
+      }
     });
   }
 
   async getRecentEvents(limit: number = 100, filePath?: string): Promise<FileEvent[]> {
     return new Promise((resolve, reject) => {
       let sql = `
-        SELECT 
+        SELECT
           e.id,
           e.timestamp,
           e.event_type_id,
@@ -221,17 +208,17 @@ export class EventOperations {
         JOIN files f ON e.file_id = f.id
         LEFT JOIN measurements m ON e.id = m.event_id
       `;
-      
+
       const params: any[] = [];
-      
+
       if (filePath) {
         sql += ' WHERE e.file_path = ?';
         params.push(filePath);
       }
-      
+
       sql += ' ORDER BY e.timestamp DESC LIMIT ?';
       params.push(limit);
-      
+
       this.db.all(sql, params, (err, rows: any[]) => {
         if (err) {
           reject(err);
@@ -254,7 +241,7 @@ export class EventOperations {
   async getEventById(eventId: number): Promise<FileEvent | null> {
     return new Promise((resolve, reject) => {
       const sql = `
-        SELECT 
+        SELECT
           e.id,
           e.timestamp,
           e.event_type_id,
@@ -266,7 +253,7 @@ export class EventOperations {
         JOIN event_types et ON e.event_type_id = et.id
         WHERE e.id = ?
       `;
-      
+
       this.db.get(sql, [eventId], (err, row: any) => {
         if (err) {
           reject(err);
