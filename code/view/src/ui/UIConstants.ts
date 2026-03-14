@@ -1,5 +1,8 @@
 /**
  * UI Layout Constants
+ * @created 2026-03-14
+ * @checked 2026-03-14
+ * @updated 2026-03-14
  */
 
 export const UI_LAYOUT = {

@@ -5,6 +5,9 @@
  * Test modules:
  * - blessed-ui-core.test.ts: Component initialization and data processing tests
  * - blessed-ui-display-modes.test.ts: Display mode functionality tests
+ * @created 2026-03-13
+ * @checked 2026-03-14
+ * @updated 2026-03-13
  */
 
 // This file serves as the main test suite entry point

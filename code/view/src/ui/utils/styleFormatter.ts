@@ -1,6 +1,9 @@
 /**
  * Style formatting utilities for blessed tags
  * Provides unified interface for applying colors, backgrounds, and text styles
+ * @created 2026-03-13
+ * @checked 2026-03-14
+ * @updated 2026-03-13
  */
 
 export type Color = 'red' | 'green' | 'yellow' | 'blue' | 'magenta' | 'cyan' | 'white' | 'black';

@@ -1,6 +1,9 @@
 /**
  * Duplicate Daemon Prevention Tests
  * Tests for preventing multiple daemon instances on the same directory
+ * @created 2026-03-13
+ * @checked 2026-03-14
+ * @updated 2026-03-13
  */
 
 import { describe, test, expect, beforeEach, afterEach } from 'vitest';

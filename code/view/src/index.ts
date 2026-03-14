@@ -1,6 +1,9 @@
 /**
  * CCTOP CLI Main Entry Point
  * Blessed.js Terminal UI Implementation
+ * @created 2026-03-13
+ * @checked 2026-03-14
+ * @updated 2026-03-14
  */
 
 import { BlessedFramelessUISimple } from './ui/BlessedFramelessUI';

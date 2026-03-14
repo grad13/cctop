@@ -1,6 +1,9 @@
 /**
  * Move Detection Advanced Tests - FUNC-003 File Movement Tracking
  * Tests for complex move detection scenarios
+ * @created 2026-03-13
+ * @checked 2026-03-14
+ * @updated 2026-03-13
  */
 
 import { describe, test, expect, beforeEach, afterEach, afterAll } from 'vitest';

@@ -1,6 +1,9 @@
 /**
  * Query Builder
  * Provides common SQL fragments for event queries
+ * @created 2026-03-14
+ * @checked 2026-03-14
+ * @updated 2026-03-14
  */
 
 const EVENT_SELECT_COLUMNS = `

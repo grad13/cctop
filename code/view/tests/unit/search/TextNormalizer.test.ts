@@ -1,5 +1,8 @@
 /**
  * Unit tests for TextNormalizer
+ * @created 2026-03-13
+ * @checked 2026-03-14
+ * @updated 2026-03-13
  */
 
 import { TextNormalizer } from '../../../src/search/TextNormalizer';

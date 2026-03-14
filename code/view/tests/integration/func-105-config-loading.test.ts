@@ -1,6 +1,9 @@
 /**
  * FUNC-105 Configuration Loading Integration Tests
  * Tests for configuration hierarchy and loading mechanisms
+ * @created 2026-03-13
+ * @checked 2026-03-14
+ * @updated 2026-03-13
  */
 
 import { describe, it, expect, beforeEach, afterEach, beforeAll, afterAll } from 'vitest';

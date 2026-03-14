@@ -1,6 +1,9 @@
 /**
  * UI Content Builder
  * Builds text content for UI panels based on current state
+ * @created 2026-03-14
+ * @checked 2026-03-14
+ * @updated 2026-03-14
  */
 
 import { UIState } from './UIState';

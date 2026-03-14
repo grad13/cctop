@@ -2,6 +2,9 @@
  * UI Data State Management  
  * Manages data loading state (pagination, loading flags, data cache)
  * Part of Phase 3: State management separation
+ * @created 2026-03-13
+ * @checked 2026-03-14
+ * @updated 2026-03-13
  */
 
 import { EventRow } from '../../types/event-row';

@@ -2,6 +2,9 @@
  * UI Viewport State Management
  * Manages viewport-specific state (scrolling, selection, display area)
  * Part of Phase 3: State management separation
+ * @created 2026-03-13
+ * @checked 2026-03-14
+ * @updated 2026-03-13
  */
 
 export class UIViewportState {

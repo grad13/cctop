@@ -1,6 +1,9 @@
 /**
  * Directory Structure Creator
  * Creates .cctop/ directory structure
+ * @created 2026-03-14
+ * @checked 2026-03-14
+ * @updated 2026-03-14
  */
 
 import * as fs from 'fs';

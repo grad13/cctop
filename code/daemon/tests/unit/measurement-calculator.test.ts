@@ -1,6 +1,9 @@
 /**
  * MeasurementCalculator Unit Tests
  * FUNC-000準拠の測定値計算機能テスト
+ * @created 2026-03-13
+ * @checked 2026-03-14
+ * @updated 2026-03-13
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';

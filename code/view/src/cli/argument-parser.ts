@@ -1,6 +1,9 @@
 /**
  * CLI Argument Parser
  * Handles command-line argument parsing and help display
+ * @created 2026-03-14
+ * @checked 2026-03-14
+ * @updated 2026-03-14
  */
 
 export interface CLIArguments {

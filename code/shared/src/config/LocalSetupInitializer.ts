@@ -1,6 +1,9 @@
 /**
  * Local Setup Initializer
  * Handles automatic creation of .cctop/ directory structure and initial configuration
+ * @created 2026-03-13
+ * @checked 2026-03-14
+ * @updated 2026-03-14
  */
 
 import * as fs from 'fs';

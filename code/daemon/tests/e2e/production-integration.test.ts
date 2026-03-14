@@ -1,5 +1,8 @@
 /**
  * Production Integration Test - Real Daemon Event Detection
+ * @created 2026-03-13
+ * @checked 2026-03-14
+ * @updated 2026-03-13
  */
 
 import { describe, test, expect, beforeEach, afterEach } from 'vitest';

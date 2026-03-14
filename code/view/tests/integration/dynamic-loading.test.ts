@@ -1,3 +1,9 @@
+/**
+ * dynamic-loading.test
+ * @created 2026-03-13
+ * @checked 2026-03-14
+ * @updated 2026-03-13
+ */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { DynamicDataLoader, EventData, LoadingState } from '../../src/loading/DynamicDataLoader.js';
 

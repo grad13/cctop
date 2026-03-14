@@ -1,3 +1,9 @@
+/**
+ * trigger-manager.test
+ * @created 2026-03-14
+ * @checked 2026-03-14
+ * @updated 2026-03-14
+ */
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import sqlite3 from 'sqlite3';
 import { TriggerManager } from '../../src/database/TriggerManager.js';

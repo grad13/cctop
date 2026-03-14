@@ -1,6 +1,9 @@
 /**
  * Database Connection Management Tests
  * Tests for database connection handling and lifecycle
+ * @created 2026-03-13
+ * @checked 2026-03-14
+ * @updated 2026-03-13
  */
 
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';

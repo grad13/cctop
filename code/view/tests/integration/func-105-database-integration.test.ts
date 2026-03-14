@@ -5,6 +5,9 @@
  * Test modules:
  * - func-105-setup-flow.test.ts: Setup and initialization flow tests
  * - func-105-config-loading.test.ts: Configuration loading and hierarchy tests
+ * @created 2026-03-13
+ * @checked 2026-03-14
+ * @updated 2026-03-13
  */
 
 // This file serves as the main test suite entry point

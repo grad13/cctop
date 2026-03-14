@@ -4,6 +4,9 @@
  * 
  * Test modules:
  * - local-setup-core.test.ts: Core initialization functionality tests
+ * @created 2026-03-13
+ * @checked 2026-03-14
+ * @updated 2026-03-13
  */
 
 // This file serves as the main test suite entry point

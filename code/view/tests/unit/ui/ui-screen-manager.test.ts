@@ -1,3 +1,9 @@
+/**
+ * ui-screen-manager.test
+ * @created 2026-03-14
+ * @checked 2026-03-14
+ * @updated 2026-03-14
+ */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 // Mock blessed before importing UIScreenManager

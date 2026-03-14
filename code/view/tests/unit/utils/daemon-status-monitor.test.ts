@@ -1,6 +1,9 @@
 /**
  * Daemon Status Monitor Tests
  * Tests for daemon process monitoring functionality
+ * @created 2026-03-13
+ * @checked 2026-03-14
+ * @updated 2026-03-13
  */
 
 import { DaemonStatusMonitor } from '../../../src/utils/daemon-status-monitor.ts';

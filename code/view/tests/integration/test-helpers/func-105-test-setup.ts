@@ -1,6 +1,9 @@
 /**
  * Common test setup for FUNC-105 integration tests
  * Shared utilities and setup/teardown logic
+ * @created 2026-03-13
+ * @checked 2026-03-14
+ * @updated 2026-03-13
  */
 
 import { LocalSetupInitializer } from '../../../src/config/local-setup-initializer';

@@ -2,6 +2,9 @@
  * EventTable Viewport Interface
  * Defines contract for EventTable interaction without exposing implementation details
  * Part of Phase 3: Architecture improvement for responsibility separation
+ * @created 2026-03-13
+ * @checked 2026-03-14
+ * @updated 2026-03-13
  */
 
 import blessed from 'blessed';

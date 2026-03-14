@@ -2,6 +2,9 @@
  * Shared Configuration Interface
  * Per FUNC-101 specification
  * Common settings used by both daemon and CLI
+ * @created 2026-03-13
+ * @checked 2026-03-14
+ * @updated 2026-03-13
  */
 
 export interface SharedConfig {

@@ -2,6 +2,9 @@
  * String Utils Tests
  * 
  * Tests for string manipulation utilities with East Asian Width support
+ * @created 2026-03-13
+ * @checked 2026-03-14
+ * @updated 2026-03-13
  */
 
 import { describe, it, expect } from 'vitest';

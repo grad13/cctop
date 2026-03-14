@@ -1,6 +1,9 @@
 /**
  * Column normalization utility
  * Provides a unified interface for formatting column values with proper width and alignment
+ * @created 2026-03-13
+ * @checked 2026-03-14
+ * @updated 2026-03-13
  */
 
 import { padOrTruncate, padLeft, truncateDirectoryPath } from './stringUtils';

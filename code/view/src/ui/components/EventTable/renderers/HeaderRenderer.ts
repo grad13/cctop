@@ -1,5 +1,8 @@
 /**
  * Header rendering logic for EventTable
+ * @created 2026-03-13
+ * @checked 2026-03-14
+ * @updated 2026-03-13
  */
 
 import { generateHeaderLine, generateSeparatorLine } from '../utils/columnConfig';
