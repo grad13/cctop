@@ -1,4 +1,5 @@
 import sqlite3 from 'sqlite3';
+import { QueryBuilder } from './QueryBuilder';
 
 /**
  * File Event Reader
@@ -44,62 +45,30 @@ export class FileEventReader {
         return;
       }
 
-      // Build filter condition
-      const buildFilterCondition = (filters?: string[]): string => {
-        if (!filters || filters.length === 0 || filters.length >= 6) {
-          return ''; // No filtering if no filters or all types selected
-        }
-        const filterConditions = filters.map(f => `'${f}'`).join(',');
-        return `AND et.name IN (${filterConditions})`;
-      };
-      
-      const filterCondition = buildFilterCondition(filters);
-      
-      // Standard compliant query only
-      const query = mode === 'unique' ? 
-        `WITH latest_events AS (
-          SELECT 
-            e.*,
-            ROW_NUMBER() OVER (PARTITION BY e.file_name, e.directory ORDER BY e.timestamp DESC) as rn
+      const filterCond = QueryBuilder.filterCondition(filters);
+      let query: string;
+
+      if (mode === 'unique') {
+        const cteWhere = filters && filters.length > 0 && filters.length < 6
+          ? `JOIN event_types et2 ON e.event_type_id = et2.id
+             WHERE et2.name IN (${filters.map(f => `'${f}'`).join(',')})`
+          : '';
+        query = `${QueryBuilder.uniqueCTE(cteWhere)}
+          SELECT ${QueryBuilder.selectColumns('le')}
+          FROM latest_events le
+          ${QueryBuilder.joins('le')}
+          WHERE le.rn = 1
+          ORDER BY le.id DESC
+          LIMIT ? OFFSET ?`;
+      } else {
+        const whereClause = filterCond ? `WHERE ${filterCond}` : '';
+        query = `SELECT ${QueryBuilder.selectColumns()}
           FROM events e
-          ${filters && filters.length > 0 && filters.length < 6 ? 
-            `JOIN event_types et2 ON e.event_type_id = et2.id 
-             WHERE et2.name IN (${filters.map(f => `'${f}'`).join(',')})` : ''}
-        )
-        SELECT 
-          le.id,
-          le.timestamp,
-          le.file_name as filename,
-          le.directory,
-          et.name as event_type,
-          COALESCE(m.file_size, 0) as size,
-          m.line_count as lines,
-          m.block_count as blocks,
-          COALESCE(m.inode, 0) as inode,
-          0 as elapsed_ms
-        FROM latest_events le
-        JOIN event_types et ON le.event_type_id = et.id
-        LEFT JOIN measurements m ON le.id = m.event_id
-        WHERE le.rn = 1
-        ORDER BY le.id DESC 
-        LIMIT ? OFFSET ?` :
-        `SELECT 
-          e.id,
-          e.timestamp,
-          e.file_name as filename,
-          e.directory,
-          et.name as event_type,
-          COALESCE(m.file_size, 0) as size,
-          m.line_count as lines,
-          m.block_count as blocks,
-          COALESCE(m.inode, 0) as inode,
-          0 as elapsed_ms
-        FROM events e
-        JOIN event_types et ON e.event_type_id = et.id
-        LEFT JOIN measurements m ON e.id = m.event_id
-        ${filterCondition ? `WHERE ${filterCondition.replace('AND ', '')}` : ''}
-        ORDER BY e.id DESC 
-        LIMIT ? OFFSET ?`;
+          ${QueryBuilder.joins()}
+          ${whereClause}
+          ORDER BY e.id DESC
+          LIMIT ? OFFSET ?`;
+      }
 
       this.db.all(query, [limit, offset], (err, rows) => {
         if (err) {
@@ -111,10 +80,6 @@ export class FileEventReader {
     });
   }
 
-  /**
-   * Search events with keyword and filters
-   * Implementation with staged fetching
-   */
   async searchEvents(params: {
     keyword: string;
     filters?: string[];
@@ -122,12 +87,12 @@ export class FileEventReader {
     limit?: number;
     offset?: number;
   }): Promise<any[]> {
-    const { 
-      keyword, 
-      filters = ['find', 'create', 'modify', 'delete', 'move', 'restore'], 
+    const {
+      keyword,
+      filters = ['find', 'create', 'modify', 'delete', 'move', 'restore'],
       mode = 'all',
       limit = 100,
-      offset = 0 
+      offset = 0
     } = params;
 
     return new Promise((resolve, reject) => {
@@ -136,56 +101,27 @@ export class FileEventReader {
         return;
       }
 
-      // Build filter conditions
       const filterConditions = filters.map(f => `'${f}'`).join(',');
-      
-      // Standard compliant query with search
-      const query = mode === 'unique' ? 
-        `WITH latest_events AS (
-          SELECT 
-            e.*,
-            ROW_NUMBER() OVER (PARTITION BY e.file_name, e.directory ORDER BY e.timestamp DESC) as rn
+      let query: string;
+
+      if (mode === 'unique') {
+        query = `${QueryBuilder.uniqueCTE('WHERE (e.file_name LIKE ? OR e.directory LIKE ?)')}
+          SELECT ${QueryBuilder.selectColumns('le')}
+          FROM latest_events le
+          ${QueryBuilder.joins('le')}
+          WHERE le.rn = 1
+            AND et.name IN (${filterConditions})
+          ORDER BY le.timestamp DESC
+          LIMIT ? OFFSET ?`;
+      } else {
+        query = `SELECT ${QueryBuilder.selectColumns()}
           FROM events e
+          ${QueryBuilder.joins()}
           WHERE (e.file_name LIKE ? OR e.directory LIKE ?)
-        )
-        SELECT 
-          le.id,
-          le.timestamp,
-          le.file_name as filename,
-          le.directory,
-          et.name as event_type,
-          COALESCE(m.file_size, 0) as size,
-          m.line_count as lines,
-          m.block_count as blocks,
-          COALESCE(m.inode, 0) as inode,
-          0 as elapsed_ms
-        FROM latest_events le
-        JOIN event_types et ON le.event_type_id = et.id
-        LEFT JOIN measurements m ON le.id = m.event_id
-        WHERE 
-          le.rn = 1
-          AND et.name IN (${filterConditions})
-        ORDER BY le.timestamp DESC 
-        LIMIT ? OFFSET ?` :
-        `SELECT 
-          e.id,
-          e.timestamp,
-          e.file_name as filename,
-          e.directory,
-          et.name as event_type,
-          COALESCE(m.file_size, 0) as size,
-          m.line_count as lines,
-          m.block_count as blocks,
-          COALESCE(m.inode, 0) as inode,
-          0 as elapsed_ms
-        FROM events e
-        JOIN event_types et ON e.event_type_id = et.id
-        LEFT JOIN measurements m ON e.id = m.event_id
-        WHERE 
-          (e.file_name LIKE ? OR e.directory LIKE ?)
-          AND et.name IN (${filterConditions})
-        ORDER BY e.timestamp DESC 
-        LIMIT ? OFFSET ?`;
+            AND et.name IN (${filterConditions})
+          ORDER BY e.timestamp DESC
+          LIMIT ? OFFSET ?`;
+      }
 
       const searchPattern = `%${keyword}%`;
       this.db.all(query, [searchPattern, searchPattern, limit, offset], (err, rows) => {
@@ -198,10 +134,6 @@ export class FileEventReader {
     });
   }
 
-  /**
-   * Get events after a specific event ID (for incremental updates)
-   * Returns events ordered by id ASC (oldest first for proper cache update order)
-   */
   async getEventsAfterId(lastEventId: number, limit: number = 100): Promise<any[]> {
     return new Promise((resolve, reject) => {
       if (!this.db) {
@@ -209,21 +141,9 @@ export class FileEventReader {
         return;
       }
 
-      const query = `
-        SELECT
-          e.id,
-          e.timestamp,
-          e.file_name as filename,
-          e.directory,
-          et.name as event_type,
-          COALESCE(m.file_size, 0) as size,
-          m.line_count as lines,
-          m.block_count as blocks,
-          COALESCE(m.inode, 0) as inode,
-          0 as elapsed_ms
+      const query = `SELECT ${QueryBuilder.selectColumns()}
         FROM events e
-        JOIN event_types et ON e.event_type_id = et.id
-        LEFT JOIN measurements m ON e.id = m.event_id
+        ${QueryBuilder.joins()}
         WHERE e.id > ?
         ORDER BY e.id ASC
         LIMIT ?`;
