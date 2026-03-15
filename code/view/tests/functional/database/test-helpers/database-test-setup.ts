@@ -6,13 +6,13 @@
  * @updated 2026-03-13
  */
 
-import { DatabaseAdapter } from '../../../../src/database/database-adapter.ts';
+import { FileEventReader } from '../../../../src/database/FileEventReader';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 
 export interface DatabaseTestContext {
-  adapter: DatabaseAdapter;
+  adapter: FileEventReader;
   dbPath: string;
   testDir: string;
 }
@@ -33,16 +33,16 @@ export class DatabaseTestSetup {
     }
   }
 
-  createDatabaseAdapter(dbPath?: string): DatabaseAdapter {
-    return new DatabaseAdapter(dbPath || this.dbPath);
+  createFileEventReader(dbPath?: string): FileEventReader {
+    return new FileEventReader(dbPath || this.dbPath);
   }
 
-  async createTestDatabase(adapter: DatabaseAdapter): Promise<void> {
+  async createTestDatabase(adapter: FileEventReader): Promise<void> {
     await adapter.connect();
     await this.setupFunc000Schema(adapter);
   }
 
-  private async setupFunc000Schema(adapter: DatabaseAdapter): Promise<void> {
+  private async setupFunc000Schema(adapter: FileEventReader): Promise<void> {
     const db = adapter.getDatabase();
     if (!db) return;
 
@@ -182,7 +182,7 @@ export class DatabaseTestSetup {
     }
   }
 
-  async verifyTableExists(adapter: DatabaseAdapter, tableName: string): Promise<boolean> {
+  async verifyTableExists(adapter: FileEventReader, tableName: string): Promise<boolean> {
     try {
       const result = await adapter.getDatabase().prepare(`
         SELECT COUNT(*) as count 
@@ -195,7 +195,7 @@ export class DatabaseTestSetup {
     }
   }
 
-  async verifyEventTypesData(adapter: DatabaseAdapter): Promise<boolean> {
+  async verifyEventTypesData(adapter: FileEventReader): Promise<boolean> {
     try {
       const result = await adapter.getDatabase().prepare(`
         SELECT COUNT(*) as count FROM event_types
@@ -206,7 +206,7 @@ export class DatabaseTestSetup {
     }
   }
 
-  async verifyForeignKeysEnabled(adapter: DatabaseAdapter): Promise<boolean> {
+  async verifyForeignKeysEnabled(adapter: FileEventReader): Promise<boolean> {
     try {
       const result = await adapter.getDatabase().prepare(`
         PRAGMA foreign_keys
@@ -217,7 +217,7 @@ export class DatabaseTestSetup {
     }
   }
 
-  async verifyIndexExists(adapter: DatabaseAdapter, indexName: string): Promise<boolean> {
+  async verifyIndexExists(adapter: FileEventReader, indexName: string): Promise<boolean> {
     try {
       const result = await adapter.getDatabase().prepare(`
         SELECT COUNT(*) as count 
@@ -230,7 +230,7 @@ export class DatabaseTestSetup {
     }
   }
 
-  async getEventCount(adapter: DatabaseAdapter): Promise<number> {
+  async getEventCount(adapter: FileEventReader): Promise<number> {
     try {
       const result = await adapter.getDatabase().prepare(`
         SELECT COUNT(*) as count FROM events

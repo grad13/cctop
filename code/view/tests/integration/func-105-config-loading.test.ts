@@ -27,6 +27,8 @@ describe('FUNC-105 Configuration Loading Integration', () => {
   beforeEach(async () => {
     context = testSetup.setupTestContext(testDir);
     await context.initializer.initialize();
+    // Load configuration to auto-generate view-config.json
+    await context.configLoader.loadConfiguration();
   });
 
   afterEach(() => {
@@ -39,12 +41,12 @@ describe('FUNC-105 Configuration Loading Integration', () => {
     // Verify 3-layer configuration structure
     expect(config).toHaveProperty('shared');
     expect(config).toHaveProperty('daemon');
-    expect(config).toHaveProperty('cli');
+    expect(config).toHaveProperty('view');
 
-    // Verify CLI config structure
-    expect(config.cli).toHaveProperty('display');
-    expect(config.cli).toHaveProperty('interaction');
-    expect(config.cli).toHaveProperty('logFile');
+    // Verify view config structure
+    expect(config.view).toHaveProperty('display');
+    expect(config.view).toHaveProperty('interactive');
+    expect(config.view).toHaveProperty('locale');
   });
 
   it('should handle configuration override priority correctly', async () => {
@@ -54,42 +56,42 @@ describe('FUNC-105 Configuration Loading Integration', () => {
     sharedConfig.database = { path: 'custom-shared.db' };
     testSetup.createExistingConfig(sharedPath, sharedConfig);
 
-    // Modify CLI config with override
-    const cliPath = '.cctop/config/cli-config.json';
-    const cliConfig = testSetup.readConfigFile(cliPath);
-    cliConfig.database = { path: 'custom-cli.db' };
-    testSetup.createExistingConfig(cliPath, cliConfig);
+    // Modify view config with override
+    const viewPath = '.cctop/config/view-config.json';
+    const viewConfig = testSetup.readConfigFile(viewPath);
+    viewConfig.database = { path: 'custom-view.db' };
+    testSetup.createExistingConfig(viewPath, viewConfig);
 
     const config = await context.configLoader.loadConfiguration();
 
-    // CLI config should override shared config
-    expect(config.cli.database.path).toBe('custom-cli.db');
+    // View config should override shared config
+    expect(config.view.database.path).toBe('custom-view.db');
     expect(config.shared.database.path).toBe('custom-shared.db');
   });
 
   it('should validate configuration file format and structure', async () => {
     const config = await context.configLoader.loadConfiguration();
 
-    // Validate required CLI configuration sections
-    expect(config.cli.display).toHaveProperty('refreshInterval');
-    expect(config.cli.display).toHaveProperty('maxRows');
-    expect(config.cli.display).toHaveProperty('showTimestamps');
+    // Validate required view configuration sections
+    expect(config.view.display).toHaveProperty('refreshRateMs');
+    expect(config.view.display).toHaveProperty('maxEvents');
+    expect(config.view.display).toHaveProperty('dateFormat');
 
-    expect(config.cli.interaction).toHaveProperty('enableMouse');
-    expect(config.cli.interaction).toHaveProperty('scrollSpeed');
+    expect(config.view.interactive).toHaveProperty('keyRepeatDelay');
+    expect(config.view.interactive).toHaveProperty('keyRepeatInterval');
   });
 
   it('should handle missing configuration files gracefully', async () => {
     // Remove a config file
-    const cliPath = '.cctop/config/cli-config.json';
-    if (fs.existsSync(cliPath)) {
-      fs.unlinkSync(cliPath);
+    const viewPath = '.cctop/config/view-config.json';
+    if (fs.existsSync(viewPath)) {
+      fs.unlinkSync(viewPath);
     }
 
     // Should still load with defaults
     const config = await context.configLoader.loadConfiguration();
-    expect(config).toHaveProperty('cli');
-    expect(config.cli).toHaveProperty('display');
+    expect(config).toHaveProperty('view');
+    expect(config.view).toHaveProperty('display');
   });
 
   it('should merge configuration layers correctly', async () => {
@@ -100,19 +102,19 @@ describe('FUNC-105 Configuration Loading Integration', () => {
     sharedConfig.overrideTest = 'shared-value';
     testSetup.createExistingConfig(sharedPath, sharedConfig);
 
-    // Override in CLI config
-    const cliPath = '.cctop/config/cli-config.json';
-    const cliConfig = testSetup.readConfigFile(cliPath);
-    cliConfig.overrideTest = 'cli-value';
-    testSetup.createExistingConfig(cliPath, cliConfig);
+    // Override in view config
+    const viewPath = '.cctop/config/view-config.json';
+    const viewConfig = testSetup.readConfigFile(viewPath);
+    viewConfig.overrideTest = 'view-value';
+    testSetup.createExistingConfig(viewPath, viewConfig);
 
     const config = await context.configLoader.loadConfiguration();
 
     // Shared value should be accessible
     expect(config.shared.testValue).toBe('from-shared');
     
-    // CLI should override shared
-    expect(config.cli.overrideTest).toBe('cli-value');
+    // View should override shared
+    expect(config.view.overrideTest).toBe('view-value');
     expect(config.shared.overrideTest).toBe('shared-value');
   });
 
@@ -120,42 +122,42 @@ describe('FUNC-105 Configuration Loading Integration', () => {
     const config = await context.configLoader.loadConfiguration();
 
     // Type validations
-    expect(typeof config.cli.display.refreshInterval).toBe('number');
-    expect(typeof config.cli.display.maxRows).toBe('number');
-    expect(typeof config.cli.display.showTimestamps).toBe('boolean');
-    expect(typeof config.cli.interaction.enableMouse).toBe('boolean');
-    expect(typeof config.cli.interaction.scrollSpeed).toBe('number');
+    expect(typeof config.view.display.refreshRateMs).toBe('number');
+    expect(typeof config.view.display.maxEvents).toBe('number');
+    expect(typeof config.view.display.dateFormat).toBe('string');
+    expect(typeof config.view.interactive.keyRepeatDelay).toBe('number');
+    expect(typeof config.view.interactive.keyRepeatInterval).toBe('number');
   });
 
   it('should handle corrupted configuration files', async () => {
     // Corrupt a config file
-    const cliPath = '.cctop/config/cli-config.json';
-    testSetup.corruptFile(cliPath);
+    const viewPath = '.cctop/config/view-config.json';
+    testSetup.corruptFile(viewPath);
 
     // Should handle gracefully and use defaults
     const config = await context.configLoader.loadConfiguration();
-    expect(config).toHaveProperty('cli');
-    expect(config.cli).toHaveProperty('display');
+    expect(config).toHaveProperty('view');
+    expect(config.view).toHaveProperty('display');
   });
 
   it('should preserve custom configuration sections', async () => {
     // Add custom sections to config
-    const cliPath = '.cctop/config/cli-config.json';
-    const cliConfig = testSetup.readConfigFile(cliPath);
-    cliConfig.customSection = {
+    const viewPath = '.cctop/config/view-config.json';
+    const viewConfig = testSetup.readConfigFile(viewPath);
+    viewConfig.customSection = {
       customKey: 'customValue',
       nested: {
         value: 42
       }
     };
-    testSetup.createExistingConfig(cliPath, cliConfig);
+    testSetup.createExistingConfig(viewPath, viewConfig);
 
     const config = await context.configLoader.loadConfiguration();
 
     // Custom sections should be preserved
-    expect(config.cli.customSection).toBeDefined();
-    expect(config.cli.customSection.customKey).toBe('customValue');
-    expect(config.cli.customSection.nested.value).toBe(42);
+    expect(config.view.customSection).toBeDefined();
+    expect(config.view.customSection.customKey).toBe('customValue');
+    expect(config.view.customSection.nested.value).toBe(42);
   });
 
 });

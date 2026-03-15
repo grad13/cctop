@@ -7,20 +7,20 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { Database } from '../../src/database/database';
+import { FileEventRecorder } from '../../src/database/FileEventRecorder';
 import * as fs from 'fs';
 import * as path from 'path';
 import sqlite3 from 'sqlite3';
 
 describe('Database Schema Management Tests', () => {
   const testDbPath = path.join(__dirname, 'test-schema-mgmt.db');
-  let database: Database;
+  let database: FileEventRecorder;
 
   beforeEach(async () => {
     if (fs.existsSync(testDbPath)) {
       fs.unlinkSync(testDbPath);
     }
-    database = new Database(testDbPath);
+    database = new FileEventRecorder(testDbPath);
     await database.connect();
   });
 

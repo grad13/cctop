@@ -58,7 +58,7 @@ export interface LocaleConfig {
  * Default view configuration
  */
 export const defaultViewConfig: ViewConfig = {
-  version: '0.3.0.0',
+  version: '0.5.2.6',
   display: {
     maxEvents: 20,
     refreshRateMs: 100,

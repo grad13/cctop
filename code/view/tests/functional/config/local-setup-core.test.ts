@@ -84,7 +84,7 @@ describe('LocalSetupInitializer - Core', () => {
 
         // Validate structure
         expect(sharedConfig).toHaveProperty('version');
-        expect(sharedConfig).toHaveProperty('projectName');
+        expect(sharedConfig).toHaveProperty('project');
         expect(daemonConfig).toHaveProperty('daemon');
         expect(cliConfig).toHaveProperty('display');
       } finally {

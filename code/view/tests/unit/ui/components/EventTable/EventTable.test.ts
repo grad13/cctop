@@ -1,6 +1,6 @@
 /**
  * EventTable Component Tests
- * 
+ *
  * Tests for optimized event list display with intelligent diff detection
  * @created 2026-03-13
  * @checked -
@@ -11,16 +11,10 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import blessed from 'blessed';
 import { EventTable } from '../../../../../src/ui/components/EventTable/EventTable';
 import { EventRow } from '../../../../../src/types/event-row';
+import { createMockBox } from '../../../../helpers/mock-blessed';
 
 // Mock blessed
-const mockBox = {
-  setContent: vi.fn(),
-  getContent: vi.fn().mockReturnValue(''),
-  destroy: vi.fn(),
-  screen: {
-    render: vi.fn()
-  }
-};
+const mockBox = createMockBox();
 
 vi.mock('blessed', () => ({
   default: {
@@ -34,12 +28,10 @@ describe('EventTable', () => {
   const screenWidth = 180;
 
   beforeEach(() => {
-    // Create mock screen
     mockScreen = {
       render: vi.fn()
     };
 
-    // Clear all mocks
     vi.clearAllMocks();
   });
 
@@ -71,7 +63,7 @@ describe('EventTable', () => {
 
     it('should calculate directory width correctly', () => {
       eventTable = new EventTable({ parent: mockScreen }, screenWidth);
-      
+
       // Fixed columns total: 99, so directory width = 180 - 99 = 81
       const box = eventTable.getBox();
       expect(box).toBeDefined();
@@ -79,22 +71,16 @@ describe('EventTable', () => {
   });
 
   describe('Render Method', () => {
-    let mockBox: any;
+    let localMockBox: any;
     let mockEvents: EventRow[];
 
     beforeEach(() => {
-      mockBox = {
-        setContent: vi.fn(),
-        getContent: vi.fn().mockReturnValue(''),
-        destroy: vi.fn(),
-        screen: mockScreen
-      };
-      
-      ((blessed as any).box as ReturnType<typeof vi.fn>).mockReturnValue(mockBox);
-      
+      localMockBox = createMockBox(mockScreen);
+
+      ((blessed as any).box as ReturnType<typeof vi.fn>).mockReturnValue(localMockBox);
+
       eventTable = new EventTable({ parent: mockScreen }, screenWidth);
 
-      // Create test events
       mockEvents = [
         {
           id: 1,
@@ -126,31 +112,25 @@ describe('EventTable', () => {
     it('should update events correctly', () => {
       eventTable.update(mockEvents, 0);
 
-      expect(mockBox.setContent).toHaveBeenCalled();
+      expect(localMockBox.setContent).toHaveBeenCalled();
       expect(mockScreen.render).toHaveBeenCalled();
     });
 
     it('should optimize selection-only changes', () => {
-      // First render
       eventTable.update(mockEvents, 0);
-      
-      // Clear mocks
-      mockBox.setContent.mockClear();
+
+      localMockBox.setContent.mockClear();
       mockScreen.render.mockClear();
 
-      // Change only selection
       eventTable.update(mockEvents, 1);
 
-      // Should still update content (blessed limitation)
-      expect(mockBox.setContent).toHaveBeenCalled();
+      expect(localMockBox.setContent).toHaveBeenCalled();
       expect(mockScreen.render).toHaveBeenCalled();
     });
 
     it('should detect when events are completely different', () => {
-      // First render
       eventTable.update(mockEvents, 0);
 
-      // New events
       const newEvents: EventRow[] = [
         {
           ...mockEvents[0],
@@ -159,26 +139,22 @@ describe('EventTable', () => {
         }
       ];
 
-      // Clear mocks
-      mockBox.setContent.mockClear();
+      localMockBox.setContent.mockClear();
       mockScreen.render.mockClear();
 
-      // Render different events
       eventTable.update(newEvents, 0);
 
-      expect(mockBox.setContent).toHaveBeenCalled();
+      expect(localMockBox.setContent).toHaveBeenCalled();
       expect(mockScreen.render).toHaveBeenCalled();
     });
 
     it('should handle empty event list', () => {
-      // Set initial content to something different
-      mockBox.getContent.mockReturnValue('initial content');
-      
+      localMockBox.getContent.mockReturnValue('initial content');
+
       eventTable.update([], -1);
 
-      expect(mockBox.setContent).toHaveBeenCalled();
-      expect(mockBox.setContent).toHaveBeenCalledWith('');
-      // Content should be empty since shouldShowEndOfData returns false
+      expect(localMockBox.setContent).toHaveBeenCalled();
+      expect(localMockBox.setContent).toHaveBeenCalledWith('');
     });
   });
 
@@ -201,25 +177,19 @@ describe('EventTable', () => {
   });
 
   describe('Screen Width Updates', () => {
-    let mockBox: any;
+    let localMockBox: any;
 
     beforeEach(() => {
-      mockBox = {
-        setContent: vi.fn(),
-        getContent: vi.fn().mockReturnValue(''),
-        destroy: vi.fn(),
-        screen: mockScreen
-      };
-      
-      ((blessed as any).box as ReturnType<typeof vi.fn>).mockReturnValue(mockBox);
-      
+      localMockBox = createMockBox(mockScreen);
+
+      ((blessed as any).box as ReturnType<typeof vi.fn>).mockReturnValue(localMockBox);
+
       eventTable = new EventTable({ parent: mockScreen }, screenWidth);
     });
 
     it('should update screen width and clear cache', () => {
       const newWidth = 200;
-      
-      // Render some events first to populate cache
+
       const events: EventRow[] = [{
         id: 1,
         timestamp: Date.now(),
@@ -232,63 +202,50 @@ describe('EventTable', () => {
         inode: 12345,
         elapsed_ms: 0
       }];
-      
+
       eventTable.update(events, 0);
-      
-      // Update screen width
+
       eventTable.updateScreenWidth(newWidth);
-      
-      // Re-render should use new width
-      mockBox.setContent.mockClear();
+
+      localMockBox.setContent.mockClear();
       eventTable.update(events, 0);
-      
-      expect(mockBox.setContent).toHaveBeenCalled();
+
+      expect(localMockBox.setContent).toHaveBeenCalled();
     });
   });
 
   describe('Destroy Method', () => {
-    let mockBox: any;
+    let localMockBox: any;
 
     beforeEach(() => {
-      mockBox = {
-        setContent: vi.fn(),
-        getContent: vi.fn().mockReturnValue(''),
-        destroy: vi.fn(),
-        screen: mockScreen
-      };
-      
-      ((blessed as any).box as ReturnType<typeof vi.fn>).mockReturnValue(mockBox);
-      
+      localMockBox = createMockBox(mockScreen);
+
+      ((blessed as any).box as ReturnType<typeof vi.fn>).mockReturnValue(localMockBox);
+
       eventTable = new EventTable({ parent: mockScreen }, screenWidth);
     });
 
     it('should destroy box and clear cache', () => {
       eventTable.destroy();
-      
-      expect(mockBox.destroy).toHaveBeenCalled();
+
+      expect(localMockBox.destroy).toHaveBeenCalled();
     });
   });
 
   describe('Cache Management', () => {
-    let mockBox: any;
+    let localMockBox: any;
 
     beforeEach(() => {
-      mockBox = {
-        setContent: vi.fn(),
-        getContent: vi.fn().mockReturnValue(''),
-        destroy: vi.fn(),
-        screen: mockScreen
-      };
-      
-      ((blessed as any).box as ReturnType<typeof vi.fn>).mockReturnValue(mockBox);
-      
+      localMockBox = createMockBox(mockScreen);
+
+      ((blessed as any).box as ReturnType<typeof vi.fn>).mockReturnValue(localMockBox);
+
       eventTable = new EventTable({ parent: mockScreen }, screenWidth);
     });
 
     it('should limit cache size to prevent memory bloat', () => {
-      // Create many events to trigger cache cleanup
       const manyEvents: EventRow[] = [];
-      
+
       for (let i = 0; i < 2500; i++) {
         manyEvents.push({
           id: i,
@@ -304,15 +261,12 @@ describe('EventTable', () => {
         });
       }
 
-      // Render in batches to build up cache
       for (let i = 0; i < 25; i++) {
         const batch = manyEvents.slice(i * 100, (i + 1) * 100);
         eventTable.update(batch, 0);
       }
 
-      // Cache should be limited (implementation detail)
-      // We can't directly test cache size, but rendering should still work
-      expect(mockBox.setContent).toHaveBeenCalled();
+      expect(localMockBox.setContent).toHaveBeenCalled();
     });
   });
 });

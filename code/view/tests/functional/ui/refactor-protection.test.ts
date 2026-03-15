@@ -8,8 +8,10 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { BlessedFramelessUISimple } from '../../../src/ui/BlessedFramelessUI';
-import { DatabaseAdapterFunc000 } from '../../../src/database/database-adapter-func000';
+import { FileEventReader } from '../../../src/database/FileEventReader';
 import { EventRow } from '../../../src/types/event-row';
+import { UIDataManager } from '../../../src/ui/UIDataManager';
+import { UIState } from '../../../src/ui/UIState';
 
 // Mock blessed module
 vi.mock('blessed', () => ({
@@ -51,7 +53,7 @@ vi.mock('sqlite3', () => ({
 
 describe('Refactor Protection - Core Functions', () => {
   let ui: BlessedFramelessUISimple;
-  let mockDb: DatabaseAdapterFunc000;
+  let mockDb: FileEventReader;
   
   const mockEvents: EventRow[] = [
     {
@@ -123,8 +125,9 @@ describe('Refactor Protection - Core Functions', () => {
       uiState.toggleEventFilter('restore');
       
       // Should only have 'modify' filter
-      expect(uiState.getEventFilters().has('modify')).toBe(true);
-      expect(uiState.getEventFilters().size).toBe(1);
+      const filters = uiState.getEventTypeFilters();
+      expect(filters.isEventTypeEnabled('modify')).toBe(true);
+      expect(filters.getActiveFilters().length).toBe(1);
       
       // Test getActiveFilters returns correct format
       const activeFilters = uiState.getActiveFilters();
@@ -135,7 +138,7 @@ describe('Refactor Protection - Core Functions', () => {
       const uiState = (ui as any).uiState;
       
       // All filters should be active by default
-      expect(uiState.getEventFilters().size).toBe(6);
+      expect(uiState.getEventTypeFilters().getActiveFilters().length).toBe(6);
       
       const activeFilters = uiState.getActiveFilters();
       expect(activeFilters).toEqual(['Find', 'Create', 'Modify', 'Delete', 'Move', 'Restore']);
@@ -145,19 +148,17 @@ describe('Refactor Protection - Core Functions', () => {
   describe('Display Mode Functionality', () => {
     it('should support switching between all and unique modes', async () => {
       const uiState = (ui as any).uiState;
-      
+
       // Start in 'all' mode
       expect(uiState.getDisplayMode()).toBe('all');
-      
+
       // Switch to unique
       uiState.setDisplayMode('unique');
       expect(uiState.getDisplayMode()).toBe('unique');
-      expect(uiState.getPreviousDisplayMode()).toBe('all');
-      
+
       // Switch back to all
       uiState.setDisplayMode('all');
       expect(uiState.getDisplayMode()).toBe('all');
-      expect(uiState.getPreviousDisplayMode()).toBe('unique');
     });
 
     it('should reset selection and viewport on mode change', async () => {
@@ -177,42 +178,36 @@ describe('Refactor Protection - Core Functions', () => {
 
   describe('Data Refresh Functionality', () => {
     it('should call database with correct parameters', async () => {
-      const uiState = (ui as any).uiState;
-      
-      // Set up specific display mode and filters
-      uiState.setDisplayMode('unique');
-      uiState.resetEventFilters();
-      uiState.toggleEventFilter('create'); // Remove create, keep modify
-      
-      // Trigger refresh (we need to access private method for testing)
-      const refreshData = (ui as any).refreshData;
-      await refreshData.call(ui, false);
-      
-      // Should call database with correct parameters
+      const uiState = new UIState('all');
+
+      // Remove create filter
+      uiState.toggleEventFilter('create');
+
+      const dataManager = new UIDataManager(mockDb as any, uiState);
+      await dataManager.refreshData(false);
+
+      // refreshAllMode calls getLatestEvents with 'all' mode
       expect(mockDb.getLatestEvents).toHaveBeenCalledWith(
-        100, // limit
-        'unique', // mode
-        0, // offset
-        ['Find', 'Modify', 'Delete', 'Move', 'Restore'] // filters (without Create)
+        100,
+        'all',
+        0,
+        expect.arrayContaining(['Find', 'Modify', 'Delete', 'Move', 'Restore'])
       );
     });
 
     it('should handle append mode correctly', async () => {
-      const uiState = (ui as any).uiState;
-      
-      // Set some existing data
+      const uiState = new UIState('all');
       uiState.setEvents(mockEvents.slice(0, 1));
-      
-      // Trigger append refresh
-      const refreshData = (ui as any).refreshData;
-      await refreshData.call(ui, true);
-      
-      // Should call with offset > 0 for append
+
+      const dataManager = new UIDataManager(mockDb as any, uiState);
+      await dataManager.refreshData(true);
+
+      // Append mode: offset = existing events count (1)
       expect(mockDb.getLatestEvents).toHaveBeenCalledWith(
-        100, // limit
-        'all', // mode
-        0, // offset starts at 0 but is managed internally
-        ['Find', 'Create', 'Modify', 'Delete', 'Move', 'Restore'] // all filters
+        100,
+        'all',
+        1,
+        expect.arrayContaining(['Find', 'Create', 'Modify', 'Delete', 'Move', 'Restore'])
       );
     });
   });
@@ -234,36 +229,35 @@ describe('Refactor Protection - Core Functions', () => {
   describe('Integration - Critical Workflows', () => {
     it('should handle filter change workflow', async () => {
       const uiState = (ui as any).uiState;
-      
+
       // Simulate filter change workflow
-      uiState.enterFilterMode();
-      expect(uiState.getDisplayState()).toBe('filter');
-      
+      uiState.startEditing('event_type_filter');
+      expect(uiState.getDisplayState()).toBe('event_type_filter');
+
       // Toggle a filter
       uiState.toggleEventFilter('create');
-      expect(uiState.getEventFilters().has('create')).toBe(false);
-      
+      expect(uiState.getEventTypeFilters().isEventTypeEnabled('create')).toBe(false);
+
       // Exit filter mode
-      uiState.exitSpecialMode();
-      expect(uiState.getDisplayState()).toBe('normal');
+      uiState.confirmEditing();
+      expect(uiState.getDisplayState()).toBe('stream_live');
     });
 
     it('should handle search workflow', async () => {
       const uiState = (ui as any).uiState;
-      
+
       // Enter search mode
-      uiState.enterSearchMode();
-      expect(uiState.getDisplayState()).toBe('search');
+      uiState.startEditing('keyword_filter');
+      expect(uiState.getDisplayState()).toBe('keyword_filter');
       expect(uiState.getSearchText()).toBe('');
-      
+
       // Add search text
-      uiState.appendToSearchText('test');
+      uiState.appendToSearchPattern('test');
       expect(uiState.getSearchText()).toBe('test');
-      
-      // Apply search
-      uiState.applySearch();
-      expect(uiState.getDisplayState()).toBe('normal');
-      expect(uiState.isDbSearchApplied()).toBe(true);
+
+      // Confirm search
+      uiState.confirmEditing();
+      expect(uiState.getDisplayState()).toBe('stream_live');
     });
   });
 });

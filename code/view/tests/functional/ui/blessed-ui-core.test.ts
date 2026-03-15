@@ -7,8 +7,8 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { BlessedFramelessUISimple } from '../../../src/ui/blessed-frameless-ui-simple';
-import { DatabaseAdapter } from '../../../src/database/database-adapter';
+import { BlessedFramelessUISimple } from '../../../src/ui/BlessedFramelessUI';
+import { FileEventReader } from '../../../src/database/FileEventReader';
 import { EventRow } from '../../../src/types/event-row';
 
 // Mock blessed module
@@ -39,8 +39,8 @@ vi.mock('blessed', () => ({
   }
 }));
 
-// Mock DatabaseAdapter
-vi.mock('../../src/database/database-adapter');
+// Mock FileEventReader
+vi.mock('../../../src/database/FileEventReader');
 
 function generateMockEvents(): EventRow[] {
   return [
@@ -73,7 +73,7 @@ function generateMockEvents(): EventRow[] {
 
 describe('FUNC-202: UI Core Components', () => {
   let ui: BlessedFramelessUISimple;
-  let mockDb: DatabaseAdapter;
+  let mockDb: FileEventReader;
   const testConfig = {
     refreshInterval: 100,
     maxRows: 25,

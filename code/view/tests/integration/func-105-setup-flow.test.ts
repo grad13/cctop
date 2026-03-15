@@ -65,8 +65,10 @@ describe('FUNC-105: Complete Setup Flow', () => {
     testSetup.makeDirectoryReadOnly('.cctop');
 
     try {
-      // Should not throw, but handle gracefully
-      await expect(context.initializer.initialize()).resolves.not.toThrow();
+      // Should not throw, but return failure result
+      const result = await context.initializer.initialize();
+      expect(result.success).toBe(false);
+      expect(result.message).toMatch(/Failed to initialize/);
     } finally {
       // Restore permissions for cleanup
       testSetup.restoreDirectoryPermissions('.cctop');
@@ -92,7 +94,7 @@ describe('FUNC-105: Complete Setup Flow', () => {
     // Verify config file contents
     const sharedConfig = testSetup.readConfigFile('.cctop/config/shared-config.json');
     expect(sharedConfig).toHaveProperty('version');
-    expect(sharedConfig).toHaveProperty('projectName');
+    expect(sharedConfig).toHaveProperty('project');
 
     const daemonConfig = testSetup.readConfigFile('.cctop/config/daemon-config.json');
     expect(daemonConfig).toHaveProperty('monitoring');

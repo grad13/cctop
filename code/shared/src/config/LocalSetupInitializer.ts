@@ -63,7 +63,12 @@ export class LocalSetupInitializer {
       };
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
-      throw new Error(`Failed to initialize configuration: ${errorMessage}`);
+      return {
+        success: false,
+        created: false,
+        configPath,
+        message: `Failed to initialize configuration: ${errorMessage}`
+      };
     }
   }
 

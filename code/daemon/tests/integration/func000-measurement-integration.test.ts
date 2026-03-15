@@ -7,7 +7,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { Database } from '@cctop/shared';
+import { FileEventRecorder } from '../../src/database/FileEventRecorder';
 import { FileEventHandler } from '../../src/events/FileEventHandler';
 import { LogManager } from '../../src/logging/LogManager';
 import * as fs from 'fs/promises';
@@ -15,7 +15,7 @@ import * as path from 'path';
 import * as os from 'os';
 
 describe('FUNC-000 Measurement Integration', () => {
-  let db: Database;
+  let db: FileEventRecorder;
   let handler: FileEventHandler;
   let logger: LogManager;
   let tempDir: string;
@@ -29,7 +29,7 @@ describe('FUNC-000 Measurement Integration', () => {
     tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'test-files-'));
     
     // Initialize components
-    db = new Database(tempDbPath);
+    db = new FileEventRecorder(tempDbPath);
     await db.connect();
     
     logger = new LogManager('/tmp/integration-test.log', 'info');

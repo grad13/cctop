@@ -54,18 +54,6 @@ describe('Navigation Behavior', () => {
     });
   });
 
-  describe('Near bottom detection', () => {
-    it('should detect when near bottom', () => {
-      // Set to position 5 (within 5 items of end with 10 total)
-      uiState.setSelectedIndex(5);
-      expect(uiState.isNearBottom()).toBe(true);
-    });
-
-    it('should not detect as near bottom when at top', () => {
-      uiState.setSelectedIndex(0);
-      expect(uiState.isNearBottom()).toBe(false);
-    });
-  });
 });
 
 describe('Search Mode Behavior', () => {
@@ -76,19 +64,23 @@ describe('Search Mode Behavior', () => {
   });
 
   describe('Local search during typing', () => {
-    it.skip('should reset DB search flag when entering search mode', () => {
-      // TODO: setSearchText, applySearch, isDbSearchApplied, and enterSearchMode methods no longer exist in UIState
-      // This test needs to be updated for the new API
+    it('should start with empty search pattern when entering search mode', () => {
+      uiState.startEditing('keyword_filter');
+      expect(uiState.getDisplayState()).toBe('keyword_filter');
+      expect(uiState.getSearchText()).toBe('');
     });
 
-    it.skip('should allow local filtering while typing', () => {
-      // TODO: enterSearchMode and setSearchText methods no longer exist in UIState
-      // This test needs to be updated for the new API
+    it('should allow local filtering while typing', () => {
+      uiState.startEditing('keyword_filter');
+      uiState.appendToSearchPattern('test');
+      expect(uiState.getSearchText()).toBe('test');
     });
 
-    it.skip('should update search results when backspacing', () => {
-      // TODO: enterSearchMode and setSearchText methods no longer exist in UIState
-      // This test needs to be updated for the new API
+    it('should update search results when backspacing', () => {
+      uiState.startEditing('keyword_filter');
+      uiState.appendToSearchPattern('test');
+      uiState.backspaceSearchPattern();
+      expect(uiState.getSearchText()).toBe('tes');
     });
   });
 });

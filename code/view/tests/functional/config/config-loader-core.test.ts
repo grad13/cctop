@@ -37,9 +37,9 @@ describe('ConfigLoader - Core Functionality', () => {
 
       // Check that configuration was loaded successfully
       expect(config.configPath).toBe(configPath);
-      expect(config.shared.version).toBe('0.3.0.0');
-      expect(config.daemon.daemon.enabled).toBe(true);
-      expect(config.cli.display.maxRows).toBe(20);
+      expect(config.shared.version).toBe('0.5.2.6');
+      expect(config.daemon.daemon.autoStart).toBe(true);
+      expect(config.view.display.maxEvents).toBe(20);
 
       // Check that .cctop directory was created
       expect(fs.existsSync(configPath)).toBe(true);
@@ -47,16 +47,14 @@ describe('ConfigLoader - Core Functionality', () => {
     });
 
     it('should load existing configuration without reinitializing', async () => {
-      // Pre-create configuration with custom values
-      await configLoader.loadConfiguration(testDir); // First call creates config
+      // Pre-create shared config with custom values
+      const sharedConfigDir = path.join(configPath, 'config');
+      fs.mkdirSync(sharedConfigDir, { recursive: true });
+      const sharedConfigPath = path.join(sharedConfigDir, 'shared-config.json');
+      const customSharedConfig = { version: '0.5.2.6', projectName: 'CustomProject' };
+      fs.writeFileSync(sharedConfigPath, JSON.stringify(customSharedConfig, null, 2));
 
-      // Modify shared config
-      const sharedConfigPath = path.join(configPath, 'config', 'shared-config.json');
-      const existingSharedConfig = JSON.parse(fs.readFileSync(sharedConfigPath, 'utf8'));
-      existingSharedConfig.projectName = 'CustomProject';
-      fs.writeFileSync(sharedConfigPath, JSON.stringify(existingSharedConfig, null, 2));
-
-      // Second call should load existing config
+      // Should load existing config
       const config = await configLoader.loadConfiguration(testDir);
       expect(config.shared.projectName).toBe('CustomProject');
     });
@@ -65,38 +63,38 @@ describe('ConfigLoader - Core Functionality', () => {
       // Create corrupted config file
       const corruptedDir = path.join(testDir, '.cctop', 'config');
       fs.mkdirSync(corruptedDir, { recursive: true });
-      fs.writeFileSync(path.join(corruptedDir, 'cli-config.json'), '{ invalid json');
+      fs.writeFileSync(path.join(corruptedDir, 'view-config.json'), '{ invalid json');
 
       const config = await configLoader.loadConfiguration(testDir);
 
       // Should still load with defaults despite corrupted file
       expect(config).toBeDefined();
-      expect(config.cli.display.maxRows).toBe(20); // Default value
+      expect(config.view.display.maxEvents).toBe(20); // Default value
     });
 
-    it('should merge CLI config with defaults', async () => {
-      // Create partial CLI config
-      const cliConfigDir = path.join(testDir, '.cctop', 'config');
-      fs.mkdirSync(cliConfigDir, { recursive: true });
-      
+    it('should merge view config with defaults', async () => {
+      // Create partial view config
+      const configDir = path.join(testDir, '.cctop', 'config');
+      fs.mkdirSync(configDir, { recursive: true });
+
       const partialConfig = {
         display: {
-          maxRows: 50, // Override default
+          maxEvents: 50, // Override default
           customSetting: 'test' // Add custom setting
         }
       };
-      
+
       fs.writeFileSync(
-        path.join(cliConfigDir, 'cli-config.json'),
+        path.join(configDir, 'view-config.json'),
         JSON.stringify(partialConfig, null, 2)
       );
 
       const config = await configLoader.loadConfiguration(testDir);
 
       // Should merge with defaults
-      expect(config.cli.display.maxRows).toBe(50); // Overridden value
-      expect(config.cli.display.customSetting).toBe('test'); // Custom setting
-      expect(config.cli.display.refreshInterval).toBe(100); // Default value should still be present
+      expect(config.view.display.maxEvents).toBe(50); // Overridden value
+      expect(config.view.display.customSetting).toBe('test'); // Custom setting
+      expect(config.view.display.refreshRateMs).toBe(100); // Default value should still be present
     });
 
     it('should default to current working directory', async () => {
@@ -116,24 +114,24 @@ describe('ConfigLoader - Core Functionality', () => {
     });
 
     it('should handle missing shared config gracefully', async () => {
-      // Create only CLI config
+      // Create only view config
       const configDir = path.join(testDir, '.cctop', 'config');
       fs.mkdirSync(configDir, { recursive: true });
-      
-      const cliConfig = {
-        display: { maxRows: 30 }
+
+      const viewConfig = {
+        display: { maxEvents: 30 }
       };
-      
+
       fs.writeFileSync(
-        path.join(configDir, 'cli-config.json'),
-        JSON.stringify(cliConfig, null, 2)
+        path.join(configDir, 'view-config.json'),
+        JSON.stringify(viewConfig, null, 2)
       );
 
       const config = await configLoader.loadConfiguration(testDir);
 
       // Should use defaults for shared config
-      expect(config.shared.version).toBe('0.3.0.0');
-      expect(config.cli.display.maxRows).toBe(30);
+      expect(config.shared.version).toBe('0.5.2.6');
+      expect(config.view.display.maxEvents).toBe(30);
     });
 
 
@@ -141,7 +139,7 @@ describe('ConfigLoader - Core Functionality', () => {
       // Create config with deep nesting
       const configDir = path.join(testDir, '.cctop', 'config');
       fs.mkdirSync(configDir, { recursive: true });
-      
+
       const deepConfig = {
         display: {
           theme: {
@@ -152,19 +150,19 @@ describe('ConfigLoader - Core Functionality', () => {
           }
         }
       };
-      
+
       fs.writeFileSync(
-        path.join(configDir, 'cli-config.json'),
+        path.join(configDir, 'view-config.json'),
         JSON.stringify(deepConfig, null, 2)
       );
 
       const config = await configLoader.loadConfiguration(testDir);
 
       // Deep nested properties should be preserved
-      expect(config.cli.display.theme.colors.primary).toBe('#ff0000');
-      expect(config.cli.display.theme.colors.secondary).toBe('#00ff00');
+      expect(config.view.display.theme.colors.primary).toBe('#ff0000');
+      expect(config.view.display.theme.colors.secondary).toBe('#00ff00');
       // Other defaults should still be present
-      expect(config.cli.display.maxRows).toBe(20);
+      expect(config.view.display.maxEvents).toBe(20);
     });
   });
 });

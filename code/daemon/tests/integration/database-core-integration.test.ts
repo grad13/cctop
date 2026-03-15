@@ -7,7 +7,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { Database } from '../../src/database/database';
+import { FileEventRecorder } from '../../src/database/FileEventRecorder';
 import { DatabaseReader } from '../../src/database/database-reader';
 import { FileEvent } from '@cctop/shared';
 import * as fs from 'fs';
@@ -15,7 +15,7 @@ import * as path from 'path';
 
 describe('Database Core Integration Tests', () => {
   const testDbPath = path.join(__dirname, 'test-database-core.db');
-  let database: Database;
+  let database: FileEventRecorder;
   let reader: DatabaseReader;
 
   beforeEach(async () => {
@@ -24,7 +24,7 @@ describe('Database Core Integration Tests', () => {
       fs.unlinkSync(testDbPath);
     }
 
-    database = new Database(testDbPath);
+    database = new FileEventRecorder(testDbPath);
     reader = new DatabaseReader(testDbPath);
     
     await database.connect();

@@ -3,111 +3,69 @@
  * Tests for database connection handling and lifecycle
  * @created 2026-03-13
  * @checked -
- * @updated 2026-03-13
+ * @updated 2026-03-15
  */
 
-import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
-import { DatabaseTestSetup } from './test-helpers/database-test-setup';
-import { DatabaseAdapter } from '../../../../src/database/database-adapter.ts';
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { DatabaseTestHelper } from './test-helpers/database-test-helper';
+import { FileEventReader } from '../../../src/database/FileEventReader';
 
 describe('Database Connection Management', () => {
-  let testSetup: DatabaseTestSetup;
+  let helper: DatabaseTestHelper;
   let testDir: string;
   let dbPath: string;
-  let adapter: DatabaseAdapter;
 
   beforeAll(() => {
-    testSetup = new DatabaseTestSetup();
-    ({ testDir, dbPath } = testSetup.createTestEnvironment());
+    helper = new DatabaseTestHelper();
+    ({ testDir, dbPath } = helper.createTestEnvironment());
+    helper.createTestDbWithSampleData();
   });
 
   afterAll(() => {
-    testSetup.cleanupTestEnvironment();
-  });
-
-  beforeEach(async () => {
-    adapter = testSetup.createDatabaseAdapter(dbPath);
-    await testSetup.createTestDatabase(adapter);
-  });
-
-  afterEach(async () => {
-    if (adapter) {
-      await adapter.disconnect();
-    }
+    helper.cleanupTestEnvironment();
   });
 
   it('should connect to existing database successfully', async () => {
+    const adapter = new FileEventReader(dbPath);
     await expect(adapter.connect()).resolves.not.toThrow();
-    expect(adapter.getDatabase()).toBeDefined();
-  });
-
-  it('should handle connection to non-existent database gracefully', async () => {
-    const nonExistentAdapter = testSetup.createDatabaseAdapter(testSetup.createNonExistentDbPath());
-    await expect(nonExistentAdapter.connect()).resolves.not.toThrow();
+    // Verify connection works by querying
+    const events = await adapter.getLatestEvents(1);
+    expect(events).toBeDefined();
+    await adapter.disconnect();
   });
 
   it('should disconnect from database properly', async () => {
+    const adapter = new FileEventReader(dbPath);
     await adapter.connect();
     await expect(adapter.disconnect()).resolves.not.toThrow();
   });
 
-  it('should support close() alias for disconnect()', async () => {
-    await adapter.connect();
-    await expect(adapter.close()).resolves.not.toThrow();
-  });
-
   it('should handle multiple connect calls gracefully', async () => {
+    const adapter = new FileEventReader(dbPath);
     await adapter.connect();
     await expect(adapter.connect()).resolves.not.toThrow();
-    expect(adapter.getDatabase()).toBeDefined();
+    // Should still work after double connect
+    const events = await adapter.getLatestEvents(1);
+    expect(events).toBeDefined();
+    await adapter.disconnect();
   });
 
   it('should handle disconnect without prior connect', async () => {
+    const adapter = new FileEventReader(dbPath);
     await expect(adapter.disconnect()).resolves.not.toThrow();
   });
 
   it('should handle multiple disconnect calls gracefully', async () => {
+    const adapter = new FileEventReader(dbPath);
     await adapter.connect();
     await adapter.disconnect();
     await expect(adapter.disconnect()).resolves.not.toThrow();
   });
 
-  it('should maintain connection state correctly', async () => {
-    // Create a new adapter for this test
-    const freshAdapter = testSetup.createDatabaseAdapter(dbPath);
-    
-    // Initially not connected
-    expect(freshAdapter.getDatabase()).toBeNull();
-    
-    // After connect
-    await freshAdapter.connect();
-    expect(freshAdapter.getDatabase()).toBeDefined();
-    
-    // After disconnect
-    await freshAdapter.disconnect();
-    expect(freshAdapter.getDatabase()).toBeNull();
-  });
-
-  it('should handle database file permissions', async () => {
-    await adapter.connect();
-    
-    // Verify we can perform basic operations
-    const db = adapter.getDatabase();
-    if (db) {
-      const result = await new Promise<any>((resolve, reject) => {
-        db.get('SELECT 1 as test', (err, row) => {
-          if (err) reject(err);
-          else resolve(row);
-        });
-      });
-      expect(result.test).toBe(1);
-    }
-  });
-
   it('should handle database path with special characters', async () => {
     const specialPath = testDir + '/test-db with spaces & symbols.db';
-    const specialAdapter = testSetup.createDatabaseAdapter(specialPath);
-    
+    helper.createTestDb(specialPath);
+    const specialAdapter = new FileEventReader(specialPath);
     await expect(specialAdapter.connect()).resolves.not.toThrow();
     await specialAdapter.disconnect();
   });

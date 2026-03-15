@@ -278,6 +278,7 @@ export class UIState {
   }
 
   startEditing(type: 'filter' | 'search' | 'event_type_filter' | 'keyword_filter'): void {
+    this.saveCurrentState();
     if (type === 'filter' || type === 'event_type_filter') {
       this.setDisplayState('event_type_filter');
     } else if (type === 'search' || type === 'keyword_filter') {

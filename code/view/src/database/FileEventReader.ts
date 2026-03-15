@@ -31,7 +31,9 @@ export class FileEventReader {
   async disconnect(): Promise<void> {
     return new Promise((resolve, reject) => {
       if (this.db) {
-        this.db.close((err) => {
+        const db = this.db;
+        this.db = null;
+        db.close((err) => {
           if (err) {
             reject(err);
           } else {

@@ -1,10 +1,10 @@
 #!/bin/bash
 set -e
 
-# dev ブランチにいることを確認
+# local ブランチにいることを確認
 current=$(git branch --show-current)
-if [ "$current" != "dev" ]; then
-  echo "Error: must be on dev branch"
+if [ "$current" != "local" ]; then
+  echo "Error: must be on local branch"
   exit 1
 fi
 
@@ -17,19 +17,19 @@ fi
 # master に切り替え
 git checkout master
 
-# dev から公開ファイルを同期（非公開ファイル以外すべて）
-git checkout dev -- code/ documents/spec/ documents/screenshots/ \
+# local から公開ファイルを同期（非公開ファイル以外すべて）
+git checkout local -- code/ documents/spec/ documents/screenshots/ \
   documents/CONTRIBUTING.md documents/event-filtering.md \
   README.md LICENSE .github/
 # NOTE: .gitignore は同期しない（ブランチごとに個別管理）
 
 # 変更があればコミット
 if ! git diff --cached --quiet; then
-  git commit -m "sync from dev"
+  git commit -m "sync from local"
 fi
 
 # push
 git push origin master
 
-# dev に戻る
-git checkout dev
+# local に戻る
+git checkout local

@@ -7,8 +7,8 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { BlessedFramelessUISimple } from '../../../src/ui/blessed-frameless-ui-simple';
-import { DatabaseAdapter } from '../../../src/database/database-adapter';
+import { BlessedFramelessUISimple } from '../../../src/ui/BlessedFramelessUI';
+import { FileEventReader } from '../../../src/database/FileEventReader';
 import { EventRow } from '../../../src/types/event-row';
 
 // Mock blessed module
@@ -39,8 +39,8 @@ vi.mock('blessed', () => ({
   }
 }));
 
-// Mock DatabaseAdapter
-vi.mock('../../src/database/database-adapter');
+// Mock FileEventReader
+vi.mock('../../../src/database/FileEventReader');
 
 function generateMockEventsForMode(): EventRow[] {
   return [
@@ -81,7 +81,7 @@ function generateMockEventsForMode(): EventRow[] {
 
 describe('FUNC-202: UI Display Mode Functionality', () => {
   let ui: BlessedFramelessUISimple;
-  let mockDb: DatabaseAdapter;
+  let mockDb: FileEventReader;
   
   beforeEach(() => {
     // Create mock database adapter with mode-aware getLatestEvents

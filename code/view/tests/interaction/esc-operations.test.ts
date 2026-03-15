@@ -1,258 +1,220 @@
 /**
  * esc-operations.test
+ * Tests ESC behavior using UIState directly
  * @created 2026-03-13
  * @checked -
- * @updated 2026-03-13
+ * @updated 2026-03-15
  */
 import { describe, it, expect, beforeEach } from 'vitest';
-import { ESCOperationManager, FilterState } from '../../src/input/ESCOperationManager.js';
+import { UIState } from '../../src/ui/UIState';
 
 /**
  * ESC operation test
- * Tests two different ESC behaviors
- * Tests implementation file src/input/ESCOperationManager.ts
+ * Tests two different ESC behaviors via UIState:
+ * 1. During editing: cancelEditing() restores saved state
+ * 2. In normal mode: resetAllFilters() clears all filters
  */
 
 describe('ESC Operations', () => {
-  let escManager: ESCOperationManager;
+  let uiState: UIState;
 
   beforeEach(() => {
-    escManager = new ESCOperationManager();
+    uiState = new UIState();
   });
 
-  describe('編集モード中のESC操作', () => {
+  describe('ESC during editing mode', () => {
     it('should restore previous state when ESC is pressed during event filter editing', () => {
-      // 初期状態でフィルターを設定
-      escManager.updateState({
-        mode: 'unique',
-        eventFilters: ['Create', 'Modify'], // Deleteを除外
-        keywordFilter: 'important'
-      });
+      // Set initial state
+      uiState.setDisplayMode('unique');
+      uiState.toggleEventFilter('Delete');  // Exclude Delete
+      uiState.toggleEventFilter('Move');    // Exclude Move
+      uiState.toggleEventFilter('Find');    // Exclude Find
+      uiState.toggleEventFilter('Restore'); // Exclude Restore
+      uiState.setSearchPattern('important');
 
-      const stateBeforeEdit = escManager.getCurrentState();
+      const filtersBefore = uiState.getActiveFilters().slice();
+      const searchBefore = uiState.getSearchPattern();
 
-      // Event Filter編集モードに入る
-      escManager.enterEditingMode('eventFilter');
-      expect(escManager.getCurrentMode()).toBe('editing');
+      // Enter event filter editing mode (saves state automatically)
+      uiState.startEditing('event_type_filter');
+      expect(uiState.getDisplayState()).toBe('event_type_filter');
 
-      // 編集中に状態を変更
-      escManager.updateState({
-        eventFilters: ['Create'] // さらにModifyも除外
-      });
+      // Modify filters during editing
+      uiState.toggleEventFilter('Modify'); // Further exclude Modify
 
-      // ESC押下で編集破棄
-      const restoredState = escManager.executeEscape();
+      // ESC cancels editing → restores saved state
+      uiState.cancelEditing();
 
-      // 編集前の状態に戻ることを確認
-      expect(restoredState).toEqual(stateBeforeEdit);
-      expect(restoredState.eventFilters).toEqual(['Create', 'Modify']);
-      expect(escManager.getCurrentMode()).toBe('normal');
+      expect(uiState.getActiveFilters()).toEqual(filtersBefore);
+      expect(uiState.getSearchPattern()).toBe(searchBefore);
+      expect(uiState.getDisplayState()).toBe('stream_live');
     });
 
     it('should restore previous state when ESC is pressed during keyword filter editing', () => {
-      // 初期状態を設定
-      escManager.updateState({
-        mode: 'all',
-        eventFilters: ['Create', 'Modify', 'Delete'],
-        keywordFilter: 'test'
-      });
+      // Set initial state
+      uiState.setSearchPattern('test');
 
-      const stateBeforeEdit = escManager.getCurrentState();
+      // Enter keyword filter editing mode
+      uiState.startEditing('keyword_filter');
+      expect(uiState.getDisplayState()).toBe('keyword_filter');
 
-      // Keyword Filter編集モードに入る
-      escManager.enterEditingMode('keywordFilter');
+      // Modify search during editing
+      uiState.setSearchPattern('important-changed');
 
-      // 編集中にキーワードを変更
-      escManager.updateState({
-        keywordFilter: 'important-changed'
-      });
+      // ESC cancels editing
+      uiState.cancelEditing();
 
-      // ESC押下で編集破棄
-      const restoredState = escManager.executeEscape();
-
-      // 編集前の状態に戻ることを確認
-      expect(restoredState).toEqual(stateBeforeEdit);
-      expect(restoredState.keywordFilter).toBe('test');
-      expect(escManager.getCurrentMode()).toBe('normal');
+      expect(uiState.getSearchPattern()).toBe('test');
+      expect(uiState.getDisplayState()).toBe('stream_live');
     });
 
     it('should handle multiple edit sessions with proper state restoration', () => {
-      // 複数回の編集セッションテスト
-      
-      // 1回目の編集
-      escManager.updateState({
-        mode: 'unique',
-        keywordFilter: 'session1'
-      });
+      // First edit session
+      uiState.setSearchPattern('session1');
 
-      escManager.enterEditingMode('keywordFilter');
-      escManager.updateState({ keywordFilter: 'temp1' });
-      const firstRestore = escManager.executeEscape();
-      expect(firstRestore.keywordFilter).toBe('session1');
+      uiState.startEditing('keyword_filter');
+      uiState.setSearchPattern('temp1');
+      uiState.cancelEditing();
+      expect(uiState.getSearchPattern()).toBe('session1');
 
-      // 2回目の編集
-      escManager.updateState({ keywordFilter: 'session2' });
-      escManager.enterEditingMode('keywordFilter');
-      escManager.updateState({ keywordFilter: 'temp2' });
-      const secondRestore = escManager.executeEscape();
-      expect(secondRestore.keywordFilter).toBe('session2');
+      // Second edit session
+      uiState.setSearchPattern('session2');
+
+      uiState.startEditing('keyword_filter');
+      uiState.setSearchPattern('temp2');
+      uiState.cancelEditing();
+      expect(uiState.getSearchPattern()).toBe('session2');
     });
   });
 
-  describe('Normal Mode中のESC操作', () => {
+  describe('ESC in normal mode (reset all)', () => {
     it('should reset all filters to default state when ESC is pressed in normal mode', () => {
-      // 複雑な状態を設定
-      escManager.updateState({
-        mode: 'unique',
-        eventFilters: ['Create', 'Modify'], // 一部除外
-        keywordFilter: 'complex-filter'
-      });
+      // Set complex state
+      uiState.setDisplayMode('unique');
+      uiState.toggleEventFilter('Delete');
+      uiState.toggleEventFilter('Move');
+      uiState.setSearchPattern('complex-filter');
 
-      // Normal ModeでESC押下
-      const resetState = escManager.executeEscape();
+      // resetAllFilters = normal mode ESC
+      uiState.resetAllFilters();
 
-      // 初期化状態: all mode + no filters
-      const expectedDefaultState = {
-        mode: 'all',
-        eventFilters: ['Create', 'Modify', 'Delete', 'Move', 'Find', 'Restore'],
-        keywordFilter: ''
-      };
-
-      expect(resetState).toEqual(expectedDefaultState);
-      expect(escManager.getCurrentMode()).toBe('normal');
+      // All filters should be active (6 event types)
+      expect(uiState.getActiveFilters()).toHaveLength(6);
+      expect(uiState.getSearchPattern()).toBe('');
+      expect(uiState.getDisplayState()).toBe('stream_live');
     });
 
     it('should reset to default even from complex filtered state', () => {
-      // 複数のフィルターが適用された複雑な状態
-      escManager.updateState({
-        mode: 'unique',
-        eventFilters: ['Create'], // 大部分除外
-        keywordFilter: 'very-specific-search-term'
-      });
+      // Heavy filtering
+      uiState.setDisplayMode('unique');
+      uiState.toggleEventFilter('Modify');
+      uiState.toggleEventFilter('Delete');
+      uiState.toggleEventFilter('Move');
+      uiState.toggleEventFilter('Find');
+      uiState.toggleEventFilter('Restore');
+      uiState.setSearchPattern('very-specific-search-term');
 
-      // Normal ModeでESC押下
-      const resetState = escManager.executeEscape();
+      uiState.resetAllFilters();
 
-      // 全て初期状態に戻る
-      expect(resetState.mode).toBe('all');
-      expect(resetState.eventFilters).toHaveLength(6); // 全イベントタイプ
-      expect(resetState.keywordFilter).toBe('');
+      expect(uiState.getActiveFilters()).toHaveLength(6);
+      expect(uiState.getSearchPattern()).toBe('');
     });
 
     it('should not affect normal mode ESC when no editing session is active', () => {
-      // 編集セッションなしでESC実行
-      escManager.updateState({
-        mode: 'unique',
-        eventFilters: ['Create', 'Modify'],
-        keywordFilter: 'test'
-      });
+      uiState.toggleEventFilter('Delete');
+      uiState.toggleEventFilter('Move');
+      uiState.setSearchPattern('test');
 
-      const resetState = escManager.executeEscape();
+      uiState.resetAllFilters();
 
-      // 初期状態にリセット
-      expect(resetState.mode).toBe('all');
-      expect(resetState.eventFilters).toEqual(['Create', 'Modify', 'Delete', 'Move', 'Find', 'Restore']);
-      expect(resetState.keywordFilter).toBe('');
+      expect(uiState.getActiveFilters()).toHaveLength(6);
+      expect(uiState.getSearchPattern()).toBe('');
     });
   });
 
-  describe('モード状態管理', () => {
+  describe('Mode state management', () => {
     it('should correctly track editing vs normal mode transitions', () => {
-      // 初期状態: normal
-      expect(escManager.getCurrentMode()).toBe('normal');
+      // Initial: stream_live
+      expect(uiState.getDisplayState()).toBe('stream_live');
 
-      // 編集モードに入る
-      escManager.enterEditingMode('eventFilter');
-      expect(escManager.getCurrentMode()).toBe('editing');
+      // Enter event filter editing
+      uiState.startEditing('event_type_filter');
+      expect(uiState.getDisplayState()).toBe('event_type_filter');
 
-      // ESCで編集終了 → normal mode
-      escManager.executeEscape();
-      expect(escManager.getCurrentMode()).toBe('normal');
+      // ESC cancels → stream_live
+      uiState.cancelEditing();
+      expect(uiState.getDisplayState()).toBe('stream_live');
 
-      // 再度編集モード
-      escManager.enterEditingMode('keywordFilter');
-      expect(escManager.getCurrentMode()).toBe('editing');
+      // Enter keyword filter editing
+      uiState.startEditing('keyword_filter');
+      expect(uiState.getDisplayState()).toBe('keyword_filter');
 
-      // ESCで編集終了
-      escManager.executeEscape();
-      expect(escManager.getCurrentMode()).toBe('normal');
+      // ESC cancels → stream_live
+      uiState.cancelEditing();
+      expect(uiState.getDisplayState()).toBe('stream_live');
     });
 
     it('should maintain mode consistency across multiple operations', () => {
-      // 複数の操作にわたってモード整合性を維持
+      const validStates = ['stream_live', 'event_type_filter', 'keyword_filter', 'stream_paused', 'detail'];
+
       const operations = [
-        () => escManager.enterEditingMode('eventFilter'),
-        () => escManager.updateState({ eventFilters: ['Create'] }),
-        () => escManager.executeEscape(), // 編集破棄
-        () => escManager.enterEditingMode('keywordFilter'),
-        () => escManager.updateState({ keywordFilter: 'test' }),
-        () => escManager.executeEscape(), // 編集破棄
-        () => escManager.executeEscape()  // 全クリア
+        () => uiState.startEditing('event_type_filter'),
+        () => uiState.toggleEventFilter('Create'),
+        () => uiState.cancelEditing(),
+        () => uiState.startEditing('keyword_filter'),
+        () => uiState.setSearchPattern('test'),
+        () => uiState.cancelEditing(),
+        () => uiState.resetAllFilters()
       ];
 
       for (const operation of operations) {
         operation();
-        // 各操作後もモードが適切に管理されている
-        expect(['normal', 'editing']).toContain(escManager.getCurrentMode());
+        expect(validStates).toContain(uiState.getDisplayState());
       }
 
-      // 最終的にnormal modeであることを確認
-      expect(escManager.getCurrentMode()).toBe('normal');
+      expect(uiState.getDisplayState()).toBe('stream_live');
     });
   });
 
   describe('Edge Cases', () => {
-    it('should handle ESC when no previous state exists', () => {
-      // previousStateがnullの状態でESC
-      escManager.enterEditingMode('eventFilter');
-      
-      // previousStateを強制的にクリア（エッジケース）
-      (escManager as any).previousState = null;
-      
-      const result = escManager.executeEscape();
-      
-      // エラーが発生せず、現在の状態が維持される
-      expect(result).toBeDefined();
-      expect(escManager.getCurrentMode()).toBe('normal');
+    it('should handle cancelEditing when no saved state exists', () => {
+      // cancelEditing without startEditing (no saved state)
+      uiState.setSearchPattern('test');
+      uiState.cancelEditing();
+
+      // Should not crash, display state goes to stream_live
+      expect(uiState.getDisplayState()).toBe('stream_live');
     });
 
-    it('should handle rapid ESC operations', () => {
-      // 連続ESC操作
-      escManager.updateState({ keywordFilter: 'test' });
-      
-      const result1 = escManager.executeEscape(); // 1回目
-      const result2 = escManager.executeEscape(); // 2回目（即座）
-      
-      // 両方とも初期状態になる
-      expect(result1.keywordFilter).toBe('');
-      expect(result2.keywordFilter).toBe('');
-      expect(escManager.getCurrentMode()).toBe('normal');
+    it('should handle rapid resetAllFilters operations', () => {
+      uiState.setSearchPattern('test');
+
+      uiState.resetAllFilters();
+      uiState.resetAllFilters();
+
+      expect(uiState.getSearchPattern()).toBe('');
+      expect(uiState.getActiveFilters()).toHaveLength(6);
     });
 
     it('should preserve state integrity during complex edit sequences', () => {
-      // 複雑な編集シーケンス
-      escManager.updateState({ mode: 'unique', keywordFilter: 'base' });
-      
-      // 1. 編集開始
-      escManager.enterEditingMode('keywordFilter');
-      escManager.updateState({ keywordFilter: 'edit1' });
-      
-      // 2. 編集キャンセル
-      escManager.executeEscape();
-      expect(escManager.getCurrentState().keywordFilter).toBe('base');
-      
-      // 3. 再度編集
-      escManager.enterEditingMode('keywordFilter');
-      escManager.updateState({ keywordFilter: 'edit2' });
-      
-      // 4. 編集確定（ESCではなく通常確定の想定）
-      (escManager as any).currentMode = 'normal';
-      (escManager as any).previousState = null;
-      
-      // 5. 全クリア
-      const finalState = escManager.executeEscape();
-      expect(finalState.keywordFilter).toBe('');
-      expect(finalState.mode).toBe('all');
+      // 1. Set base state
+      uiState.setSearchPattern('base');
+
+      // 2. Start editing, modify, cancel → restores to 'base'
+      uiState.startEditing('keyword_filter');
+      uiState.setSearchPattern('edit1');
+      uiState.cancelEditing();
+      expect(uiState.getSearchPattern()).toBe('base');
+
+      // 3. Start editing again, modify, confirm → keeps 'edit2'
+      uiState.startEditing('keyword_filter');
+      uiState.setSearchPattern('edit2');
+      uiState.confirmEditing();
+      expect(uiState.getSearchPattern()).toBe('edit2');
+
+      // 4. Reset all
+      uiState.resetAllFilters();
+      expect(uiState.getSearchPattern()).toBe('');
     });
   });
 });

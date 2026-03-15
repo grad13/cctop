@@ -21,7 +21,7 @@ export class DaemonConfigManager {
 
   private getDefaultConfig(): DaemonConfig {
     return {
-      version: '0.3.0.0',
+      version: '0.5.2.6',
       monitoring: {
         watchPaths: ['.'],
         excludePatterns: [
