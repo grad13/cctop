@@ -28,6 +28,7 @@ Thumbs.db
 
 # Internal (not tracked)
 CLAUDE.md
+.claude/
 documents/plan/
 documents/handoff/
 documents/reference/
