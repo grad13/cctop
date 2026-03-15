@@ -35,5 +35,9 @@ documents/reference/
 documents/archive/
 _externals/
 
+# Working directories (refactor/analysis artifacts)
+**/.refactor-*/
+**/*-from-*/
+
 # Package files
 *.tgz
