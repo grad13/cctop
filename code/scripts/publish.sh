@@ -23,6 +23,12 @@ git checkout local -- code/ documents/spec/ documents/screenshots/ \
   README.md LICENSE .github/
 # NOTE: .gitignore は同期しない（ブランチごとに個別管理）
 
+# master の .gitignore に該当するファイルをステージから除外
+ignored=$(git ls-files --cached --ignored --exclude-standard)
+if [ -n "$ignored" ]; then
+  echo "$ignored" | xargs git rm --cached -r
+fi
+
 # 変更があればコミット
 if ! git diff --cached --quiet; then
   git commit -m "sync from local"
