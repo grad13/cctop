@@ -1,16 +1,14 @@
 ---
-Created: 2026-03-14
-Updated: 2026-03-14
-Checked: -
+updated: 2026-03-17 12:08
+checked: -
 id: SPEC-V-NEW-005
 title: Daemon Status Monitor
 version: 2.1
 status: draft
 source:
-  - path: code/view/src/utils/daemon-status-monitor.ts
+  - path: code/app/view/src/utils/daemon-status-monitor.ts
     runtime: TypeScript (Node.js ESM)
 type: new
-created: 2026-03-14
 ---
 Created: 2026-03-14
 Updated: 2026-03-14
@@ -21,7 +19,7 @@ Checked: -
 ## Meta
 | Source | Runtime |
 |--------|---------|
-| `code/view/src/utils/daemon-status-monitor.ts` | TypeScript (Node.js ESM) |
+| `code/app/view/src/utils/daemon-status-monitor.ts` | TypeScript (Node.js ESM) |
 
 ## Contract
 

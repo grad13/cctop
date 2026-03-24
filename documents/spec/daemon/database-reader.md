@@ -1,16 +1,14 @@
 ---
-Created: 2026-03-14
-Updated: 2026-03-14
-Checked: -
+updated: 2026-03-17 12:08
+checked: -
 id: SPEC-D04
 title: View-oriented Read-only Database Access
 version: 2.1
 status: draft
 source:
-  - path: code/daemon/src/database/database-reader.ts
+  - path: code/app/daemon/src/database/database-reader.ts
     runtime: TypeScript (Node.js ESM)
 type: new
-created: 2026-03-14
 ---
 Created: 2026-03-14
 Updated: 2026-03-14
@@ -21,7 +19,7 @@ Checked: -
 ## Meta
 | Source | Runtime |
 |--------|---------|
-| `code/daemon/src/database/database-reader.ts` | TypeScript (Node.js ESM) |
+| `code/app/daemon/src/database/database-reader.ts` | TypeScript (Node.js ESM) |
 
 ## Contract
 

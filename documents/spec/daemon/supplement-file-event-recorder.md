@@ -1,17 +1,15 @@
 ---
-Created: 2026-03-14
-Updated: 2026-03-14
-Checked: -
+updated: 2026-03-17 12:08
+checked: -
 id: SPEC-D07
 title: "Supplement: FileEventRecorder Facade"
 version: 2.1
 status: draft
 source:
-  - path: code/daemon/src/database/FileEventRecorder.ts
+  - path: code/app/daemon/src/database/FileEventRecorder.ts
     runtime: TypeScript (Node.js ESM)
 type: supplement
 supplements: database-schema-implementation.md
-created: 2026-03-14
 ---
 Created: 2026-03-14
 Updated: 2026-03-14
@@ -22,7 +20,7 @@ Checked: -
 ## Meta
 | Source | Runtime |
 |--------|---------|
-| `code/daemon/src/database/FileEventRecorder.ts` | TypeScript (Node.js ESM) |
+| `code/app/daemon/src/database/FileEventRecorder.ts` | TypeScript (Node.js ESM) |
 
 **Supplements**: `database-schema-implementation.md` -- covers the coordinator/facade pattern that composes all database operation classes.
 

@@ -3,12 +3,12 @@
   "version": "0.6.7",
   "description": "Agent work monitoring with real-time file tracking",
   "workspaces": [
-    "shared",
-    "daemon",
-    "view"
+    "app/shared",
+    "app/daemon",
+    "app/view"
   ],
   "bin": {
-    "cctop": "bin/cctop"
+    "cctop": "app/bin/cctop"
   },
   "scripts": {
     "install:all": "npm install",
@@ -17,12 +17,12 @@
     "build:daemon": "npm run build -w @cctop/daemon",
     "build:view": "npm run build -w @cctop/view",
     "test": "npm run test --workspaces",
-    "daemon": "node bin/cctop daemon start",
-    "cli": "node bin/cctop cli",
+    "daemon": "node app/bin/cctop daemon start",
+    "cli": "node app/bin/cctop cli",
     "dev": "npm run daemon & npm run cli",
-    "clean": "rm -rf */node_modules */package-lock.json",
-    "clean:all": "rm -rf node_modules package-lock.json */node_modules */package-lock.json */*.tsbuildinfo",
-    "clean:dist": "rm -rf */dist",
+    "clean": "rm -rf app/*/node_modules app/*/package-lock.json",
+    "clean:all": "rm -rf node_modules package-lock.json app/*/node_modules app/*/package-lock.json app/*/*.tsbuildinfo",
+    "clean:dist": "rm -rf app/*/dist",
     "prepublishOnly": "npm run build"
   },
   "dependencies": {

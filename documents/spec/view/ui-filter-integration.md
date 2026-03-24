@@ -1,7 +1,6 @@
 ---
-Created: 2026-03-13
-Updated: 2026-03-14
-Checked: 2026-03-14
+updated: 2026-03-14 16:09
+checked: 2026-03-14 00:00
 Deprecated: -
 Format: spec-v2.1
 Source: documents/visions/functions/FUNC-208-ui-filter-integration.md

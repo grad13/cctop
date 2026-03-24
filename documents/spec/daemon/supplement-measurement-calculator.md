@@ -1,17 +1,15 @@
 ---
-Created: 2026-03-14
-Updated: 2026-03-14
-Checked: -
+updated: 2026-03-17 12:08
+checked: -
 id: SPEC-D08
 title: "Supplement: File Measurement Calculation"
 version: 2.1
 status: draft
 source:
-  - path: code/daemon/src/events/MeasurementCalculator.ts
+  - path: code/app/daemon/src/events/MeasurementCalculator.ts
     runtime: TypeScript (Node.js ESM)
 type: supplement
 supplements: chokidar-database-integration.md
-created: 2026-03-14
 ---
 Created: 2026-03-14
 Updated: 2026-03-14
@@ -22,7 +20,7 @@ Checked: -
 ## Meta
 | Source | Runtime |
 |--------|---------|
-| `code/daemon/src/events/MeasurementCalculator.ts` | TypeScript (Node.js ESM) |
+| `code/app/daemon/src/events/MeasurementCalculator.ts` | TypeScript (Node.js ESM) |
 
 **Supplements**: `chokidar-database-integration.md` -- covers the measurement collection logic referenced as "MeasurementCollector" in section 6.1 of the integration spec.
 

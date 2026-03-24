@@ -62,7 +62,7 @@ cctop view
 ### Event Filtering
 
 Filter events by type (`f`, `c`, `m`, `d`, `v`, `r`) or search by keyword (`/`).
-See [detailed filtering guide](documents/event-filtering.md) for more information.
+See spec documents for detailed filtering information.
 
 ## Current Scope
 

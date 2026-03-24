@@ -1,17 +1,15 @@
 ---
-Created: 2026-03-14
-Updated: 2026-03-14
-Checked: -
+updated: 2026-03-17 12:08
+checked: -
 id: SPEC-S02
 title: DirectoryStructureCreator - .cctop Directory Scaffolding
 version: 2.1
 status: draft
 source:
-  - path: code/shared/src/config/DirectoryStructureCreator.ts
+  - path: code/app/shared/src/config/DirectoryStructureCreator.ts
     runtime: TypeScript (Node.js ESM)
 type: supplement
 supplements: local-setup-initialization.md
-created: 2026-03-14
 ---
 Created: 2026-03-14
 Updated: 2026-03-14
@@ -22,7 +20,7 @@ Checked: -
 ## Meta
 | Source | Runtime |
 |--------|---------|
-| `code/shared/src/config/DirectoryStructureCreator.ts` | TypeScript (Node.js ESM) |
+| `code/app/shared/src/config/DirectoryStructureCreator.ts` | TypeScript (Node.js ESM) |
 
 ## Contract
 

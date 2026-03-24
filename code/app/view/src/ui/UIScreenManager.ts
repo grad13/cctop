@@ -1,0 +1,75 @@
+// meta: updated=2026-03-17 12:02 checked=2026-03-14 00:00
+
+import * as blessed from 'blessed';
+
+export class UIScreenManager {
+  private screen!: blessed.Widgets.Screen;
+
+  initializeScreen(): blessed.Widgets.Screen {
+    // Suppress terminal compatibility warnings (consolidated from index.ts)
+    const originalStderr = process.stderr.write.bind(process.stderr);
+    (process.stderr as any).write = function(chunk: any, encoding?: any, callback?: any): boolean {
+      const str = chunk.toString();
+      if (str.includes('Error on xterm') ||
+          str.includes('Setulc') ||
+          str.includes('\u001b[58') ||
+          str.includes('var v,') ||
+          str.includes('stack = []') ||
+          str.includes('out = [')) {
+        return true;
+      }
+      return originalStderr(chunk, encoding, callback);
+    };
+
+    // Force terminal type to avoid Setulc capability issues
+    (process as any).env.TERM = 'xterm';
+    
+    // Monkey patch blessed's terminal capability detection
+    const blessedProgram = (blessed as any).program;
+    if (blessedProgram && blessedProgram.prototype) {
+      const originalParse = blessedProgram.prototype._parseTerminfo;
+      blessedProgram.prototype._parseTerminfo = function() {
+        const result = originalParse.apply(this, arguments);
+        // Disable problematic capabilities
+        if (this.terminfo) {
+          delete this.terminfo.Setulc;
+          delete this.terminfo.setulc;
+        }
+        return result;
+      };
+    }
+
+    this.screen = blessed.screen({
+      smartCSR: true,
+      title: 'CCTOP v0.5.0.0',
+      fullUnicode: true,
+      autoPadding: false,
+      warnings: false,
+      forceUnicode: true,
+      dockBorders: false,
+      ignoreDockContrast: true,
+      terminal: 'xterm',
+      disableUnderline: true,
+      style: {
+        bg: 'transparent'
+      }
+    } as any);
+
+    return this.screen;
+  }
+
+  getScreen(): blessed.Widgets.Screen {
+    return this.screen;
+  }
+
+  destroy(): void {
+    if (this.screen) {
+      try {
+        this.screen.destroy();
+      } catch (error) {
+        // Log cleanup errors but do not propagate (terminal may already be detached)
+        process.stderr.write(`UIScreenManager: destroy error: ${error}\n`);
+      }
+    }
+  }
+}

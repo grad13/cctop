@@ -31,7 +31,7 @@ jobs:
         # Verify workspace symlinks
         ls -la node_modules/@cctop/ || echo "No @cctop directory in node_modules"
         # Verify shared module exists
-        ls -la shared/ || echo "No shared directory"
+        ls -la app/shared/ || echo "No shared directory"
 
     - name: Build packages
       working-directory: code

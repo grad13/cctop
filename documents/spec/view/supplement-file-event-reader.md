@@ -1,17 +1,15 @@
 ---
-Created: 2026-03-14
-Updated: 2026-03-14
-Checked: -
+updated: 2026-03-17 12:08
+checked: -
 id: SPEC-V-SUP-008
 title: FileEventReader (Supplement)
 version: 2.1
 status: draft
 source:
-  - path: code/view/src/database/FileEventReader.ts
+  - path: code/app/view/src/database/FileEventReader.ts
     runtime: TypeScript (Node.js ESM)
 type: supplement
 supplements: unique-file-cache-manager.md
-created: 2026-03-14
 ---
 Created: 2026-03-14
 Updated: 2026-03-14
@@ -22,7 +20,7 @@ Checked: -
 ## Meta
 | Source | Runtime |
 |--------|---------|
-| `code/view/src/database/FileEventReader.ts` | TypeScript (Node.js ESM) |
+| `code/app/view/src/database/FileEventReader.ts` | TypeScript (Node.js ESM) |
 
 Supplements: unique-file-cache-manager.md (Section 5: API - FileEventReader)
 

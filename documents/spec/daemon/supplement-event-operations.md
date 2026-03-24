@@ -1,17 +1,15 @@
 ---
-Created: 2026-03-14
-Updated: 2026-03-14
-Checked: -
+updated: 2026-03-17 12:08
+checked: -
 id: SPEC-D06
 title: "Supplement: Event Operations Transaction Logic"
 version: 2.1
 status: draft
 source:
-  - path: code/daemon/src/database/EventOperations.ts
+  - path: code/app/daemon/src/database/EventOperations.ts
     runtime: TypeScript (Node.js ESM)
 type: supplement
 supplements: database-schema-implementation.md
-created: 2026-03-14
 ---
 Created: 2026-03-14
 Updated: 2026-03-14
@@ -22,7 +20,7 @@ Checked: -
 ## Meta
 | Source | Runtime |
 |--------|---------|
-| `code/daemon/src/database/EventOperations.ts` | TypeScript (Node.js ESM) |
+| `code/app/daemon/src/database/EventOperations.ts` | TypeScript (Node.js ESM) |
 
 **Supplements**: `database-schema-implementation.md` -- covers the transactional event insertion logic and file record management not detailed in the schema spec.
 

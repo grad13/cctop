@@ -1,17 +1,15 @@
 ---
-Created: 2026-03-14
-Updated: 2026-03-14
-Checked: -
+updated: 2026-03-17 12:08
+checked: -
 id: SPEC-S03
 title: ConfigManager - Unified Configuration Management (TypeScript Implementation)
 version: 2.1
 status: draft
 source:
-  - path: code/shared/src/config-manager.ts
+  - path: code/app/shared/src/config-manager.ts
     runtime: TypeScript (Node.js ESM)
 type: supplement
 supplements: config-manager-implementation.md
-created: 2026-03-14
 ---
 Created: 2026-03-14
 Updated: 2026-03-14
@@ -22,7 +20,7 @@ Checked: -
 ## Meta
 | Source | Runtime |
 |--------|---------|
-| `code/shared/src/config-manager.ts` | TypeScript (Node.js ESM) |
+| `code/app/shared/src/config-manager.ts` | TypeScript (Node.js ESM) |
 
 ## Contract
 

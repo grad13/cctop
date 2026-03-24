@@ -1,17 +1,15 @@
 ---
-Created: 2026-03-14
-Updated: 2026-03-14
-Checked: -
+updated: 2026-03-17 12:08
+checked: -
 id: SPEC-V-SUP-007
 title: CLI Argument Parser (Supplement)
 version: 2.1
 status: draft
 source:
-  - path: code/view/src/cli/argument-parser.ts
+  - path: code/app/view/src/cli/argument-parser.ts
     runtime: TypeScript (Node.js ESM)
 type: supplement
 supplements: view-interface-specification.md
-created: 2026-03-14
 ---
 Created: 2026-03-14
 Updated: 2026-03-14
@@ -22,7 +20,7 @@ Checked: -
 ## Meta
 | Source | Runtime |
 |--------|---------|
-| `code/view/src/cli/argument-parser.ts` | TypeScript (Node.js ESM) |
+| `code/app/view/src/cli/argument-parser.ts` | TypeScript (Node.js ESM) |
 
 Supplements: view-interface-specification.md (Section 5: Options Reference)
 

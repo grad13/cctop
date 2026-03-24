@@ -1,16 +1,14 @@
 ---
-Created: 2026-03-14
-Updated: 2026-03-14
-Checked: -
+updated: 2026-03-17 12:08
+checked: -
 id: SPEC-V-NEW-006
 title: Event Query Adapter
 version: 2.1
 status: draft
 source:
-  - path: code/view/src/database/EventQueryAdapter.ts
+  - path: code/app/view/src/database/EventQueryAdapter.ts
     runtime: TypeScript (Node.js ESM)
 type: new
-created: 2026-03-14
 ---
 Created: 2026-03-14
 Updated: 2026-03-14
@@ -21,7 +19,7 @@ Checked: -
 ## Meta
 | Source | Runtime |
 |--------|---------|
-| `code/view/src/database/EventQueryAdapter.ts` | TypeScript (Node.js ESM) |
+| `code/app/view/src/database/EventQueryAdapter.ts` | TypeScript (Node.js ESM) |
 
 ## Contract
 

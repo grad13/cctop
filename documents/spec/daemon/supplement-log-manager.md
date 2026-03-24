@@ -1,17 +1,15 @@
 ---
-Created: 2026-03-14
-Updated: 2026-03-14
-Checked: -
+updated: 2026-03-17 12:08
+checked: -
 id: SPEC-D10
 title: "Supplement: Daemon Log Management"
 version: 2.1
 status: draft
 source:
-  - path: code/daemon/src/logging/LogManager.ts
+  - path: code/app/daemon/src/logging/LogManager.ts
     runtime: TypeScript (Node.js ESM)
 type: supplement
 supplements: background-activity-monitor.md
-created: 2026-03-14
 ---
 Created: 2026-03-14
 Updated: 2026-03-14
@@ -22,7 +20,7 @@ Checked: -
 ## Meta
 | Source | Runtime |
 |--------|---------|
-| `code/daemon/src/logging/LogManager.ts` | TypeScript (Node.js ESM) |
+| `code/app/daemon/src/logging/LogManager.ts` | TypeScript (Node.js ESM) |
 
 **Supplements**: `background-activity-monitor.md` -- covers the logging subsystem referenced in section 4 (Process State Management) and section 9 (Configuration).
 

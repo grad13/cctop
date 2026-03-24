@@ -1,7 +1,6 @@
 ---
-Created: 2026-03-13
-Updated: 2026-03-13
-Checked: -
+updated: 2026-03-14 15:42
+checked: -
 Deprecated: -
 Format: spec-v2.1
 Source: documents/visions/functions/FUNC-002-chokidar-database-integration.md

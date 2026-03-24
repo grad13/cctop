@@ -1,5 +1,6 @@
 <div align="center">
     <h1>cctop</h1>
+    <a href="https://orbital-q.sakura.ne.jp/">🌐 ORBITAL-Q</a>
 </div>
 
 <div align="center">
@@ -62,7 +63,7 @@ cctop view
 ### Event Filtering
 
 Filter events by type (`f`, `c`, `m`, `d`, `v`, `r`) or search by keyword (`/`).
-See [detailed filtering guide](documents/event-filtering.md) for more information.
+See spec documents for detailed filtering information.
 
 ## Current Scope
 

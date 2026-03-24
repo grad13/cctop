@@ -1,3 +1,8 @@
+---
+updated: 2026-03-14 14:26
+checked: -
+---
+
 # Contributing to cctop
 
 Thank you for your interest in contributing to cctop!
