@@ -1,7 +1,10 @@
 {
   "name": "cctop",
-  "description": "ファイル変更監視ツール",
-  "description-en": "File change monitoring tool",
+  "description": {
+    "ja": "ファイル変更監視ツール",
+    "en": "File change monitoring tool"
+  },
   "url": "https://github.com/grad13/cctop",
+  "category": "productivity",
   "thumbnail": "thumbnail.png"
 }

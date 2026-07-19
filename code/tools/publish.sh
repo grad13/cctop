@@ -16,7 +16,7 @@ if ! git diff --quiet || ! git diff --cached --quiet; then
 fi
 
 # 公開対象パス
-PUBLIC_PATHS="code documents/spec documents/screenshots documents/CONTRIBUTING.md README.md LICENSE .github"
+PUBLIC_PATHS="code documents/spec documents/screenshots CONTRIBUTING.md README.md LICENSE .github"
 
 # master に切り替え
 git checkout master
